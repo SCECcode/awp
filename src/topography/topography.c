@@ -7,8 +7,96 @@
 #include <sys/types.h>
 
 #include <awp/definitions.h>
-#include "topography/topography.h"
+#include <topography/grid/shift.h>
+#include <topography/grid/grid_3d.h>
+#include <topography/topography.h>
 #include <topography/topography.cuh>
+
+topo_t topo_init(const int USETOPO, 
+                 const char *INTOPO, 
+                 const int rank,
+                 const int x_rank_l,
+                 const int x_rank_r,
+                 const int y_rank_f,
+                 const int y_rank_b,
+                 const int coord[2],
+                 int px,
+                 int py,
+                 int nxt,
+                 int nyt,
+                 int nzt,
+                 const _prec dt,
+                 const _prec h,
+                 cudaStream_t stream_1,
+                 cudaStream_t stream_2,
+                 cudaStream_t stream_i
+                     )
+{
+
+        int mxt;
+        int myt;
+        int mzt;
+        topo_set_memory_size(nxt, nyt, nzt, &mxt, &myt, &mzt);
+        int gridsize = mxt * myt * mzt;
+        int slice = myt * mzt;
+        int line = mzt;
+        int slice_gl = ngsl * mzt;
+
+        topo_t T = {.use = USETOPO, .dbg = TOPO_DBG, 
+                    .verbose = TOPO_VERBOSE,
+                    .rank = rank, 
+                    .topography_file = INTOPO,
+                    .x_rank_l = x_rank_l, .x_rank_r = x_rank_r,
+                    .y_rank_f = y_rank_f, .y_rank_b = y_rank_b,
+                    .coord = {coord[0], coord[1]},
+                    .px = px, .py = py,
+                    .nx = nxt, .ny = nyt, .nz = nzt, 
+                    .mx = mxt, .my = myt, .mz = mzt, 
+                    // Alignment by 2 is for extra padding needed for absorbing
+                    // boundary layers
+                    .off_x = {2, 2 + ngsl, 2 + ngsl + nxt, 2 + ngsl2 + nxt},
+                    .off_y = {2, 2 + ngsl, 2 + ngsl + nyt, 2 + ngsl2 + nyt},
+                    .off_z = {0, align, align + nzt, 2*align + nzt},
+                    // Grid affinity
+                    .sxx = {0, 1, 1}, .syy = {0, 1, 1}, .szz = {0, 1, 1},
+                    .sxy = {1, 0, 1}, .sxz = {1, 1, 0}, .syz = {0, 0, 0},
+                    .su1 = {1, 1, 1}, .sv1 = {0, 0, 1}, .sw1 = {0, 1, 0},
+                    .gridsize = gridsize,
+                    .slice = slice, .line = line,
+                    .slice_gl = slice_gl,
+                    .dth = dt/h,
+                    .timestep = 1,
+                    .gridspacing = h,
+                    .stream_1 = stream_1,
+                    .stream_2 = stream_2,
+                    .stream_i = stream_i
+                   };
+
+        if (rank == 0 && T.verbose && T.use) printf("Topography:: enabled\n");
+        if (T.dbg && rank == 0 && T.use)
+                printf("Topography:: debugging enabled\n");
+
+        if (T.dbg && rank == 0 && T.use)
+                printf("Topography block size:: %d %d %d\n", TBX, TBY, TBZ);
+
+        topo_set_bounds(&T);
+
+
+        int3_t boundary1 = {.x = 0, .y = 0, .z = 0};
+        int3_t boundary2 = {.x = 0, .y = 0, .z = 1};
+        int3_t coordinate = {.x = coord[0], .y = coord[1], .z = 0};
+        int3_t size = {.x = nxt, .y = nyt, .z = nzt};
+        int3_t shift = {.x = 1, .y = 0, .z = 0};    
+        T.topography_grid = grid_init_metric_grid(
+            size, shift, coordinate, boundary1, boundary2, h);
+        T.velocity_grid = grid_init_velocity_grid(
+            size, shift, coordinate, boundary1, boundary2, h);
+        T.stress_grid = grid_init_stress_grid(
+            size, shift, coordinate, boundary1, boundary2, h);
+
+        return T;
+
+}
 
 void topo_set_bounds(topo_t *T)
 {
