@@ -3,9 +3,9 @@
 #include <math.h>
 #include <assert.h>
 
-#include <awp/error.h>
 #include <test/test.h>
-#include <topography/grid/grid_3d.h>
+#include <grid/grid_3d.h>
+#include <grid/error.h>
 
 /* Initialize grid
  * 

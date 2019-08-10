@@ -1,4 +1,11 @@
+add_subdirectory(grid)
 add_subdirectory(topography)
 add_subdirectory(argparse)
 add_subdirectory(mpi)
+add_subdirectory(interpolation)
+add_subdirectory(functions)
+add_subdirectory(buffers)
+add_subdirectory(readers)
+add_subdirectory(vtk)
+add_subdirectory(test)
 

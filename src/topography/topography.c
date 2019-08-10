@@ -7,8 +7,7 @@
 #include <sys/types.h>
 
 #include <awp/definitions.h>
-#include <topography/grid/shift.h>
-#include <topography/grid/grid_3d.h>
+#include <grid/grid_3d.h>
 #include <topography/topography.h>
 #include <topography/topography.cuh>
 
@@ -134,7 +133,6 @@ void topo_set_bounds(topo_t *T)
 void topo_d_malloc(topo_t *T)
 {
         int num_bytes = sizeof(_prec)*T->mx*T->my*T->mz;
-        CUCHK(cudaMalloc((void**)&T->u1, num_bytes));
         CUCHK(cudaMalloc((void**)&T->rho, num_bytes));
         CUCHK(cudaMalloc((void**)&T->lami, num_bytes));
         CUCHK(cudaMalloc((void**)&T->mui, num_bytes));
