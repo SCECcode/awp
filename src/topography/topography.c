@@ -7,8 +7,11 @@
 #include <sys/types.h>
 
 #include <awp/definitions.h>
+#include <awp/error.h>
 #include <grid/grid_3d.h>
+#include <topography/geometry/geometry.h>
 #include <topography/topography.h>
+#include <topography/readers/serial_reader.h>
 #include <topography/topography.cuh>
 
 topo_t topo_init(const int USETOPO, 

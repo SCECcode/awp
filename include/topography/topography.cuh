@@ -151,7 +151,6 @@ void topo_stress_right_H(topo_t *T);
 #ifdef __cplusplus
 }
 #endif
-#
 
 // Number of threads per block to use
 #ifndef TBX

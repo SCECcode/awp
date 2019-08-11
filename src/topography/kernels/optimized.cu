@@ -1,5 +1,5 @@
 #include <awp/definitions.h>
-#include <topography/kernels/unoptimized.cuh>
+#include <topography/kernels/optimized.cuh>
 
 __global__ void dtopo_vel_110(
     float *u1, float *u2, float *u3, const float *dcrjx, const float *dcrjy,

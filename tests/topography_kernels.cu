@@ -4,11 +4,21 @@
 
 #include <argparse/argparse.h>
 #include <topography/topography.h>
-#include <topography/topography.cuh>
-#include <topography/examples/constant.h>
+#include <topography/initializations/constant.h>
+#include <topography/initializations/random.h>
+#include <topography/initializations/cerjan.h>
+#include <functions/norm.h>
 #include <mpi/partition.h>
+
+#ifdef USE_OPTIMIZED_KERNELS
+#include <topography/opt_topography.cuh>
 #include <topography/kernels/unoptimized.cuh>
+#else
+#include <topography/topography.cuh>
+#include <topography/kernels/unoptimized.cuh>
+#endif
 #include <topography/geometry.h>
+#include <topography/host.h>
  
 static const char *const usages[] = {
     "topography_kernels [options] [[--] args]",
@@ -24,15 +34,17 @@ static int ny = 0;
 static int nz = 0;
 static int nt = 0;
 static prec h = 1.0;
-static prec dt = 0.25;
+static prec dt = 0.0025;
 static int coord[2] = {0, 0};
 static int dim[2] = {0, 0};
 static int rank, size;
 static struct side_t side;
 static cudaStream_t stream_1, stream_2, stream_i;
+static int use_optimized_kernels = USE_OPTIMIZED_KERNELS;
 
 void init(topo_t *T);
 void run(topo_t *T);
+double norm(topo_t *T);
 
 int main(int argc, char **argv)
 {
@@ -41,6 +53,7 @@ int main(int argc, char **argv)
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+        printf("Optimized kernels: %d.\n", use_optimized_kernels);
         cudaStreamCreate(&stream_1);
         cudaStreamCreate(&stream_2);
         cudaStreamCreate(&stream_i);
@@ -70,10 +83,6 @@ int main(int argc, char **argv)
             "\nPerformance analysis of CUDA compute kernels for AWP.", "\n");
         argc = argparse_parse(&argparse, argc, (const char**)argv);
 
-        if (nx != 0) printf("nx: %d\n", nx);
-        if (ny != 0) printf("ny: %d\n", ny);
-        if (nz != 0) printf("nz: %d\n", nz);
-        if (nt != 0) printf("nt: %d\n", nt);
         dim[0] = px;
         dim[1] = py;
         
@@ -83,13 +92,20 @@ int main(int argc, char **argv)
         err = mpi_partition_2d(rank, dim, period, coord, &side, &comm);
         assert(err == 0);
 
-        topo_t reference;
+        topo_t device;
+        topo_t host;
 
+        init(&device);
+        host = device;
+        topo_h_malloc(&host);
+        run(&device);
 
-        init(&reference);
-        run(&reference);
-        topo_d_free(&reference);
-        topo_free(&reference);
+        topo_dtoh(&host, &device);
+        norm(&host);
+
+        topo_h_free(&host);
+        topo_d_free(&device);
+        topo_free(&device);
 
         return 0;
 }
@@ -101,19 +117,53 @@ void init(topo_t *T)
                               stream_1, stream_2, stream_i);
         topo_d_malloc(T);
         topo_d_zero_init(T);
+        topo_d_cerjan_disable(T);
         topo_init_metrics(T);
         topo_init_grid(T);
 
+        // Gaussian hill geometry
         _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
-        _prec hill_height = 1000;
+        _prec hill_height = nz * 0.2;
         _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
         // No canyon
-        _prec3_t canyon_width = {.x = 0, .y = 0, .z = 0};
+        _prec3_t canyon_width = {.x = 100, .y = 100, .z = 0};
         _prec canyon_height = 0;
         _prec3_t canyon_center = {.x = 0, .y = 0, .z = 0};
         topo_init_gaussian_hill_and_canyon(T, hill_width, hill_height,
                                            hill_center, canyon_width,
                                            canyon_height, canyon_center);
+
+        // Set random initial conditions using fixed seed
+        int seed = 100000;
+        topo_d_random(T, seed, T->u1);
+        topo_d_random(T, seed, T->v1);
+        topo_d_random(T, seed, T->w1);
+
+        topo_d_random(T, seed, T->xx);
+        topo_d_random(T, seed, T->yy);
+        topo_d_random(T, seed, T->zz);
+        topo_d_random(T, seed, T->xy);
+        topo_d_random(T, seed, T->xz);
+        topo_d_random(T, seed, T->yz);
+
+        topo_init_material_H(T);
+        topo_build(T);
+}
+
+double norm(topo_t *host)
+{
+
+        double sum = 0.0;
+        prec *fields[] = {host->u1, host->v1, host->w1, host->xx, host->yy,
+                          host->zz, host->xy, host->xz, host->yz};
+        double field_sums[9];
+        for (int i = 0; i < 9; ++i) {
+                field_sums[i] = l2norm(fields[i], host->mx, host->my, host->mz,
+                                       0, host->mx, 0, host->my, 0, host->mz);
+        }
+        printf("%g %g %g \n", field_sums[0], field_sums[1], field_sums[2]);
+        printf("%g %g %g \n", field_sums[3], field_sums[4], field_sums[5]);
+                return sum;
 }
 
 void run(topo_t *T)

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef TOPO_EXAMPLE_CONSTANT_H
-#define TOPO_EXAMPLE_CONSTANT_H
+#ifndef TOPO_INIT_CONSTANT_H
+#define TOPO_INIT_CONSTANT_H
 
 #ifdef __cplusplus
 extern "C" {

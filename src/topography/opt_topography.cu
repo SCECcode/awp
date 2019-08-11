@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 #include <topography/topography.h>
-#include <topography/topography.cuh>
-#include <topography/kernels/unoptimized.cuh>
+#include <topography/opt_topography.cuh>
+#include <topography/kernels/optimized.cuh>
 #include <awp/definitions.h>
 
 void topo_init_material_H(topo_t *T)

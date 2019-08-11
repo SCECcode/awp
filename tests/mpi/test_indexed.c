@@ -9,10 +9,6 @@
 #include <test/test.h>
 #include <test/check.h>
 
-#define ADDLINENUM 1
-#define ADDRANK 1
-#define RANK rank
-
 int main(int argc, char **argv)
 {
         int rank, size;
