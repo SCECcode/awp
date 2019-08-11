@@ -8,14 +8,17 @@ set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h     
     ${AWP_MINI_SOURCE_DIR}/include/topography/topography.h     
     ${AWP_MINI_SOURCE_DIR}/include/grid/grid_3d.h
+    ${AWP_MINI_SOURCE_DIR}/include/grid/shift.h
     ${AWP_MINI_SOURCE_DIR}/include/topography/topography.cuh     
+    ${AWP_MINI_SOURCE_DIR}/include/topography/geometry.h
     ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/unoptimized.cuh     
     ${AWP_MINI_SOURCE_DIR}/include/test/test.h     
+    ${AWP_MINI_SOURCE_DIR}/include/vtk/vtk.h     
     ${AWP_MINI_SOURCE_DIR}/include/topography/metrics/metrics.h
     )
 
 add_library(topography
-        topography.c topography.cu   ${HEADERS}
+        topography.c topography.cu geometry.c  ${HEADERS}
         )
 
 
@@ -24,4 +27,12 @@ target_include_directories(topography
         ${AWP_MINI_SOURCE_DIR}/include/
        )
 
-target_link_libraries(topography ${MPI_C_LIBRARIES} grid unoptimized_kernels)
+target_link_libraries(topography 
+        ${MPI_C_LIBRARIES} 
+        grid 
+        unoptimized_kernels
+        metrics
+        geometry
+        topography_readers
+        vtk
+        )

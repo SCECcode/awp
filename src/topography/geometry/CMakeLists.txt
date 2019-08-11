@@ -10,5 +10,5 @@ target_include_directories(geometry
         PUBLIC
         ${AWP_MINI_SOURCE_DIR}/include/
        )
-target_link_libraries(geometry grid)
+target_link_libraries(geometry grid functions)
 

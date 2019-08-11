@@ -8,6 +8,7 @@
 #include <topography/examples/constant.h>
 #include <mpi/partition.h>
 #include <topography/kernels/unoptimized.cuh>
+#include <topography/geometry.h>
  
 static const char *const usages[] = {
     "topography_kernels [options] [[--] args]",
@@ -16,32 +17,30 @@ static const char *const usages[] = {
 };
 
 static topo_t reference;
-static int nt;
+static int px = 0;
+static int py = 0;
+static int nx = 0;
+static int ny = 0;
+static int nz = 0;
+static int nt = 0;
+static prec h = 1.0;
+static prec dt = 0.25;
+static int coord[2] = {0, 0};
+static int dim[2] = {0, 0};
+static int rank, size;
+static struct side_t side;
+static cudaStream_t stream_1, stream_2, stream_i;
 
+void init(topo_t *T);
 void run(topo_t *T);
 
 int main(int argc, char **argv)
 {
         MPI_Init(&argc, &argv);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN); 
-        int rank, size;
-        struct side_t side;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-        int px = 0;
-        int py = 0;
-        int nx = 0;
-        int ny = 0;
-        int nz = 0;
-        nt = 0;
-        int coord[2] = {0, 0};
-        int dim[2] = {0, 0};
-
-        prec h = 1.0;
-        prec dt = 1.0;
-
-        cudaStream_t stream_1, stream_2, stream_i;
         cudaStreamCreate(&stream_1);
         cudaStreamCreate(&stream_2);
         cudaStreamCreate(&stream_i);
@@ -84,29 +83,44 @@ int main(int argc, char **argv)
         err = mpi_partition_2d(rank, dim, period, coord, &side, &comm);
         assert(err == 0);
 
-        reference = topo_init(1, "", rank, side.left, side.right, side.front,
-                              side.back, coord, px, py, nx, ny, nz, dt, h,
-                              stream_1, stream_2, stream_i);
+        topo_t reference;
 
-        topo_d_malloc(&reference);
-        topo_d_zero_init(&reference);
 
+        init(&reference);
         run(&reference);
-
         topo_d_free(&reference);
+        topo_free(&reference);
 
         return 0;
+}
+
+void init(topo_t *T)
+{
+        *T = topo_init(1, "", rank, side.left, side.right, side.front,
+                              side.back, coord, px, py, nx, ny, nz, dt, h,
+                              stream_1, stream_2, stream_i);
+        topo_d_malloc(T);
+        topo_d_zero_init(T);
+        topo_init_metrics(T);
+        topo_init_grid(T);
+
+        _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
+        _prec hill_height = 1000;
+        _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
+        // No canyon
+        _prec3_t canyon_width = {.x = 0, .y = 0, .z = 0};
+        _prec canyon_height = 0;
+        _prec3_t canyon_center = {.x = 0, .y = 0, .z = 0};
+        topo_init_gaussian_hill_and_canyon(T, hill_width, hill_height,
+                                           hill_center, canyon_width,
+                                           canyon_height, canyon_center);
 }
 
 void run(topo_t *T)
 {
         for(int iter = 0; iter < nt; ++iter) {
-
-        topo_velocity_interior_H(T);
-        topo_velocity_front_H(T);
-        topo_velocity_back_H(T);
-
+                topo_velocity_interior_H(T);
+                topo_velocity_front_H(T);
+                topo_velocity_back_H(T);
         }
-
-
 }
