@@ -5,8 +5,6 @@ add_subdirectory(mpi)
 add_subdirectory(interpolation)
 add_subdirectory(readers)
 
-# Unoptimized version
-add_executable(test_unoptimized_kernels topography_kernels.cu)
 
 set(LIBRARIES 
     ${MPI_C_LIBRARIES} 
@@ -14,6 +12,7 @@ set(LIBRARIES
     mpi
     topography_initializations
     functions
+    testing
     )
 
 set(UNOPT_LIBRARIES
@@ -25,6 +24,9 @@ set(OPT_LIBRARIES
         ${LIBRARIES}
         opt_topography
         )
+
+# Unoptimized version
+add_executable(test_unoptimized_kernels topography_kernels.cu)
 
 target_link_libraries(test_unoptimized_kernels 
         ${UNOPT_LIBRARIES} 
@@ -46,4 +48,3 @@ target_link_libraries(test_optimized_kernels
 
 target_compile_definitions(test_optimized_kernels 
         PUBLIC USE_OPTIMIZED_KERNELS=1)
-

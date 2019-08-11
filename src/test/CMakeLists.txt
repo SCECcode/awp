@@ -12,6 +12,7 @@ add_library(testing
 
 target_link_libraries(testing
         ${MPI_C_LIBRARIES}
+        m
         )
 
 target_include_directories(testing

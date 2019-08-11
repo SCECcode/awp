@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -7,15 +8,13 @@
 #include <topography/initializations/constant.h>
 #include <topography/initializations/random.h>
 #include <topography/initializations/cerjan.h>
-#include <functions/norm.h>
+#include <test/check.h>
 #include <mpi/partition.h>
 
 #ifdef USE_OPTIMIZED_KERNELS
 #include <topography/opt_topography.cuh>
-#include <topography/kernels/unoptimized.cuh>
 #else
 #include <topography/topography.cuh>
-#include <topography/kernels/unoptimized.cuh>
 #endif
 #include <topography/geometry.h>
 #include <topography/host.h>
@@ -34,17 +33,25 @@ static int ny = 0;
 static int nz = 0;
 static int nt = 0;
 static prec h = 1.0;
-static prec dt = 0.0025;
+static prec dt = 0.25;
 static int coord[2] = {0, 0};
 static int dim[2] = {0, 0};
 static int rank, size;
 static struct side_t side;
 static cudaStream_t stream_1, stream_2, stream_i;
 static int use_optimized_kernels = USE_OPTIMIZED_KERNELS;
+const char *outputdir;
+const char *inputdir;
 
 void init(topo_t *T);
 void run(topo_t *T);
-double norm(topo_t *T);
+void write(topo_t *host, const char *outputdir);
+void write_file(const char *path, const char *filename, const _prec *data, const
+                int size);
+
+int compare(topo_t *host, const char *inputdir);
+void read_file(const char *path, const char *filename, _prec *data, const int
+                size);
 
 int main(int argc, char **argv)
 {
@@ -73,6 +80,10 @@ int main(int argc, char **argv)
                         "Number of grid points in the Z-direction", NULL, 0, 0),
             OPT_INTEGER('t', "nt", &nt,
                         "Number of iterations to perform", NULL, 0, 0),
+            OPT_STRING('o', "output", &outputdir,
+                        "Write results to output directory", NULL, 0, 0),
+            OPT_STRING('i', "input", &inputdir,
+                        "Read results to input directory", NULL, 0, 0),
             OPT_END(),
         };
 
@@ -101,13 +112,16 @@ int main(int argc, char **argv)
         run(&device);
 
         topo_dtoh(&host, &device);
-        norm(&host);
+        write(&host, outputdir);
+        err = compare(&host, inputdir);
 
         topo_h_free(&host);
         topo_d_free(&device);
         topo_free(&device);
 
-        return 0;
+        MPI_Finalize();
+
+        return err;
 }
 
 void init(topo_t *T)
@@ -123,7 +137,7 @@ void init(topo_t *T)
 
         // Gaussian hill geometry
         _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
-        _prec hill_height = nz * 0.2;
+        _prec hill_height = nz;
         _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
         // No canyon
         _prec3_t canyon_width = {.x = 100, .y = 100, .z = 0};
@@ -134,36 +148,19 @@ void init(topo_t *T)
                                            canyon_height, canyon_center);
 
         // Set random initial conditions using fixed seed
-        int seed = 100000;
-        topo_d_random(T, seed, T->u1);
-        topo_d_random(T, seed, T->v1);
-        topo_d_random(T, seed, T->w1);
+        topo_d_random(T, 1, T->u1);
+        topo_d_random(T, 2, T->v1);
+        topo_d_random(T, 3, T->w1);
 
-        topo_d_random(T, seed, T->xx);
-        topo_d_random(T, seed, T->yy);
-        topo_d_random(T, seed, T->zz);
-        topo_d_random(T, seed, T->xy);
-        topo_d_random(T, seed, T->xz);
-        topo_d_random(T, seed, T->yz);
+        topo_d_random(T, 4, T->xx);
+        topo_d_random(T, 5, T->yy);
+        topo_d_random(T, 6, T->zz);
+        topo_d_random(T, 7, T->xy);
+        topo_d_random(T, 8, T->xz);
+        topo_d_random(T, 9, T->yz);
 
         topo_init_material_H(T);
         topo_build(T);
-}
-
-double norm(topo_t *host)
-{
-
-        double sum = 0.0;
-        prec *fields[] = {host->u1, host->v1, host->w1, host->xx, host->yy,
-                          host->zz, host->xy, host->xz, host->yz};
-        double field_sums[9];
-        for (int i = 0; i < 9; ++i) {
-                field_sums[i] = l2norm(fields[i], host->mx, host->my, host->mz,
-                                       0, host->mx, 0, host->my, 0, host->mz);
-        }
-        printf("%g %g %g \n", field_sums[0], field_sums[1], field_sums[2]);
-        printf("%g %g %g \n", field_sums[3], field_sums[4], field_sums[5]);
-                return sum;
 }
 
 void run(topo_t *T)
@@ -173,4 +170,82 @@ void run(topo_t *T)
                 topo_velocity_front_H(T);
                 topo_velocity_back_H(T);
         }
+}
+
+void write(topo_t *host, const char *outputdir)
+{
+        if (!outputdir) {
+                return;
+        }
+        printf("writing to directory: %s \n", outputdir);
+
+        mkdir(outputdir, 0700);
+
+        int size = host->mx * host->my * host->mz;
+        write_file(outputdir, "vx.bin", host->u1, size);
+        write_file(outputdir, "vy.bin", host->v1, size);
+        write_file(outputdir, "vz.bin", host->w1, size);
+}
+
+void write_file(const char *path, const char *filename, const _prec *data,
+                const int size) 
+{
+        char output[512];
+        sprintf(output, "%s/%s", path, filename);
+        FILE *fh = fopen(output, "wb");
+        if (!fh) {
+                printf("Unable to open: %s. \n", filename);
+                MPI_Abort(MPI_COMM_WORLD, 1);
+                exit(1);
+        }
+        fwrite(data, sizeof(prec), size, fh);
+        fclose(fh);
+
+}
+
+int compare(topo_t *host, const char *inputdir)
+{
+        if (!inputdir) {
+                return 0;
+        }
+
+        topo_t reference = *host;
+        topo_h_malloc(&reference);
+
+        int size = host->mx * host->my * host->mz;
+        printf("reading from directory: %s \n", inputdir);
+        read_file(inputdir, "vx.bin", reference.u1, size);
+        read_file(inputdir, "vy.bin", reference.v1, size);
+        read_file(inputdir, "vz.bin", reference.w1, size);
+
+        prec *a[3] = {reference.u1, reference.v1, reference.w1};
+        prec *b[3] = {host->u1, host->v1, host->w1};
+        const char *names[3] = {"vx", "vy", "vz"};
+        double err[3];
+        double total_error = 0;
+        for (int i = 0; i < 3; ++i) {
+                err[i] = chk_2(a[i], b[i], size);
+                printf("%s: %g ", names[i], err[i]);
+                total_error += err[i];
+        }
+        printf("\n");
+
+        topo_h_free(&reference);
+        return total_error > 1e-6;
+}
+
+void read_file(const char *path, const char *filename, _prec *data, const int
+                size)
+{
+        char input[512];
+        sprintf(input, "%s/%s", path, filename);
+
+        FILE *fh = fopen(input, "rb");
+        if (!fh) {
+                printf("Unable to open: %s. \n", filename);
+                MPI_Abort(MPI_COMM_WORLD, 1);
+                exit(1);
+        }
+        fread(data, sizeof(prec), size, fh);
+        fclose(fh);
 }

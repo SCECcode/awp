@@ -17,9 +17,22 @@ extern "C" {
  *      Maximum absolute difference 
  */      
 double chk_inf(const prec *a, const prec *b, const int n);
-
 int chk_infi(const int *a, const int *b, const int n);
 int chk_infl(const size_t *a, const size_t *b, const size_t n);
+
+
+/*
+ * Compare two arrays in the 2-norm.
+ *
+ * Arguments:
+ *      a: Array of size n     
+ *      b: Array of size n     
+ *      n: Number of elements to compare
+ *
+ * Return value:
+ *      2-norm difference
+ */      
+double chk_2(const prec *a, const prec *b, const int n);
 
 #ifdef __cplusplus
 }

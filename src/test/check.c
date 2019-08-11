@@ -35,3 +35,12 @@ int chk_infl(const size_t *a, const size_t *b, const size_t n)
         return err;
 }
 
+double chk_2(const prec *a, const prec *b, const int n)
+{
+        double err = 0;
+        for (int i = 0; i < n; ++i) {
+                double diff = pow(a[i] - b[i], 2);
+                err += diff;
+        }
+        return sqrt(err);
+}

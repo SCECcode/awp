@@ -775,7 +775,7 @@ __global__ void dtopo_vel_111(
         float Ai3 = _f_c(i, j) * _g3(k + 6) * rho3;
         Ai3 = nu * 1.0 / Ai3;
         float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k + 6);
-        _u1(i, j, k + 6) =
+        _u1(i, j, k + 6) = 
             (a * _u1(i, j, k + 6) +
              Ai1 *
                  (dhx[2] * _f_c(i, j) * _g3_c(k + 6) * _s11(i, j, k + 6) +
