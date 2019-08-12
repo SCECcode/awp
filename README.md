@@ -39,7 +39,7 @@ Options
     -z, --nz=<int>        Number of grid points in the Z-direction
     -t, --nt=<int>        Number of iterations to perform
     -o, --output=<str>    Write results to output directory
-    -i, --input=<str>     Read results to input directory
+    -i, --input=<str>     Read results from input directory
 ```
 
 Use the unoptimized-version to write a reference solution for a given

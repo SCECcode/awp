@@ -83,7 +83,7 @@ int main(int argc, char **argv)
             OPT_STRING('o', "output", &outputdir,
                         "Write results to output directory", NULL, 0, 0),
             OPT_STRING('i', "input", &inputdir,
-                        "Read results to input directory", NULL, 0, 0),
+                        "Read results from input directory", NULL, 0, 0),
             OPT_END(),
         };
 
@@ -246,6 +246,6 @@ void read_file(const char *path, const char *filename, _prec *data, const int
                 MPI_Abort(MPI_COMM_WORLD, 1);
                 exit(1);
         }
-        fread(data, sizeof(prec), size, fh);
+        int count = fread(data, sizeof(prec), size, fh);
         fclose(fh);
 }
