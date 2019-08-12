@@ -40,8 +40,8 @@ static int rank, size;
 static struct side_t side;
 static cudaStream_t stream_1, stream_2, stream_i;
 static int use_optimized_kernels = USE_OPTIMIZED_KERNELS;
-const char *outputdir;
-const char *inputdir;
+static const char *outputdir;
+static const char *inputdir;
 
 void init(topo_t *T);
 void run(topo_t *T);
@@ -224,7 +224,7 @@ int compare(topo_t *host, const char *inputdir)
         double err[3];
         double total_error = 0;
         for (int i = 0; i < 3; ++i) {
-                err[i] = chk_2(a[i], b[i], size);
+                err[i] = chk_inf(a[i], b[i], size);
                 printf("%s: %g ", names[i], err[i]);
                 total_error += err[i];
         }

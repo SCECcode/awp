@@ -58,7 +58,7 @@ The results are the same if, after execution,
 ```
 vx: 0 vy: 0 vz: 0
 ```
-is displayed. This message shows the l2-error in each component of the particle
+is displayed. This message shows the maximum difference in each component of the particle
 velocity field.
 
 ## Optimized kernels
