@@ -2,6 +2,8 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <cuda_runtime.h>
+#include <cuda_profiler_api.h>
 
 #include <argparse/argparse.h>
 #include <topography/topography.h>
@@ -109,7 +111,10 @@ int main(int argc, char **argv)
         init(&device);
         host = device;
         topo_h_malloc(&host);
+        cudaProfilerStart();
         run(&device);
+        cudaDeviceSynchronize();
+        cudaProfilerStop();
 
         topo_dtoh(&host, &device);
         write(&host, outputdir);
