@@ -1,6 +1,6 @@
 #!/usr/bin/bash
-opt=build/tests/test_optimized_kernels
-unopt=build/tests/test_unoptimized_kernels
+opt=release/tests/test_optimized_kernels
+unopt=release/tests/test_unoptimized_kernels
 mkdir -p logs
 nz=256
 nt=100
