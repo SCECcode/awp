@@ -1,4 +1,5 @@
 #include <cuda.h>
+#include <nvToolsExt.h>
 #include <stdio.h>
 
 #include <topography/topography.h>
@@ -43,6 +44,7 @@ void topo_velocity_interior_H(topo_t *T)
         }
 
         // Compute velocities in the front send buffer region. 
+        nvtxRangePushA("velocity_interior_front");
         dtopo_vel_111<<<grid, block, 0, T->stream_1>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
@@ -69,9 +71,12 @@ void topo_velocity_interior_H(topo_t *T)
                                                    T->velocity_bounds_front[0], 
                                                    T->velocity_bounds_right[1],
                                                    T->velocity_bounds_front[1]);
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
         // Compute interior part excluding send buffer regions
+        nvtxRangePushA("velocity_interior_interior");
         dtopo_vel_111<<<grid, block, 0, T->stream_i>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
@@ -98,9 +103,12 @@ void topo_velocity_interior_H(topo_t *T)
                                                    T->velocity_bounds_front[1], 
                                                    T->velocity_bounds_right[1],
                                                    T->velocity_bounds_back[0]);
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
         // Compute back send buffer region
+        nvtxRangePushA("velocity_interior_back");
         dtopo_vel_111<<<grid, block, 0, T->stream_2>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
@@ -127,12 +135,15 @@ void topo_velocity_interior_H(topo_t *T)
                                                    T->velocity_bounds_back[0], 
                                                    T->velocity_bounds_right[1],
                                                    T->velocity_bounds_back[1]);
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
         // Adjust grid size for boundary computation
         grid.z = (TOP_BOUNDARY_SIZE+TBZ-1)/TBZ;
         // Boundary stencils near free surface
         
+        nvtxRangePushA("velocity_interior_boundary_front");
         dtopo_vel_112<<<grid, block, 0, T->stream_1>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
@@ -159,8 +170,11 @@ void topo_velocity_interior_H(topo_t *T)
                                                    T->velocity_bounds_front[0], 
                                                    T->velocity_bounds_right[1],
                                                    T->velocity_bounds_front[1]);
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
+        nvtxRangePushA("velocity_interior_boundary_interior");
         dtopo_vel_112<<<grid, block, 0, T->stream_i>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
@@ -187,8 +201,11 @@ void topo_velocity_interior_H(topo_t *T)
                                                    T->velocity_bounds_front[1], 
                                                    T->velocity_bounds_right[1],
                                                    T->velocity_bounds_back[0]);
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
+        nvtxRangePushA("velocity_interior_boundary_back");
         dtopo_vel_112<<<grid, block, 0, T->stream_2>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
@@ -215,6 +232,8 @@ void topo_velocity_interior_H(topo_t *T)
                                                    T->velocity_bounds_back[0], 
                                                    T->velocity_bounds_right[1],
                                                    T->velocity_bounds_back[1]);
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
         // This kernel only runs in debug mode because it applies one-sided
@@ -267,6 +286,7 @@ void topo_velocity_front_H(topo_t *T)
                    (T->velocity_grid_front.y+TBY-1)/TBY,
                    (T->velocity_grid_front.z+TBZ-1)/TBZ);
 
+        nvtxRangePushA("velocity_front_interior");
         dtopo_buf_vel_111<<<grid, block, 0, T->stream_1>>>
                          (T->f_u1, T->f_v1, T->f_w1, 
                           T->dcrjx, T->dcrjy, T->dcrjz,
@@ -292,11 +312,14 @@ void topo_velocity_front_H(topo_t *T)
                           T->nx, T->ny, T->nz,
                           0, T->velocity_grid_front.y,
                           T->velocity_bounds_front[0]);  
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
         // Boundary stencils near free surface
         // Adjust grid size for boundary computation
         grid.z = (TOP_BOUNDARY_SIZE+TBZ-1)/TBZ;
+        nvtxRangePushA("velocity_front_boundary");
         dtopo_buf_vel_112<<<grid, block, 0, T->stream_1>>>
                          (T->f_u1, T->f_v1, T->f_w1, 
                           T->dcrjx, T->dcrjy, T->dcrjz,
@@ -322,7 +345,8 @@ void topo_velocity_front_H(topo_t *T)
                           T->nx, T->ny, T->nz,
                           0, T->velocity_grid_front.y,
                           T->velocity_bounds_front[0]);  
-
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
         // This kernel only runs in debug mode because it applies one-sided
@@ -373,6 +397,7 @@ void topo_velocity_back_H(topo_t *T)
                    (T->velocity_grid_back.y+TBY-1)/TBY,
                    (T->velocity_grid_back.z+TBZ-1)/TBZ);
 
+        nvtxRangePushA("velocity_back_interior");
         dtopo_buf_vel_111<<<grid, block, 0, T->stream_2>>>
                          (T->b_u1, T->b_v1, T->b_w1, 
                           T->dcrjx, T->dcrjy, T->dcrjz,
@@ -398,11 +423,14 @@ void topo_velocity_back_H(topo_t *T)
                           T->nx, T->ny, T->nz,
                           0, T->velocity_grid_back.y,
                           T->velocity_bounds_back[0]);  
+        cudaDeviceSynchronize();
+        nvtxRangePop();
         CUCHK(cudaGetLastError());
 
         // Boundary stencils near free surface
         // Adjust grid size for boundary computation
         grid.z = (TOP_BOUNDARY_SIZE+TBZ-1)/TBZ;
+        nvtxRangePushA("velocity_back_boundary");
         dtopo_buf_vel_112<<<grid, block, 0, T->stream_2>>>
                          (T->b_u1, T->b_v1, T->b_w1, 
                           T->dcrjx, T->dcrjy, T->dcrjz,
@@ -429,6 +457,8 @@ void topo_velocity_back_H(topo_t *T)
                           0, T->velocity_grid_back.y,
                           T->velocity_bounds_back[0]);  
         CUCHK(cudaGetLastError());
+        cudaDeviceSynchronize();
+        nvtxRangePop();
 
         // This kernel only runs in debug mode because it applies one-sided
         // stencils at depth

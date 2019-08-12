@@ -40,7 +40,7 @@ set(LIBRARIES
     )
 
 set(UNOPT_LIBRARIES ${LIBRARIES} unoptimized_kernels)
-set(OPT_LIBRARIES ${LIBRARIES} optimized_kernels)
+set(OPT_LIBRARIES ${LIBRARIES} optimized_kernels nvToolsExt)
 
 
 # Unoptimized version

@@ -28,7 +28,7 @@ void topo_stress_right_H(topo_t *T);
 #define TBY 1
 #endif
 #ifndef TBZ
-#define TBZ 16
+#define TBZ 64
 #endif
 
 // Number of boundary points. Must match the number of boundary stencils used in
