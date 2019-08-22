@@ -207,6 +207,8 @@ typedef struct
         _prec*  __restrict__ rho;
         _prec*  __restrict__ lami;
         _prec*  __restrict__ mui;
+        // lambda / (lambda + 2 mu) (only used by AWP)
+        _prec*  __restrict__ lam_mu;
         // Stresses
         _prec*  __restrict__ xx;
         _prec*  __restrict__ yy;
@@ -221,6 +223,15 @@ typedef struct
         _prec*  __restrict__ r4;
         _prec*  __restrict__ r5;
         _prec*  __restrict__ r6;
+        // Attenuation variables
+        _prec*  __restrict__ qpi;
+        _prec*  __restrict__ qsi;
+        int* ww;
+        _prec*  __restrict__ wwo;
+        _prec*  __restrict__ vx1;
+        _prec*  __restrict__ vx2;
+        _prec*  __restrict__ coeff;
+
         // Velocities
         _prec*  __restrict__ u1;
         _prec*  __restrict__ v1;

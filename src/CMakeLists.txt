@@ -1,3 +1,4 @@
+add_subdirectory(awp)
 add_subdirectory(grid)
 add_subdirectory(topography)
 add_subdirectory(argparse)

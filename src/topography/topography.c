@@ -135,6 +135,9 @@ void topo_set_bounds(topo_t *T)
 
 void topo_d_malloc(topo_t *T)
 {
+        // This function is only used for testing purposes (main AWP application
+        // is responsible for memory allocation). Here, for simplicity, much
+        // larger chunks of memory are allocated than necessary.
         int num_bytes = sizeof(_prec)*T->mx*T->my*T->mz;
         CUCHK(cudaMalloc((void**)&T->rho, num_bytes));
         CUCHK(cudaMalloc((void**)&T->lami, num_bytes));
@@ -163,6 +166,14 @@ void topo_d_malloc(topo_t *T)
         CUCHK(cudaMalloc((void**)&T->dcrjx, num_bytes));
         CUCHK(cudaMalloc((void**)&T->dcrjy, num_bytes));
         CUCHK(cudaMalloc((void**)&T->dcrjz, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->qpi, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->qsi, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->wwo, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->ww, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->vx1, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->vx2, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->coeff, num_bytes));
+        CUCHK(cudaMalloc((void**)&T->lam_mu, num_bytes));
 }
 
 void topo_d_free(topo_t *T)
