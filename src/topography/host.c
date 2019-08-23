@@ -16,6 +16,12 @@ void topo_h_malloc(topo_t *host)
         host->xy = (prec*)malloc(num_bytes);
         host->xz = (prec*)malloc(num_bytes);
         host->yz = (prec*)malloc(num_bytes);
+        host->r1 = (prec*)malloc(num_bytes);
+        host->r2 = (prec*)malloc(num_bytes);
+        host->r3 = (prec*)malloc(num_bytes);
+        host->r4 = (prec*)malloc(num_bytes);
+        host->r5 = (prec*)malloc(num_bytes);
+        host->r6 = (prec*)malloc(num_bytes);
         
 }
 
@@ -39,6 +45,18 @@ void topo_dtoh(topo_t *host, const topo_t *device)
         CUCHK(cudaMemcpy(host->xz, device->xz, num_bytes,
                          cudaMemcpyDeviceToHost));
         CUCHK(cudaMemcpy(host->yz, device->yz, num_bytes,
+                         cudaMemcpyDeviceToHost));
+        CUCHK(cudaMemcpy(host->r1, device->r1, num_bytes,
+                         cudaMemcpyDeviceToHost));
+        CUCHK(cudaMemcpy(host->r2, device->r2, num_bytes,
+                         cudaMemcpyDeviceToHost));
+        CUCHK(cudaMemcpy(host->r3, device->r3, num_bytes,
+                         cudaMemcpyDeviceToHost));
+        CUCHK(cudaMemcpy(host->r4, device->r4, num_bytes,
+                         cudaMemcpyDeviceToHost));
+        CUCHK(cudaMemcpy(host->r5, device->r5, num_bytes,
+                         cudaMemcpyDeviceToHost));
+        CUCHK(cudaMemcpy(host->r6, device->r6, num_bytes,
                          cudaMemcpyDeviceToHost));
 }
 

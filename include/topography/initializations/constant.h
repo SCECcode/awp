@@ -7,7 +7,7 @@ extern "C" {
 #endif
 void topo_d_zero_init(topo_t *T);
 
-void topo_d_constant(topo_t *T);
+void topo_d_constant(topo_t *T, const prec value, prec *d_field);
 
 #ifdef __cplusplus
 }

@@ -4,10 +4,11 @@ set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/constant.h     
     ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/random.h     
     ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/cerjan.h     
+    ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/linear.h     
     )
 
 add_library(topography_initializations
-        constant.c random.c cerjan.c ${HEADERS}
+        constant.c random.c cerjan.c linear.c ${HEADERS}
         )
 
 target_include_directories(topography_initializations

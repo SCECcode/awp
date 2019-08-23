@@ -24,6 +24,7 @@ double check_fl1err(const _prec *u, const _prec *v,
 
 }
 
+#include <test/test.h>
 double check_fl2err(const _prec *u, const _prec *v, 
                     const int i0, const int in, 
                     const int j0, const int jn, 
@@ -41,7 +42,7 @@ double check_fl2err(const _prec *u, const _prec *v,
         }
         }
         }
-        return sqrt(err/num);
+        return sqrt(err);
 
 }
 
@@ -62,6 +63,27 @@ double check_flinferr(const _prec *u, const _prec *v,
         }
         return err;
 
+}
+
+double check_flinfprint(const _prec *u, const _prec *v, 
+                      const int i0, const int in, 
+                      const int j0, const int jn, 
+                      const int k0, const int kn, 
+                      const int line, const int slice)
+{
+        double err = 0.0;
+        for (int i = i0; i < in; ++i) {
+        for (int j = j0; j < jn; ++j) {
+        for (int k = k0; k < kn; ++k) {
+                int pos = k + j*line + i*slice; 
+                err = err > fabs(u[pos] - v[pos]) ? err : fabs(u[pos] - v[pos]);
+                if (err > 0) {
+                        printf("error[%d %d %d] = %g \n", i, j, k, err);
+                }
+        }
+        }
+        }
+        return err;
 }
 
 int check_all(check_fun fp, 

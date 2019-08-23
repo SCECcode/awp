@@ -1,4 +1,8 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include <cuda_runtime.h>
+
+#include <awp/definitions.h>
 #include <topography/topography.h>
 #include <topography/initializations/constant.h>
 
@@ -15,8 +19,19 @@ void topo_d_zero_init(topo_t *T)
         }
 }
 
-void topo_d_constant(topo_t *T)
+void topo_d_constant(topo_t *T, const prec value, prec *d_field)
 {
+        int num_bytes = sizeof(_prec) * T->mx * T->my * T->mz;
+        prec *tmp = (_prec*)malloc(num_bytes);
+        for(int i = 0; i < T->mx; ++i) {
+        for(int j = 0; j < T->my; ++j) {
+        for(int k = 0; k < T->mz; ++k) {
+                tmp[k + j * T->mz + i * T->mz * T->my] = value;
+        }
+        }
+        }
 
+        CUCHK(cudaMemcpy(d_field, tmp, num_bytes, cudaMemcpyHostToDevice));
 
+        free(tmp);
 }

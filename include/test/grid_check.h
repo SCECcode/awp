@@ -75,6 +75,12 @@ double check_flinferr(const _prec *u, const _prec *v,
                       const int j0, const int jn, 
                       const int k0, const int kn, 
                       const int line, const int slice);
+// Print grid points at which errors occur
+double check_flinfprint(const _prec *u, const _prec *v, 
+                      const int i0, const int in, 
+                      const int j0, const int jn, 
+                      const int k0, const int kn, 
+                      const int line, const int slice);
 
 int check_all(check_fun fp, 
               const _prec *field, const _prec *result, 
