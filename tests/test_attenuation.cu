@@ -30,27 +30,21 @@ static const char *const usages[] = {
 static topo_t reference;
 static int px = 0;
 static int py = 0;
-static int nx = 100;
-static int ny = 100;
-static int nz = 100;
-static int nt = 1;
+static int nx = 64;
+static int ny = 64;
+static int nz = 64;
+static int nt = 10;
 static prec h = 1.0;
-static prec dt = 0.25;
+static prec dt = 0.5/3;
 static int coord[2] = {0, 0};
 static int dim[2] = {0, 0};
 static int rank, size;
 static struct side_t side;
 static cudaStream_t stream_1, stream_2, stream_i;
 
-
-// AWP stuff
-static int xse2, xss2;
-static int yls, yre;
-
 void init(topo_t *T);
 void init_awp(topo_t *T);
 void run(topo_t *T, topo_t *awp);
-void awp_bounds();
 void write(topo_t *host, const char *outputdir);
 void write_file(const char *path, const char *filename, const _prec *data, const
                 int size);
@@ -120,6 +114,7 @@ int main(int argc, char **argv)
 
         topo_dtoh(&topo_h, &topo);
         topo_dtoh(&awp_h, &awp);
+
         err = compare(&topo_h, &awp_h);
 
         topo_d_free(&topo);
@@ -158,11 +153,11 @@ void init(topo_t *T)
                                            canyon_height, canyon_center);
 
         // Set random initial conditions using fixed seed
-        topo_d_linear_i(T, T->u1);
+        topo_d_random(T, 1, T->u1);
         topo_d_constant(T, 2, T->v1);
         topo_d_constant(T, 3, T->w1);
 
-        topo_d_constant(T, 1, T->xx);
+        topo_d_constant(T, 0, T->xx);
         topo_d_constant(T, 5, T->yy);
         topo_d_constant(T, 6, T->zz);
         topo_d_constant(T, 7, T->xy);
@@ -199,7 +194,6 @@ void init_awp(topo_t *T)
 {
         _prec fmajor = 0, fminor = 0, Rz[9], RzT[9];
         SetDeviceConstValue(&h, dt, &nx, &ny, &nz, 1, fmajor, fminor, Rz, RzT);
-        awp_bounds();
 }
 
 void run(topo_t *topo, topo_t *awp)
@@ -209,8 +203,7 @@ void run(topo_t *topo, topo_t *awp)
                 //topo_velocity_front_H(T);
                 //topo_velocity_back_H(T);
 
-               //topo_stress_interior_H(topo);
-
+               topo_stress_interior_H(topo);
 
 	       dstrqc_H_new(awp->xx, awp->yy, awp->zz, awp->xy, awp->xz, awp->yz,
 	        	awp->r1, awp->r2, awp->r3, awp->r4, awp->r5, awp->r6,
@@ -218,31 +211,10 @@ void run(topo_t *topo, topo_t *awp)
 	        	awp->mui, awp->qpi, awp->coeff, awp->qsi, awp->dcrjx, awp->dcrjy, awp->dcrjz,
 	        	ny,  nz,  awp->stream_1, awp->lam_mu,
 	        	awp->vx1, awp->vx2, awp->ww, awp->wwo,
-	        	nx, 0,  coord[0], coord[1],   xss2,  xse2,
-	        	yls,  yre, 0);
+	        	nx, 0,  coord[0], coord[1],   ngsl + 2,  nx + ngsl2 - 1,
+	        	 2 + ngsl,  ny + ngsl2 - 1, 0);
 
         }
-}
-
-void awp_bounds(void)
-{
-       xss2  = ngsl+4;
-       xse2  = nx+ngsl-1;
-
-       if(side.front<0) {
-	  yls = 2+ngsl;
-       }
-       else {
-	  yls = 4;
-       }
-
-       if(side.back<0) {
-	  yre = ny+ngsl+1;
-       }
-       else {
-	  yre = ny + ngsl2 - 1;
-       }
-    
 }
 
 int compare(topo_t *topo, topo_t *awp)
@@ -252,19 +224,24 @@ int compare(topo_t *topo, topo_t *awp)
         prec *b[3] = {topo->xx, topo->r1, topo->w1};
         const char *names[3] = {"sxx", "r1", "vz"};
         double err[3];
+        int nxt = nx - ngsl;
+        int nyt = ny - ngsl;
+        int nzt = 20;
         double total_error = 0;
-        int excl = 0;
+        int excl = 4;
         int i0 = excl + ngsl + 2;
-        int in = i0 + 20;
+        int in = i0 + nxt;
         int j0 = excl + ngsl + 2;
-        int jn = j0 + 20;
-        int nbnd = 10;
+        int jn = j0 + nyt;
+        int nbnd = 8;
         int k0 = align + excl + nbnd;
-        int kn = k0 + 1;
-        print("Comparing in region [%d %d %d] [%d %d %d]\n", i0, j0, k0,
-                        in, jn, kn);
+        int kn = k0 + nzt;
+        int size = (in - i0) * (jn - j0) * (kn - k0);
+        printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
+                        in, jn, kn,  size);
+        printf("line: %d slice: %d \n", topo->line, topo->slice);
         for (int i = 0; i < 2; ++i) {
-             err[i] = check_flinfprint(a[i], b[i], 
+             err[i] = check_flinferr(a[i], b[i], 
                              i0, in, j0, jn, k0, kn,
                              topo->line, topo->slice);
                 printf("%s: %g ", names[i], err[i]);

@@ -91,7 +91,6 @@ void SetDeviceConstValue(_prec *DH, _prec DT, int *nxt, int *nyt, int *nzt, int 
        slice_2[k]  = (nyt[k]+4+ngsl2)*(nzt[k]+2*align)*2;
        yline_1[k]  = nzt[k]+2*align;
        yline_2[k]  = (nzt[k]+2*align)*2;
-       printf("h_dth = %g %g \n", h_dth[k], DT);
     }
 
     CUCHK(cudaMemcpyToSymbol(d_c1,      &h_c1,    sizeof(_prec)));
@@ -738,16 +737,10 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
 
     f_r      = r1[pos];
     f_rtmp   = -h*(vs2+vs3) + a1; 
-    float old = xx[pos];
     f_xx     = xx[pos]  + tmp - xm*(vs2+vs3) + vx1*f_r;  
     r1[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
-    if (i = 15 && j == 15 && k < 43) {
-    printf("%f %f %f %f %f \n", old, xx[pos]  + tmp - xm*(vs2+vs3), f_xx,
-                    d_dth[0], d_DT);
-    }
     xx[pos]  = (f_xx + d_DT*f_rtmp)*f_dcrj;
-    xx[pos] = 10;
 
     f_r      = r2[pos];
     f_rtmp   = -h*(vs1+vs3) + a1;  
@@ -3582,4 +3575,3 @@ __global__ void addplanesrc_cu(int n, int dim,  int NST, _prec*  mu, _prec*  lam
 
         return;
 }
-
