@@ -111,7 +111,7 @@ therefore by replaced by two arrays. The computation could be further
 optimized by noticing that two of the four values in each array are the same (up
 to a sign).  
 
-### Index mapping
+### Mapping of blocks and threads
 In AWP-TOPO, the memory layout is chosen such that z is the fast direction, y is
 the second fastest direction, and x is the slowest direction. This is opposite
 to the thread block configuration in CUDA; here x is the fastest, and z is the
