@@ -20,7 +20,7 @@ int pos = k + j * line + i * slice;
 While these changes can be performed by hand, we will regenerate the kernels
 with proper mappings using the kernel generator. If we take a look at
 `dtopo_vel_112` this is what we currently have:
-```C
+```c
   const int i = threadIdx.x + blockIdx.x * blockDim.x + bi;
   if (i >= nx)
     return;
@@ -35,7 +35,53 @@ with proper mappings using the kernel generator. If we take a look at
   if (k >= 6)
     return;
 ```
-Git commit #   changes this to:
+Git commit: `c3ddb16dcd1ff89160ae7ac6c97d6c61cf2f692d` changes this to:
+```c
+  const int i = threadIdx.z + blockIdx.z * blockDim.z + bi;
+  if (i >= nx)
+    return;
+  if (i >= ei)
+    return;
+  const int j = threadIdx.y + blockIdx.y * blockDim.y + bj;
+  if (j >= ny)
+    return;
+  if (j >= ej)
+    return;
+  const int k = threadIdx.x + blockIdx.x * blockDim.x;
+  if (k >= 6)
+    return;
 ```
+In addition to this change, the launch configuration needs to be adjusted for
+all kernels. For example, the launch configuration for the interior kernel
+`dtopo_vel_111` used to be:
+```c
+        dim3 block (TBX, TBY, TBZ);
+        dim3 grid ((T->velocity_grid_interior.x+TBX-1)/TBX, 
+                   (T->velocity_grid_interior.y+TBY-1)/TBY,
+                   (T->velocity_grid_interior.z+TBZ-1)/TBZ);
 
 ```
+We change it to:
+```c
+        dim3 block (VEL_INT_X, VEL_INT_Y, VEL_INT_Z);
+        int grid_x = T->velocity_bounds_right[1] - T->velocity_bounds_left[0];
+        int grid_y = T->velocity_bounds_back[0] - T->velocity_bounds_front[1];
+        int grid_z = T->velocity_grid_interior.z;
+        dim3 grid((grid_z + VEL_INT_X - 1) / VEL_INT_X,
+                  (grid_y + VEL_INT_Y - 1) / VEL_INT_Y,
+                  (grid_x + VEL_INT_Z - 1) / VEL_INT_Z);
+
+```
+and for the boundary kernel `dtopo_vel_112`, we change it to:
+```c
+        dim3 block (VEL_BND_X, VEL_BND_Y, VEL_BND_Z);
+        int grid_x = T->velocity_bounds_right[1] - T->velocity_bounds_left[0];
+        int grid_y = T->velocity_bounds_front[1] - T->velocity_bounds_front[0];
+        int grid_z = T->velocity_grid_interior.z;
+        dim3 grid((grid_z + VEL_BND_X - 1) / VEL_BND_X,
+                  (grid_y + VEL_BND_Y - 1) / VEL_BND_Y,
+                  (grid_x + VEL_BND_Z - 1) / VEL_BND_Z);
+```
+The number of blocks in the CUDA grid is now adjusted to match the size of each
+compute region. Before, the same number of grid blocks were requested despite
+having compute regions of different sizes.

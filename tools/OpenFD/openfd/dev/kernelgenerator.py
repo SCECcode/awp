@@ -27,7 +27,8 @@ def make_kernel(label,
                 index_bounds=None,
                 reduction=None,
                 lhs_indices=None,
-                rhs_indices=None 
+                rhs_indices=None,
+                grid_order=None
                 ):
     """
     Generate code for compute kernels that can execute on either the CPU or GPU. 
@@ -78,6 +79,8 @@ def make_kernel(label,
             function.
         rhs_indices(optional) : Remap the indices on the right-hand side using a
             function.
+        grid_order: An array that contains the order of the CUDA thread indices.
+            e.g., ['x', 'y', 'z'].
 
     Returns:
         A list of `Kernel` objects that contains the generated code for each
@@ -99,6 +102,7 @@ def make_kernel(label,
 
     if not debug:
         debug = openfd.debug
+
     
     if reduction:
         #TODO: Implement me
@@ -124,7 +128,8 @@ def make_kernel(label,
                    extraout=extraout,
                    extraconst=extraconst,
                    indices=indices, 
-                   precision=precision
+                   precision=precision,
+                   grid_order=grid_order
                    )
 
     # Append region ID to kernelfunction name unless only one region is used
@@ -163,7 +168,7 @@ def make_kernel(label,
 
 def write_kernels(filename, kernels, header=False, 
                   kernelname=None,
-                  source_includes=[], header_includes=[]):
+                  source_includes=[], header_includes=[], include_header=False):
     """
     Write the compute kernels to source and header files.
 
@@ -176,6 +181,7 @@ def write_kernels(filename, kernels, header=False,
             source.
         header_includes(optional) : Extra include statements placed in the
             header.
+        include_header(optional) : Include the header file automatically.
     """
     from openfd import utils
 
@@ -192,7 +198,7 @@ def write_kernels(filename, kernels, header=False,
     f = open(sourcefile, 'w')
     for include in utils.to_tuple(source_includes):
         f.write('%s\n' % include)
-    if header:
+    if include_header:
         f.write('#include "%s"\n'%headerfile)
     f.write('\n')
     for kernel in filtered_kernels:
@@ -305,7 +311,8 @@ class KernelGenerator(object):
     def __init__(self, gridsize, bounds, dout, din, const=[], extrain=[],
                  extraout=[],
                extraconst=[], indices=None, debug=False,
-               loop_order=None, index_bounds=None, precision=None):
+               loop_order=None, index_bounds=None, precision=None,
+               grid_order=None):
         """
         The base class init defines class members required for all child classes
         The sequence of functions called to generate the kernel code
@@ -388,6 +395,11 @@ class KernelGenerator(object):
             self.index_bounds = self.define_index_bounds(index_bounds)
         else:
             self.index_bounds = [None]*len(bounds)
+
+        if not grid_order:
+            self.grid_order = ['x', 'y', 'z']
+        else:
+            self.grid_order = grid_order
 
         self.const = const
         self.extrain = extrain
@@ -994,7 +1006,7 @@ class CudaGenerator(KernelGenerator):
 
         if not indices:
             indices = ['i', 'j', 'k']
-        idgrids = ['x', 'y', 'z']
+        idgrids = self.grid_order
 
         index = indices[idx]
         idgrid = idgrids[idx]

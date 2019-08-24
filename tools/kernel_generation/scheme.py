@@ -222,6 +222,7 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
         lhs_indices = None
         rhs_indices = None
         index_bounds = (1,1,0)
+    grid_order = ['z', 'y', 'x']
 
     kernels = kg.make_kernel(label, 
                               lhs, rhs,
@@ -243,7 +244,8 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                                             F.f_1, F.f_2, F.f_c,
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
-                              lhs_indices=lhs_indices, rhs_indices=rhs_indices)
+                              lhs_indices=lhs_indices, rhs_indices=rhs_indices,
+                              grid_order=grid_order)
     return kernels
 
 def stress(label, debug=0, debug_ops=0, use_cartesian=0):
@@ -401,6 +403,7 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     bounds = helper.strbounds(D(F.s11,'z'), F.s11,
                               exclude_left=helper.get_exclude_left(debug))
     index_bounds = (1,1,0)
+    grid_order = ['z', 'y', 'x']
     kernels = kg.make_kernel(label, 
                               lhs, rhs,
                               bounds, helper.gridsymbols,
@@ -421,7 +424,8 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
                                             F.f_1, F.f_2, F.f_c,
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
-                              lhs_indices=lhs_indices, rhs_indices=rhs_indices)
+                              lhs_indices=lhs_indices, rhs_indices=rhs_indices,
+                              grid_order=grid_order)
     return kernels
 
 def apply_sponge_layer():
@@ -454,11 +458,14 @@ def material(label, unit_material=0):
     lhs, rhs = fd.equations(eqs)
 
     bounds = helper.bounds()
+    grid_order = ['z', 'y', 'x']
+
     kernels = kg.make_kernel(label, 
                               lhs, rhs,
                               bounds, helper.gridsymbols,
                               regions=(1, 1, 1),
-                              debug=0, generator=helper.generator)
+                              debug=0, generator=helper.generator,
+                              grid_order=grid_order)
     return kernels
 
 
@@ -471,5 +478,6 @@ kernels += stress("dtopo_str", debug=debug, debug_ops=0,
         use_cartesian=use_cartesian)
 kernels += material("dtopo_init_material", unit_material=1)
 kg.write_kernels(filename, kernels, header=True,
-header_includes=['#include "definitions.h"'])
+        source_includes=['#include <topography/kernels/%s.cuh>'%filename], 
+        header_includes=['#include <awp/definitions.h>'])
 

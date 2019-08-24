@@ -1,6 +1,6 @@
 #ifndef OPTIMIZED_H
 #define OPTIMIZED_H
-#include "definitions.h"
+#include <awp/definitions.h>
 #include <math.h>
 
 __global__ void dtopo_vel_110(
