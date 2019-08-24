@@ -1,0 +1,76 @@
+==6052== NVPROF is profiling process 6052, command: release/tests/test_optimized_kernels --nx=400 --ny=400 --nz=256 --px=1 --py=1 --input=profile/run_400_400_256 --nt=100
+==6052== Profiling application: release/tests/test_optimized_kernels --nx=400 --ny=400 --nz=256 --px=1 --py=1 --input=profile/run_400_400_256 --nt=100
+==6052== Profiling result:
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   65.46%  5.81505s       300  19.383ms  1.1542ms  71.782ms  dtopo_vel_111
+                   22.56%  2.00358s       300  6.6786ms  5.6874ms  9.1906ms  dtopo_vel_112
+                   10.63%  943.95ms       200  4.7198ms  3.6182ms  5.8233ms  dtopo_buf_vel_112
+                    1.35%  120.17ms       200  600.83us  30.657us  1.5093ms  dtopo_buf_vel_111
+      API calls:   99.89%  8.88615s      1001  8.8773ms  1.1420us  71.793ms  cudaDeviceSynchronize
+                    0.11%  9.8012ms      1000  9.8010us  4.5000us  1.2945ms  cudaLaunchKernel
+                    0.00%  178.21us      1000     178ns      95ns     840ns  cudaGetLastError
+
+==6052== NVTX result:
+==6052==   Thread "<unnamed>" 
+==6052==     Domain "<unnamed>"
+==6052==       Range "velocity_back_boundary"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  369.64ms       100  3.6964ms  3.6299ms  4.2605ms  velocity_back_boundary
+ GPU activities:  100.00%  368.69ms       100  3.6869ms  3.6182ms  4.2486ms  dtopo_buf_vel_112
+      API calls:  100.00%  527.62us       100  5.2760us  4.6270us  9.1600us  cudaLaunchKernel
+
+==6052==       Range "velocity_back_interior"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  4.3536ms       100  43.535us  39.869us  60.235us  velocity_back_interior
+ GPU activities:  100.00%  3.1790ms       100  31.789us  30.657us  40.705us  dtopo_buf_vel_111
+      API calls:  100.00%  779.27us       100  7.7920us  5.0090us  24.332us  cudaLaunchKernel
+
+==6052==       Range "velocity_front_boundary"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  576.36ms       100  5.7636ms  5.6909ms  5.8351ms  velocity_front_boundary
+ GPU activities:  100.00%  575.26ms       100  5.7526ms  5.6791ms  5.8233ms  dtopo_buf_vel_112
+      API calls:  100.00%  638.73us       100  6.3870us  5.0380us  14.645us  cudaLaunchKernel
+
+==6052==       Range "velocity_front_interior"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  118.27ms       100  1.1827ms  1.1693ms  1.5254ms  velocity_front_interior
+ GPU activities:  100.00%  116.99ms       100  1.1699ms  1.1593ms  1.5093ms  dtopo_buf_vel_111
+      API calls:  100.00%  841.66us       100  8.4160us  5.4820us  26.264us  cudaLaunchKernel
+
+==6052==       Range "velocity_interior_back"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  119.12ms       100  1.1912ms  1.1705ms  1.5351ms  velocity_interior_back
+ GPU activities:  100.00%  116.61ms       100  1.1661ms  1.1542ms  1.5027ms  dtopo_vel_111
+      API calls:  100.00%  2.0250ms       100  20.250us  10.029us  34.731us  cudaLaunchKernel
+
+==6052==       Range "velocity_interior_boundary_back"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  576.86ms       100  5.7686ms  5.7000ms  6.3070ms  velocity_interior_boundary_back
+ GPU activities:  100.00%  575.50ms       100  5.7550ms  5.6897ms  6.2949ms  dtopo_vel_112
+      API calls:  100.00%  862.68us       100  8.6260us  5.0710us  24.295us  cudaLaunchKernel
+
+==6052==       Range "velocity_interior_boundary_front"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  577.57ms       100  5.7757ms  5.7095ms  6.3328ms  velocity_interior_boundary_front
+ GPU activities:  100.00%  576.32ms       100  5.7632ms  5.6874ms  6.3186ms  dtopo_vel_112
+      API calls:  100.00%  724.18us       100  7.2410us  5.3750us  16.050us  cudaLaunchKernel
+
+==6052==       Range "velocity_interior_boundary_interior"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  853.07ms       100  8.5307ms  8.4577ms  9.2028ms  velocity_interior_boundary_interior
+ GPU activities:  100.00%  851.76ms       100  8.5176ms  8.4477ms  9.1906ms  dtopo_vel_112
+      API calls:  100.00%  779.03us       100  7.7900us  4.9730us  23.362us  cudaLaunchKernel
+
+==6052==       Range "velocity_interior_front"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  119.88ms       100  1.1988ms  1.1685ms  2.8109ms  velocity_interior_front
+ GPU activities:  100.00%  117.40ms       100  1.1740ms  1.1588ms  1.5077ms  dtopo_vel_111
+      API calls:  100.00%  2.0311ms       100  20.311us  4.9640us  1.2945ms  cudaLaunchKernel
+
+==6052==       Range "velocity_interior_interior"
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+          Range:  100.00%  5.58267s       100  55.827ms  55.215ms  71.809ms  velocity_interior_interior
+ GPU activities:  100.00%  5.58104s       100  55.810ms  55.201ms  71.782ms  dtopo_vel_111
+      API calls:  100.00%  591.90us       100  5.9190us  4.5000us  18.306us  cudaLaunchKernel
+
+==6052== Generated result file: /home/ooreilly/codes/awp-opt/profile/run_400_400_256.6052

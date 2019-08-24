@@ -35,7 +35,7 @@ with proper mappings using the kernel generator. If we take a look at
   if (k >= 6)
     return;
 ```
-Git commit: `c3ddb16dcd1ff89160ae7ac6c97d6c61cf2f692d` changes this to:
+Git commit: `a14a025b8b46b308bc3efba23ccab52f745fdd20` changes this to:
 ```c
   const int i = threadIdx.z + blockIdx.z * blockDim.z + bi;
   if (i >= nx)
@@ -85,3 +85,23 @@ and for the boundary kernel `dtopo_vel_112`, we change it to:
 The number of blocks in the CUDA grid is now adjusted to match the size of each
 compute region. Before, the same number of grid blocks were requested despite
 having compute regions of different sizes.
+
+After this optimization, nvprof reveals that the boundary kernel `dtopo_vel_112`
+is no longer taking the longest execution time:
+
+**Baseline**
+
+```
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   56.78%  9.41535s       300  31.384ms  26.998ms  42.701ms  dtopo_vel_112
+                   40.55%  6.72360s       300  22.412ms  2.1199ms  81.573ms  dtopo_vel_111
+```
+
+**Index mapping optimization**
+```
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   78.64%  5.98085s       300  19.936ms  1.1826ms  74.440ms  dtopo_vel_111
+                   11.84%  900.20ms       300  3.0006ms  380.75us  8.3974ms  dtopo_vel_112
+
+```
+The time taken by `dtopo_vel_112` has been reduced by a factor of 10!

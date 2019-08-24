@@ -1,1 +1,3 @@
 build/*
+profile/*.[0-9]*
+profile/*/

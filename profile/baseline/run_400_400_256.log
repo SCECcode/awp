@@ -1,0 +1,12 @@
+==15264== NVPROF is profiling process 15264, command: release/tests/test_unoptimized_kernels --nx=400 --ny=400 --nz=256 --px=1 --py=1 --output=profile/baseline/run_400_400_256 --nt=100
+==15264== Profiling application: release/tests/test_unoptimized_kernels --nx=400 --ny=400 --nz=256 --px=1 --py=1 --output=profile/baseline/run_400_400_256 --nt=100
+==15264== Profiling result:
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   56.78%  9.41535s       300  31.384ms  26.998ms  42.701ms  dtopo_vel_112
+                   40.55%  6.72360s       300  22.412ms  2.1199ms  81.573ms  dtopo_vel_111
+                    1.64%  271.95ms       200  1.3597ms  1.3248ms  1.7601ms  dtopo_buf_vel_111
+                    1.03%  171.24ms       200  856.20us  810.59us  1.0937ms  dtopo_buf_vel_112
+      API calls:   99.97%  16.5399s         1  16.5399s  16.5399s  16.5399s  cudaDeviceSynchronize
+                    0.03%  4.9695ms      1000  4.9690us  3.4320us  1.2843ms  cudaLaunchKernel
+                    0.00%  101.05us      1000     101ns      95ns     389ns  cudaGetLastError
+==15264== Generated result file: /home/ooreilly/codes/awp-opt/profile/baseline/run_400_400_256.15264
