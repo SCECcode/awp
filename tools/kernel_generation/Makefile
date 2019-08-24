@@ -1,11 +1,13 @@
 ifndef $(${AWP_OPT})
-AWP_OPT=../../src/topography/kernels
+AWP_OPT=../..
 $(warning "The environment variable AWP_OPT is not set. Set it to the path to export kernels to")
 $(info "Using default value: ${AWP_OPT})
 endif
 
+src=${AWP_OPT}/src/topography/kernels
+include=${AWP_OPT}/include/topography/kernels
+
 PY=python3
-awp=${AWP_OPT}
 kernel=optimized
 metrics_kernel=metrics_kernel
 energy_kernel=cuenergy_kernel
@@ -38,7 +40,8 @@ format:
 	clang-format -i $(kernel).*
 
 copy:
-	cp $(kernel).* $(awp)/
+	cp $(kernel).cu $(src)
+	cp $(kernel).cuh $(include)
 
 build_metrics:
 	$(PY) metrics.py $(prec)
