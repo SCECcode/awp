@@ -66,7 +66,7 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
         debug_ops : Only enables the interpolation operators
 
     """
-    from helper import D, P
+    from helper import D, P, Pavg
     from variables import F, mem, size
     G = helper.shifts()
 
@@ -87,9 +87,9 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
 
     print("Generating velocity kernels: %s. "%label)
 
-    rho1 = fd.Variable('rho1', dtype=fd.prec, val=P(P(F.rho, 'y', 1), 'z', 1)) 
-    rho2 = fd.Variable('rho2', dtype=fd.prec, val=P(P(F.rho, 'x', 1), 'z', 1)) 
-    rho3 = fd.Variable('rho3', dtype=fd.prec, val=P(P(F.rho, 'x', 1), 'y', 1)) 
+    rho1 = fd.Variable('rho1', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'y', 1), 'z', 1)) 
+    rho2 = fd.Variable('rho2', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'z', 1)) 
+    rho3 = fd.Variable('rho3', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'y', 1)) 
 
     # Jacobians
     J1 = F.f_1 * F.g3_c
@@ -252,16 +252,16 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     """
     Generate stress update kernels.
     """
-    from helper import D, P
+    from helper import D, P, Pavg
     from variables import F, mem, size
     G = helper.shifts()
 
     print("Generating stress kernels: %s. "%label)
 
     a, nu = sp.symbols('a nu')
-    rho1 = fd.Variable('rho1', dtype=fd.prec, val=P(P(F.rho, 'y', 1), 'z', 1)) 
-    rho2 = fd.Variable('rho2', dtype=fd.prec, val=P(P(F.rho, 'x', 1), 'z', 1)) 
-    rho3 = fd.Variable('rho3', dtype=fd.prec, val=P(P(F.rho, 'x', 1), 'y', 1)) 
+    rho1 = fd.Variable('rho1', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'y', 1), 'z', 1)) 
+    rho2 = fd.Variable('rho2', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'z', 1)) 
+    rho3 = fd.Variable('rho3', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'y', 1)) 
 
     Jii = fd.Variable('Jii', dtype=fd.prec, val=F.f_c*F.g3_c)
     J12i = fd.Variable('J12i', dtype=fd.prec, val=F.f*F.g3_c)
@@ -269,22 +269,22 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     J23i = fd.Variable('J23i', dtype=fd.prec, val=F.f_2*F.g3)
 
     lam = fd.Variable('lam', dtype=fd.prec, 
-                      val=nu/P(
-                              P(
-                                P(F.lami, 'x', G.s11[0]), 
+                      val=nu/Pavg(
+                              Pavg(
+                                Pavg(F.lami, 'x', G.s11[0]), 
                                           'y', G.s11[1]),
                                           'z', G.s11[2]))
 
     twomu = fd.Variable('twomu', dtype=fd.prec, 
-                     val=2*nu/P(
-                                P(
-                                  P(F.mui, 'x', G.s11[0]), 
+                     val=2*nu/Pavg(
+                                Pavg(
+                                  Pavg(F.mui, 'x', G.s11[0]), 
                                            'y', G.s11[1]),
                                            'z', G.s11[2]))
 
-    mu12 = fd.Variable('mu12', dtype=fd.prec, val=nu/P(F.mui,'z',G.s12[2]))
-    mu13 = fd.Variable('mu13', dtype=fd.prec, val=nu/P(F.mui,'y',G.s13[1]))
-    mu23 = fd.Variable('mu23', dtype=fd.prec, val=nu/P(F.mui,'x',G.s23[0]))
+    mu12 = fd.Variable('mu12', dtype=fd.prec, val=nu/Pavg(F.mui,'z',G.s12[2]))
+    mu13 = fd.Variable('mu13', dtype=fd.prec, val=nu/Pavg(F.mui,'y',G.s13[1]))
+    mu23 = fd.Variable('mu23', dtype=fd.prec, val=nu/Pavg(F.mui,'x',G.s23[0]))
 
     vx_x = D(F.u1, 'x', G.s33[0])
     vy_y = D(F.u2, 'y', G.s33[1])    

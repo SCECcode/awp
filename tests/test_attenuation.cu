@@ -17,7 +17,7 @@
 
 #include <awp/kernel.h>
 
-#include <topography/topography.cuh>
+#include <topography/opt_topography.cuh>
 #include <topography/geometry.h>
 #include <topography/host.h>
  
@@ -154,15 +154,15 @@ void init(topo_t *T)
 
         // Set random initial conditions using fixed seed
         topo_d_random(T, 1, T->u1);
-        topo_d_constant(T, 2, T->v1);
-        topo_d_constant(T, 3, T->w1);
+        topo_d_random(T, 2, T->v1);
+        topo_d_random(T, 3, T->w1);
 
-        topo_d_constant(T, 0, T->xx);
-        topo_d_constant(T, 5, T->yy);
-        topo_d_constant(T, 6, T->zz);
-        topo_d_constant(T, 7, T->xy);
-        topo_d_constant(T, 8, T->xz);
-        topo_d_constant(T, 9, T->yz);
+        topo_d_random(T, 0, T->xx);
+        topo_d_random(T, 5, T->yy);
+        topo_d_random(T, 6, T->zz);
+        topo_d_random(T, 7, T->xy);
+        topo_d_random(T, 8, T->xz);
+        topo_d_random(T, 9, T->yz);
 
         topo_d_constant(T, 0, T->r1);
         topo_d_constant(T, 5, T->r2);
@@ -185,8 +185,8 @@ void init(topo_t *T)
 
         topo_init_material_H(T);
 
-        topo_d_constant(T, 1, T->mui);
-        topo_d_constant(T, 1, T->lami);
+        topo_d_random(T, 1, T->mui);
+        topo_d_random(T, 1, T->lami);
         topo_build(T);
 }
 

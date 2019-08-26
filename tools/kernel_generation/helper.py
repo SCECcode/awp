@@ -127,6 +127,9 @@ def D(expr, axis, hat=0, order=4, ops='build3_all', bnd_left=0, bnd_right=0,
 def P(expr, axis, hat=0, order=4, ops='build3_all'):
     return operator('P', expr, axis, hat=hat, order=order,
             ops=ops, gpu=True)
+
+def Pavg(expr, axis, hat=0, order=2, ops='build3_all'):
+    return P(expr, axis, hat, order, ops)
     
 def H(expr, axis, hat=0, order=4, ops='build3_all'):
     op =  operator('H', expr, axis, hat=hat, order=order,
@@ -183,7 +186,8 @@ def operator(op, expr, axis, order=2, hat=False, gpu=True, shape=None,
         coef_str = "%s%s" % (op, hstr[hat])
     fmt = '%s/%s%s' % (ops, op_str, bcstr) + '%s.json'
 
-    coef = '%s%s'  % (coef_str.lower(), axis)
+    coef = '%s%s%d'  % (coef_str.lower(), axis, order)
+    coef = '%s%d'  % (coef_str.lower(), order)
     return sbp.Derivative(expr, axis, order=order, fmt=fmt,
                               gpu=gpu, coef=coef, shape=shape)
 
