@@ -1,0 +1,23 @@
+Summary of changes:
+Add Makefile to generate output directory, compute kernels, and run solver
+Fix kernel calls so that all grid points are computed
+Fix missing grid spacing scaling in the compute kernels
+Fix incorrect norm scaling in the SAT term. Current value is hard-coded for order = 2
+Remove pre-computed values in kernel generation
+Remove extra copy to and from host to device calls
+Perform some cleanup to make the code easier to read
+
+TODO:
+Add README.md that explains what the example does and how to use the code.
+Include figure of simulation output
+Add convergence test
+Change scaling in SAT term so that fourth order operators can be used
+Rename kernels to something more easier to understand than u1, u2 ..
+Document code
+Write docstrings for all functions
+
+Suggestions:
+Rename linear_advection.py to kernels.py and rename params_adv.py to solver.py
+Change expressions to be for the semi-discrete part only and write
+a function that modifies the expressions to apply the RK time integrator
+Loop over regions instead of calling them one by one

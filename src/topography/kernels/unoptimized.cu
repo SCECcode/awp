@@ -12,6 +12,7 @@ __global__ void dtopo_vel_110(
     const float *s23, const float *s33, const float a, const float nu,
     const int nx, const int ny, const int nz, const int bi, const int bj,
     const int ei, const int ej) {
+        int tmp = 0;
         const float phzl[6][7] = {
             {0.8338228784688313, 0.1775123316429260, 0.1435067013076542,
              -0.1548419114194114, 0.0000000000000000, 0.0000000000000000,
