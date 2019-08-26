@@ -252,6 +252,7 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
+                              launch_bounds=['yes','yes'],
                               grid_order=grid_order)
     return kernels
 
@@ -488,6 +489,7 @@ kernels += stress("dtopo_str", debug=debug, debug_ops=0,
         use_cartesian=use_cartesian)
 kernels += material("dtopo_init_material", unit_material=1)
 kg.write_kernels(filename, kernels, header=True,
-        source_includes=['#include <topography/kernels/%s.cuh>'%filename], 
+        source_includes=['#include <topography/kernels/optimized_launch_config.cuh>',
+                         '#include <topography/kernels/%s.cuh>'%filename], 
         header_includes=['#include <awp/definitions.h>'])
 

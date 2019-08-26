@@ -5,6 +5,7 @@
 #include <topography/topography.h>
 #include <topography/opt_topography.cuh>
 #include <topography/kernels/optimized.cuh>
+#include <topography/kernels/optimized_launch_config.cuh>
 #include <awp/definitions.h>
 
 void topo_init_material_H(topo_t *T)
