@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 
         MPI_Finalize();
 
-        return err;
+        return 0;
 }
 
 void init(topo_t *T)
