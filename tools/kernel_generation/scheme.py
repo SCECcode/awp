@@ -31,6 +31,7 @@ else:
     use_2d = str(sys.argv[4])
     use_acoustic = int(sys.argv[5])
     use_cartesian = int(sys.argv[6])
+    use_cubic_interpolation = int(sys.argv[7])
 
 helper.set_precision(prec_str)
 use_sponge = helper.get_use_sponge_layer(debug)
@@ -40,6 +41,8 @@ print("Precision:", prec_str, "\n",
       "Sponge layer:", use_sponge, "\n",
       "Use Cartesian version:", use_cartesian, "\n",
       "Use Acoustic version:", use_acoustic, "\n",
+      "Use cubic interpolation of material parameters:", 
+       use_cubic_interpolation, "\n",
       "Restrict to 2D:", use_2d, "\n",
       "Apply free surface boundary condition:", use_free_surface_bc)
 
@@ -68,6 +71,10 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
     """
     from helper import D, P, Pavg
     from variables import F, mem, size
+    
+    if use_cubic_interpolation:
+        Pavg = P
+
     G = helper.shifts()
 
     f = F.f
@@ -255,6 +262,9 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     from helper import D, P, Pavg
     from variables import F, mem, size
     G = helper.shifts()
+
+    if use_cubic_interpolation:
+        Pavg = P
 
     print("Generating stress kernels: %s. "%label)
 
