@@ -32,10 +32,13 @@ else:
     use_acoustic = int(sys.argv[5])
     use_cartesian = int(sys.argv[6])
     use_cubic_interpolation = int(sys.argv[7])
+    loop = int(sys.argv[8])
 
 helper.set_precision(prec_str)
 use_sponge = helper.get_use_sponge_layer(debug)
 use_free_surface_bc = helper.get_use_free_surface_bc(debug)
+launch_bounds = ['yes','yes']
+grid_order = ['z', 'y', 'x']
 print("Precision:", prec_str, "\n",
       "Debug:", debug, "\n",
       "Sponge layer:", use_sponge, "\n",
@@ -229,7 +232,6 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
         lhs_indices = None
         rhs_indices = None
         index_bounds = (1,1,0)
-    grid_order = ['z', 'y', 'x']
 
     kernels = kg.make_kernel(label, 
                               lhs, rhs,
@@ -252,8 +254,8 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
-                              launch_bounds=['yes','yes'],
-                              loop=True,
+                              launch_bounds=launch_bounds,
+                              loop=loop,
                               loop_order=[0],
                               grid_order=grid_order)
     return kernels
@@ -416,7 +418,6 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     bounds = helper.strbounds(D(F.s11,'z'), F.s11,
                               exclude_left=helper.get_exclude_left(debug))
     index_bounds = (1,1,0)
-    grid_order = ['z', 'y', 'x']
     kernels = kg.make_kernel(label, 
                               lhs, rhs,
                               bounds, helper.gridsymbols,
@@ -437,7 +438,7 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
                                             F.f_1, F.f_2, F.f_c,
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
-                              loop=True,
+                              loop=loop,
                               loop_order=[0],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
                               grid_order=grid_order)
