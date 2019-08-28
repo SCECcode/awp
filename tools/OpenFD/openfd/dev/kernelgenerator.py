@@ -539,8 +539,8 @@ class KernelGenerator(object):
 
 
         for ii in range(0, len(self.bounds)):
-            if not self.loop or (self.loop_order and ii not in
-                    self.loop_order):
+           # if not self.loop or (self.loop_order and ii not in
+           #         self.loop_order):
                 code += self.idgrid(ii, index_bounds=self.index_bounds[ii])
                 code += self.ifguard(self.indices[ii], self.bounds[ii],
                         region[ii], self.index_bounds[ii])
@@ -563,6 +563,8 @@ class KernelGenerator(object):
 
         if self.loop and self.loop_order:
             code += self.addloop(region, code_block)
+        else:
+            code += code_block
 
         for macro in macros:
             code += macro.undefine() + '\n'
