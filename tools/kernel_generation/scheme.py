@@ -253,6 +253,7 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                                             f2_1, f2_2, f2_3],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
                               launch_bounds=['yes','yes'],
+                              loop_order=None,
                               grid_order=grid_order)
     return kernels
 
