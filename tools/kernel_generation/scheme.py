@@ -37,8 +37,9 @@ else:
 helper.set_precision(prec_str)
 use_sponge = helper.get_use_sponge_layer(debug)
 use_free_surface_bc = helper.get_use_free_surface_bc(debug)
-launch_bounds = ['yes','yes']
+launch_bounds = ['no','no']
 grid_order = ['z', 'y', 'x']
+grid_order = ['x', 'y', 'z']
 print("Precision:", prec_str, "\n",
       "Debug:", debug, "\n",
       "Sponge layer:", use_sponge, "\n",
@@ -442,7 +443,7 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
                               loop=loop,
                               loop_order=[0],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
-                              grid_order=['x', 'y', 'z'])
+                              grid_order=grid_order)
     return kernels
 
 def apply_sponge_layer():

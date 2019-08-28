@@ -14,8 +14,8 @@ energy_kernel=cuenergy_kernel
 use_2d=0
 use_acoustic=0
 use_cartesian=0
-use_cubic_interpolation=0
-use_loop=1
+use_cubic_interpolation=1
+use_loop=0
 debug=0
 prec=float
 

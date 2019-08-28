@@ -6,7 +6,7 @@ class C(object):
     _double = 'double'
     _int = 'int'
     _uint = 'size_t'
-    _ptr = '*  __restrict__ '
+    _ptr = '*  '
 
     @staticmethod
     def get_type(nptype):
