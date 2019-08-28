@@ -539,7 +539,7 @@ class KernelGenerator(object):
 
 
         for ii in range(0, len(self.bounds)):
-            if not self.loop_order or (self.loop_order and ii not in
+            if not self.loop or (self.loop_order and ii not in
                     self.loop_order):
                 code += self.idgrid(ii, index_bounds=self.index_bounds[ii])
                 code += self.ifguard(self.indices[ii], self.bounds[ii],
