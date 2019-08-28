@@ -153,11 +153,11 @@ void init(topo_t *T)
                                            canyon_height, canyon_center);
 
         // Set random initial conditions using fixed seed
-        topo_d_random(T, 1, T->u1);
-        topo_d_random(T, 2, T->v1);
-        topo_d_random(T, 3, T->w1);
+        topo_d_linear_i(T, T->u1);
+        topo_d_constant(T, 0, T->v1);
+        topo_d_constant(T, 0, T->w1);
 
-        topo_d_random(T, 0, T->xx);
+        topo_d_constant(T, 1, T->xx);
         topo_d_random(T, 5, T->yy);
         topo_d_random(T, 6, T->zz);
         topo_d_random(T, 7, T->xy);
@@ -165,11 +165,11 @@ void init(topo_t *T)
         topo_d_random(T, 9, T->yz);
 
         topo_d_constant(T, 0, T->r1);
-        topo_d_constant(T, 5, T->r2);
-        topo_d_constant(T, 6, T->r3);
-        topo_d_constant(T, 7, T->r4);
-        topo_d_constant(T, 8, T->r5);
-        topo_d_constant(T, 9, T->r6);
+        topo_d_constant(T, 0, T->r2);
+        topo_d_constant(T, 0, T->r3);
+        topo_d_constant(T, 0, T->r4);
+        topo_d_constant(T, 0, T->r5);
+        topo_d_constant(T, 0, T->r6);
 
         topo_d_constant(T, 0, T->qpi);
         topo_d_constant(T, 0, T->qsi);
@@ -179,6 +179,7 @@ void init(topo_t *T)
         topo_d_constant(T, 1.0, T->dcrjz);
 
         topo_d_constant(T, 1.0, T->wwo);
+        topo_d_constanti(T, 1, T->ww);
         topo_d_constant(T, 1.0, T->vx1);
         topo_d_constant(T, 1.0, T->vx2);
         topo_d_constant(T, 1.0, T->coeff);
@@ -187,23 +188,29 @@ void init(topo_t *T)
 
         topo_d_random(T, 1, T->mui);
         topo_d_random(T, 1, T->lami);
+        topo_d_constant(T, 1, T->mui);
+        topo_d_constant(T, 1, T->lami);
+        topo_d_constant(T, 1, T->lam_mu);
         topo_build(T);
 }
 
 void init_awp(topo_t *T)
 {
         _prec fmajor = 0, fminor = 0, Rz[9], RzT[9];
+        printf("Initializing AWP: %d %d %d\n", nx, ny, nz);
         SetDeviceConstValue(&h, dt, &nx, &ny, &nz, 1, fmajor, fminor, Rz, RzT);
 }
 
 void run(topo_t *topo, topo_t *awp)
 {
+
         for(int iter = 0; iter < nt; ++iter) {
                 //topo_velocity_interior_H(T);
                 //topo_velocity_front_H(T);
                 //topo_velocity_back_H(T);
 
                topo_stress_interior_H(topo);
+
 
 	       dstrqc_H_new(awp->xx, awp->yy, awp->zz, awp->xy, awp->xz, awp->yz,
 	        	awp->r1, awp->r2, awp->r3, awp->r4, awp->r5, awp->r6,
@@ -226,7 +233,7 @@ int compare(topo_t *topo, topo_t *awp)
         double err[3];
         int nxt = nx - ngsl;
         int nyt = ny - ngsl;
-        int nzt = 20;
+        int nzt = 50;
         double total_error = 0;
         int excl = 4;
         int i0 = excl + ngsl + 2;
@@ -239,7 +246,6 @@ int compare(topo_t *topo, topo_t *awp)
         int size = (in - i0) * (jn - j0) * (kn - k0);
         printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
                         in, jn, kn,  size);
-        printf("line: %d slice: %d \n", topo->line, topo->slice);
         for (int i = 0; i < 2; ++i) {
              err[i] = check_flinferr(a[i], b[i], 
                              i0, in, j0, jn, k0, kn,

@@ -35,3 +35,20 @@ void topo_d_constant(topo_t *T, const prec value, prec *d_field)
 
         free(tmp);
 }
+
+void topo_d_constanti(topo_t *T, const int value, int *d_field)
+{
+        int num_bytes = sizeof(int) * T->mx * T->my * T->mz;
+        int *tmp = (int*)malloc(num_bytes);
+        for(int i = 0; i < T->mx; ++i) {
+        for(int j = 0; j < T->my; ++j) {
+        for(int k = 0; k < T->mz; ++k) {
+                tmp[k + j * T->mz + i * T->mz * T->my] = value;
+        }
+        }
+        }
+
+        CUCHK(cudaMemcpy(d_field, tmp, num_bytes, cudaMemcpyHostToDevice));
+
+        free(tmp);
+}

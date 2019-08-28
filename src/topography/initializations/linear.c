@@ -10,10 +10,11 @@ void topo_d_linear_i(topo_t *T, prec *d_field)
 {
         int num_bytes = sizeof(_prec) * T->mx * T->my * T->mz;
         prec *tmp = (_prec*)malloc(num_bytes);
+        printf("size: %d %d %d\n",T->mx, T->my, T->mz);
         for(int i = 0; i < T->mx; ++i) {
         for(int j = 0; j < T->my; ++j) {
         for(int k = 0; k < T->mz; ++k) {
-                tmp[k + j * T->mz + i * T->mz * T->my] = i;
+                tmp[k + j * T->mz + i * T->mz * T->my] =  i;
         }
         }
         }
