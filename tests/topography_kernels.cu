@@ -44,6 +44,8 @@ static cudaStream_t stream_1, stream_2, stream_i;
 static int use_optimized_kernels = USE_OPTIMIZED_KERNELS;
 static const char *outputdir;
 static const char *inputdir;
+static int run_velocity = 1;
+static int run_stress = 1;
 
 void init(topo_t *T);
 void run(topo_t *T);
@@ -86,6 +88,10 @@ int main(int argc, char **argv)
                         "Write results to output directory", NULL, 0, 0),
             OPT_STRING('i', "input", &inputdir,
                         "Read results from input directory", NULL, 0, 0),
+            OPT_INTEGER('s', "stress", &run_stress,
+                        "Run stress kernels", NULL, 0, 0),
+            OPT_INTEGER('v', "velocity", &run_velocity,
+                        "Run velocity kernels", NULL, 0, 0),
             OPT_END(),
         };
 
@@ -171,9 +177,17 @@ void init(topo_t *T)
 void run(topo_t *T)
 {
         for(int iter = 0; iter < nt; ++iter) {
-                topo_velocity_interior_H(T);
-                topo_velocity_front_H(T);
-                topo_velocity_back_H(T);
+                if (run_velocity) {
+                        topo_velocity_interior_H(T);
+                        //topo_velocity_front_H(T);
+                        //topo_velocity_back_H(T);
+                }
+
+                if (run_stress) {
+                        topo_stress_interior_H(T);
+                        //topo_stress_left_H(T);
+                        //topo_stress_right_H(T);
+                }
         }
 }
 
@@ -190,6 +204,7 @@ void write(topo_t *host, const char *outputdir)
         write_file(outputdir, "vx.bin", host->u1, size);
         write_file(outputdir, "vy.bin", host->v1, size);
         write_file(outputdir, "vz.bin", host->w1, size);
+        write_file(outputdir, "xx.bin", host->xx, size);
 }
 
 void write_file(const char *path, const char *filename, const _prec *data,
@@ -222,13 +237,14 @@ int compare(topo_t *host, const char *inputdir)
         read_file(inputdir, "vx.bin", reference.u1, size);
         read_file(inputdir, "vy.bin", reference.v1, size);
         read_file(inputdir, "vz.bin", reference.w1, size);
+        read_file(inputdir, "xx.bin", reference.xx, size);
 
-        prec *a[3] = {reference.u1, reference.v1, reference.w1};
-        prec *b[3] = {host->u1, host->v1, host->w1};
-        const char *names[3] = {"vx", "vy", "vz"};
-        double err[3];
+        prec *a[4] = {reference.u1, reference.v1, reference.w1, reference.xx};
+        prec *b[4] = {host->u1, host->v1, host->w1, host->xx};
+        const char *names[4] = {"vx", "vy", "vz", "xx"};
+        double err[4];
         double total_error = 0;
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < 4; ++i) {
                 err[i] = chk_inf(a[i], b[i], size);
                 printf("%s: %g ", names[i], err[i]);
                 total_error += err[i];

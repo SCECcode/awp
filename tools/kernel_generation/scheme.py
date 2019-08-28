@@ -46,6 +46,7 @@ print("Precision:", prec_str, "\n",
       "Use Acoustic version:", use_acoustic, "\n",
       "Use cubic interpolation of material parameters:", 
        use_cubic_interpolation, "\n",
+       "Apply loop within kernels:", loop, "\n", 
       "Restrict to 2D:", use_2d, "\n",
       "Apply free surface boundary condition:", use_free_surface_bc)
 
@@ -441,7 +442,7 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
                               loop=loop,
                               loop_order=[0],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
-                              grid_order=grid_order)
+                              grid_order=['x', 'y', 'z'])
     return kernels
 
 def apply_sponge_layer():

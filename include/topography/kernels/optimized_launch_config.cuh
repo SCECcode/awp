@@ -1,8 +1,6 @@
 #ifndef _OPT_TOPOGRAPHY_LAUNCH_CONFIG_H
 #define _OPT_TOPOGRAPHY_LAUNCH_CONFIG_H
 
-
-
 // Number of threads per block to use for interior velocity kernel
 #ifndef VEL_INT_X
 #define VEL_INT_X 32
@@ -23,6 +21,28 @@
 #endif
 #ifndef VEL_BND_Z
 #define VEL_BND_Z 1
+#endif
+
+// Number of threads per block to use for interior stress kernel
+#ifndef STR_INT_X
+#define STR_INT_X 32
+#endif
+#ifndef STR_INT_Y
+#define STR_INT_Y 4
+#endif
+#ifndef STR_INT_Z
+#define STR_INT_Z 1
+#endif
+
+// Number of threads per block to use for boundary stress kernel
+#ifndef STR_BND_X
+#define STR_BND_X 7
+#endif
+#ifndef STR_BND_Y
+#define STR_BND_Y 8
+#endif
+#ifndef STR_BND_Z
+#define STR_BND_Z 1
 #endif
 
 // Kernel naming convention
@@ -93,6 +113,42 @@
 #define DTOPO_BUF_VEL_110_Z VEL_BND_Z
 #endif
 
+#ifndef DTOPO_STR_110_X
+#define DTOPO_STR_110_X STR_INT_X
+#endif
+
+#ifndef DTOPO_STR_110_Y
+#define DTOPO_STR_110_Y STR_INT_Y
+#endif
+
+#ifndef DTOPO_STR_110_Z
+#define DTOPO_STR_110_Z STR_INT_Z
+#endif
+
+#ifndef DTOPO_STR_111_X
+#define DTOPO_STR_111_X STR_INT_X
+#endif
+
+#ifndef DTOPO_STR_111_Y
+#define DTOPO_STR_111_Y STR_INT_Y
+#endif
+
+#ifndef DTOPO_STR_111_Z
+#define DTOPO_STR_111_Z STR_INT_Z
+#endif
+
+#ifndef DTOPO_STR_112_X
+#define DTOPO_STR_112_X STR_INT_X
+#endif
+
+#ifndef DTOPO_STR_112_Y
+#define DTOPO_STR_112_Y STR_INT_Y
+#endif
+
+#ifndef DTOPO_STR_112_Z
+#define DTOPO_STR_112_Z STR_INT_Z
+#endif
+
 
 // Launch bounds
  
@@ -141,11 +197,14 @@
 // Apply loop in kernel
 // This option must be compatible with the kernel. If there is no loop in the
 // kernel, turn of this option, and vice versa.
-#define DTOPO_VEL_110_LOOP_Z 1
-#define DTOPO_VEL_111_LOOP_Z 1
-#define DTOPO_VEL_112_LOOP_Z 1
-#define DTOPO_BUF_VEL_110_LOOP_Z 1
-#define DTOPO_BUF_VEL_111_LOOP_Z 1
-#define DTOPO_BUF_VEL_112_LOOP_Z 1
+#define DTOPO_VEL_110_LOOP_Z 0
+#define DTOPO_VEL_111_LOOP_Z 0
+#define DTOPO_VEL_112_LOOP_Z 0
+#define DTOPO_BUF_VEL_110_LOOP_Z 0
+#define DTOPO_BUF_VEL_111_LOOP_Z 0
+#define DTOPO_BUF_VEL_112_LOOP_Z 0
+#define DTOPO_STR_110_LOOP_Z 0
+#define DTOPO_STR_111_LOOP_Z 0
+#define DTOPO_STR_112_LOOP_Z 0
 
 #endif

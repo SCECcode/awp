@@ -560,6 +560,14 @@ void topo_stress_interior_H(topo_t *T)
                    (T->stress_grid_interior.z+TBZ-1)/TBZ);
 
 
+        {
+        //dim3 block2(DTOPO_STR_111_X, DTOPO_STR_111_Y,
+        //            DTOPO_STR_111_Z);
+        //int3_t size = {(int)T->stress_bounds_right[0] - T->stress_bounds_left[0], 
+        //               (int)T->stress_bounds_ydir[1] -  T->stress_bounds_ydir[0],
+        //               (int)T->stress_grid_interior.z};
+        //dim3 loop(0, 0, DTOPO_STR_111_LOOP_Z);
+        //dim3 grid2 = set_grid(block2, size, loop);
         dtopo_str_111<<<grid, block, 0, T->stream_i>>>
                          (
                           T->xx, T->xy, T->xz, 
@@ -587,9 +595,18 @@ void topo_stress_interior_H(topo_t *T)
                           T->stress_bounds_left[1], T->stress_bounds_ydir[0], 
                           T->stress_bounds_right[0], T->stress_bounds_ydir[1]);
         CUCHK(cudaGetLastError());
+        }
 
         // Adjust grid size for boundary computation
         grid.z = (TOP_BOUNDARY_SIZE+TBZ-1)/TBZ;
+        {
+        //dim3 block2(DTOPO_STR_112_X, DTOPO_STR_112_Y,
+        //            DTOPO_STR_112_Z);
+        //int3_t size = {(int)T->stress_bounds_right[0] - T->stress_bounds_left[0], 
+        //               (int)T->stress_bounds_ydir[1] -  T->stress_bounds_ydir[0],
+        //               TOP_BOUNDARY_SIZE};
+        //dim3 loop(0, 0, DTOPO_STR_111_LOOP_Z);
+        //dim3 grid2 = set_grid(block2, size, loop);
         dtopo_str_112<<<grid, block, 0, T->stream_i>>>
                          (
                           T->xx, T->xy, T->xz, 
@@ -618,6 +635,7 @@ void topo_stress_interior_H(topo_t *T)
                           T->stress_bounds_right[0], T->stress_bounds_ydir[1]);
 
         CUCHK(cudaGetLastError());
+        }
 
         if (TOPO_DBG) {
                 dtopo_str_110<<<grid, block, 0, T->stream_i>>>
