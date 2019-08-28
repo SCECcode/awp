@@ -253,7 +253,8 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                                             f2_1, f2_2, f2_3],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
                               launch_bounds=['yes','yes'],
-                              loop_order=None,
+                              loop=True,
+                              loop_order=[0],
                               grid_order=grid_order)
     return kernels
 
@@ -436,6 +437,8 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
                                             F.f_1, F.f_2, F.f_c,
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
+                              loop=True,
+                              loop_order=[0],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
                               grid_order=grid_order)
     return kernels

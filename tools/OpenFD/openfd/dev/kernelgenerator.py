@@ -409,7 +409,7 @@ class KernelGenerator(object):
         if index_bounds:
             self.index_bounds = self.define_index_bounds(index_bounds)
         else:
-            self.index_bounds = [None]*len(bounds)
+            self.index_bounds = [(0,0)]*len(bounds)
 
         if not grid_order:
             self.grid_order = ['x', 'y', 'z']
@@ -539,8 +539,8 @@ class KernelGenerator(object):
 
 
         for ii in range(0, len(self.bounds)):
-           # if not self.loop or (self.loop_order and ii not in
-           #         self.loop_order):
+            if not self.loop or (self.loop_order and ii not in
+                    self.loop_order):
                 code += self.idgrid(ii, index_bounds=self.index_bounds[ii])
                 code += self.ifguard(self.indices[ii], self.bounds[ii],
                         region[ii], self.index_bounds[ii])
@@ -589,8 +589,9 @@ class KernelGenerator(object):
 
         ids = [self.indices[idx] for idx in self.loop_order]
         bnds = [self.bounds[idx] for idx in self.loop_order]
+        idx_bnds = [self.index_bounds[idx] for idx in self.loop_order]
         region = [region[idx] for idx in self.loop_order]
-        loop = Loop(bnds, region, ids)
+        loop = Loop(bnds, region, ids, index_bounds=idx_bnds)
 
         code = ''
         for ii in range(0, len(region)):
@@ -1154,20 +1155,30 @@ class OpenclGenerator(KernelGenerator):
         return code
 
 class Loop:
-    def __init__(self, bounds, region, syms, use_header=True):
+    def __init__(self, bounds, region, syms, use_header=True, index_bounds=None):
         self.use_header = use_header
         self.region = region
         bnds = self._bounds(bounds, region)
         self.bounds = bnds
         self.syms = syms
+        if not index_bounds:
+            self.index_bounds = [[0,0] for bi in bounds]
+        else:
+            self.index_bounds = index_bounds
 
     def header(self, i):
         if not self.use_header:
             return ''
         bounds = self.bounds[i]
+        if self.index_bounds[i]:
+            bi = self.index_bounds[i][0]
+            ei = self.index_bounds[i][1]
+        else:
+            bi = 0
+            ei = bounds[1]-bounds[0]
         return self.indent(i) + 'for (int %s = %s; %s < %s; ++%s) {\n' % \
-                                (self.syms[i], 0, self.syms[i],
-                                 bounds[1]-bounds[0], self.syms[i])
+                (self.syms[i], bi, self.syms[i], ei,
+                 self.syms[i])
 
     def indent(self, i):
         return _tab(i)
