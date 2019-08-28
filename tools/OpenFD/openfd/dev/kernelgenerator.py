@@ -24,11 +24,13 @@ def make_kernel(label,
                 debug=False, 
                 precision=None,
                 loop_order=None, 
+                loop=False,
                 index_bounds=None,
                 reduction=None,
                 lhs_indices=None,
                 rhs_indices=None,
-                grid_order=None
+                grid_order=None, 
+                launch_bounds=None
                 ):
     """
     Generate code for compute kernels that can execute on either the CPU or GPU. 
@@ -68,8 +70,10 @@ def make_kernel(label,
         debug(optional) : Set to `True` to enable kernel debugging.
         precision(optional) : Floating-point precision to use by generators.
             Defaults to `np.float32`. Pass `np.float64` to use double precision.
-        loop_order(optional) : The order in which to execute loops. Only
-            relevant for C code. Default loop order is `(0, 1, 2)`.
+        loop(optional) : Enable loops. Default to False.
+        loop_order(optional) : The order in which to execute loops. 
+            Default loop order is `(0, 1, 2)`. Requires `loop = True` to enable
+                loops for non C-code.
         index_bounds(optional) : Pass index bounds as input arguments to the
             kernel. Use this option to only compute for a subset of a region.
         reduction(optional) : Perform a reduction operation instead of the
@@ -81,6 +85,12 @@ def make_kernel(label,
             function.
         grid_order: An array that contains the order of the CUDA thread indices.
             e.g., ['x', 'y', 'z'].
+        launch_bounds(optional) : Add CUDA launch bounds to kernel. The launch
+        bounds are specified by an array of size 2, one for each argument. The
+        second argument can be left empty '' as it is optional. Defaults to
+        `None`.
+
+
 
     Returns:
         A list of `Kernel` objects that contains the generated code for each
@@ -121,6 +131,7 @@ def make_kernel(label,
     ka = generator(gridsize, bounds, 
                    [Expr(o) for o in dout], [Expr(i) for i in din],
                    debug=debug, 
+                   loop=loop,
                    loop_order=loop_order,
                    index_bounds=index_bounds,
                    const=const,
@@ -129,7 +140,8 @@ def make_kernel(label,
                    extraconst=extraconst,
                    indices=indices, 
                    precision=precision,
-                   grid_order=grid_order
+                   grid_order=grid_order,
+                   launch_bounds=launch_bounds
                    )
 
     # Append region ID to kernelfunction name unless only one region is used
@@ -243,7 +255,7 @@ def extension(language):
 
 def kernelgenerator(language, gridsize, bounds, dout, din, const=[], extrain=[], 
                     extraout=[],
-                    extraconst=[], indices=[], debug=False,
+                    extraconst=[], indices=[], debug=False, loop=False,
                     loop_order=None, index_bounds=None):
     """
     Interface to generate a kernel function for a specific target language. 
@@ -259,16 +271,17 @@ def kernelgenerator(language, gridsize, bounds, dout, din, const=[], extrain=[],
          ' instead.', PendingDeprecationWarning)
     if language == 'C':
         return CGenerator(gridsize, bounds, dout, din, const, extrain, extraout,
-                          extraconst, indices, debug, loop_order, index_bounds) 
+                          extraconst, indices, debug, True, loop_order,
+                          index_bounds) 
     elif language == 'Cuda': 
         return CudaGenerator(gridsize, bounds, dout, din, const, extrain,
                              extraout,
-                             extraconst, indices, debug, loop_order, 
+                             extraconst, indices, debug, loop, loop_order, 
                              index_bounds) 
     elif language == 'Opencl': 
         return OpenclGenerator(gridsize, bounds, dout, din, const, extrain,
                                extraout,
-                               extraconst, indices, debug, loop_order,
+                               extraconst, indices, debug, loop, loop_order,
                                index_bounds) 
     else:
         raise NotImplementedError('No kernel generator for language: `%s`' 
@@ -310,9 +323,9 @@ class KernelGenerator(object):
 
     def __init__(self, gridsize, bounds, dout, din, const=[], extrain=[],
                  extraout=[],
-               extraconst=[], indices=None, debug=False,
+               extraconst=[], indices=None, debug=False, loop=False,
                loop_order=None, index_bounds=None, precision=None,
-               grid_order=None):
+               grid_order=None, launch_bounds=None):
         """
         The base class init defines class members required for all child classes
         The sequence of functions called to generate the kernel code
@@ -377,6 +390,8 @@ class KernelGenerator(object):
         else:
             self.indices = list(self.define_indices())
 
+        self.loop = loop
+
         if not loop_order:
             # Default to reversed order so that fastest index is incremented in
             # the innermost loop.
@@ -394,7 +409,7 @@ class KernelGenerator(object):
         if index_bounds:
             self.index_bounds = self.define_index_bounds(index_bounds)
         else:
-            self.index_bounds = [None]*len(bounds)
+            self.index_bounds = [(0,0)]*len(bounds)
 
         if not grid_order:
             self.grid_order = ['x', 'y', 'z']
@@ -406,9 +421,9 @@ class KernelGenerator(object):
         self.extraout = extraout
         self.extraconst = extraconst
         self.maxdim = 3
+        self.launch_bounds = launch_bounds
 
         self.debug = debug
-        self.loop_header = True                #If true, print explicit for loop
         self.dec_str()  #Should be overidden for a specific target language
 
     def kernel(self, name, region, indices=None, 
@@ -444,16 +459,15 @@ class KernelGenerator(object):
         if not right_index_mapping:
            right_index_mapping = self.right_index_mapping
 
-        code = self.body(region, left_index_mapping, right_index_mapping)
-        if self.loop_header:
-            code = self.addloop(region, code)
+        code = ''
+        code += self.body(region, left_index_mapping, right_index_mapping)
         code = self.define_coefficients(region, code, left_index_mapping,
                         right_index_mapping)
 
         (header, args) = self.define_function(name, left_index_mapping,
                         right_index_mapping)
         
-        code = self.append_body(header, code)
+        code = self.append_body(name, header, code)
 
         gridsize = [None]*len(region)
         for ii in range(len(region)):
@@ -525,21 +539,32 @@ class KernelGenerator(object):
 
 
         for ii in range(0, len(self.bounds)):
-            code += self.idgrid(ii, index_bounds=self.index_bounds[ii])
-            code += self.ifguard(self.indices[ii], self.bounds[ii], region[ii],
-                                 self.index_bounds[ii])
+            if not self.loop or (self.loop_order and ii not in
+                    self.loop_order):
+                code += self.idgrid(ii, index_bounds=self.index_bounds[ii])
+                code += self.ifguard(self.indices[ii], self.bounds[ii],
+                        region[ii], self.index_bounds[ii])
+
 
         macros = self.get_macros()
+
         for macro in macros:
             code += macro.define() + '\n'
+
 
         if self.debug:
             dbgcode = self._debugcode(region)
         else:
             dbgcode = 0
 
+        code_block = ''
         for l, r in zip(self.dout, self.din):
-            code += self._expr2c(l, r, lindices, rindices, dbgcode)
+            code_block += self._expr2c(l, r, lindices, rindices, dbgcode)
+
+        if self.loop and self.loop_order:
+            code += self.addloop(region, code_block)
+        else:
+            code += code_block
 
         for macro in macros:
             code += macro.undefine() + '\n'
@@ -564,8 +589,9 @@ class KernelGenerator(object):
 
         ids = [self.indices[idx] for idx in self.loop_order]
         bnds = [self.bounds[idx] for idx in self.loop_order]
+        idx_bnds = [self.index_bounds[idx] for idx in self.loop_order]
         region = [region[idx] for idx in self.loop_order]
-        loop = Loop(bnds, region, ids)
+        loop = Loop(bnds, region, ids, index_bounds=idx_bnds)
 
         code = ''
         for ii in range(0, len(region)):
@@ -739,6 +765,7 @@ class KernelGenerator(object):
             [', %s %s' % (self.cint, d) 
             for d in sorted(set(map(str, indices)))])
 
+
         code = self.fundec
         code += '%s %s(%s%s%s%s%s)' % (
             self.cret, name, str_cout, str_cin, str_cint, 
@@ -748,17 +775,32 @@ class KernelGenerator(object):
 
         return code, args
 
-    def append_body(self, header, body):
+    def append_launch_bounds(self, name):
+
+        code = ''
+        if self.launch_bounds:
+            if self.launch_bounds[0] == 'yes' and self.launch_bounds[1] != 'yes':
+                code += '__launch_bounds__(%s_MAX_THREADS_PER_BLOCK)' % (name.upper())
+            if self.launch_bounds[0] == 'yes' and self.launch_bounds[1] == 'yes':
+                code += '__launch_bounds__(%s_MAX_THREADS_PER_BLOCK,\
+                %s_MIN_BLOCKS_PER_SM)' % ( name.upper(), name.upper())
+            code += '\n\n'
+        return code
+
+    def append_body(self, name, header, body):
         """
         Appends the function body after a function declaration
 
         Arguments:
+            name(`str`) : Function name.
             header(`str`) : Function declaration ( without `;`).
                 This string is generated by calling `define_function()`.
             body : Code body. This string is generated by calling `body()`.
         """
-
-        code = header + '\n'
+        
+        code = ''
+        code += self.append_launch_bounds(name)
+        code += header + '\n'
         code += '{\n'
         code += ''.join(
             ['%s %s\n' % (_tab(1), b) for b in body.split('\n')])
@@ -979,7 +1021,6 @@ class CudaGenerator(KernelGenerator):
         self.ccoef = 'const float'  # Precision for coefficients
         self.cret = 'void'  # Type of return value
         self.fundec = '__global__ '
-        self.loop_header = False
 
         if self.precision == np.float64:
             self.cin = 'const double *'
@@ -1063,7 +1104,6 @@ class OpenclGenerator(KernelGenerator):
         self.ccoef = 'const float'  # Precision for coefficients
         self.cret = 'void'  # Type of return value
         self.fundec = '__kernel '
-        self.loop_header = False
 
         if self.precision == np.float64:
             self.cin = '__global double *'
@@ -1115,20 +1155,30 @@ class OpenclGenerator(KernelGenerator):
         return code
 
 class Loop:
-    def __init__(self, bounds, region, syms, use_header=True):
+    def __init__(self, bounds, region, syms, use_header=True, index_bounds=None):
         self.use_header = use_header
         self.region = region
         bnds = self._bounds(bounds, region)
         self.bounds = bnds
         self.syms = syms
+        if not index_bounds:
+            self.index_bounds = [[0,0] for bi in bounds]
+        else:
+            self.index_bounds = index_bounds
 
     def header(self, i):
         if not self.use_header:
             return ''
         bounds = self.bounds[i]
+        if self.index_bounds[i]:
+            bi = self.index_bounds[i][0]
+            ei = self.index_bounds[i][1]
+        else:
+            bi = 0
+            ei = bounds[1]-bounds[0]
         return self.indent(i) + 'for (int %s = %s; %s < %s; ++%s) {\n' % \
-                                (self.syms[i], 0, self.syms[i],
-                                 bounds[1]-bounds[0], self.syms[i])
+                (self.syms[i], bi, self.syms[i], ei,
+                 self.syms[i])
 
     def indent(self, i):
         return _tab(i)

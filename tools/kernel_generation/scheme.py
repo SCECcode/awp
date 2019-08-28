@@ -31,15 +31,21 @@ else:
     use_2d = str(sys.argv[4])
     use_acoustic = int(sys.argv[5])
     use_cartesian = int(sys.argv[6])
+    use_cubic_interpolation = int(sys.argv[7])
+    loop = int(sys.argv[8])
 
 helper.set_precision(prec_str)
 use_sponge = helper.get_use_sponge_layer(debug)
 use_free_surface_bc = helper.get_use_free_surface_bc(debug)
+launch_bounds = ['yes','yes']
+grid_order = ['z', 'y', 'x']
 print("Precision:", prec_str, "\n",
       "Debug:", debug, "\n",
       "Sponge layer:", use_sponge, "\n",
       "Use Cartesian version:", use_cartesian, "\n",
       "Use Acoustic version:", use_acoustic, "\n",
+      "Use cubic interpolation of material parameters:", 
+       use_cubic_interpolation, "\n",
       "Restrict to 2D:", use_2d, "\n",
       "Apply free surface boundary condition:", use_free_surface_bc)
 
@@ -68,6 +74,10 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
     """
     from helper import D, P, Pavg
     from variables import F, mem, size
+    
+    if use_cubic_interpolation:
+        Pavg = P
+
     G = helper.shifts()
 
     f = F.f
@@ -222,7 +232,6 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
         lhs_indices = None
         rhs_indices = None
         index_bounds = (1,1,0)
-    grid_order = ['z', 'y', 'x']
 
     kernels = kg.make_kernel(label, 
                               lhs, rhs,
@@ -245,6 +254,9 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
+                              launch_bounds=launch_bounds,
+                              loop=loop,
+                              loop_order=[0],
                               grid_order=grid_order)
     return kernels
 
@@ -255,6 +267,9 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     from helper import D, P, Pavg
     from variables import F, mem, size
     G = helper.shifts()
+
+    if use_cubic_interpolation:
+        Pavg = P
 
     print("Generating stress kernels: %s. "%label)
 
@@ -403,7 +418,6 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     bounds = helper.strbounds(D(F.s11,'z'), F.s11,
                               exclude_left=helper.get_exclude_left(debug))
     index_bounds = (1,1,0)
-    grid_order = ['z', 'y', 'x']
     kernels = kg.make_kernel(label, 
                               lhs, rhs,
                               bounds, helper.gridsymbols,
@@ -424,6 +438,8 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
                                             F.f_1, F.f_2, F.f_c,
                                             f1_1, f1_2, f1_3,
                                             f2_1, f2_2, f2_3],
+                              loop=loop,
+                              loop_order=[0],
                               lhs_indices=lhs_indices, rhs_indices=rhs_indices,
                               grid_order=grid_order)
     return kernels
@@ -478,6 +494,7 @@ kernels += stress("dtopo_str", debug=debug, debug_ops=0,
         use_cartesian=use_cartesian)
 kernels += material("dtopo_init_material", unit_material=1)
 kg.write_kernels(filename, kernels, header=True,
-        source_includes=['#include <topography/kernels/%s.cuh>'%filename], 
+        source_includes=['#include <topography/kernels/optimized_launch_config.cuh>',
+                         '#include <topography/kernels/%s.cuh>'%filename], 
         header_includes=['#include <awp/definitions.h>'])
 

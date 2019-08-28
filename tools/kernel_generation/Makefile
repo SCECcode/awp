@@ -14,6 +14,8 @@ energy_kernel=cuenergy_kernel
 use_2d=0
 use_acoustic=0
 use_cartesian=0
+use_cubic_interpolation=0
+use_loop=1
 debug=0
 prec=float
 
@@ -25,7 +27,9 @@ metrics: build_metrics format_metrics copy_metrics
 energy: build_energy format_energy copy_energy
 
 build:
-	$(PY) -Wignore scheme.py $(kernel) $(prec) $(debug) $(use_2d) $(use_acoustic) $(use_cartesian)
+	$(PY) -Wignore scheme.py $(kernel) $(prec) $(debug) $(use_2d) \
+		$(use_acoustic) $(use_cartesian) $(use_cubic_interpolation) \
+		$(use_loop)
 
 build_energy: 
 	$(PY) -Wignore energy.py $(prec)

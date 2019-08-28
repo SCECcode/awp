@@ -4,8 +4,11 @@ project(AWP_MINI VERSION 1.0 LANGUAGES C CUDA)
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 set(GCC_COMPILE_FLAGS "-std=c99")
 if (DEFINED ENV{ARCH})
-        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=$ENV{ARCH} -Xptxas=-v")
+        set(ARCH $ENV{ARCH})
+else()
+        set(ARCH sm_70)
 endif()
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=${ARCH} -Xptxas=-v -lineinfo")
 
 set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${GCC_COMPILE_FLAGS}")
 

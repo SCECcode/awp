@@ -187,7 +187,7 @@ def operator(op, expr, axis, order=2, hat=False, gpu=True, shape=None,
     fmt = '%s/%s%s' % (ops, op_str, bcstr) + '%s.json'
 
     coef = '%s%s%d'  % (coef_str.lower(), axis, order)
-    coef = '%s%d'  % (coef_str.lower(), order)
+    #coef = '%s%d'  % (coef_str.lower(), order)
     return sbp.Derivative(expr, axis, order=order, fmt=fmt,
                               gpu=gpu, coef=coef, shape=shape)
 

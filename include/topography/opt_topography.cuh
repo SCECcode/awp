@@ -31,27 +31,6 @@ void topo_stress_right_H(topo_t *T);
 #define TBZ 64
 #endif
 
-
-#ifndef VEL_INT_X
-#define VEL_INT_X 32
-#endif
-#ifndef VEL_INT_Y
-#define VEL_INT_Y 8
-#endif
-#ifndef VEL_INT_Z
-#define VEL_INT_Z 1
-#endif
-
-#ifndef VEL_BND_X
-#define VEL_BND_X 7
-#endif
-#ifndef VEL_BND_Y
-#define VEL_BND_Y 32
-#endif
-#ifndef VEL_BND_Z
-#define VEL_BND_Z 1
-#endif
-
 // Number of boundary points. Must match the number of boundary stencils used in
 // the interpolation and differentiation stencils
 #define BOTTOM_BOUNDARY_SIZE 7
