@@ -14,7 +14,8 @@
 #include <mpi/partition.h>
 
 #ifdef USE_OPTIMIZED_KERNELS
-#include <topography/opt_topography.cuh>
+#include <topography/velocity.cuh>
+#include <topography/stress.cuh>
 #else
 #include <topography/topography.cuh>
 #endif
@@ -170,7 +171,9 @@ void init(topo_t *T)
         topo_d_random(T, 8, T->xz);
         topo_d_random(T, 9, T->yz);
 
-        topo_init_material_H(T);
+        topo_d_constant(T, 1, T->mui);
+        topo_d_constant(T, 1, T->lami);
+
         topo_build(T);
 }
 
