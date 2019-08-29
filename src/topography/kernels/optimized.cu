@@ -1,23 +1,25 @@
 #include <topography/kernels/optimized.cuh>
 #include <topography/kernels/optimized_launch_config.cuh>
 
-__global__ void
-dtopo_vel_110(float *__restrict__ u1, float *__restrict__ u2,
-              float *__restrict__ u3, const float *__restrict__ dcrjx,
-              const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
-              const float *__restrict__ f, const float *__restrict__ f1_1,
-              const float *__restrict__ f1_2, const float *__restrict__ f1_c,
-              const float *__restrict__ f2_1, const float *__restrict__ f2_2,
-              const float *__restrict__ f2_c, const float *__restrict__ f_1,
-              const float *__restrict__ f_2, const float *__restrict__ f_c,
-              const float *__restrict__ g, const float *__restrict__ g3,
-              const float *__restrict__ g3_c, const float *__restrict__ g_c,
-              const float *__restrict__ rho, const float *__restrict__ s11,
-              const float *__restrict__ s12, const float *__restrict__ s13,
-              const float *__restrict__ s22, const float *__restrict__ s23,
-              const float *__restrict__ s33, const float a, const float nu,
-              const int nx, const int ny, const int nz, const int bi,
-              const int bj, const int ei, const int ej) {
+__launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK,
+                  DTOPO_VEL_110_MIN_BLOCKS_PER_SM)
+
+    __global__ void dtopo_vel_110(
+        float *__restrict__ u1, float *__restrict__ u2, float *__restrict__ u3,
+        const float *__restrict__ dcrjx, const float *__restrict__ dcrjy,
+        const float *__restrict__ dcrjz, const float *__restrict__ f,
+        const float *__restrict__ f1_1, const float *__restrict__ f1_2,
+        const float *__restrict__ f1_c, const float *__restrict__ f2_1,
+        const float *__restrict__ f2_2, const float *__restrict__ f2_c,
+        const float *__restrict__ f_1, const float *__restrict__ f_2,
+        const float *__restrict__ f_c, const float *__restrict__ g,
+        const float *__restrict__ g3, const float *__restrict__ g3_c,
+        const float *__restrict__ g_c, const float *__restrict__ rho,
+        const float *__restrict__ s11, const float *__restrict__ s12,
+        const float *__restrict__ s13, const float *__restrict__ s22,
+        const float *__restrict__ s23, const float *__restrict__ s33,
+        const float a, const float nu, const int nx, const int ny, const int nz,
+        const int bi, const int bj, const int ei, const int ej) {
   const float phz4l[6][7] = {
       {0.8338228784688313, 0.1775123316429260, 0.1435067013076542,
        -0.1548419114194114, 0.0000000000000000, 0.0000000000000000,
@@ -137,79 +139,79 @@ dtopo_vel_110(float *__restrict__ u1, float *__restrict__ u2,
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= 6)
     return;
-#define _rho(i, j, k)                                                          \
-  rho[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g3_c(k) g3_c[(k) + align]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
+#define _f(i, j)                                                               \
+  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_1(i, j)                                                             \
   f_1[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_2(i, j)                                                             \
   f_2[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
 #define _f_c(i, j)                                                             \
   f_c[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f(i, j)                                                               \
-  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s12(i, j, k)                                                          \
-  s12[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s13(i, j, k)                                                          \
-  s13[(k) + align +                                                            \
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
+#define _rho(i, j, k)                                                          \
+  rho[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s11(i, j, k)                                                          \
   s11[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g_c(k) g_c[(k) + align]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s23(i, j, k)                                                          \
-  s23[(k) + align +                                                            \
+#define _s12(i, j, k)                                                          \
+  s12[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s13(i, j, k)                                                          \
+  s13[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s22(i, j, k)                                                          \
   s22[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
+#define _s23(i, j, k)                                                          \
+  s23[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s33(i, j, k)                                                          \
   s33[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
 #define _u3(i, j, k)                                                           \
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
   for (int i = bi; i < ei; ++i) {
     float rho1 =
         phz4l[k][0] *
@@ -546,52 +548,54 @@ dtopo_vel_110(float *__restrict__ u1, float *__restrict__ u2,
                         phy4[3] * _s23(i, j + 1, 8))))) *
         f_dcrj;
   }
-#undef _rho
-#undef _g3_c
-#undef _f_1
-#undef _f_2
-#undef _g3
-#undef _f_c
+#undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
-#undef _dcrjx
-#undef _f1_1
 #undef _f
-#undef _u1
-#undef _s12
-#undef _f2_1
-#undef _s13
-#undef _s11
-#undef _g_c
+#undef _f1_1
 #undef _f1_2
-#undef _s23
-#undef _s22
-#undef _u2
-#undef _f2_2
-#undef _g
-#undef _s33
-#undef _f2_c
-#undef _u3
 #undef _f1_c
+#undef _f2_1
+#undef _f2_2
+#undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _rho
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
+#undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
-__global__ void
-dtopo_vel_111(float *__restrict__ u1, float *__restrict__ u2,
-              float *__restrict__ u3, const float *__restrict__ dcrjx,
-              const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
-              const float *__restrict__ f, const float *__restrict__ f1_1,
-              const float *__restrict__ f1_2, const float *__restrict__ f1_c,
-              const float *__restrict__ f2_1, const float *__restrict__ f2_2,
-              const float *__restrict__ f2_c, const float *__restrict__ f_1,
-              const float *__restrict__ f_2, const float *__restrict__ f_c,
-              const float *__restrict__ g, const float *__restrict__ g3,
-              const float *__restrict__ g3_c, const float *__restrict__ g_c,
-              const float *__restrict__ rho, const float *__restrict__ s11,
-              const float *__restrict__ s12, const float *__restrict__ s13,
-              const float *__restrict__ s22, const float *__restrict__ s23,
-              const float *__restrict__ s33, const float a, const float nu,
-              const int nx, const int ny, const int nz, const int bi,
-              const int bj, const int ei, const int ej) {
+__launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK,
+                  DTOPO_VEL_111_MIN_BLOCKS_PER_SM)
+
+    __global__ void dtopo_vel_111(
+        float *__restrict__ u1, float *__restrict__ u2, float *__restrict__ u3,
+        const float *__restrict__ dcrjx, const float *__restrict__ dcrjy,
+        const float *__restrict__ dcrjz, const float *__restrict__ f,
+        const float *__restrict__ f1_1, const float *__restrict__ f1_2,
+        const float *__restrict__ f1_c, const float *__restrict__ f2_1,
+        const float *__restrict__ f2_2, const float *__restrict__ f2_c,
+        const float *__restrict__ f_1, const float *__restrict__ f_2,
+        const float *__restrict__ f_c, const float *__restrict__ g,
+        const float *__restrict__ g3, const float *__restrict__ g3_c,
+        const float *__restrict__ g_c, const float *__restrict__ rho,
+        const float *__restrict__ s11, const float *__restrict__ s12,
+        const float *__restrict__ s13, const float *__restrict__ s22,
+        const float *__restrict__ s23, const float *__restrict__ s33,
+        const float a, const float nu, const int nx, const int ny, const int nz,
+        const int bi, const int bj, const int ei, const int ej) {
   const float phz4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
   const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
@@ -630,79 +634,79 @@ dtopo_vel_111(float *__restrict__ u1, float *__restrict__ u2,
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= nz - 12)
     return;
-#define _rho(i, j, k)                                                          \
-  rho[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g3_c(k) g3_c[(k) + align]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
+#define _f(i, j)                                                               \
+  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_1(i, j)                                                             \
   f_1[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_2(i, j)                                                             \
   f_2[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
 #define _f_c(i, j)                                                             \
   f_c[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f(i, j)                                                               \
-  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s12(i, j, k)                                                          \
-  s12[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s13(i, j, k)                                                          \
-  s13[(k) + align +                                                            \
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
+#define _rho(i, j, k)                                                          \
+  rho[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s11(i, j, k)                                                          \
   s11[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g_c(k) g_c[(k) + align]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s23(i, j, k)                                                          \
-  s23[(k) + align +                                                            \
+#define _s12(i, j, k)                                                          \
+  s12[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s13(i, j, k)                                                          \
+  s13[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s22(i, j, k)                                                          \
   s22[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
+#define _s23(i, j, k)                                                          \
+  s23[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s33(i, j, k)                                                          \
   s33[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
 #define _u3(i, j, k)                                                           \
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
   for (int i = bi; i < ei; ++i) {
     float rho1 =
         phz4[0] *
@@ -1010,52 +1014,54 @@ dtopo_vel_111(float *__restrict__ u1, float *__restrict__ u2,
                                     phy4[3] * _s23(i, j + 1, k + 9))))) *
         f_dcrj;
   }
-#undef _rho
-#undef _g3_c
-#undef _f_1
-#undef _f_2
-#undef _g3
-#undef _f_c
+#undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
-#undef _dcrjx
-#undef _f1_1
 #undef _f
-#undef _u1
-#undef _s12
-#undef _f2_1
-#undef _s13
-#undef _s11
-#undef _g_c
+#undef _f1_1
 #undef _f1_2
-#undef _s23
-#undef _s22
-#undef _u2
-#undef _f2_2
-#undef _g
-#undef _s33
-#undef _f2_c
-#undef _u3
 #undef _f1_c
+#undef _f2_1
+#undef _f2_2
+#undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _rho
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
+#undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
-__global__ void
-dtopo_vel_112(float *__restrict__ u1, float *__restrict__ u2,
-              float *__restrict__ u3, const float *__restrict__ dcrjx,
-              const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
-              const float *__restrict__ f, const float *__restrict__ f1_1,
-              const float *__restrict__ f1_2, const float *__restrict__ f1_c,
-              const float *__restrict__ f2_1, const float *__restrict__ f2_2,
-              const float *__restrict__ f2_c, const float *__restrict__ f_1,
-              const float *__restrict__ f_2, const float *__restrict__ f_c,
-              const float *__restrict__ g, const float *__restrict__ g3,
-              const float *__restrict__ g3_c, const float *__restrict__ g_c,
-              const float *__restrict__ rho, const float *__restrict__ s11,
-              const float *__restrict__ s12, const float *__restrict__ s13,
-              const float *__restrict__ s22, const float *__restrict__ s23,
-              const float *__restrict__ s33, const float a, const float nu,
-              const int nx, const int ny, const int nz, const int bi,
-              const int bj, const int ei, const int ej) {
+__launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK,
+                  DTOPO_VEL_112_MIN_BLOCKS_PER_SM)
+
+    __global__ void dtopo_vel_112(
+        float *__restrict__ u1, float *__restrict__ u2, float *__restrict__ u3,
+        const float *__restrict__ dcrjx, const float *__restrict__ dcrjy,
+        const float *__restrict__ dcrjz, const float *__restrict__ f,
+        const float *__restrict__ f1_1, const float *__restrict__ f1_2,
+        const float *__restrict__ f1_c, const float *__restrict__ f2_1,
+        const float *__restrict__ f2_2, const float *__restrict__ f2_c,
+        const float *__restrict__ f_1, const float *__restrict__ f_2,
+        const float *__restrict__ f_c, const float *__restrict__ g,
+        const float *__restrict__ g3, const float *__restrict__ g3_c,
+        const float *__restrict__ g_c, const float *__restrict__ rho,
+        const float *__restrict__ s11, const float *__restrict__ s12,
+        const float *__restrict__ s13, const float *__restrict__ s22,
+        const float *__restrict__ s23, const float *__restrict__ s33,
+        const float a, const float nu, const int nx, const int ny, const int nz,
+        const int bi, const int bj, const int ei, const int ej) {
   const float phz4r[6][8] = {
       {0.0000000000000000, 0.8338228784688313, 0.1775123316429260,
        0.1435067013076542, -0.1548419114194114, 0.0000000000000000,
@@ -1175,79 +1181,79 @@ dtopo_vel_112(float *__restrict__ u1, float *__restrict__ u2,
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= 6)
     return;
-#define _rho(i, j, k)                                                          \
-  rho[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g3_c(k) g3_c[(k) + align]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
+#define _f(i, j)                                                               \
+  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_1(i, j)                                                             \
   f_1[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_2(i, j)                                                             \
   f_2[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
 #define _f_c(i, j)                                                             \
   f_c[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f(i, j)                                                               \
-  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s12(i, j, k)                                                          \
-  s12[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s13(i, j, k)                                                          \
-  s13[(k) + align +                                                            \
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
+#define _rho(i, j, k)                                                          \
+  rho[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s11(i, j, k)                                                          \
   s11[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g_c(k) g_c[(k) + align]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s23(i, j, k)                                                          \
-  s23[(k) + align +                                                            \
+#define _s12(i, j, k)                                                          \
+  s12[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s13(i, j, k)                                                          \
+  s13[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s22(i, j, k)                                                          \
   s22[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
+#define _s23(i, j, k)                                                          \
+  s23[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s33(i, j, k)                                                          \
   s33[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
 #define _u3(i, j, k)                                                           \
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
   for (int i = bi; i < ei; ++i) {
     float rho1 = phz4r[k][7] * (phy4[2] * _rho(i, j, nz - 8) +
                                 phy4[0] * _rho(i, j - 2, nz - 8) +
@@ -1685,53 +1691,56 @@ dtopo_vel_112(float *__restrict__ u1, float *__restrict__ u2,
                                   phy4[3] * _s23(i, j + 1, nz - 1))))) *
         f_dcrj;
   }
-#undef _rho
-#undef _g3_c
-#undef _f_1
-#undef _f_2
-#undef _g3
-#undef _f_c
+#undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
-#undef _dcrjx
-#undef _f1_1
 #undef _f
-#undef _u1
-#undef _s12
-#undef _f2_1
-#undef _s13
-#undef _s11
-#undef _g_c
+#undef _f1_1
 #undef _f1_2
-#undef _s23
-#undef _s22
-#undef _u2
-#undef _f2_2
-#undef _g
-#undef _s33
-#undef _f2_c
-#undef _u3
 #undef _f1_c
+#undef _f2_1
+#undef _f2_2
+#undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _rho
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
+#undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
-__global__ void dtopo_buf_vel_110(
-    float *__restrict__ buf_u1, float *__restrict__ buf_u2,
-    float *__restrict__ buf_u3, const float *__restrict__ dcrjx,
-    const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
-    const float *__restrict__ f, const float *__restrict__ f1_1,
-    const float *__restrict__ f1_2, const float *__restrict__ f1_c,
-    const float *__restrict__ f2_1, const float *__restrict__ f2_2,
-    const float *__restrict__ f2_c, const float *__restrict__ f_1,
-    const float *__restrict__ f_2, const float *__restrict__ f_c,
-    const float *__restrict__ g, const float *__restrict__ g3,
-    const float *__restrict__ g3_c, const float *__restrict__ g_c,
-    const float *__restrict__ rho, const float *__restrict__ s11,
-    const float *__restrict__ s12, const float *__restrict__ s13,
-    const float *__restrict__ s22, const float *__restrict__ s23,
-    const float *__restrict__ s33, const float *__restrict__ u1,
-    const float *__restrict__ u2, const float *__restrict__ u3, const float a,
-    const float nu, const int nx, const int ny, const int nz, const int bj,
-    const int ej, const int rj0) {
+__launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK,
+                  DTOPO_BUF_VEL_110_MIN_BLOCKS_PER_SM)
+
+    __global__ void dtopo_buf_vel_110(
+        float *__restrict__ buf_u1, float *__restrict__ buf_u2,
+        float *__restrict__ buf_u3, const float *__restrict__ dcrjx,
+        const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
+        const float *__restrict__ f, const float *__restrict__ f1_1,
+        const float *__restrict__ f1_2, const float *__restrict__ f1_c,
+        const float *__restrict__ f2_1, const float *__restrict__ f2_2,
+        const float *__restrict__ f2_c, const float *__restrict__ f_1,
+        const float *__restrict__ f_2, const float *__restrict__ f_c,
+        const float *__restrict__ g, const float *__restrict__ g3,
+        const float *__restrict__ g3_c, const float *__restrict__ g_c,
+        const float *__restrict__ rho, const float *__restrict__ s11,
+        const float *__restrict__ s12, const float *__restrict__ s13,
+        const float *__restrict__ s22, const float *__restrict__ s23,
+        const float *__restrict__ s33, const float *__restrict__ u1,
+        const float *__restrict__ u2, const float *__restrict__ u3,
+        const float a, const float nu, const int nx, const int ny, const int nz,
+        const int bj, const int ej, const int rj0) {
   const float phz4l[6][7] = {
       {0.8338228784688313, 0.1775123316429260, 0.1435067013076542,
        -0.1548419114194114, 0.0000000000000000, 0.0000000000000000,
@@ -1851,79 +1860,6 @@ __global__ void dtopo_buf_vel_110(
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= 6)
     return;
-#define _rho(i, j, k)                                                          \
-  rho[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g3_c(k) g3_c[(k) + align]
-#define _f_1(i, j)                                                             \
-  f_1[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f_2(i, j)                                                             \
-  f_2[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
-#define _f_c(i, j)                                                             \
-  f_c[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f(i, j)                                                               \
-  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s12(i, j, k)                                                          \
-  s12[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s13(i, j, k)                                                          \
-  s13[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s11(i, j, k)                                                          \
-  s11[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g_c(k) g_c[(k) + align]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s23(i, j, k)                                                          \
-  s23[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s22(i, j, k)                                                          \
-  s22[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
-#define _s33(i, j, k)                                                          \
-  s33[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u3(i, j, k)                                                           \
-  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _buf_u1(i, j, k)                                                       \
   buf_u1[(j) * (2 * align + nz) + (k) + align +                                \
          ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
@@ -1933,6 +1869,79 @@ __global__ void dtopo_buf_vel_110(
 #define _buf_u3(i, j, k)                                                       \
   buf_u3[(j) * (2 * align + nz) + (k) + align +                                \
          ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
+#define _f(i, j)                                                               \
+  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_1(i, j)                                                             \
+  f_1[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_2(i, j)                                                             \
+  f_2[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_c(i, j)                                                             \
+  f_c[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
+#define _rho(i, j, k)                                                          \
+  rho[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s11(i, j, k)                                                          \
+  s11[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s12(i, j, k)                                                          \
+  s12[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s13(i, j, k)                                                          \
+  s13[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s22(i, j, k)                                                          \
+  s22[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s23(i, j, k)                                                          \
+  s23[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s33(i, j, k)                                                          \
+  s33[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u3(i, j, k)                                                           \
+  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = 0; i < nx; ++i) {
     float rho1 = phz4l[k][0] * (phy4[2] * _rho(i, j + rj0, 0) +
                                 phy4[0] * _rho(i, j + rj0 - 2, 0) +
@@ -2354,56 +2363,59 @@ __global__ void dtopo_buf_vel_110(
                                         phy4[3] * _s23(i, j + rj0 + 1, 8))))) *
         f_dcrj;
   }
-#undef _rho
-#undef _g3_c
-#undef _f_1
-#undef _f_2
-#undef _g3
-#undef _f_c
-#undef _dcrjy
-#undef _dcrjz
-#undef _dcrjx
-#undef _f1_1
-#undef _f
-#undef _u1
-#undef _s12
-#undef _f2_1
-#undef _s13
-#undef _s11
-#undef _g_c
-#undef _f1_2
-#undef _s23
-#undef _s22
-#undef _u2
-#undef _f2_2
-#undef _g
-#undef _s33
-#undef _f2_c
-#undef _u3
-#undef _f1_c
 #undef _buf_u1
 #undef _buf_u2
 #undef _buf_u3
+#undef _dcrjx
+#undef _dcrjy
+#undef _dcrjz
+#undef _f
+#undef _f1_1
+#undef _f1_2
+#undef _f1_c
+#undef _f2_1
+#undef _f2_2
+#undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _rho
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
+#undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
-__global__ void dtopo_buf_vel_111(
-    float *__restrict__ buf_u1, float *__restrict__ buf_u2,
-    float *__restrict__ buf_u3, const float *__restrict__ dcrjx,
-    const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
-    const float *__restrict__ f, const float *__restrict__ f1_1,
-    const float *__restrict__ f1_2, const float *__restrict__ f1_c,
-    const float *__restrict__ f2_1, const float *__restrict__ f2_2,
-    const float *__restrict__ f2_c, const float *__restrict__ f_1,
-    const float *__restrict__ f_2, const float *__restrict__ f_c,
-    const float *__restrict__ g, const float *__restrict__ g3,
-    const float *__restrict__ g3_c, const float *__restrict__ g_c,
-    const float *__restrict__ rho, const float *__restrict__ s11,
-    const float *__restrict__ s12, const float *__restrict__ s13,
-    const float *__restrict__ s22, const float *__restrict__ s23,
-    const float *__restrict__ s33, const float *__restrict__ u1,
-    const float *__restrict__ u2, const float *__restrict__ u3, const float a,
-    const float nu, const int nx, const int ny, const int nz, const int bj,
-    const int ej, const int rj0) {
+__launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK,
+                  DTOPO_BUF_VEL_111_MIN_BLOCKS_PER_SM)
+
+    __global__ void dtopo_buf_vel_111(
+        float *__restrict__ buf_u1, float *__restrict__ buf_u2,
+        float *__restrict__ buf_u3, const float *__restrict__ dcrjx,
+        const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
+        const float *__restrict__ f, const float *__restrict__ f1_1,
+        const float *__restrict__ f1_2, const float *__restrict__ f1_c,
+        const float *__restrict__ f2_1, const float *__restrict__ f2_2,
+        const float *__restrict__ f2_c, const float *__restrict__ f_1,
+        const float *__restrict__ f_2, const float *__restrict__ f_c,
+        const float *__restrict__ g, const float *__restrict__ g3,
+        const float *__restrict__ g3_c, const float *__restrict__ g_c,
+        const float *__restrict__ rho, const float *__restrict__ s11,
+        const float *__restrict__ s12, const float *__restrict__ s13,
+        const float *__restrict__ s22, const float *__restrict__ s23,
+        const float *__restrict__ s33, const float *__restrict__ u1,
+        const float *__restrict__ u2, const float *__restrict__ u3,
+        const float a, const float nu, const int nx, const int ny, const int nz,
+        const int bj, const int ej, const int rj0) {
   const float phz4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
   const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
@@ -2442,79 +2454,6 @@ __global__ void dtopo_buf_vel_111(
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= nz - 12)
     return;
-#define _rho(i, j, k)                                                          \
-  rho[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g3_c(k) g3_c[(k) + align]
-#define _f_1(i, j)                                                             \
-  f_1[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f_2(i, j)                                                             \
-  f_2[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
-#define _f_c(i, j)                                                             \
-  f_c[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f(i, j)                                                               \
-  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s12(i, j, k)                                                          \
-  s12[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s13(i, j, k)                                                          \
-  s13[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s11(i, j, k)                                                          \
-  s11[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g_c(k) g_c[(k) + align]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s23(i, j, k)                                                          \
-  s23[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s22(i, j, k)                                                          \
-  s22[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
-#define _s33(i, j, k)                                                          \
-  s33[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u3(i, j, k)                                                           \
-  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _buf_u1(i, j, k)                                                       \
   buf_u1[(j) * (2 * align + nz) + (k) + align +                                \
          ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
@@ -2524,6 +2463,79 @@ __global__ void dtopo_buf_vel_111(
 #define _buf_u3(i, j, k)                                                       \
   buf_u3[(j) * (2 * align + nz) + (k) + align +                                \
          ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
+#define _f(i, j)                                                               \
+  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_1(i, j)                                                             \
+  f_1[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_2(i, j)                                                             \
+  f_2[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_c(i, j)                                                             \
+  f_c[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
+#define _rho(i, j, k)                                                          \
+  rho[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s11(i, j, k)                                                          \
+  s11[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s12(i, j, k)                                                          \
+  s12[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s13(i, j, k)                                                          \
+  s13[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s22(i, j, k)                                                          \
+  s22[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s23(i, j, k)                                                          \
+  s23[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s33(i, j, k)                                                          \
+  s33[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u3(i, j, k)                                                           \
+  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = 0; i < nx; ++i) {
     float rho1 = phz4[0] * (phy4[2] * _rho(i, j + rj0, k + 4) +
                             phy4[0] * _rho(i, j + rj0 - 2, k + 4) +
@@ -2864,56 +2876,59 @@ __global__ void dtopo_buf_vel_111(
                         phy4[3] * _s23(i, j + rj0 + 1, k + 9))))) *
         f_dcrj;
   }
-#undef _rho
-#undef _g3_c
-#undef _f_1
-#undef _f_2
-#undef _g3
-#undef _f_c
-#undef _dcrjy
-#undef _dcrjz
-#undef _dcrjx
-#undef _f1_1
-#undef _f
-#undef _u1
-#undef _s12
-#undef _f2_1
-#undef _s13
-#undef _s11
-#undef _g_c
-#undef _f1_2
-#undef _s23
-#undef _s22
-#undef _u2
-#undef _f2_2
-#undef _g
-#undef _s33
-#undef _f2_c
-#undef _u3
-#undef _f1_c
 #undef _buf_u1
 #undef _buf_u2
 #undef _buf_u3
+#undef _dcrjx
+#undef _dcrjy
+#undef _dcrjz
+#undef _f
+#undef _f1_1
+#undef _f1_2
+#undef _f1_c
+#undef _f2_1
+#undef _f2_2
+#undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _rho
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
+#undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
-__global__ void dtopo_buf_vel_112(
-    float *__restrict__ buf_u1, float *__restrict__ buf_u2,
-    float *__restrict__ buf_u3, const float *__restrict__ dcrjx,
-    const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
-    const float *__restrict__ f, const float *__restrict__ f1_1,
-    const float *__restrict__ f1_2, const float *__restrict__ f1_c,
-    const float *__restrict__ f2_1, const float *__restrict__ f2_2,
-    const float *__restrict__ f2_c, const float *__restrict__ f_1,
-    const float *__restrict__ f_2, const float *__restrict__ f_c,
-    const float *__restrict__ g, const float *__restrict__ g3,
-    const float *__restrict__ g3_c, const float *__restrict__ g_c,
-    const float *__restrict__ rho, const float *__restrict__ s11,
-    const float *__restrict__ s12, const float *__restrict__ s13,
-    const float *__restrict__ s22, const float *__restrict__ s23,
-    const float *__restrict__ s33, const float *__restrict__ u1,
-    const float *__restrict__ u2, const float *__restrict__ u3, const float a,
-    const float nu, const int nx, const int ny, const int nz, const int bj,
-    const int ej, const int rj0) {
+__launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK,
+                  DTOPO_BUF_VEL_112_MIN_BLOCKS_PER_SM)
+
+    __global__ void dtopo_buf_vel_112(
+        float *__restrict__ buf_u1, float *__restrict__ buf_u2,
+        float *__restrict__ buf_u3, const float *__restrict__ dcrjx,
+        const float *__restrict__ dcrjy, const float *__restrict__ dcrjz,
+        const float *__restrict__ f, const float *__restrict__ f1_1,
+        const float *__restrict__ f1_2, const float *__restrict__ f1_c,
+        const float *__restrict__ f2_1, const float *__restrict__ f2_2,
+        const float *__restrict__ f2_c, const float *__restrict__ f_1,
+        const float *__restrict__ f_2, const float *__restrict__ f_c,
+        const float *__restrict__ g, const float *__restrict__ g3,
+        const float *__restrict__ g3_c, const float *__restrict__ g_c,
+        const float *__restrict__ rho, const float *__restrict__ s11,
+        const float *__restrict__ s12, const float *__restrict__ s13,
+        const float *__restrict__ s22, const float *__restrict__ s23,
+        const float *__restrict__ s33, const float *__restrict__ u1,
+        const float *__restrict__ u2, const float *__restrict__ u3,
+        const float a, const float nu, const int nx, const int ny, const int nz,
+        const int bj, const int ej, const int rj0) {
   const float phz4r[6][8] = {
       {0.0000000000000000, 0.8338228784688313, 0.1775123316429260,
        0.1435067013076542, -0.1548419114194114, 0.0000000000000000,
@@ -3033,79 +3048,6 @@ __global__ void dtopo_buf_vel_112(
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= 6)
     return;
-#define _rho(i, j, k)                                                          \
-  rho[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g3_c(k) g3_c[(k) + align]
-#define _f_1(i, j)                                                             \
-  f_1[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f_2(i, j)                                                             \
-  f_2[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
-#define _f_c(i, j)                                                             \
-  f_c[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f(i, j)                                                               \
-  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s12(i, j, k)                                                          \
-  s12[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s13(i, j, k)                                                          \
-  s13[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s11(i, j, k)                                                          \
-  s11[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _g_c(k) g_c[(k) + align]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _s23(i, j, k)                                                          \
-  s23[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s22(i, j, k)                                                          \
-  s22[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
-#define _s33(i, j, k)                                                          \
-  s33[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u3(i, j, k)                                                           \
-  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _buf_u1(i, j, k)                                                       \
   buf_u1[(j) * (2 * align + nz) + (k) + align +                                \
          ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
@@ -3115,6 +3057,79 @@ __global__ void dtopo_buf_vel_112(
 #define _buf_u3(i, j, k)                                                       \
   buf_u3[(j) * (2 * align + nz) + (k) + align +                                \
          ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
+#define _f(i, j)                                                               \
+  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_1(i, j)                                                             \
+  f_1[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_2(i, j)                                                             \
+  f_2[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_c(i, j)                                                             \
+  f_c[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
+#define _rho(i, j, k)                                                          \
+  rho[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s11(i, j, k)                                                          \
+  s11[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s12(i, j, k)                                                          \
+  s12[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s13(i, j, k)                                                          \
+  s13[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s22(i, j, k)                                                          \
+  s22[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s23(i, j, k)                                                          \
+  s23[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s33(i, j, k)                                                          \
+  s33[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u3(i, j, k)                                                           \
+  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = 0; i < nx; ++i) {
     float rho1 = phz4r[k][7] * (phy4[2] * _rho(i, j + rj0, nz - 8) +
                                 phy4[0] * _rho(i, j + rj0 - 2, nz - 8) +
@@ -3560,36 +3575,36 @@ __global__ void dtopo_buf_vel_112(
                           phy4[3] * _s23(i, j + rj0 + 1, nz - 1))))) *
         f_dcrj;
   }
-#undef _rho
-#undef _g3_c
-#undef _f_1
-#undef _f_2
-#undef _g3
-#undef _f_c
-#undef _dcrjy
-#undef _dcrjz
-#undef _dcrjx
-#undef _f1_1
-#undef _f
-#undef _u1
-#undef _s12
-#undef _f2_1
-#undef _s13
-#undef _s11
-#undef _g_c
-#undef _f1_2
-#undef _s23
-#undef _s22
-#undef _u2
-#undef _f2_2
-#undef _g
-#undef _s33
-#undef _f2_c
-#undef _u3
-#undef _f1_c
 #undef _buf_u1
 #undef _buf_u2
 #undef _buf_u3
+#undef _dcrjx
+#undef _dcrjy
+#undef _dcrjz
+#undef _f
+#undef _f1_1
+#undef _f1_2
+#undef _f1_c
+#undef _f2_1
+#undef _f2_2
+#undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _rho
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
+#undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
 __global__ void dtopo_str_110(
@@ -3727,19 +3742,42 @@ __global__ void dtopo_str_110(
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= 6)
     return;
-#define _g3_c(k) g3_c[(k) + align]
-#define _f_c(i, j)                                                             \
-  f_c[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
 #define _f(i, j)                                                               \
   f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_1(i, j)                                                             \
   f_1[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_2(i, j)                                                             \
   f_2[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_c(i, j)                                                             \
+  f_c[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
 #define _lami(i, j, k)                                                         \
   lami[(k) + align +                                                           \
        (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +             \
@@ -3748,62 +3786,39 @@ __global__ void dtopo_str_110(
   mui[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g_c(k) g_c[(k) + align]
-#define _u3(i, j, k)                                                           \
-  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
 #define _s11(i, j, k)                                                          \
   s11[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s22(i, j, k)                                                          \
-  s22[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s33(i, j, k)                                                          \
-  s33[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s12(i, j, k)                                                          \
   s12[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _s13(i, j, k)                                                          \
   s13[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _s22(i, j, k)                                                          \
+  s22[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s23(i, j, k)                                                          \
   s23[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s33(i, j, k)                                                          \
+  s33[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u3(i, j, k)                                                           \
+  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = bi; i < ei; ++i) {
     float Jii = _f_c(i, j) * _g3_c(k);
     Jii = 1.0 * 1.0 / Jii;
@@ -4420,34 +4435,34 @@ __global__ void dtopo_str_110(
                         pdhz4l[k][8] * _u3(i, j + 2, 8))))) *
         f_dcrj;
   }
-#undef _g3_c
-#undef _f_c
-#undef _f
-#undef _g3
-#undef _f_1
-#undef _f_2
-#undef _lami
-#undef _mui
-#undef _f1_1
-#undef _u1
-#undef _u2
-#undef _f2_2
-#undef _g_c
-#undef _u3
+#undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
-#undef _dcrjx
-#undef _s11
-#undef _s22
-#undef _s33
-#undef _s12
+#undef _f
+#undef _f1_1
 #undef _f1_2
-#undef _f2_1
-#undef _g
 #undef _f1_c
-#undef _s13
+#undef _f2_1
+#undef _f2_2
 #undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _lami
+#undef _mui
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
 #undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
 __global__ void dtopo_str_111(
@@ -4504,19 +4519,42 @@ __global__ void dtopo_str_111(
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= nz - 12)
     return;
-#define _g3_c(k) g3_c[(k) + align]
-#define _f_c(i, j)                                                             \
-  f_c[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
 #define _f(i, j)                                                               \
   f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_1(i, j)                                                             \
   f_1[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_2(i, j)                                                             \
   f_2[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_c(i, j)                                                             \
+  f_c[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
 #define _lami(i, j, k)                                                         \
   lami[(k) + align +                                                           \
        (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +             \
@@ -4525,62 +4563,39 @@ __global__ void dtopo_str_111(
   mui[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g_c(k) g_c[(k) + align]
-#define _u3(i, j, k)                                                           \
-  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
 #define _s11(i, j, k)                                                          \
   s11[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s22(i, j, k)                                                          \
-  s22[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s33(i, j, k)                                                          \
-  s33[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s12(i, j, k)                                                          \
   s12[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _s13(i, j, k)                                                          \
   s13[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _s22(i, j, k)                                                          \
+  s22[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s23(i, j, k)                                                          \
   s23[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s33(i, j, k)                                                          \
+  s33[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u3(i, j, k)                                                           \
+  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = bi; i < ei; ++i) {
     float Jii = _f_c(i, j) * _g3_c(k + 6);
     Jii = 1.0 * 1.0 / Jii;
@@ -5034,34 +5049,34 @@ __global__ void dtopo_str_111(
                         pdhz4[6] * _u3(i, j + 2, k + 9))))) *
         f_dcrj;
   }
-#undef _g3_c
-#undef _f_c
-#undef _f
-#undef _g3
-#undef _f_1
-#undef _f_2
-#undef _lami
-#undef _mui
-#undef _f1_1
-#undef _u1
-#undef _u2
-#undef _f2_2
-#undef _g_c
-#undef _u3
+#undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
-#undef _dcrjx
-#undef _s11
-#undef _s22
-#undef _s33
-#undef _s12
+#undef _f
+#undef _f1_1
 #undef _f1_2
-#undef _f2_1
-#undef _g
 #undef _f1_c
-#undef _s13
+#undef _f2_1
+#undef _f2_2
 #undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _lami
+#undef _mui
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
 #undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
 __global__ void dtopo_str_112(
@@ -5199,19 +5214,42 @@ __global__ void dtopo_str_112(
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= 6)
     return;
-#define _g3_c(k) g3_c[(k) + align]
-#define _f_c(i, j)                                                             \
-  f_c[(j) + align + ngsl +                                                     \
-      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
+#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
+#define _dcrjz(k) dcrjz[(k) + align]
 #define _f(i, j)                                                               \
   f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g3(k) g3[(k) + align]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_1(i, j)                                                             \
   f_1[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f_2(i, j)                                                             \
   f_2[(j) + align + ngsl +                                                     \
       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_c(i, j)                                                             \
+  f_c[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
 #define _lami(i, j, k)                                                         \
   lami[(k) + align +                                                           \
        (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +             \
@@ -5220,62 +5258,39 @@ __global__ void dtopo_str_112(
   mui[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _u1(i, j, k)                                                           \
-  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                           \
-  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g_c(k) g_c[(k) + align]
-#define _u3(i, j, k)                                                           \
-  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * ((j) + ngsl + 2)]
-#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-#define _dcrjz(k) dcrjz[(k) + align]
-#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
 #define _s11(i, j, k)                                                          \
   s11[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s22(i, j, k)                                                          \
-  s22[(k) + align +                                                            \
-      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
-      (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s33(i, j, k)                                                          \
-  s33[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s12(i, j, k)                                                          \
   s12[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _g(k) g[(k) + align]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _s13(i, j, k)                                                          \
   s13[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align + ngsl +                                                    \
-       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _s22(i, j, k)                                                          \
+  s22[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
 #define _s23(i, j, k)                                                          \
   s23[(k) + align +                                                            \
       (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
       (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s33(i, j, k)                                                          \
+  s33[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u3(i, j, k)                                                           \
+  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = bi; i < ei; ++i) {
     float Jii = _f_c(i, j) * _g3_c(nz - 1 - k);
     Jii = 1.0 * 1.0 / Jii;
@@ -5968,34 +5983,34 @@ __global__ void dtopo_str_112(
                            pdhz4r[k][0] * _u3(i, j + 2, nz - 1))))) *
         f_dcrj;
   }
-#undef _g3_c
-#undef _f_c
-#undef _f
-#undef _g3
-#undef _f_1
-#undef _f_2
-#undef _lami
-#undef _mui
-#undef _f1_1
-#undef _u1
-#undef _u2
-#undef _f2_2
-#undef _g_c
-#undef _u3
+#undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
-#undef _dcrjx
-#undef _s11
-#undef _s22
-#undef _s33
-#undef _s12
+#undef _f
+#undef _f1_1
 #undef _f1_2
-#undef _f2_1
-#undef _g
 #undef _f1_c
-#undef _s13
+#undef _f2_1
+#undef _f2_2
 #undef _f2_c
+#undef _f_1
+#undef _f_2
+#undef _f_c
+#undef _g
+#undef _g3
+#undef _g3_c
+#undef _g_c
+#undef _lami
+#undef _mui
+#undef _s11
+#undef _s12
+#undef _s13
+#undef _s22
 #undef _s23
+#undef _s33
+#undef _u1
+#undef _u2
+#undef _u3
 }
 
 __global__ void dtopo_init_material_111(float *__restrict__ lami,
@@ -6011,13 +6026,13 @@ __global__ void dtopo_init_material_111(float *__restrict__ lami,
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= nz)
     return;
-#define _rho(i, j, k) rho[(i)*ny * nz + (j)*nz + (k)]
 #define _lami(i, j, k) lami[(i)*ny * nz + (j)*nz + (k)]
 #define _mui(i, j, k) mui[(i)*ny * nz + (j)*nz + (k)]
+#define _rho(i, j, k) rho[(i)*ny * nz + (j)*nz + (k)]
   _rho(i, j, k) = 1.0;
   _lami(i, j, k) = 1.0;
   _mui(i, j, k) = 1.0;
-#undef _rho
 #undef _lami
 #undef _mui
+#undef _rho
 }

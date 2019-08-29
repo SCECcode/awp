@@ -179,9 +179,8 @@ void run(topo_t *T)
         for(int iter = 0; iter < nt; ++iter) {
                 if (run_velocity) {
                         topo_velocity_interior_H(T);
-
-                        //topo_velocity_front_H(T);
-                        //topo_velocity_back_H(T);
+                        topo_velocity_front_H(T);
+                        topo_velocity_back_H(T);
                 }
 
                 CUCHK(cudaStreamSynchronize(T->stream_1));
@@ -191,8 +190,8 @@ void run(topo_t *T)
 
                 if (run_stress) {
                         topo_stress_interior_H(T);
-                        //topo_stress_left_H(T);
-                        //topo_stress_right_H(T);
+                        topo_stress_left_H(T);
+                        topo_stress_right_H(T);
                 }
 
                 CUCHK(cudaStreamSynchronize(T->stream_1));

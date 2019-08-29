@@ -669,18 +669,22 @@ class KernelGenerator(object):
         """
         Get macros for each gridfunction.
         """
-        macros = []
-        labels = []
+        macros = {}
+        labels = [] 
         args = [arg for arg in _freesymbols(self.din + self.dout)]
         for di in args:
             if isinstance(di,GridFunction):
                 mac = di.macro(*self.indices)
                 label = di.label
                 if label not in labels and mac:
-                    macros.append(mac)
+                    macros[str(label)] = mac
                     labels.append(label)
 
-        return macros
+        sorted_macros = []
+        for key in sorted(macros.keys()):
+            sorted_macros.append(macros[key])
+
+        return sorted_macros
 
 
     def define_indices(self):
