@@ -197,14 +197,14 @@
 // Apply loop in kernel
 // This option must be compatible with the kernel. If there is no loop in the
 // kernel, turn of this option, and vice versa.
-#define DTOPO_VEL_110_LOOP_Z 0
-#define DTOPO_VEL_111_LOOP_Z 0
-#define DTOPO_VEL_112_LOOP_Z 0
-#define DTOPO_BUF_VEL_110_LOOP_Z 0
-#define DTOPO_BUF_VEL_111_LOOP_Z 0
-#define DTOPO_BUF_VEL_112_LOOP_Z 0
-#define DTOPO_STR_110_LOOP_Z 0
-#define DTOPO_STR_111_LOOP_Z 0
-#define DTOPO_STR_112_LOOP_Z 0
+#define DTOPO_VEL_110_LOOP_Z 1
+#define DTOPO_VEL_111_LOOP_Z 1
+#define DTOPO_VEL_112_LOOP_Z 1
+#define DTOPO_BUF_VEL_110_LOOP_Z 1
+#define DTOPO_BUF_VEL_111_LOOP_Z 1
+#define DTOPO_BUF_VEL_112_LOOP_Z 1
+#define DTOPO_STR_110_LOOP_Z 1
+#define DTOPO_STR_111_LOOP_Z 1
+#define DTOPO_STR_112_LOOP_Z 1
 
 #endif

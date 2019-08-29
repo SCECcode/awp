@@ -39,7 +39,6 @@ use_sponge = helper.get_use_sponge_layer(debug)
 use_free_surface_bc = helper.get_use_free_surface_bc(debug)
 launch_bounds = ['no','no']
 grid_order = ['z', 'y', 'x']
-grid_order = ['x', 'y', 'z']
 print("Precision:", prec_str, "\n",
       "Debug:", debug, "\n",
       "Sponge layer:", use_sponge, "\n",
@@ -259,7 +258,7 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                               launch_bounds=launch_bounds,
                               loop=loop,
                               loop_order=[0],
-                              grid_order=grid_order)
+                              grid_order=['z', 'y', 'x'])
     return kernels
 
 def stress(label, debug=0, debug_ops=0, use_cartesian=0):
