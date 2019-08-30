@@ -17,7 +17,8 @@
 
 #include <awp/kernel.h>
 
-#include <topography/opt_topography.cuh>
+#include <topography/velocity.cuh>
+#include <topography/stress_attenuation.cuh>
 #include <topography/geometry.h>
 #include <topography/host.h>
  
@@ -164,7 +165,7 @@ void init(topo_t *T)
         topo_d_random(T, 8, T->xz);
         topo_d_random(T, 9, T->yz);
 
-        topo_d_constant(T, 0, T->r1);
+        topo_d_constant(T, 1, T->r1);
         topo_d_constant(T, 0, T->r2);
         topo_d_constant(T, 0, T->r3);
         topo_d_constant(T, 0, T->r4);
@@ -184,14 +185,14 @@ void init(topo_t *T)
         topo_d_constant(T, 1.0, T->vx2);
         topo_d_constant(T, 1.0, T->coeff);
 
-        topo_init_material_H(T);
-
         topo_d_random(T, 1, T->mui);
         topo_d_random(T, 1, T->lami);
         topo_d_constant(T, 1, T->mui);
         topo_d_constant(T, 1, T->lami);
         topo_d_constant(T, 1, T->lam_mu);
         topo_build(T);
+
+        topo_set_constants(T);
 }
 
 void init_awp(topo_t *T)
@@ -203,14 +204,9 @@ void init_awp(topo_t *T)
 
 void run(topo_t *topo, topo_t *awp)
 {
-
         for(int iter = 0; iter < nt; ++iter) {
-                //topo_velocity_interior_H(T);
-                //topo_velocity_front_H(T);
-                //topo_velocity_back_H(T);
 
                topo_stress_interior_H(topo);
-
 
 	       dstrqc_H_new(awp->xx, awp->yy, awp->zz, awp->xy, awp->xz, awp->yz,
 	        	awp->r1, awp->r2, awp->r3, awp->r4, awp->r5, awp->r6,

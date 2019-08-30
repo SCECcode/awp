@@ -41,11 +41,11 @@ copy_energy:
 	cp $(energy_kernel).* $(awp)/
 
 format:
-	clang-format -i $(kernel).*
+	clang-format -i $(kernel)_*.*
 
 copy:
-	cp $(kernel).cu $(src)
-	cp $(kernel).cuh $(include)
+	cp $(kernel)_*.cu $(src)
+	cp $(kernel)_*.cuh $(include)
 
 build_metrics:
 	$(PY) metrics.py $(prec)

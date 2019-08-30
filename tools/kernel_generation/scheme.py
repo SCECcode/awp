@@ -20,6 +20,7 @@ from openfd import Expr
 import numpy as np
 import helper
 from openfd.dev import kernelgenerator as kg
+from openfd.dev.codeblock import CodeBlock
 
 if len(sys.argv) < 6:
     print(__doc__)
@@ -486,16 +487,26 @@ def material(label, unit_material=0):
     return kernels
 
 
+name = filename + '_velocity'
 kernels = []
 kernels = velocity("dtopo_vel",debug=debug, debug_ops=0,
         use_cartesian=use_cartesian)
 kernels += velocity("dtopo_buf_vel",buf=1, debug=debug,
         use_cartesian=use_cartesian)
-kernels += stress("dtopo_str", debug=debug, debug_ops=0,
-        use_cartesian=use_cartesian)
-kernels += material("dtopo_init_material", unit_material=1)
-kg.write_kernels(filename, kernels, header=True,
+kg.write_kernels(name, kernels, header=True,
         source_includes=['#include <topography/kernels/optimized_launch_config.cuh>',
-                         '#include <topography/kernels/%s.cuh>'%filename], 
+                         '#include <topography/kernels/%s.cuh>'%name], 
+        header_includes=['#include <awp/definitions.h>'])
+
+
+
+name = filename + '_stress'
+kernels = []
+kernels += stress('dtopo_str', debug=debug, debug_ops=0,
+        use_cartesian=use_cartesian)
+kernels += material('dtopo_init_material', unit_material=1)
+kg.write_kernels(name, kernels, header=True,
+        source_includes=['#include <topography/kernels/optimized_launch_config.cuh>',
+                         '#include <topography/kernels/%s.cuh>'%name], 
         header_includes=['#include <awp/definitions.h>'])
 

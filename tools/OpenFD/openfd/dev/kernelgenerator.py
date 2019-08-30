@@ -5,6 +5,7 @@ from openfd.base import GridFunction, Constant
 from sympy import symbols, sympify, expand, preorder_traversal
 from sympy import ccode
 from openfd.dev.variable import Variable
+from openfd.dev.codeblock import CodeBlock
 import numpy as np
 import openfd
 
@@ -30,7 +31,8 @@ def make_kernel(label,
                 lhs_indices=None,
                 rhs_indices=None,
                 grid_order=None, 
-                launch_bounds=None
+                launch_bounds=None,
+                init_code=''
                 ):
     """
     Generate code for compute kernels that can execute on either the CPU or GPU. 
@@ -89,6 +91,8 @@ def make_kernel(label,
         bounds are specified by an array of size 2, one for each argument. The
         second argument can be left empty '' as it is optional. Defaults to
         `None`.
+        init_code(optional) : A block of text that gets appended to the
+            beginning of the function body (before any looping takes place).
 
 
 
@@ -141,7 +145,8 @@ def make_kernel(label,
                    indices=indices, 
                    precision=precision,
                    grid_order=grid_order,
-                   launch_bounds=launch_bounds
+                   launch_bounds=launch_bounds,
+                   init_code=init_code
                    )
 
     # Append region ID to kernelfunction name unless only one region is used
@@ -325,7 +330,7 @@ class KernelGenerator(object):
                  extraout=[],
                extraconst=[], indices=None, debug=False, loop=False,
                loop_order=None, index_bounds=None, precision=None,
-               grid_order=None, launch_bounds=None):
+               grid_order=None, launch_bounds=None, init_code=''):
         """
         The base class init defines class members required for all child classes
         The sequence of functions called to generate the kernel code
@@ -422,6 +427,7 @@ class KernelGenerator(object):
         self.extraconst = extraconst
         self.maxdim = 3
         self.launch_bounds = launch_bounds
+        self.init_code = init_code
 
         self.debug = debug
         self.dec_str()  #Should be overidden for a specific target language
@@ -460,6 +466,7 @@ class KernelGenerator(object):
            right_index_mapping = self.right_index_mapping
 
         code = ''
+        code += self.init_code
         code += self.body(region, left_index_mapping, right_index_mapping)
         code = self.define_coefficients(region, code, left_index_mapping,
                         right_index_mapping)
@@ -894,7 +901,12 @@ class KernelGenerator(object):
         from sympy import ccode
 
         l = lhs[lhs_indices]
+
+        if isinstance(l, CodeBlock):
+            return l.code
+
         r = rhs[rhs_indices]
+
 
         if isinstance(l, Variable):
             pass

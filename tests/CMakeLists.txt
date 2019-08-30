@@ -53,8 +53,9 @@ target_compile_definitions(test_optimized_kernels
 add_executable(test_attenuation test_attenuation.cu)
 
 target_link_libraries(test_attenuation 
-        ${OPT_LIBRARIES} 
+        ${LIBRARIES} 
         awp
+        opt_topography_attenuation
         topography
         )
 

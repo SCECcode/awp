@@ -10,12 +10,6 @@
 extern "C" {
 #endif
 void topo_init_material_H(topo_t *T);
-void topo_velocity_interior_H(topo_t *T);
-void topo_velocity_front_H(topo_t *T);
-void topo_velocity_back_H(topo_t *T);
-void topo_stress_interior_H(topo_t *T);
-void topo_stress_left_H(topo_t *T);
-void topo_stress_right_H(topo_t *T);
 #ifdef __cplusplus
 }
 #endif
@@ -35,7 +29,6 @@ void topo_stress_right_H(topo_t *T);
 // the interpolation and differentiation stencils
 #define BOTTOM_BOUNDARY_SIZE 7
 #define TOP_BOUNDARY_SIZE 7
-
 
 
 #endif
