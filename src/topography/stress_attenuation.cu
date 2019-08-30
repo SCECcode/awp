@@ -68,7 +68,7 @@ void topo_stress_interior_H(topo_t *T)
                           T->vx2,
                           T->ww,
                           T->wwo,
-                          T->nx, T->coord[0], T->coord[1], T->nz,
+                          T->nx, T->ny, T->nz, T->coord[0], T->coord[1], T->nz,
 	        	ngsl + 2,  T->nx + ngsl2 - 1,
 	        	 2 + ngsl,  T->ny + ngsl2 - 1);
         CUCHK(cudaGetLastError());

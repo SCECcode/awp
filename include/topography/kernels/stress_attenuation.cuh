@@ -33,7 +33,7 @@ __global__ void dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, 
        const _prec *__restrict__ d_vx2, 
        const int *__restrict__ d_ww, 
        const _prec *__restrict__ d_wwo,
-       int NX, int rankx, int ranky, 
+       int NX, int ny, int nz, int rankx, int ranky, 
        int nzt, int s_i, int e_i, int s_j, int e_j);
 
 #endif

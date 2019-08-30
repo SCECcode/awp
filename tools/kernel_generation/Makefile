@@ -16,6 +16,7 @@ use_acoustic=0
 use_cartesian=0
 use_cubic_interpolation=1
 use_loop=1
+use_awp=1
 debug=0
 prec=float
 
@@ -30,6 +31,10 @@ build:
 	$(PY) -Wignore scheme.py $(kernel) $(prec) $(debug) $(use_2d) \
 		$(use_acoustic) $(use_cartesian) $(use_cubic_interpolation) \
 		$(use_loop)
+
+awp:
+	$(PY) -Wignore scheme.py awp $(prec) $(debug) 0 0 0 0 0 1
+	clang-format -i awp_*.*
 
 build_energy: 
 	$(PY) -Wignore energy.py $(prec)
