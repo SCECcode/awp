@@ -72,13 +72,4 @@ files of interest to start optimizing the kernels are
   configuration parameters
 
 
-## Performance analysis
-The script `scripts/profile.sh` can be used to see an example usage and also to
-sweep through a list of different grid sizes. This scripts profiles the
-application using `nvprof`. To run this script on Summit, submit a job using
-```
-bsub scripts/submit.lsf
-```
-
-
 
