@@ -154,18 +154,18 @@ void init(topo_t *T)
                                            canyon_height, canyon_center);
 
         // Set random initial conditions using fixed seed
-        topo_d_random(T, 0, T->u1);
-        topo_d_random(T, 1, T->v1);
-        topo_d_random(T, 2, T->w1);
+        topo_d_random(T, 1, T->u1);
+        topo_d_constant(T, 1, T->v1);
+        topo_d_constant(T, 1, T->w1);
 
-        topo_d_random(T, 1, T->xx);
-        topo_d_random(T, 5, T->yy);
-        topo_d_random(T, 6, T->zz);
-        topo_d_random(T, 7, T->xy);
-        topo_d_random(T, 8, T->xz);
-        topo_d_random(T, 9, T->yz);
+        topo_d_constant(T, 0, T->xx);
+        topo_d_constant(T, 0, T->yy);
+        topo_d_constant(T, 0, T->zz);
+        topo_d_constant(T, 0, T->xy);
+        topo_d_constant(T, 0, T->xz);
+        topo_d_constant(T, 0, T->yz);
 
-        topo_d_constant(T, 1, T->r1);
+        topo_d_constant(T, 0, T->r1);
         topo_d_constant(T, 0, T->r2);
         topo_d_constant(T, 0, T->r3);
         topo_d_constant(T, 0, T->r4);
@@ -229,14 +229,14 @@ int compare(topo_t *topo, topo_t *awp)
         double err[3];
         int nxt = nx - ngsl;
         int nyt = ny - ngsl;
-        int nzt = 52;
+        int nzt = 20;
         double total_error = 0;
-        int excl = 4;
+        int excl = 2;
         int i0 = excl + ngsl + 2;
         int in = i0 + nxt;
         int j0 = excl + ngsl + 2;
         int jn = j0 + nyt;
-        int nbnd = 8;
+        int nbnd = 2;
         int k0 = align + excl + nbnd;
         int kn = k0 + nzt - nbnd - excl;
         int size = (in - i0) * (jn - j0) * (kn - k0);

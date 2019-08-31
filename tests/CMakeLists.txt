@@ -43,8 +43,8 @@ add_executable(test_optimized_kernels topography_kernels.cu)
 
 target_link_libraries(test_optimized_kernels 
         ${LIBRARIES} 
-        #opt_topography_attenuation
-        topography
+        opt_topography_attenuation
+        opt_topography
         )
 
 target_compile_definitions(test_optimized_kernels 

@@ -1,5 +1,6 @@
 #include <topography/kernels/optimized_launch_config.cuh>
 #include <topography/kernels/optimized_stress.cuh>
+#include <stdio.h>
 
 __global__ void dtopo_str_110(
     float *__restrict__ s11, float *__restrict__ s12, float *__restrict__ s13,
@@ -913,6 +914,9 @@ __global__ void dtopo_str_111(
   const int k = threadIdx.x + blockIdx.x * blockDim.x;
   if (k >= nz - 12)
     return;
+  if (threadIdx.z == 0 && j == bj && k == 0) {
+          printf("running optimized stress.\n");
+}
 #define _dcrjx(i) dcrjx[(i) + ngsl + 2]
 #define _dcrjy(j) dcrjy[(j) + ngsl + 2]
 #define _dcrjz(k) dcrjz[(k) + align]

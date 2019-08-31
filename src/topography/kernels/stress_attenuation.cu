@@ -4,6 +4,9 @@
 #include <awp/definitions.h>
 #include <test/test.h>
 #include <topography/kernels/stress_attenuation.cuh>
+#include <stdio.h>
+//#define CURVILINEAR
+
 #define _f(i, j)                                                            \
   f[(j) + align +                                                    \
        (i) * (2 * align + 2 * ngsl + ny + 4)]
@@ -145,7 +148,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   register _prec f_v1, v1_im1, v1_ip1, v1_im2;
   register _prec f_w1, w1_im1, w1_im2, w1_ip1;
   _prec f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
-  int maxk, mink=align+3;
+  int maxk, mink;
 
   const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
@@ -178,8 +181,9 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     
   k    = blockIdx.x*blockDim.x+threadIdx.x+align;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
-
-  maxk = nzt + align - 11;
+           
+  mink = align+3;
+  maxk = nzt + align - 6;
 
   if (k < mink || k > maxk || j > e_j) return;
   
@@ -201,6 +205,11 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
 
+
+  if (j == s_j && k == align + 3) {
+          printf("running stress attenuation: %d %d %d., \n", i, j, k);
+}
+
   for(i=e_i;i>=s_i;i--)
   {
     f_vx1 = d_vx1[pos];
@@ -209,6 +218,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     f_wwo = d_wwo[pos];
     
     f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
+
 
     pos_km2  = pos-2;
     pos_km1  = pos-1;
@@ -336,10 +346,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xx, yy, zz
 
-    // Cartesian      
-    //vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
-    //vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
-    //vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
+#ifdef CURVILINEAR
     vs1 =
       dx4[1] * _u1(i, j, k) + dx4[0] * _u1(i - 1, j, k) +
       dx4[2] * _u1(i + 1, j, k) + dx4[3] * _u1(i + 2, j, k) -
@@ -370,7 +377,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                 phdz4[4] * _u1(i + 2, j, k + 1) +
                 phdz4[5] * _u1(i + 2, j, k + 2) +
                 phdz4[6] * _u1(i + 2, j, k + 3)));
-  vs2 =
+    vs2 =
       dhy4[2] * _v1(i, j, k) + dhy4[0] * _v1(i, j - 2, k) +
       dhy4[1] * _v1(i, j - 1, k) + dhy4[3] * _v1(i, j + 1, k) -
       Jii * _g_c(k) *
@@ -457,6 +464,12 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                 phdz4[4] * _u1(i + 2, j, k + 1) +
                 phdz4[5] * _u1(i + 2, j, k + 2) +
                 phdz4[6] * _u1(i + 2, j, k + 3)));
+#else
+    // Cartesian      
+    vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
+    vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
+    vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
+#endif
 
     tmp      = xl*(vs1+vs2+vs3);
 
@@ -485,9 +498,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     zz[pos]  = (f_zz + d_DT*f_rtmp)*f_dcrj;
 
     // xy
-    // Cartesian
-    // vs1      = d_c1*(u1[pos_jp1] - f_u1)   + d_c2*(u1[pos_jp2] - u1[pos_jm1]);
-    // vs2      = d_c1*(f_v1        - v1_im1) + d_c2*(v1_ip1      - v1_im2);
+#ifdef CURVILINEAR
   float J12i = _f(i, j) * _g3_c(k + 6);
   J12i = 1.0 / J12i;
 
@@ -551,6 +562,11 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                 phdz4[4] * _v1(i + 1, j, k + 1) +
                 phdz4[5] * _v1(i + 1, j, k + 2) +
                 phdz4[6] * _v1(i + 1, j, k + 3)));
+#else
+    // Cartesian
+    vs1      = d_c1*(u1[pos_jp1] - f_u1)   + d_c2*(u1[pos_jp2] - u1[pos_jm1]);
+    vs2      = d_c1*(f_v1        - v1_im1) + d_c2*(v1_ip1      - v1_im2);
+#endif
 
     f_r      = r4[pos];
     f_rtmp   = h1*(vs1+vs2); 
@@ -560,11 +576,11 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     xy[pos]  = (f_xy + d_DT*f_rtmp)*f_dcrj;
 
     // xz
-    // vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
-    // vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
+#ifdef CURVILINEAR
 
   float J13i = _f_1(i, j) * _g3(k);
   J13i = 1.0 * 1.0 / J13i;
+
   vs1 = J13i * (dz4[1] * _u1(i, j, k) + dz4[0] * _u1(i, j, k - 1) +
                       dz4[2] * _u1(i, j, k + 1) + dz4[3] * _u1(i, j, k + 2));
   vs2 =
@@ -604,12 +620,14 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     r5[pos] = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     xz[pos] = (f_xz + d_DT*f_rtmp)*f_dcrj;
+#else
+    vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
+    vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
+#endif
 
     // yz
 
-    // Cartesian
-    // vs1     = d_c1*(v1[pos_kp1] - f_v1) + d_c2*(v1[pos_kp2] - v1[pos_km1]);
-    // vs2     = d_c1*(w1[pos_jp1] - f_w1) + d_c2*(w1[pos_jp2] - w1[pos_jm1]);
+#ifdef CURVILINEAR
     float J23i = _f_2(i, j) * _g3(k);
     J23i = 1.0 * 1.0 / J23i;
     vs1 = J23i * (dz4[1] * _v1(i, j, k) + dz4[0] * _v1(i, j, k - 1) +
@@ -644,6 +662,11 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                   pdhz4[4] * _w1(i, j + 2, k + 1) +
                   pdhz4[5] * _w1(i, j + 2, k + 2) +
                   pdhz4[6] * _w1(i, j + 2, k + 3)));
+#else
+    // Cartesian
+    vs1     = d_c1*(v1[pos_kp1] - f_v1) + d_c2*(v1[pos_kp2] - v1[pos_km1]);
+    vs2     = d_c1*(w1[pos_jp1] - f_w1) + d_c2*(w1[pos_jp2] - w1[pos_jm1]);
+#endif
            
     f_r     = r6[pos];
     f_rtmp  = h3*(vs1+vs2);
@@ -651,6 +674,8 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     r6[pos] = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
+
+    //xx[pos] = 1.0;
 
     pos     = pos_im1;
   }
