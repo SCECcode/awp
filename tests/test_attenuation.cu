@@ -154,7 +154,7 @@ void init(topo_t *T)
                                            canyon_height, canyon_center);
 
         // Set random initial conditions using fixed seed
-        topo_d_random(T, 1, T->u1);
+        topo_d_linear_i(T, T->u1);
         topo_d_constant(T, 1, T->v1);
         topo_d_constant(T, 1, T->w1);
 
@@ -185,11 +185,11 @@ void init(topo_t *T)
         topo_d_constant(T, 1.0, T->vx2);
         topo_d_constant(T, 1.0, T->coeff);
 
-        topo_d_random(T, 1, T->mui);
-        topo_d_random(T, 2, T->lami);
-        topo_d_random(T, 3, T->mui);
-        topo_d_random(T, 4, T->lami);
-        topo_d_random(T, 5, T->lam_mu);
+        topo_d_constant(T, 1, T->mui);
+        topo_d_constant(T, 1, T->lami);
+        //topo_d_random(T, 3, T->mui);
+        //topo_d_random(T, 4, T->lami);
+        topo_d_constant(T, 0, T->lam_mu);
         topo_build(T);
 
         topo_set_constants(T);

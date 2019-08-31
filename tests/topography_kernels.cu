@@ -165,8 +165,8 @@ void init(topo_t *T)
 
         // Set random initial conditions using fixed seed
         
-        topo_d_linear_i(T, T->u1);
-        topo_d_constant(T, 1, T->v1);
+        topo_d_random(T, 0, T->u1);
+        topo_d_random(T, 1, T->v1);
         topo_d_constant(T, 1, T->w1);
 
         topo_d_constant(T, 0, T->xx);
@@ -196,8 +196,8 @@ void init(topo_t *T)
         topo_d_constant(T, 0.0, T->vx2);
         topo_d_constant(T, 0.0, T->coeff);
 
-        topo_d_constant(T, 1, T->mui);
-        topo_d_constant(T, 1, T->lami);
+        topo_d_linear_k(T, T->mui);
+        topo_d_linear_k(T, T->lami);
         topo_d_constant(T, 5, T->lam_mu);
 
         topo_build(T);

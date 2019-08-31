@@ -5,7 +5,7 @@
 #include <test/test.h>
 #include <topography/kernels/stress_attenuation.cuh>
 #include <stdio.h>
-//#define CURVILINEAR
+#define CURVILINEAR
 
 #define _f(i, j)                                                            \
   f[(j) + align +                                                    \
@@ -185,10 +185,18 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   mink = align+3;
   maxk = nzt + align - 6;
 
-  if (k < mink || k > maxk || j > e_j) return;
+  if (j >= 4 + 2 * ngsl + ny)
+    return;
+  if (j >= e_j)
+    return;
+
+  if (k >= nzt + align - 6)
+    return;
+
+  //if (k < mink || k > maxk) return;
   
 
-  i    = e_i;
+  i    = e_i - 1;
   pos  = i*d_slice_1+j*d_yline_1+k;
 
 
@@ -210,8 +218,8 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
           printf("running stress attenuation: %d %d %d., \n", i, j, k);
 }
 
-  for(i=e_i;i>=s_i;i--)
-  {
+  for(i=e_i-1;i>s_i-1;i--)
+  {         
     f_vx1 = d_vx1[pos];
     f_vx2 = d_vx2[pos];
     f_ww  = d_ww[pos];
