@@ -340,7 +340,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     //vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
     //vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
     //vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
-  vs1 =
+    vs1 =
       dx4[1] * _u1(i, j, k) + dx4[0] * _u1(i - 1, j, k) +
       dx4[2] * _u1(i + 1, j, k) + dx4[3] * _u1(i + 2, j, k) -
       Jii * _g_c(k) *

@@ -11,6 +11,7 @@
 #include <topography/initializations/random.h>
 #include <topography/initializations/cerjan.h>
 #include <test/check.h>
+#include <test/grid_check.h>
 #include <mpi/partition.h>
 
 #ifdef USE_OPTIMIZED_KERNELS
@@ -263,6 +264,30 @@ int compare(topo_t *host, const char *inputdir)
                 total_error += err[i];
         }
         printf("\n");
+
+        int nxt = nx - ngsl;
+        int nyt = ny - ngsl;
+        int nzt = nz - 10;
+        int excl = 4;
+        int i0 = excl + ngsl + 2;
+        int in = i0 + nxt;
+        int j0 = excl + ngsl + 2;
+        int jn = j0 + nyt;
+        int nbnd = 8;
+        int k0 = align + excl + nbnd;
+        int kn = k0 + nzt - nbnd - excl;
+        int new_size = (in - i0) * (jn - j0) * (kn - k0);
+        total_error = 0;
+        printf("slice: %d line: %d \n", host->slice, host->line);
+        printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
+                        in, jn, kn,  new_size);
+        for (int i = 0; i < 2; ++i) {
+             err[i] = check_flinferr(a[i], b[i], 
+                             i0, in, j0, jn, k0, kn,
+                             host->line, host->slice);
+                printf("%s: %g ", names[i], err[i]);
+                total_error += err[i];
+        }
 
         topo_h_free(&reference);
         return total_error > 1e-6;
