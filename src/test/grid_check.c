@@ -57,7 +57,8 @@ double check_flinferr(const _prec *u, const _prec *v,
         for (int j = j0; j < jn; ++j) {
         for (int k = k0; k < kn; ++k) {
                 int pos = k + j*line + i*slice; 
-                err = err > fabs(u[pos] - v[pos]) ? err : fabs(u[pos] - v[pos]);
+                double diff = fabs(u[pos] - v[pos]);
+                err = diff >  err ? diff : err;
         }
         }
         }

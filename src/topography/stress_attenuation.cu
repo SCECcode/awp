@@ -30,6 +30,7 @@ void topo_stress_interior_H(topo_t *T)
         }
 
         {
+        printf("Launch stress attenuation kernel.\n");
         dim3 block(DTOPO_STR_111_X, DTOPO_STR_111_Y,
                     DTOPO_STR_111_Z);
         int3_t size = {(int)T->stress_bounds_right[0] - T->stress_bounds_left[0], 

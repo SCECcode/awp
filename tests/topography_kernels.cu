@@ -16,7 +16,7 @@
 
 #ifdef USE_OPTIMIZED_KERNELS
 #include <topography/velocity.cuh>
-#include <topography/stress.cuh>
+#include <topography/stress_attenuation.cuh>
 #else
 #include <topography/topography.cuh>
 #endif
@@ -275,13 +275,16 @@ int compare(topo_t *host, const char *inputdir)
         int jn = j0 + nyt;
         int nbnd = 8;
         int k0 = align + excl + nbnd;
+
         int kn = k0 + nzt - nbnd - excl;
         int new_size = (in - i0) * (jn - j0) * (kn - k0);
         total_error = 0;
-        printf("slice: %d line: %d \n", host->slice, host->line);
+        printf("slice: %d line: %d, %d %d \n", host->slice, host->line,
+                        (2 * align + nz) * (4 + 2 * ngsl + ny), (2 * align +
+                                nz));
         printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
                         in, jn, kn,  new_size);
-        for (int i = 0; i < 2; ++i) {
+        for (int i = 0; i < 4; ++i) {
              err[i] = check_flinferr(a[i], b[i], 
                              i0, in, j0, jn, k0, kn,
                              host->line, host->slice);
