@@ -537,7 +537,9 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
 //                qpaw=qpaw/2.;
     }
     else {
-      qpaw  = f_wwo*qpa;
+        //suggested by Kyle
+	qpaw  = 2.0f*f_wwo*qpa;
+        // qpaw  = f_wwo*qpa;
     }
 //                 printf("qpaw %f\n",qpaw);
 //              printf("qpaw1 %g\n",qpaw);
@@ -558,7 +560,9 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  hw=hw/2.0f;
     }
     else {
-      hw  = f_wwo*h;
+      //suggested by Kyle
+      hw  = 2.0f*f_wwo*h;
+      // hw  = f_wwo*h;
     }
     hw=hw/f_wwo;
 
@@ -571,7 +575,9 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  h1w=h1w/2.0f;
     }
     else {
-      h1w  = f_wwo*h1;
+        //suggested by Kyle
+	h1w  = 2.0f*f_wwo*h1;
+        // h1w  = f_wwo*h1;
     }
     h1w=h1w/f_wwo;
 
@@ -584,7 +590,9 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  h2w=h2w/2.;
     }
     else {
-      h2w  = f_wwo*h2;
+        //suggested by Kyle
+        //h2w  = f_wwo*h2;
+	h2w  = 2.0f*f_wwo*h2;
     }
     h2w=h2w/f_wwo;
 
@@ -596,7 +604,9 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  h3w=h3w/2.0f;
     }
     else {
-      h3w  = f_wwo*h3;
+      //suggested by Kyle
+      h3w  = 2.0f*f_wwo*h3;
+      //h3w  = f_wwo*h3;
     }
     h3w=h3w/f_wwo;
 

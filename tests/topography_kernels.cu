@@ -292,7 +292,7 @@ int compare(topo_t *host, const char *inputdir)
         int nyt = ny - ngsl;
         int nzt = nz;
         int excl = 6;
-        int nbnd = 6;
+        int nbnd = 0;
         int i0 = excl + ngsl + 2;
         int in = i0 + nxt - 2 * excl;
         int j0 = excl + ngsl + 2;

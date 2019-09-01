@@ -260,7 +260,9 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       qpaw=coeff[f_ww*2-2]*(2.*qpa)*(2.*qpa)+coeff[f_ww*2-1]*(2.*qpa);
     }
     else {
-      qpaw  = f_wwo*qpa;
+        //suggested by Kyle
+	qpaw  = 2.0f*f_wwo*qpa;
+        // qpaw  = f_wwo*qpa;
     }
     qpaw=qpaw/f_wwo;
 
@@ -273,7 +275,9 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       hw=coeff[f_ww*2-2]*(2.0f*h)*(2.0f*h)+coeff[f_ww*2-1]*(2.0f*h);
     }
     else {
-      hw  = f_wwo*h;
+      //suggested by Kyle
+      hw  = 2.0f*f_wwo*h;
+      // hw  = f_wwo*h;
     }
     hw=hw/f_wwo;
 
@@ -285,7 +289,9 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       h1w=coeff[f_ww*2-2]*(2.0f*h1)*(2.0f*h1)+coeff[f_ww*2-1]*(2.0f*h1);
     }
     else {
-      h1w  = f_wwo*h1;
+        //suggested by Kyle
+	h1w  = 2.0f*f_wwo*h1;
+        // h1w  = f_wwo*h1;
     }
     h1w=h1w/f_wwo;
 
@@ -295,7 +301,9 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       h2w=coeff[f_ww*2-2]*(2.0f*h2)*(2.0f*h2)+coeff[f_ww*2-1]*(2.0f*h2);
     }
     else {
-      h2w  = f_wwo*h2;
+        //suggested by Kyle
+        //h2w  = f_wwo*h2;
+	h2w  = 2.0f*f_wwo*h2;
     }
     h2w=h2w/f_wwo;
 
@@ -306,7 +314,9 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       h3w=coeff[f_ww*2-2]*(2.0f*h3)*(2.0f*h3)+coeff[f_ww*2-1]*(2.0f*h3);
     }
     else {
-      h3w  = f_wwo*h3;
+      //suggested by Kyle
+      h3w  = 2.0f*f_wwo*h3;
+      //h3w  = f_wwo*h3;
     }
     h3w=h3w/f_wwo;
 
@@ -622,16 +632,16 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                 pdhz4[5] * _w1(i + 1, j, k + 2) +
                 pdhz4[6] * _w1(i + 1, j, k + 3)));
 
+#else
+    vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
+    vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
+#endif
     f_r     = r5[pos];
     f_rtmp  = h2*(vs1+vs2);
     f_xz    = xz[pos]  + xmu2*(vs1+vs2) + vx1*f_r; 
     r5[pos] = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     xz[pos] = (f_xz + d_DT*f_rtmp)*f_dcrj;
-#else
-    vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
-    vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
-#endif
 
     // yz
 
@@ -683,13 +693,12 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
 
-    //xx[pos] = 1.0;
-
     pos     = pos_im1;
   }
 }
 
 
+#define LDG(x) x
 __launch_bounds__(512,2)
 __global__ void 
 dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict__ zz,
@@ -719,7 +728,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        const _prec *__restrict__ d_vx2, 
        const int *__restrict__ d_ww, 
        const _prec *__restrict__ d_wwo,
-       int NX, int rankx, int ranky, 
+       int NX, int ny, int nz, int rankx, int ranky, 
        int nzt, int s_i, int e_i, int s_j, int e_j) 
 { 
   register int   i,  j,  k;
@@ -737,17 +746,112 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   register _prec f_v1, v1_im1, v1_ip1, v1_im2;
   register _prec f_w1, w1_im1, w1_im2, w1_ip1;
   _prec f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
-  int maxk, mink=align+3;
+  int maxk, mink;
+
+  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+                        0.5625000000000000, -0.0625000000000000};
+  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const float phdz4[7] = {-0.0026041666666667, 0.0937500000000000,
+                          -0.6796875000000000, -0.0000000000000000,
+                          0.6796875000000000,  -0.0937500000000000,
+                          0.0026041666666667};
+  const float phdz4r[6][9] = {
+      {1.5373923010673116, -1.0330083346742178, -0.6211677623382129,
+       -0.0454110758451345, 0.1680934225988761, -0.0058985508086226,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.8713921425924012, -0.1273679143938725, -0.9297550647681331,
+       0.1912595577524762, -0.0050469052908678, -0.0004818158920039,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0563333965151294, 0.3996393739211770, 0.0536007135209481,
+       -0.5022638816465500, -0.0083321572725344, 0.0010225549618299,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0132930497153990, -0.0706942590708847, 0.5596445380498726,
+       0.1434031863528334, -0.7456356868769503, 0.1028431844156395,
+       -0.0028540125859095, 0.0000000000000000, 0.0000000000000000},
+      {0.0025849423769932, -0.0492307522105194, 0.0524552477068130,
+       0.5317248489238559, 0.0530169938441240, -0.6816971139746001,
+       0.0937500000000000, -0.0026041666666667, 0.0000000000000000},
+      {0.0009619461344193, 0.0035553215968974, -0.0124936029037323,
+       -0.0773639466787397, 0.6736586580761996, 0.0002232904416222,
+       -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
+  const float dz4r[6][7] = {
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000},
+      {1.7779989465546748, -1.3337480247900155, -0.7775013168066564,
+       0.3332503950419969, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000},
+      {0.4410217341392059, 0.1730842484889890, -0.4487228323259926,
+       -0.1653831503022022, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000},
+      {-0.1798793213882701, 0.2757257254150788, 0.9597948548284453,
+       -1.1171892610431817, 0.0615480021879277, 0.0000000000000000,
+       0.0000000000000000},
+      {-0.0153911381507088, -0.0568851455503591, 0.1998976464597171,
+       0.8628231468598346, -1.0285385292191949, 0.0380940196007109,
+       0.0000000000000000},
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       -0.0416666666666667, 1.1250000000000000, -1.1250000000000000,
+       0.0416666666666667}};
+  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+                         0.5625000000000000, -0.0625000000000000};
+  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+                         0.5625000000000000, -0.0625000000000000};
+  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+                        0.5625000000000000, -0.0625000000000000};
+  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+  const float pdhz4[7] = {-0.0026041666666667, 0.0937500000000000,
+                          -0.6796875000000000, -0.0000000000000000,
+                          0.6796875000000000,  -0.0937500000000000,
+                          0.0026041666666667};
+  const float pdhz4r[6][9] = {
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 1.5886075042755419, -2.2801810182668114,
+       0.8088980291471826, -0.1316830205960989, 0.0143585054401857,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.4823226655921295, 0.0574614517751295,
+       -0.5663203488781653, 0.0309656800624243, -0.0044294485515179,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, -0.0174954311279016, 0.4325508330649349,
+       0.3111668377093504, -0.8538512002386446, 0.1314757107290064,
+       -0.0038467501367455, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, -0.1277481742492071, 0.2574468839590017,
+       0.4155794781917712, -0.0115571196122084, -0.6170517361659126,
+       0.0857115441015996, -0.0023808762250444, 0.0000000000000000},
+      {0.0000000000000000, 0.0064191319587820, -0.0164033832904366,
+       -0.0752421418813823, 0.6740179057989464, -0.0002498459192428,
+       -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
     
   k    = blockIdx.x*blockDim.x+threadIdx.x+align;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
+           
+  mink = align+3;
+  maxk = nzt + align - 6;
 
-  maxk = nzt + align -1;
+  if (j >= 4 + 2 * ngsl + ny)
+    return;
+  if (j >= e_j)
+    return;
 
-  if (k < mink || k > maxk || j > e_j) return;
+  if (k >= nzt + align - 6)
+    return;
+
+  //if (k < mink || k > maxk) return;
   
 
-  i    = e_i;
+  i    = e_i - 1;
   pos  = i*d_slice_1+j*d_yline_1+k;
 
 
@@ -764,14 +868,20 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
 
-  for(i=e_i;i>=s_i;i--)
-  {
+
+  if (j == s_j && k == align + 3) {
+          printf("running stress attenuation: %d %d %d., \n", i, j, k);
+}
+
+  for(i=e_i-1;i>s_i-1;i--)
+  {         
     f_vx1 = d_vx1[pos];
     f_vx2 = d_vx2[pos];
     f_ww  = d_ww[pos];
     f_wwo = d_wwo[pos];
     
     f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
+
 
     pos_km2  = pos-2;
     pos_km1  = pos-1;
@@ -805,7 +915,9 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       qpaw=coeff[f_ww*2-2]*(2.*qpa)*(2.*qpa)+coeff[f_ww*2-1]*(2.*qpa);
     }
     else {
-      qpaw  = f_wwo*qpa;
+        //suggested by Kyle
+	qpaw  = 2.0f*f_wwo*qpa;
+        // qpaw  = f_wwo*qpa;
     }
     qpaw=qpaw/f_wwo;
 
@@ -818,7 +930,9 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       hw=coeff[f_ww*2-2]*(2.0f*h)*(2.0f*h)+coeff[f_ww*2-1]*(2.0f*h);
     }
     else {
-      hw  = f_wwo*h;
+      //suggested by Kyle
+      hw  = 2.0f*f_wwo*h;
+      // hw  = f_wwo*h;
     }
     hw=hw/f_wwo;
 
@@ -830,7 +944,9 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       h1w=coeff[f_ww*2-2]*(2.0f*h1)*(2.0f*h1)+coeff[f_ww*2-1]*(2.0f*h1);
     }
     else {
-      h1w  = f_wwo*h1;
+        //suggested by Kyle
+	h1w  = 2.0f*f_wwo*h1;
+        // h1w  = f_wwo*h1;
     }
     h1w=h1w/f_wwo;
 
@@ -840,7 +956,9 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       h2w=coeff[f_ww*2-2]*(2.0f*h2)*(2.0f*h2)+coeff[f_ww*2-1]*(2.0f*h2);
     }
     else {
-      h2w  = f_wwo*h2;
+        //suggested by Kyle
+        //h2w  = f_wwo*h2;
+	h2w  = 2.0f*f_wwo*h2;
     }
     h2w=h2w/f_wwo;
 
@@ -851,7 +969,9 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       h3w=coeff[f_ww*2-2]*(2.0f*h3)*(2.0f*h3)+coeff[f_ww*2-1]*(2.0f*h3);
     }
     else {
-      h3w  = f_wwo*h3;
+      //suggested by Kyle
+      h3w  = 2.0f*f_wwo*h3;
+      //h3w  = f_wwo*h3;
     }
     h3w=h3w/f_wwo;
 
@@ -893,10 +1013,190 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     w1_im1   = w1_im2;
     w1_im2   = w1[pos_im2];
 
+    // xx, yy, zz
 
-    vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
-    vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
-    vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
+#ifdef CURVILINEAR
+  float Jii = _f_c(i, j) * _g3_c(nz - 1 - k - 6);
+  Jii = 1.0 * 1.0 / Jii;
+  // xx, yy, zz
+  float vs1 = dx4[1] * _u1(i, j, nz - 1 - k - 6) +
+              dx4[0] * _u1(i - 1, j, nz - 1 - k - 6) +
+              dx4[2] * _u1(i + 1, j, nz - 1 - k - 6) +
+              dx4[3] * _u1(i + 2, j, nz - 1 - k - 6) -
+              Jii * _g_c(nz - 1 - k - 6) *
+                  (px4[1] * _f1_1(i, j) *
+                       (phdz4r[k][8] * _u1(i, j, nz - 9) +
+                        phdz4r[k][7] * _u1(i, j, nz - 8) +
+                        phdz4r[k][6] * _u1(i, j, nz - 7) +
+                        phdz4r[k][5] * _u1(i, j, nz - 6) +
+                        phdz4r[k][4] * _u1(i, j, nz - 5) +
+                        phdz4r[k][3] * _u1(i, j, nz - 4) +
+                        phdz4r[k][2] * _u1(i, j, nz - 3) +
+                        phdz4r[k][1] * _u1(i, j, nz - 2) +
+                        phdz4r[k][0] * _u1(i, j, nz - 1)) +
+                   px4[0] * _f1_1(i - 1, j) *
+                       (phdz4r[k][8] * _u1(i - 1, j, nz - 9) +
+                        phdz4r[k][7] * _u1(i - 1, j, nz - 8) +
+                        phdz4r[k][6] * _u1(i - 1, j, nz - 7) +
+                        phdz4r[k][5] * _u1(i - 1, j, nz - 6) +
+                        phdz4r[k][4] * _u1(i - 1, j, nz - 5) +
+                        phdz4r[k][3] * _u1(i - 1, j, nz - 4) +
+                        phdz4r[k][2] * _u1(i - 1, j, nz - 3) +
+                        phdz4r[k][1] * _u1(i - 1, j, nz - 2) +
+                        phdz4r[k][0] * _u1(i - 1, j, nz - 1)) +
+                   px4[2] * _f1_1(i + 1, j) *
+                       (phdz4r[k][8] * _u1(i + 1, j, nz - 9) +
+                        phdz4r[k][7] * _u1(i + 1, j, nz - 8) +
+                        phdz4r[k][6] * _u1(i + 1, j, nz - 7) +
+                        phdz4r[k][5] * _u1(i + 1, j, nz - 6) +
+                        phdz4r[k][4] * _u1(i + 1, j, nz - 5) +
+                        phdz4r[k][3] * _u1(i + 1, j, nz - 4) +
+                        phdz4r[k][2] * _u1(i + 1, j, nz - 3) +
+                        phdz4r[k][1] * _u1(i + 1, j, nz - 2) +
+                        phdz4r[k][0] * _u1(i + 1, j, nz - 1)) +
+                   px4[3] * _f1_1(i + 2, j) *
+                       (phdz4r[k][8] * _u1(i + 2, j, nz - 9) +
+                        phdz4r[k][7] * _u1(i + 2, j, nz - 8) +
+                        phdz4r[k][6] * _u1(i + 2, j, nz - 7) +
+                        phdz4r[k][5] * _u1(i + 2, j, nz - 6) +
+                        phdz4r[k][4] * _u1(i + 2, j, nz - 5) +
+                        phdz4r[k][3] * _u1(i + 2, j, nz - 4) +
+                        phdz4r[k][2] * _u1(i + 2, j, nz - 3) +
+                        phdz4r[k][1] * _u1(i + 2, j, nz - 2) +
+                        phdz4r[k][0] * _u1(i + 2, j, nz - 1)));
+  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - k - 6) +
+              dhy4[0] * _v1(i, j - 2, nz - 1 - k - 6) +
+              dhy4[1] * _v1(i, j - 1, nz - 1 - k - 6) +
+              dhy4[3] * _v1(i, j + 1, nz - 1 - k - 6) -
+              Jii * _g_c(nz - 1 - k - 6) *
+                  (phy4[2] * _f2_2(i, j) *
+                       (phdz4r[k][8] * _v1(i, j, nz - 9) +
+                        phdz4r[k][7] * _v1(i, j, nz - 8) +
+                        phdz4r[k][6] * _v1(i, j, nz - 7) +
+                        phdz4r[k][5] * _v1(i, j, nz - 6) +
+                        phdz4r[k][4] * _v1(i, j, nz - 5) +
+                        phdz4r[k][3] * _v1(i, j, nz - 4) +
+                        phdz4r[k][2] * _v1(i, j, nz - 3) +
+                        phdz4r[k][1] * _v1(i, j, nz - 2) +
+                        phdz4r[k][0] * _v1(i, j, nz - 1)) +
+                   phy4[0] * _f2_2(i, j - 2) *
+                       (phdz4r[k][8] * _v1(i, j - 2, nz - 9) +
+                        phdz4r[k][7] * _v1(i, j - 2, nz - 8) +
+                        phdz4r[k][6] * _v1(i, j - 2, nz - 7) +
+                        phdz4r[k][5] * _v1(i, j - 2, nz - 6) +
+                        phdz4r[k][4] * _v1(i, j - 2, nz - 5) +
+                        phdz4r[k][3] * _v1(i, j - 2, nz - 4) +
+                        phdz4r[k][2] * _v1(i, j - 2, nz - 3) +
+                        phdz4r[k][1] * _v1(i, j - 2, nz - 2) +
+                        phdz4r[k][0] * _v1(i, j - 2, nz - 1)) +
+                   phy4[1] * _f2_2(i, j - 1) *
+                       (phdz4r[k][8] * _v1(i, j - 1, nz - 9) +
+                        phdz4r[k][7] * _v1(i, j - 1, nz - 8) +
+                        phdz4r[k][6] * _v1(i, j - 1, nz - 7) +
+                        phdz4r[k][5] * _v1(i, j - 1, nz - 6) +
+                        phdz4r[k][4] * _v1(i, j - 1, nz - 5) +
+                        phdz4r[k][3] * _v1(i, j - 1, nz - 4) +
+                        phdz4r[k][2] * _v1(i, j - 1, nz - 3) +
+                        phdz4r[k][1] * _v1(i, j - 1, nz - 2) +
+                        phdz4r[k][0] * _v1(i, j - 1, nz - 1)) +
+                   phy4[3] * _f2_2(i, j + 1) *
+                       (phdz4r[k][8] * _v1(i, j + 1, nz - 9) +
+                        phdz4r[k][7] * _v1(i, j + 1, nz - 8) +
+                        phdz4r[k][6] * _v1(i, j + 1, nz - 7) +
+                        phdz4r[k][5] * _v1(i, j + 1, nz - 6) +
+                        phdz4r[k][4] * _v1(i, j + 1, nz - 5) +
+                        phdz4r[k][3] * _v1(i, j + 1, nz - 4) +
+                        phdz4r[k][2] * _v1(i, j + 1, nz - 3) +
+                        phdz4r[k][1] * _v1(i, j + 1, nz - 2) +
+                        phdz4r[k][0] * _v1(i, j + 1, nz - 1)));
+  float vs3 =
+      Jii *
+      Jii * _g_c(nz - 1 - k - 6) *
+          (phy4[2] * _f2_2(i, j) *
+               (phdz4r[k][8] * _v1(i, j, nz - 9) +
+                phdz4r[k][7] * _v1(i, j, nz - 8) +
+                phdz4r[k][6] * _v1(i, j, nz - 7) +
+                phdz4r[k][5] * _v1(i, j, nz - 6) +
+                phdz4r[k][4] * _v1(i, j, nz - 5) +
+                phdz4r[k][3] * _v1(i, j, nz - 4) +
+                phdz4r[k][2] * _v1(i, j, nz - 3) +
+                phdz4r[k][1] * _v1(i, j, nz - 2) +
+                phdz4r[k][0] * _v1(i, j, nz - 1)) +
+           phy4[0] * _f2_2(i, j - 2) *
+               (phdz4r[k][8] * _v1(i, j - 2, nz - 9) +
+                phdz4r[k][7] * _v1(i, j - 2, nz - 8) +
+                phdz4r[k][6] * _v1(i, j - 2, nz - 7) +
+                phdz4r[k][5] * _v1(i, j - 2, nz - 6) +
+                phdz4r[k][4] * _v1(i, j - 2, nz - 5) +
+                phdz4r[k][3] * _v1(i, j - 2, nz - 4) +
+                phdz4r[k][2] * _v1(i, j - 2, nz - 3) +
+                phdz4r[k][1] * _v1(i, j - 2, nz - 2) +
+                phdz4r[k][0] * _v1(i, j - 2, nz - 1)) +
+           phy4[1] * _f2_2(i, j - 1) *
+               (phdz4r[k][8] * _v1(i, j - 1, nz - 9) +
+                phdz4r[k][7] * _v1(i, j - 1, nz - 8) +
+                phdz4r[k][6] * _v1(i, j - 1, nz - 7) +
+                phdz4r[k][5] * _v1(i, j - 1, nz - 6) +
+                phdz4r[k][4] * _v1(i, j - 1, nz - 5) +
+                phdz4r[k][3] * _v1(i, j - 1, nz - 4) +
+                phdz4r[k][2] * _v1(i, j - 1, nz - 3) +
+                phdz4r[k][1] * _v1(i, j - 1, nz - 2) +
+                phdz4r[k][0] * _v1(i, j - 1, nz - 1)) +
+           phy4[3] * _f2_2(i, j + 1) *
+               (phdz4r[k][8] * _v1(i, j + 1, nz - 9) +
+                phdz4r[k][7] * _v1(i, j + 1, nz - 8) +
+                phdz4r[k][6] * _v1(i, j + 1, nz - 7) +
+                phdz4r[k][5] * _v1(i, j + 1, nz - 6) +
+                phdz4r[k][4] * _v1(i, j + 1, nz - 5) +
+                phdz4r[k][3] * _v1(i, j + 1, nz - 4) +
+                phdz4r[k][2] * _v1(i, j + 1, nz - 3) +
+                phdz4r[k][1] * _v1(i, j + 1, nz - 2) +
+                phdz4r[k][0] * _v1(i, j + 1, nz - 1))) -
+      Jii * _g_c(nz - 1 - k - 6) *
+          (px4[1] * _f1_1(i, j) *
+               (phdz4r[k][8] * _u1(i, j, nz - 9) +
+                phdz4r[k][7] * _u1(i, j, nz - 8) +
+                phdz4r[k][6] * _u1(i, j, nz - 7) +
+                phdz4r[k][5] * _u1(i, j, nz - 6) +
+                phdz4r[k][4] * _u1(i, j, nz - 5) +
+                phdz4r[k][3] * _u1(i, j, nz - 4) +
+                phdz4r[k][2] * _u1(i, j, nz - 3) +
+                phdz4r[k][1] * _u1(i, j, nz - 2) +
+                phdz4r[k][0] * _u1(i, j, nz - 1)) +
+           px4[0] * _f1_1(i - 1, j) *
+               (phdz4r[k][8] * _u1(i - 1, j, nz - 9) +
+                phdz4r[k][7] * _u1(i - 1, j, nz - 8) +
+                phdz4r[k][6] * _u1(i - 1, j, nz - 7) +
+                phdz4r[k][5] * _u1(i - 1, j, nz - 6) +
+                phdz4r[k][4] * _u1(i - 1, j, nz - 5) +
+                phdz4r[k][3] * _u1(i - 1, j, nz - 4) +
+                phdz4r[k][2] * _u1(i - 1, j, nz - 3) +
+                phdz4r[k][1] * _u1(i - 1, j, nz - 2) +
+                phdz4r[k][0] * _u1(i - 1, j, nz - 1)) +
+           px4[2] * _f1_1(i + 1, j) *
+               (phdz4r[k][8] * _u1(i + 1, j, nz - 9) +
+                phdz4r[k][7] * _u1(i + 1, j, nz - 8) +
+                phdz4r[k][6] * _u1(i + 1, j, nz - 7) +
+                phdz4r[k][5] * _u1(i + 1, j, nz - 6) +
+                phdz4r[k][4] * _u1(i + 1, j, nz - 5) +
+                phdz4r[k][3] * _u1(i + 1, j, nz - 4) +
+                phdz4r[k][2] * _u1(i + 1, j, nz - 3) +
+                phdz4r[k][1] * _u1(i + 1, j, nz - 2) +
+                phdz4r[k][0] * _u1(i + 1, j, nz - 1)) +
+           px4[3] * _f1_1(i + 2, j) *
+               (phdz4r[k][8] * _u1(i + 2, j, nz - 9) +
+                phdz4r[k][7] * _u1(i + 2, j, nz - 8) +
+                phdz4r[k][6] * _u1(i + 2, j, nz - 7) +
+                phdz4r[k][5] * _u1(i + 2, j, nz - 6) +
+                phdz4r[k][4] * _u1(i + 2, j, nz - 5) +
+                phdz4r[k][3] * _u1(i + 2, j, nz - 4) +
+                phdz4r[k][2] * _u1(i + 2, j, nz - 3) +
+                phdz4r[k][1] * _u1(i + 2, j, nz - 2) +
+                phdz4r[k][0] * _u1(i + 2, j, nz - 1)));
+#else
+    // Cartesian      
+    //TODO: Implement
+#endif
 
     tmp      = xl*(vs1+vs2+vs3);
 
@@ -924,9 +1224,104 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     f_rtmp   = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1);  
     zz[pos]  = (f_zz + d_DT*f_rtmp)*f_dcrj;
 
-
-    vs1      = d_c1*(u1[pos_jp1] - f_u1)   + d_c2*(u1[pos_jp2] - u1[pos_jm1]);
-    vs2      = d_c1*(f_v1        - v1_im1) + d_c2*(v1_ip1      - v1_im2);
+    // xy
+#ifdef CURVILINEAR
+  float J12i = _f(i, j) * _g3_c(nz - 1 - k - 6);
+  J12i = 1.0 * 1.0 / J12i;
+  vs1 = dy4[1] * _u1(i, j, nz - 1 - k - 6) +
+              dy4[0] * _u1(i, j - 1, nz - 1 - k - 6) +
+              dy4[2] * _u1(i, j + 1, nz - 1 - k - 6) +
+              dy4[3] * _u1(i, j + 2, nz - 1 - k - 6) -
+              J12i * _g_c(nz - 1 - k - 6) *
+                  (py4[1] * _f2_1(i, j) *
+                       (phdz4r[k][8] * _u1(i, j, nz - 9) +
+                        phdz4r[k][7] * _u1(i, j, nz - 8) +
+                        phdz4r[k][6] * _u1(i, j, nz - 7) +
+                        phdz4r[k][5] * _u1(i, j, nz - 6) +
+                        phdz4r[k][4] * _u1(i, j, nz - 5) +
+                        phdz4r[k][3] * _u1(i, j, nz - 4) +
+                        phdz4r[k][2] * _u1(i, j, nz - 3) +
+                        phdz4r[k][1] * _u1(i, j, nz - 2) +
+                        phdz4r[k][0] * _u1(i, j, nz - 1)) +
+                   py4[0] * _f2_1(i, j - 1) *
+                       (phdz4r[k][8] * _u1(i, j - 1, nz - 9) +
+                        phdz4r[k][7] * _u1(i, j - 1, nz - 8) +
+                        phdz4r[k][6] * _u1(i, j - 1, nz - 7) +
+                        phdz4r[k][5] * _u1(i, j - 1, nz - 6) +
+                        phdz4r[k][4] * _u1(i, j - 1, nz - 5) +
+                        phdz4r[k][3] * _u1(i, j - 1, nz - 4) +
+                        phdz4r[k][2] * _u1(i, j - 1, nz - 3) +
+                        phdz4r[k][1] * _u1(i, j - 1, nz - 2) +
+                        phdz4r[k][0] * _u1(i, j - 1, nz - 1)) +
+                   py4[2] * _f2_1(i, j + 1) *
+                       (phdz4r[k][8] * _u1(i, j + 1, nz - 9) +
+                        phdz4r[k][7] * _u1(i, j + 1, nz - 8) +
+                        phdz4r[k][6] * _u1(i, j + 1, nz - 7) +
+                        phdz4r[k][5] * _u1(i, j + 1, nz - 6) +
+                        phdz4r[k][4] * _u1(i, j + 1, nz - 5) +
+                        phdz4r[k][3] * _u1(i, j + 1, nz - 4) +
+                        phdz4r[k][2] * _u1(i, j + 1, nz - 3) +
+                        phdz4r[k][1] * _u1(i, j + 1, nz - 2) +
+                        phdz4r[k][0] * _u1(i, j + 1, nz - 1)) +
+                   py4[3] * _f2_1(i, j + 2) *
+                       (phdz4r[k][8] * _u1(i, j + 2, nz - 9) +
+                        phdz4r[k][7] * _u1(i, j + 2, nz - 8) +
+                        phdz4r[k][6] * _u1(i, j + 2, nz - 7) +
+                        phdz4r[k][5] * _u1(i, j + 2, nz - 6) +
+                        phdz4r[k][4] * _u1(i, j + 2, nz - 5) +
+                        phdz4r[k][3] * _u1(i, j + 2, nz - 4) +
+                        phdz4r[k][2] * _u1(i, j + 2, nz - 3) +
+                        phdz4r[k][1] * _u1(i, j + 2, nz - 2) +
+                        phdz4r[k][0] * _u1(i, j + 2, nz - 1)));
+  vs2 = dhx4[2] * _v1(i, j, nz - 1 - k - 6) +
+              dhx4[0] * _v1(i - 2, j, nz - 1 - k - 6) +
+              dhx4[1] * _v1(i - 1, j, nz - 1 - k - 6) +
+              dhx4[3] * _v1(i + 1, j, nz - 1 - k - 6) -
+              J12i * _g_c(nz - 1 - k - 6) *
+                  (phx4[2] * _f1_2(i, j) *
+                       (phdz4r[k][8] * _v1(i, j, nz - 9) +
+                        phdz4r[k][7] * _v1(i, j, nz - 8) +
+                        phdz4r[k][6] * _v1(i, j, nz - 7) +
+                        phdz4r[k][5] * _v1(i, j, nz - 6) +
+                        phdz4r[k][4] * _v1(i, j, nz - 5) +
+                        phdz4r[k][3] * _v1(i, j, nz - 4) +
+                        phdz4r[k][2] * _v1(i, j, nz - 3) +
+                        phdz4r[k][1] * _v1(i, j, nz - 2) +
+                        phdz4r[k][0] * _v1(i, j, nz - 1)) +
+                   phx4[0] * _f1_2(i - 2, j) *
+                       (phdz4r[k][8] * _v1(i - 2, j, nz - 9) +
+                        phdz4r[k][7] * _v1(i - 2, j, nz - 8) +
+                        phdz4r[k][6] * _v1(i - 2, j, nz - 7) +
+                        phdz4r[k][5] * _v1(i - 2, j, nz - 6) +
+                        phdz4r[k][4] * _v1(i - 2, j, nz - 5) +
+                        phdz4r[k][3] * _v1(i - 2, j, nz - 4) +
+                        phdz4r[k][2] * _v1(i - 2, j, nz - 3) +
+                        phdz4r[k][1] * _v1(i - 2, j, nz - 2) +
+                        phdz4r[k][0] * _v1(i - 2, j, nz - 1)) +
+                   phx4[1] * _f1_2(i - 1, j) *
+                       (phdz4r[k][8] * _v1(i - 1, j, nz - 9) +
+                        phdz4r[k][7] * _v1(i - 1, j, nz - 8) +
+                        phdz4r[k][6] * _v1(i - 1, j, nz - 7) +
+                        phdz4r[k][5] * _v1(i - 1, j, nz - 6) +
+                        phdz4r[k][4] * _v1(i - 1, j, nz - 5) +
+                        phdz4r[k][3] * _v1(i - 1, j, nz - 4) +
+                        phdz4r[k][2] * _v1(i - 1, j, nz - 3) +
+                        phdz4r[k][1] * _v1(i - 1, j, nz - 2) +
+                        phdz4r[k][0] * _v1(i - 1, j, nz - 1)) +
+                   phx4[3] * _f1_2(i + 1, j) *
+                       (phdz4r[k][8] * _v1(i + 1, j, nz - 9) +
+                        phdz4r[k][7] * _v1(i + 1, j, nz - 8) +
+                        phdz4r[k][6] * _v1(i + 1, j, nz - 7) +
+                        phdz4r[k][5] * _v1(i + 1, j, nz - 6) +
+                        phdz4r[k][4] * _v1(i + 1, j, nz - 5) +
+                        phdz4r[k][3] * _v1(i + 1, j, nz - 4) +
+                        phdz4r[k][2] * _v1(i + 1, j, nz - 3) +
+                        phdz4r[k][1] * _v1(i + 1, j, nz - 2) +
+                        phdz4r[k][0] * _v1(i + 1, j, nz - 1)));
+#else
+    // Cartesian
+    //TODO: Implement
+#endif
     f_r      = r4[pos];
     f_rtmp   = h1*(vs1+vs2); 
     f_xy     = xy[pos]  + xmu1*(vs1+vs2) + vx1*f_r;
@@ -934,18 +1329,130 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1);
     xy[pos]  = (f_xy + d_DT*f_rtmp)*f_dcrj;
 
-
-    vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
-    vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
+    // xz
+#ifdef CURVILINEAR
+  float J13i = _f_1(i, j) * _g3(nz - 1 - k - 6);
+  J13i = 1.0 * 1.0 / J13i;
+  vs1 =
+      J13i * (dz4r[k][6] * _u1(i, j, nz - 7) + dz4r[k][5] * _u1(i, j, nz - 6) +
+              dz4r[k][4] * _u1(i, j, nz - 5) + dz4r[k][3] * _u1(i, j, nz - 4) +
+              dz4r[k][2] * _u1(i, j, nz - 3) + dz4r[k][1] * _u1(i, j, nz - 2) +
+              dz4r[k][0] * _u1(i, j, nz - 1));
+  vs2 = dhx4[2] * _w1(i, j, nz - 1 - k - 6) +
+              dhx4[0] * _w1(i - 2, j, nz - 1 - k - 6) +
+              dhx4[1] * _w1(i - 1, j, nz - 1 - k - 6) +
+              dhx4[3] * _w1(i + 1, j, nz - 1 - k - 6) -
+              J13i * _g(nz - 1 - k - 6) *
+                  (phx4[2] * _f1_c(i, j) *
+                       (pdhz4r[k][8] * _w1(i, j, nz - 9) +
+                        pdhz4r[k][7] * _w1(i, j, nz - 8) +
+                        pdhz4r[k][6] * _w1(i, j, nz - 7) +
+                        pdhz4r[k][5] * _w1(i, j, nz - 6) +
+                        pdhz4r[k][4] * _w1(i, j, nz - 5) +
+                        pdhz4r[k][3] * _w1(i, j, nz - 4) +
+                        pdhz4r[k][2] * _w1(i, j, nz - 3) +
+                        pdhz4r[k][1] * _w1(i, j, nz - 2) +
+                        pdhz4r[k][0] * _w1(i, j, nz - 1)) +
+                   phx4[0] * _f1_c(i - 2, j) *
+                       (pdhz4r[k][8] * _w1(i - 2, j, nz - 9) +
+                        pdhz4r[k][7] * _w1(i - 2, j, nz - 8) +
+                        pdhz4r[k][6] * _w1(i - 2, j, nz - 7) +
+                        pdhz4r[k][5] * _w1(i - 2, j, nz - 6) +
+                        pdhz4r[k][4] * _w1(i - 2, j, nz - 5) +
+                        pdhz4r[k][3] * _w1(i - 2, j, nz - 4) +
+                        pdhz4r[k][2] * _w1(i - 2, j, nz - 3) +
+                        pdhz4r[k][1] * _w1(i - 2, j, nz - 2) +
+                        pdhz4r[k][0] * _w1(i - 2, j, nz - 1)) +
+                   phx4[1] * _f1_c(i - 1, j) *
+                       (pdhz4r[k][8] * _w1(i - 1, j, nz - 9) +
+                        pdhz4r[k][7] * _w1(i - 1, j, nz - 8) +
+                        pdhz4r[k][6] * _w1(i - 1, j, nz - 7) +
+                        pdhz4r[k][5] * _w1(i - 1, j, nz - 6) +
+                        pdhz4r[k][4] * _w1(i - 1, j, nz - 5) +
+                        pdhz4r[k][3] * _w1(i - 1, j, nz - 4) +
+                        pdhz4r[k][2] * _w1(i - 1, j, nz - 3) +
+                        pdhz4r[k][1] * _w1(i - 1, j, nz - 2) +
+                        pdhz4r[k][0] * _w1(i - 1, j, nz - 1)) +
+                   phx4[3] * _f1_c(i + 1, j) *
+                       (pdhz4r[k][8] * _w1(i + 1, j, nz - 9) +
+                        pdhz4r[k][7] * _w1(i + 1, j, nz - 8) +
+                        pdhz4r[k][6] * _w1(i + 1, j, nz - 7) +
+                        pdhz4r[k][5] * _w1(i + 1, j, nz - 6) +
+                        pdhz4r[k][4] * _w1(i + 1, j, nz - 5) +
+                        pdhz4r[k][3] * _w1(i + 1, j, nz - 4) +
+                        pdhz4r[k][2] * _w1(i + 1, j, nz - 3) +
+                        pdhz4r[k][1] * _w1(i + 1, j, nz - 2) +
+                        pdhz4r[k][0] * _w1(i + 1, j, nz - 1)));
+#else
+    //TODO: Implement
+#endif
     f_r     = r5[pos];
     f_rtmp  = h2*(vs1+vs2);
     f_xz    = xz[pos]  + xmu2*(vs1+vs2) + vx1*f_r; 
     r5[pos] = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     xz[pos] = (f_xz + d_DT*f_rtmp)*f_dcrj;
-	 
-    vs1     = d_c1*(v1[pos_kp1] - f_v1) + d_c2*(v1[pos_kp2] - v1[pos_km1]);
-    vs2     = d_c1*(w1[pos_jp1] - f_w1) + d_c2*(w1[pos_jp2] - w1[pos_jm1]);
+
+    // yz
+
+#ifdef CURVILINEAR
+  float J23i = _f_2(i, j) * _g3(nz - 1 - k - 6);
+  J23i = 1.0 * 1.0 / J23i;
+  vs1 =
+      J23i * (dz4r[k][6] * _v1(i, j, nz - 7) + dz4r[k][5] * _v1(i, j, nz - 6) +
+              dz4r[k][4] * _v1(i, j, nz - 5) + dz4r[k][3] * _v1(i, j, nz - 4) +
+              dz4r[k][2] * _v1(i, j, nz - 3) + dz4r[k][1] * _v1(i, j, nz - 2) +
+              dz4r[k][0] * _v1(i, j, nz - 1));
+  vs2 = dy4[1] * _w1(i, j, nz - 1 - k - 6) +
+              dy4[0] * _w1(i, j - 1, nz - 1 - k - 6) +
+              dy4[2] * _w1(i, j + 1, nz - 1 - k - 6) +
+              dy4[3] * _w1(i, j + 2, nz - 1 - k - 6) -
+              J23i * _g(nz - 1 - k - 6) *
+                  (py4[1] * _f2_c(i, j) *
+                       (pdhz4r[k][8] * _w1(i, j, nz - 9) +
+                        pdhz4r[k][7] * _w1(i, j, nz - 8) +
+                        pdhz4r[k][6] * _w1(i, j, nz - 7) +
+                        pdhz4r[k][5] * _w1(i, j, nz - 6) +
+                        pdhz4r[k][4] * _w1(i, j, nz - 5) +
+                        pdhz4r[k][3] * _w1(i, j, nz - 4) +
+                        pdhz4r[k][2] * _w1(i, j, nz - 3) +
+                        pdhz4r[k][1] * _w1(i, j, nz - 2) +
+                        pdhz4r[k][0] * _w1(i, j, nz - 1)) +
+                   py4[0] * _f2_c(i, j - 1) *
+                       (pdhz4r[k][8] * _w1(i, j - 1, nz - 9) +
+                        pdhz4r[k][7] * _w1(i, j - 1, nz - 8) +
+                        pdhz4r[k][6] * _w1(i, j - 1, nz - 7) +
+                        pdhz4r[k][5] * _w1(i, j - 1, nz - 6) +
+                        pdhz4r[k][4] * _w1(i, j - 1, nz - 5) +
+                        pdhz4r[k][3] * _w1(i, j - 1, nz - 4) +
+                        pdhz4r[k][2] * _w1(i, j - 1, nz - 3) +
+                        pdhz4r[k][1] * _w1(i, j - 1, nz - 2) +
+                        pdhz4r[k][0] * _w1(i, j - 1, nz - 1)) +
+                   py4[2] * _f2_c(i, j + 1) *
+                       (pdhz4r[k][8] * _w1(i, j + 1, nz - 9) +
+                        pdhz4r[k][7] * _w1(i, j + 1, nz - 8) +
+                        pdhz4r[k][6] * _w1(i, j + 1, nz - 7) +
+                        pdhz4r[k][5] * _w1(i, j + 1, nz - 6) +
+                        pdhz4r[k][4] * _w1(i, j + 1, nz - 5) +
+                        pdhz4r[k][3] * _w1(i, j + 1, nz - 4) +
+                        pdhz4r[k][2] * _w1(i, j + 1, nz - 3) +
+                        pdhz4r[k][1] * _w1(i, j + 1, nz - 2) +
+                        pdhz4r[k][0] * _w1(i, j + 1, nz - 1)) +
+                   py4[3] * _f2_c(i, j + 2) *
+                       (pdhz4r[k][8] * _w1(i, j + 2, nz - 9) +
+                        pdhz4r[k][7] * _w1(i, j + 2, nz - 8) +
+                        pdhz4r[k][6] * _w1(i, j + 2, nz - 7) +
+                        pdhz4r[k][5] * _w1(i, j + 2, nz - 6) +
+                        pdhz4r[k][4] * _w1(i, j + 2, nz - 5) +
+                        pdhz4r[k][3] * _w1(i, j + 2, nz - 4) +
+                        pdhz4r[k][2] * _w1(i, j + 2, nz - 3) +
+                        pdhz4r[k][1] * _w1(i, j + 2, nz - 2) +
+                        pdhz4r[k][0] * _w1(i, j + 2, nz - 1)));
+#else
+    // Cartesian
+    //TODO: Implement
+#endif
+           
     f_r     = r6[pos];
     f_rtmp  = h3*(vs1+vs2);
     f_yz    = yz[pos]  + xmu3*(vs1+vs2) + vx1*f_r;
@@ -953,11 +1460,6 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
 
-  if (k == mink && i == s_i) {
-        printf("xx = %g vs1 = %g  \n", xx[pos], vx1);
-  }
-
     pos     = pos_im1;
   }
 }
-

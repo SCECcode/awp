@@ -30,14 +30,7 @@ void topo_stress_interior_H(topo_t *T)
         }
 
 
-      {
-      //const int blockx = BLOCK_SIZE_Z, blocky = BLOCK_SIZE_Y;
-      //dim3 block(blockx, blocky, 1);
-      //int s_j = ngsl + 2;
-      //int e_j = T->ny + ngsl2 - 1;
-      //dim3 grid ((T->nz+block.x-1)/block.x, (e_j-s_j+1+block.y-1)/block.y,1);
-
-
+     {
      dim3 block(DTOPO_STR_111_X, DTOPO_STR_111_Y,
                  DTOPO_STR_111_Z);
      int3_t size = {(int)T->stress_bounds_right[0] - T->stress_bounds_left[0], 
