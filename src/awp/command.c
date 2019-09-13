@@ -64,6 +64,7 @@
 #include <math.h>
 #include <string.h>
 #include <awp/pmcl3d_cons.h>
+#include <assert.h>
 
 // Default IN3D Values
 const _prec def_TMAX       = 20.00;
@@ -134,15 +135,15 @@ const char def_SOURCEFILE[IN_FILE_LEN] = "";
 const char def_RECVFILE[IN_FILE_LEN] = "";
 
 void parsemultiple(char *optarg, int *val){
-    char *token, *str, *tofree;
     int k;
-    tofree=str=strdup(optarg);
-    for (k=0; k<MAXGRIDS; k++){
-         token=strsep(&str, ",");
-         if (token == NULL) break;
-         else val[k]=atoi(token);
-    }
-    free(tofree);
+    char *token;
+    token = strtok (optarg,",");
+    k = 0;
+    while (token != NULL && k < MAXGRIDS) {
+     val[k] = atoi(token);
+     token = strtok(NULL, ",");
+     k++;
+    } 
 }
 
 void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
@@ -217,6 +218,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
         strcpy(SOURCEFILE, def_SOURCEFILE);
         strcpy(RECVFILE, def_RECVFILE);
 
+
         extern char *optarg;
         static const char *optstring =
             "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:G:z:i:l:h:30:p:s:r:W:1:2:"
@@ -272,6 +274,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
             {"RECVFILE", required_argument, NULL, 109},
         };
 
+
         // If IFAULT=2 and INSRC is not set, then *INSRC = def_INSRC_TPSRC, not
         // def_INSRC
         int insrcIsSet = 0;
@@ -280,6 +283,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
         int c;
 
         while ((c = getopt_long(argc, argv, optstring, long_options, NULL)) !=
+
                -1) {
                 switch (c) {
                         case 'T':
@@ -506,6 +510,9 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                 exit(-1);
                 }
         }
+
+
+
         // If IFAULT=2 and INSRC is not set, then *INSRC = def_INSRC_TPSRC, not
         // def_INSRC
         if (*IFAULT == 2 && !insrcIsSet) {
@@ -519,6 +526,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
            interpreted as 1 and NBGX[0] is set to 0.  This line prevents that.
          */
         if (NBGX[0] == 0) NBGX[0] = 1;
+
 
         return;
 }

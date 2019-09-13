@@ -28,8 +28,6 @@
 #include <topography/receivers/receivers.h>
 #include <buffers/buffer.h>
 #include <checksum/checksum.h>
-//#include "cuPrintf.cu"
-//
 
 #define FORCE_HIGH_Q 0
 
@@ -286,6 +284,7 @@ int main(int argc,char **argv)
     _prec tmpvs;
 
     int main_err = 0;
+
 
 //  variable initialization begins 
     //NZ=(int*) calloc(MAXGRIDS, sizeof(int));
