@@ -39,10 +39,6 @@ void topo_stress_interior_H(topo_t *T)
      dim3 loop(0, 0, DTOPO_STR_112_LOOP_Z);
      dim3 grid = set_grid(block, size, loop);
 
-      printf("block.x = %d block.y = %d block.z = %d\n", block.x, block.y,
-                      block.z);
-      printf("grid.x = %d grid.y = %d grid.z = %d\n", grid.x, grid.y, grid.z);
-
       int shift = ngsl + 2;
         dtopo_str_111<<<grid, block, 0, T->stream_i>>>
                          (

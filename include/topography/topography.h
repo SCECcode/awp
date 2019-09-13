@@ -9,6 +9,7 @@
 
 #include <topography/metrics/metrics.h>
 #include <awp/definitions.h>
+#include <vtk/vtk.h>
 #include <test/test.h>
 
 

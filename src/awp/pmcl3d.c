@@ -22,10 +22,13 @@
 #include <awp/seism.h>
 #include <awp/debug.h>
 #include <awp/calc.h>
+#include <awp/init.h>
 #include <topography/topography.h>
-#include <topography/topography.cuh>
+#include <topography/velocity.cuh>
+#include <topography/stress_attenuation.cuh>
 #include <topography/sources/sources.h>
 #include <topography/receivers/receivers.h>
+#include <topography/geometry/geometry.h>
 #include <buffers/buffer.h>
 #include <checksum/checksum.h>
 
