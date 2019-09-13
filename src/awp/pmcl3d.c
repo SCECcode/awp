@@ -661,6 +661,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     }
     fflush(stdout);
 
+    printf("FILTER: %d %d %d \n", filtorder, srcfilt_b, srcfilt_a); 
     SetDeviceFilterParameters(filtorder, srcfilt_b, srcfilt_a);
 
     tpsrc = (PosInf*) calloc(ngrids, sizeof(PosInf));
