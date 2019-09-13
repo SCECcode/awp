@@ -25,7 +25,7 @@
 #include <awp/init.h>
 #include <topography/topography.h>
 #include <topography/velocity.cuh>
-#include <topography/stress_attenuation.cuh>
+#include <topography/stress.cuh>
 #include <topography/sources/sources.h>
 #include <topography/receivers/receivers.h>
 #include <topography/geometry/geometry.h>
@@ -1586,7 +1586,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                                  DT, *DH,
                                  stream_1, stream_2, stream_i
                                  );
-            topo_bind(&T, d_d1[0], d_lam[0], d_mu[0], d_xx[0], d_yy[0], d_zz[0],
+            topo_bind(&T, d_d1[0], d_lam[0], d_mu[0], 
+                      d_qp[0], d_coeff, d_qs[0], d_vx1[0], d_vx2[0], d_ww[0],
+                      d_wwo[0], d_xx[0], d_yy[0], d_zz[0],
                       d_xy[0], d_xz[0], d_yz[0], d_r1[0], d_r2[0], d_r3[0],
                       d_r4[0], d_r5[0], d_r6[0], d_u1[0], d_v1[0], d_w1[0],
                       d_f_u1[0], d_f_v1[0], d_f_w1[0], d_b_u1[0], d_b_v1[0],

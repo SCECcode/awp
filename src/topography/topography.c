@@ -465,6 +465,13 @@ void topo_bind(topo_t *T,
                _prec*  __restrict__ rho, 
                _prec*  __restrict__ lami, 
                _prec*  __restrict__ mui,
+               _prec *__restrict__  qp,
+               _prec *__restrict__  coeff, 
+               _prec *__restrict__  qs, 
+               _prec *__restrict__ d_vx1, 
+               _prec *__restrict__ d_vx2, 
+               int *__restrict__ d_ww, 
+               _prec *__restrict__ d_wwo,
                _prec*  __restrict__ xx, 
                _prec*  __restrict__ yy, 
                _prec*  __restrict__ zz,
@@ -493,6 +500,13 @@ void topo_bind(topo_t *T,
                     T->rho = rho; 
                     T->lami = lami; 
                     T->mui = mui;
+                    T->qpi     =  qp;     
+                    T->coeff  = coeff; 
+                    T->qsi     = qs;    
+                    T->vx1  = d_vx1; 
+                    T->vx2  = d_vx2; 
+                    T->ww   = d_ww;  
+                    T->wwo  = d_wwo; 
                     T->xx = xx; 
                     T->yy = yy; 
                     T->zz = zz;

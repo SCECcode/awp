@@ -101,7 +101,7 @@ void set_constants(const _prec dh, const _prec dt, const int nxt, const int
 }
 
 #define LDG(x) x
-__launch_bounds__(512,2)
+__launch_bounds__(512)
 __global__ void 
 dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict__ zz,
            _prec*  __restrict__ xy, _prec*  __restrict__ xz, _prec*  __restrict__ yz,
@@ -212,11 +212,6 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   w1_im2 = w1[pos-d_slice_1];
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
-
-
-  if (j == s_j && k == align + 3) {
-          printf("running stress attenuation: %d %d %d., \n", i, j, k);
-}
 
   for(i=e_i-1;i>s_i-1;i--)
   {         
@@ -699,7 +694,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
 
 #define LDG(x) x
-__launch_bounds__(512,2)
+__launch_bounds__(512)
 __global__ void 
 dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict__ zz,
            _prec*  __restrict__ xy, _prec*  __restrict__ xz, _prec*  __restrict__ yz,
@@ -731,7 +726,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        int NX, int ny, int nz, int rankx, int ranky, 
        int nzt, int s_i, int e_i, int s_j, int e_j) 
 { 
-  register int   i,  j,  k;
+  register int   i,  j,  k, kb;
   register int   pos,     pos_ip1, pos_im2, pos_im1;
   register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
   register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
@@ -835,6 +830,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
     
   k    = blockIdx.x*blockDim.x+threadIdx.x+align;
+  kb   = k - align;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
            
   mink = align+3;
@@ -845,7 +841,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   if (j >= e_j)
     return;
 
-  if (k >= nzt + align - 6)
+  if (kb >= 6)
     return;
 
   //if (k < mink || k > maxk) return;
@@ -867,11 +863,6 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   w1_im2 = w1[pos-d_slice_1];
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
-
-
-  if (j == s_j && k == align + 3) {
-          printf("running stress attenuation: %d %d %d., \n", i, j, k);
-}
 
   for(i=e_i-1;i>s_i-1;i--)
   {         
@@ -1015,184 +1006,194 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xx, yy, zz
 
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+#define _v1(i, j, k)                                                           \
+  v1[(k) + align + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+#define _w1(i, j, k)                                                           \
+  w1[(k) + align + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
 #ifdef CURVILINEAR
-  float Jii = _f_c(i, j) * _g3_c(nz - 1 - k - 6);
+  float Jii = _f_c(i, j) * _g3_c(nz - 1 - kb - 6);
   Jii = 1.0 * 1.0 / Jii;
   // xx, yy, zz
-  float vs1 = dx4[1] * _u1(i, j, nz - 1 - k - 6) +
-              dx4[0] * _u1(i - 1, j, nz - 1 - k - 6) +
-              dx4[2] * _u1(i + 1, j, nz - 1 - k - 6) +
-              dx4[3] * _u1(i + 2, j, nz - 1 - k - 6) -
+  float vs1 = dx4[1] * _u1(i, j, nz - 1 - kb - 6) +
+              dx4[0] * _u1(i - 1, j, nz - 1 - kb - 6) +
+              dx4[2] * _u1(i + 1, j, nz - 1 - kb - 6) +
+              dx4[3] * _u1(i + 2, j, nz - 1 - kb - 6) -
               Jii * _g_c(nz - 1 - k - 6) *
                   (px4[1] * _f1_1(i, j) *
-                       (phdz4r[k][8] * _u1(i, j, nz - 9) +
-                        phdz4r[k][7] * _u1(i, j, nz - 8) +
-                        phdz4r[k][6] * _u1(i, j, nz - 7) +
-                        phdz4r[k][5] * _u1(i, j, nz - 6) +
-                        phdz4r[k][4] * _u1(i, j, nz - 5) +
-                        phdz4r[k][3] * _u1(i, j, nz - 4) +
-                        phdz4r[k][2] * _u1(i, j, nz - 3) +
-                        phdz4r[k][1] * _u1(i, j, nz - 2) +
-                        phdz4r[k][0] * _u1(i, j, nz - 1)) +
+                       (phdz4r[kb][8] * _u1(i, j, nz - 9) +
+                        phdz4r[kb][7] * _u1(i, j, nz - 8) +
+                        phdz4r[kb][6] * _u1(i, j, nz - 7) +
+                        phdz4r[kb][5] * _u1(i, j, nz - 6) +
+                        phdz4r[kb][4] * _u1(i, j, nz - 5) +
+                        phdz4r[kb][3] * _u1(i, j, nz - 4) +
+                        phdz4r[kb][2] * _u1(i, j, nz - 3) +
+                        phdz4r[kb][1] * _u1(i, j, nz - 2) +
+                        phdz4r[kb][0] * _u1(i, j, nz - 1)) +
                    px4[0] * _f1_1(i - 1, j) *
-                       (phdz4r[k][8] * _u1(i - 1, j, nz - 9) +
-                        phdz4r[k][7] * _u1(i - 1, j, nz - 8) +
-                        phdz4r[k][6] * _u1(i - 1, j, nz - 7) +
-                        phdz4r[k][5] * _u1(i - 1, j, nz - 6) +
-                        phdz4r[k][4] * _u1(i - 1, j, nz - 5) +
-                        phdz4r[k][3] * _u1(i - 1, j, nz - 4) +
-                        phdz4r[k][2] * _u1(i - 1, j, nz - 3) +
-                        phdz4r[k][1] * _u1(i - 1, j, nz - 2) +
-                        phdz4r[k][0] * _u1(i - 1, j, nz - 1)) +
+                       (phdz4r[kb][8] * _u1(i - 1, j, nz - 9) +
+                        phdz4r[kb][7] * _u1(i - 1, j, nz - 8) +
+                        phdz4r[kb][6] * _u1(i - 1, j, nz - 7) +
+                        phdz4r[kb][5] * _u1(i - 1, j, nz - 6) +
+                        phdz4r[kb][4] * _u1(i - 1, j, nz - 5) +
+                        phdz4r[kb][3] * _u1(i - 1, j, nz - 4) +
+                        phdz4r[kb][2] * _u1(i - 1, j, nz - 3) +
+                        phdz4r[kb][1] * _u1(i - 1, j, nz - 2) +
+                        phdz4r[kb][0] * _u1(i - 1, j, nz - 1)) +
                    px4[2] * _f1_1(i + 1, j) *
-                       (phdz4r[k][8] * _u1(i + 1, j, nz - 9) +
-                        phdz4r[k][7] * _u1(i + 1, j, nz - 8) +
-                        phdz4r[k][6] * _u1(i + 1, j, nz - 7) +
-                        phdz4r[k][5] * _u1(i + 1, j, nz - 6) +
-                        phdz4r[k][4] * _u1(i + 1, j, nz - 5) +
-                        phdz4r[k][3] * _u1(i + 1, j, nz - 4) +
-                        phdz4r[k][2] * _u1(i + 1, j, nz - 3) +
-                        phdz4r[k][1] * _u1(i + 1, j, nz - 2) +
-                        phdz4r[k][0] * _u1(i + 1, j, nz - 1)) +
+                       (phdz4r[kb][8] * _u1(i + 1, j, nz - 9) +
+                        phdz4r[kb][7] * _u1(i + 1, j, nz - 8) +
+                        phdz4r[kb][6] * _u1(i + 1, j, nz - 7) +
+                        phdz4r[kb][5] * _u1(i + 1, j, nz - 6) +
+                        phdz4r[kb][4] * _u1(i + 1, j, nz - 5) +
+                        phdz4r[kb][3] * _u1(i + 1, j, nz - 4) +
+                        phdz4r[kb][2] * _u1(i + 1, j, nz - 3) +
+                        phdz4r[kb][1] * _u1(i + 1, j, nz - 2) +
+                        phdz4r[kb][0] * _u1(i + 1, j, nz - 1)) +
                    px4[3] * _f1_1(i + 2, j) *
-                       (phdz4r[k][8] * _u1(i + 2, j, nz - 9) +
-                        phdz4r[k][7] * _u1(i + 2, j, nz - 8) +
-                        phdz4r[k][6] * _u1(i + 2, j, nz - 7) +
-                        phdz4r[k][5] * _u1(i + 2, j, nz - 6) +
-                        phdz4r[k][4] * _u1(i + 2, j, nz - 5) +
-                        phdz4r[k][3] * _u1(i + 2, j, nz - 4) +
-                        phdz4r[k][2] * _u1(i + 2, j, nz - 3) +
-                        phdz4r[k][1] * _u1(i + 2, j, nz - 2) +
-                        phdz4r[k][0] * _u1(i + 2, j, nz - 1)));
-  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - k - 6) +
-              dhy4[0] * _v1(i, j - 2, nz - 1 - k - 6) +
-              dhy4[1] * _v1(i, j - 1, nz - 1 - k - 6) +
-              dhy4[3] * _v1(i, j + 1, nz - 1 - k - 6) -
+                       (phdz4r[kb][8] * _u1(i + 2, j, nz - 9) +
+                        phdz4r[kb][7] * _u1(i + 2, j, nz - 8) +
+                        phdz4r[kb][6] * _u1(i + 2, j, nz - 7) +
+                        phdz4r[kb][5] * _u1(i + 2, j, nz - 6) +
+                        phdz4r[kb][4] * _u1(i + 2, j, nz - 5) +
+                        phdz4r[kb][3] * _u1(i + 2, j, nz - 4) +
+                        phdz4r[kb][2] * _u1(i + 2, j, nz - 3) +
+                        phdz4r[kb][1] * _u1(i + 2, j, nz - 2) +
+                        phdz4r[kb][0] * _u1(i + 2, j, nz - 1)));
+  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - kb - 6) +
+              dhy4[0] * _v1(i, j - 2, nz - 1 - kb - 6) +
+              dhy4[1] * _v1(i, j - 1, nz - 1 - kb - 6) +
+              dhy4[3] * _v1(i, j + 1, nz - 1 - kb - 6) -
               Jii * _g_c(nz - 1 - k - 6) *
                   (phy4[2] * _f2_2(i, j) *
-                       (phdz4r[k][8] * _v1(i, j, nz - 9) +
-                        phdz4r[k][7] * _v1(i, j, nz - 8) +
-                        phdz4r[k][6] * _v1(i, j, nz - 7) +
-                        phdz4r[k][5] * _v1(i, j, nz - 6) +
-                        phdz4r[k][4] * _v1(i, j, nz - 5) +
-                        phdz4r[k][3] * _v1(i, j, nz - 4) +
-                        phdz4r[k][2] * _v1(i, j, nz - 3) +
-                        phdz4r[k][1] * _v1(i, j, nz - 2) +
-                        phdz4r[k][0] * _v1(i, j, nz - 1)) +
+                       (phdz4r[kb][8] * _v1(i, j, nz - 9) +
+                        phdz4r[kb][7] * _v1(i, j, nz - 8) +
+                        phdz4r[kb][6] * _v1(i, j, nz - 7) +
+                        phdz4r[kb][5] * _v1(i, j, nz - 6) +
+                        phdz4r[kb][4] * _v1(i, j, nz - 5) +
+                        phdz4r[kb][3] * _v1(i, j, nz - 4) +
+                        phdz4r[kb][2] * _v1(i, j, nz - 3) +
+                        phdz4r[kb][1] * _v1(i, j, nz - 2) +
+                        phdz4r[kb][0] * _v1(i, j, nz - 1)) +
                    phy4[0] * _f2_2(i, j - 2) *
-                       (phdz4r[k][8] * _v1(i, j - 2, nz - 9) +
-                        phdz4r[k][7] * _v1(i, j - 2, nz - 8) +
-                        phdz4r[k][6] * _v1(i, j - 2, nz - 7) +
-                        phdz4r[k][5] * _v1(i, j - 2, nz - 6) +
-                        phdz4r[k][4] * _v1(i, j - 2, nz - 5) +
-                        phdz4r[k][3] * _v1(i, j - 2, nz - 4) +
-                        phdz4r[k][2] * _v1(i, j - 2, nz - 3) +
-                        phdz4r[k][1] * _v1(i, j - 2, nz - 2) +
-                        phdz4r[k][0] * _v1(i, j - 2, nz - 1)) +
+                       (phdz4r[kb][8] * _v1(i, j - 2, nz - 9) +
+                        phdz4r[kb][7] * _v1(i, j - 2, nz - 8) +
+                        phdz4r[kb][6] * _v1(i, j - 2, nz - 7) +
+                        phdz4r[kb][5] * _v1(i, j - 2, nz - 6) +
+                        phdz4r[kb][4] * _v1(i, j - 2, nz - 5) +
+                        phdz4r[kb][3] * _v1(i, j - 2, nz - 4) +
+                        phdz4r[kb][2] * _v1(i, j - 2, nz - 3) +
+                        phdz4r[kb][1] * _v1(i, j - 2, nz - 2) +
+                        phdz4r[kb][0] * _v1(i, j - 2, nz - 1)) +
                    phy4[1] * _f2_2(i, j - 1) *
-                       (phdz4r[k][8] * _v1(i, j - 1, nz - 9) +
-                        phdz4r[k][7] * _v1(i, j - 1, nz - 8) +
-                        phdz4r[k][6] * _v1(i, j - 1, nz - 7) +
-                        phdz4r[k][5] * _v1(i, j - 1, nz - 6) +
-                        phdz4r[k][4] * _v1(i, j - 1, nz - 5) +
-                        phdz4r[k][3] * _v1(i, j - 1, nz - 4) +
-                        phdz4r[k][2] * _v1(i, j - 1, nz - 3) +
-                        phdz4r[k][1] * _v1(i, j - 1, nz - 2) +
-                        phdz4r[k][0] * _v1(i, j - 1, nz - 1)) +
+                       (phdz4r[kb][8] * _v1(i, j - 1, nz - 9) +
+                        phdz4r[kb][7] * _v1(i, j - 1, nz - 8) +
+                        phdz4r[kb][6] * _v1(i, j - 1, nz - 7) +
+                        phdz4r[kb][5] * _v1(i, j - 1, nz - 6) +
+                        phdz4r[kb][4] * _v1(i, j - 1, nz - 5) +
+                        phdz4r[kb][3] * _v1(i, j - 1, nz - 4) +
+                        phdz4r[kb][2] * _v1(i, j - 1, nz - 3) +
+                        phdz4r[kb][1] * _v1(i, j - 1, nz - 2) +
+                        phdz4r[kb][0] * _v1(i, j - 1, nz - 1)) +
                    phy4[3] * _f2_2(i, j + 1) *
-                       (phdz4r[k][8] * _v1(i, j + 1, nz - 9) +
-                        phdz4r[k][7] * _v1(i, j + 1, nz - 8) +
-                        phdz4r[k][6] * _v1(i, j + 1, nz - 7) +
-                        phdz4r[k][5] * _v1(i, j + 1, nz - 6) +
-                        phdz4r[k][4] * _v1(i, j + 1, nz - 5) +
-                        phdz4r[k][3] * _v1(i, j + 1, nz - 4) +
-                        phdz4r[k][2] * _v1(i, j + 1, nz - 3) +
-                        phdz4r[k][1] * _v1(i, j + 1, nz - 2) +
-                        phdz4r[k][0] * _v1(i, j + 1, nz - 1)));
+                       (phdz4r[kb][8] * _v1(i, j + 1, nz - 9) +
+                        phdz4r[kb][7] * _v1(i, j + 1, nz - 8) +
+                        phdz4r[kb][6] * _v1(i, j + 1, nz - 7) +
+                        phdz4r[kb][5] * _v1(i, j + 1, nz - 6) +
+                        phdz4r[kb][4] * _v1(i, j + 1, nz - 5) +
+                        phdz4r[kb][3] * _v1(i, j + 1, nz - 4) +
+                        phdz4r[kb][2] * _v1(i, j + 1, nz - 3) +
+                        phdz4r[kb][1] * _v1(i, j + 1, nz - 2) +
+                        phdz4r[kb][0] * _v1(i, j + 1, nz - 1)));
   float vs3 =
       Jii *
-      Jii * _g_c(nz - 1 - k - 6) *
+      Jii * _g_c(nz - 1 - kb - 6) *
           (phy4[2] * _f2_2(i, j) *
-               (phdz4r[k][8] * _v1(i, j, nz - 9) +
-                phdz4r[k][7] * _v1(i, j, nz - 8) +
-                phdz4r[k][6] * _v1(i, j, nz - 7) +
-                phdz4r[k][5] * _v1(i, j, nz - 6) +
-                phdz4r[k][4] * _v1(i, j, nz - 5) +
-                phdz4r[k][3] * _v1(i, j, nz - 4) +
-                phdz4r[k][2] * _v1(i, j, nz - 3) +
-                phdz4r[k][1] * _v1(i, j, nz - 2) +
-                phdz4r[k][0] * _v1(i, j, nz - 1)) +
+               (phdz4r[kb][8] * _v1(i, j, nz - 9) +
+                phdz4r[kb][7] * _v1(i, j, nz - 8) +
+                phdz4r[kb][6] * _v1(i, j, nz - 7) +
+                phdz4r[kb][5] * _v1(i, j, nz - 6) +
+                phdz4r[kb][4] * _v1(i, j, nz - 5) +
+                phdz4r[kb][3] * _v1(i, j, nz - 4) +
+                phdz4r[kb][2] * _v1(i, j, nz - 3) +
+                phdz4r[kb][1] * _v1(i, j, nz - 2) +
+                phdz4r[kb][0] * _v1(i, j, nz - 1)) +
            phy4[0] * _f2_2(i, j - 2) *
-               (phdz4r[k][8] * _v1(i, j - 2, nz - 9) +
-                phdz4r[k][7] * _v1(i, j - 2, nz - 8) +
-                phdz4r[k][6] * _v1(i, j - 2, nz - 7) +
-                phdz4r[k][5] * _v1(i, j - 2, nz - 6) +
-                phdz4r[k][4] * _v1(i, j - 2, nz - 5) +
-                phdz4r[k][3] * _v1(i, j - 2, nz - 4) +
-                phdz4r[k][2] * _v1(i, j - 2, nz - 3) +
-                phdz4r[k][1] * _v1(i, j - 2, nz - 2) +
-                phdz4r[k][0] * _v1(i, j - 2, nz - 1)) +
+               (phdz4r[kb][8] * _v1(i, j - 2, nz - 9) +
+                phdz4r[kb][7] * _v1(i, j - 2, nz - 8) +
+                phdz4r[kb][6] * _v1(i, j - 2, nz - 7) +
+                phdz4r[kb][5] * _v1(i, j - 2, nz - 6) +
+                phdz4r[kb][4] * _v1(i, j - 2, nz - 5) +
+                phdz4r[kb][3] * _v1(i, j - 2, nz - 4) +
+                phdz4r[kb][2] * _v1(i, j - 2, nz - 3) +
+                phdz4r[kb][1] * _v1(i, j - 2, nz - 2) +
+                phdz4r[kb][0] * _v1(i, j - 2, nz - 1)) +
            phy4[1] * _f2_2(i, j - 1) *
-               (phdz4r[k][8] * _v1(i, j - 1, nz - 9) +
-                phdz4r[k][7] * _v1(i, j - 1, nz - 8) +
-                phdz4r[k][6] * _v1(i, j - 1, nz - 7) +
-                phdz4r[k][5] * _v1(i, j - 1, nz - 6) +
-                phdz4r[k][4] * _v1(i, j - 1, nz - 5) +
-                phdz4r[k][3] * _v1(i, j - 1, nz - 4) +
-                phdz4r[k][2] * _v1(i, j - 1, nz - 3) +
-                phdz4r[k][1] * _v1(i, j - 1, nz - 2) +
-                phdz4r[k][0] * _v1(i, j - 1, nz - 1)) +
+               (phdz4r[kb][8] * _v1(i, j - 1, nz - 9) +
+                phdz4r[kb][7] * _v1(i, j - 1, nz - 8) +
+                phdz4r[kb][6] * _v1(i, j - 1, nz - 7) +
+                phdz4r[kb][5] * _v1(i, j - 1, nz - 6) +
+                phdz4r[kb][4] * _v1(i, j - 1, nz - 5) +
+                phdz4r[kb][3] * _v1(i, j - 1, nz - 4) +
+                phdz4r[kb][2] * _v1(i, j - 1, nz - 3) +
+                phdz4r[kb][1] * _v1(i, j - 1, nz - 2) +
+                phdz4r[kb][0] * _v1(i, j - 1, nz - 1)) +
            phy4[3] * _f2_2(i, j + 1) *
-               (phdz4r[k][8] * _v1(i, j + 1, nz - 9) +
-                phdz4r[k][7] * _v1(i, j + 1, nz - 8) +
-                phdz4r[k][6] * _v1(i, j + 1, nz - 7) +
-                phdz4r[k][5] * _v1(i, j + 1, nz - 6) +
-                phdz4r[k][4] * _v1(i, j + 1, nz - 5) +
-                phdz4r[k][3] * _v1(i, j + 1, nz - 4) +
-                phdz4r[k][2] * _v1(i, j + 1, nz - 3) +
-                phdz4r[k][1] * _v1(i, j + 1, nz - 2) +
-                phdz4r[k][0] * _v1(i, j + 1, nz - 1))) -
-      Jii * _g_c(nz - 1 - k - 6) *
+               (phdz4r[kb][8] * _v1(i, j + 1, nz - 9) +
+                phdz4r[kb][7] * _v1(i, j + 1, nz - 8) +
+                phdz4r[kb][6] * _v1(i, j + 1, nz - 7) +
+                phdz4r[kb][5] * _v1(i, j + 1, nz - 6) +
+                phdz4r[kb][4] * _v1(i, j + 1, nz - 5) +
+                phdz4r[kb][3] * _v1(i, j + 1, nz - 4) +
+                phdz4r[kb][2] * _v1(i, j + 1, nz - 3) +
+                phdz4r[kb][1] * _v1(i, j + 1, nz - 2) +
+                phdz4r[kb][0] * _v1(i, j + 1, nz - 1))) -
+      Jii * _g_c(nz - 1 - kb - 6) *
           (px4[1] * _f1_1(i, j) *
-               (phdz4r[k][8] * _u1(i, j, nz - 9) +
-                phdz4r[k][7] * _u1(i, j, nz - 8) +
-                phdz4r[k][6] * _u1(i, j, nz - 7) +
-                phdz4r[k][5] * _u1(i, j, nz - 6) +
-                phdz4r[k][4] * _u1(i, j, nz - 5) +
-                phdz4r[k][3] * _u1(i, j, nz - 4) +
-                phdz4r[k][2] * _u1(i, j, nz - 3) +
-                phdz4r[k][1] * _u1(i, j, nz - 2) +
-                phdz4r[k][0] * _u1(i, j, nz - 1)) +
+               (phdz4r[kb][8] * _u1(i, j, nz - 9) +
+                phdz4r[kb][7] * _u1(i, j, nz - 8) +
+                phdz4r[kb][6] * _u1(i, j, nz - 7) +
+                phdz4r[kb][5] * _u1(i, j, nz - 6) +
+                phdz4r[kb][4] * _u1(i, j, nz - 5) +
+                phdz4r[kb][3] * _u1(i, j, nz - 4) +
+                phdz4r[kb][2] * _u1(i, j, nz - 3) +
+                phdz4r[kb][1] * _u1(i, j, nz - 2) +
+                phdz4r[kb][0] * _u1(i, j, nz - 1)) +
            px4[0] * _f1_1(i - 1, j) *
-               (phdz4r[k][8] * _u1(i - 1, j, nz - 9) +
-                phdz4r[k][7] * _u1(i - 1, j, nz - 8) +
-                phdz4r[k][6] * _u1(i - 1, j, nz - 7) +
-                phdz4r[k][5] * _u1(i - 1, j, nz - 6) +
-                phdz4r[k][4] * _u1(i - 1, j, nz - 5) +
-                phdz4r[k][3] * _u1(i - 1, j, nz - 4) +
-                phdz4r[k][2] * _u1(i - 1, j, nz - 3) +
-                phdz4r[k][1] * _u1(i - 1, j, nz - 2) +
-                phdz4r[k][0] * _u1(i - 1, j, nz - 1)) +
+               (phdz4r[kb][8] * _u1(i - 1, j, nz - 9) +
+                phdz4r[kb][7] * _u1(i - 1, j, nz - 8) +
+                phdz4r[kb][6] * _u1(i - 1, j, nz - 7) +
+                phdz4r[kb][5] * _u1(i - 1, j, nz - 6) +
+                phdz4r[kb][4] * _u1(i - 1, j, nz - 5) +
+                phdz4r[kb][3] * _u1(i - 1, j, nz - 4) +
+                phdz4r[kb][2] * _u1(i - 1, j, nz - 3) +
+                phdz4r[kb][1] * _u1(i - 1, j, nz - 2) +
+                phdz4r[kb][0] * _u1(i - 1, j, nz - 1)) +
            px4[2] * _f1_1(i + 1, j) *
-               (phdz4r[k][8] * _u1(i + 1, j, nz - 9) +
-                phdz4r[k][7] * _u1(i + 1, j, nz - 8) +
-                phdz4r[k][6] * _u1(i + 1, j, nz - 7) +
-                phdz4r[k][5] * _u1(i + 1, j, nz - 6) +
-                phdz4r[k][4] * _u1(i + 1, j, nz - 5) +
-                phdz4r[k][3] * _u1(i + 1, j, nz - 4) +
-                phdz4r[k][2] * _u1(i + 1, j, nz - 3) +
-                phdz4r[k][1] * _u1(i + 1, j, nz - 2) +
-                phdz4r[k][0] * _u1(i + 1, j, nz - 1)) +
+               (phdz4r[kb][8] * _u1(i + 1, j, nz - 9) +
+                phdz4r[kb][7] * _u1(i + 1, j, nz - 8) +
+                phdz4r[kb][6] * _u1(i + 1, j, nz - 7) +
+                phdz4r[kb][5] * _u1(i + 1, j, nz - 6) +
+                phdz4r[kb][4] * _u1(i + 1, j, nz - 5) +
+                phdz4r[kb][3] * _u1(i + 1, j, nz - 4) +
+                phdz4r[kb][2] * _u1(i + 1, j, nz - 3) +
+                phdz4r[kb][1] * _u1(i + 1, j, nz - 2) +
+                phdz4r[kb][0] * _u1(i + 1, j, nz - 1)) +
            px4[3] * _f1_1(i + 2, j) *
-               (phdz4r[k][8] * _u1(i + 2, j, nz - 9) +
-                phdz4r[k][7] * _u1(i + 2, j, nz - 8) +
-                phdz4r[k][6] * _u1(i + 2, j, nz - 7) +
-                phdz4r[k][5] * _u1(i + 2, j, nz - 6) +
-                phdz4r[k][4] * _u1(i + 2, j, nz - 5) +
-                phdz4r[k][3] * _u1(i + 2, j, nz - 4) +
-                phdz4r[k][2] * _u1(i + 2, j, nz - 3) +
-                phdz4r[k][1] * _u1(i + 2, j, nz - 2) +
-                phdz4r[k][0] * _u1(i + 2, j, nz - 1)));
+               (phdz4r[kb][8] * _u1(i + 2, j, nz - 9) +
+                phdz4r[kb][7] * _u1(i + 2, j, nz - 8) +
+                phdz4r[kb][6] * _u1(i + 2, j, nz - 7) +
+                phdz4r[kb][5] * _u1(i + 2, j, nz - 6) +
+                phdz4r[kb][4] * _u1(i + 2, j, nz - 5) +
+                phdz4r[kb][3] * _u1(i + 2, j, nz - 4) +
+                phdz4r[kb][2] * _u1(i + 2, j, nz - 3) +
+                phdz4r[kb][1] * _u1(i + 2, j, nz - 2) +
+                phdz4r[kb][0] * _u1(i + 2, j, nz - 1)));
 #else
     // Cartesian      
     //TODO: Implement
@@ -1226,98 +1227,98 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xy
 #ifdef CURVILINEAR
-  float J12i = _f(i, j) * _g3_c(nz - 1 - k - 6);
+  float J12i = _f(i, j) * _g3_c(nz - 1 - kb - 6);
   J12i = 1.0 * 1.0 / J12i;
-  vs1 = dy4[1] * _u1(i, j, nz - 1 - k - 6) +
-              dy4[0] * _u1(i, j - 1, nz - 1 - k - 6) +
-              dy4[2] * _u1(i, j + 1, nz - 1 - k - 6) +
-              dy4[3] * _u1(i, j + 2, nz - 1 - k - 6) -
-              J12i * _g_c(nz - 1 - k - 6) *
+  vs1 = dy4[1] * _u1(i, j, nz - 1 - kb - 6) +
+              dy4[0] * _u1(i, j - 1, nz - 1 - kb - 6) +
+              dy4[2] * _u1(i, j + 1, nz - 1 - kb - 6) +
+              dy4[3] * _u1(i, j + 2, nz - 1 - kb - 6) -
+              J12i * _g_c(nz - 1 - kb - 6) *
                   (py4[1] * _f2_1(i, j) *
-                       (phdz4r[k][8] * _u1(i, j, nz - 9) +
-                        phdz4r[k][7] * _u1(i, j, nz - 8) +
-                        phdz4r[k][6] * _u1(i, j, nz - 7) +
-                        phdz4r[k][5] * _u1(i, j, nz - 6) +
-                        phdz4r[k][4] * _u1(i, j, nz - 5) +
-                        phdz4r[k][3] * _u1(i, j, nz - 4) +
-                        phdz4r[k][2] * _u1(i, j, nz - 3) +
-                        phdz4r[k][1] * _u1(i, j, nz - 2) +
-                        phdz4r[k][0] * _u1(i, j, nz - 1)) +
+                       (phdz4r[kb][8] * _u1(i, j, nz - 9) +
+                        phdz4r[kb][7] * _u1(i, j, nz - 8) +
+                        phdz4r[kb][6] * _u1(i, j, nz - 7) +
+                        phdz4r[kb][5] * _u1(i, j, nz - 6) +
+                        phdz4r[kb][4] * _u1(i, j, nz - 5) +
+                        phdz4r[kb][3] * _u1(i, j, nz - 4) +
+                        phdz4r[kb][2] * _u1(i, j, nz - 3) +
+                        phdz4r[kb][1] * _u1(i, j, nz - 2) +
+                        phdz4r[kb][0] * _u1(i, j, nz - 1)) +
                    py4[0] * _f2_1(i, j - 1) *
-                       (phdz4r[k][8] * _u1(i, j - 1, nz - 9) +
-                        phdz4r[k][7] * _u1(i, j - 1, nz - 8) +
-                        phdz4r[k][6] * _u1(i, j - 1, nz - 7) +
-                        phdz4r[k][5] * _u1(i, j - 1, nz - 6) +
-                        phdz4r[k][4] * _u1(i, j - 1, nz - 5) +
-                        phdz4r[k][3] * _u1(i, j - 1, nz - 4) +
-                        phdz4r[k][2] * _u1(i, j - 1, nz - 3) +
-                        phdz4r[k][1] * _u1(i, j - 1, nz - 2) +
-                        phdz4r[k][0] * _u1(i, j - 1, nz - 1)) +
+                       (phdz4r[kb][8] * _u1(i, j - 1, nz - 9) +
+                        phdz4r[kb][7] * _u1(i, j - 1, nz - 8) +
+                        phdz4r[kb][6] * _u1(i, j - 1, nz - 7) +
+                        phdz4r[kb][5] * _u1(i, j - 1, nz - 6) +
+                        phdz4r[kb][4] * _u1(i, j - 1, nz - 5) +
+                        phdz4r[kb][3] * _u1(i, j - 1, nz - 4) +
+                        phdz4r[kb][2] * _u1(i, j - 1, nz - 3) +
+                        phdz4r[kb][1] * _u1(i, j - 1, nz - 2) +
+                        phdz4r[kb][0] * _u1(i, j - 1, nz - 1)) +
                    py4[2] * _f2_1(i, j + 1) *
-                       (phdz4r[k][8] * _u1(i, j + 1, nz - 9) +
-                        phdz4r[k][7] * _u1(i, j + 1, nz - 8) +
-                        phdz4r[k][6] * _u1(i, j + 1, nz - 7) +
-                        phdz4r[k][5] * _u1(i, j + 1, nz - 6) +
-                        phdz4r[k][4] * _u1(i, j + 1, nz - 5) +
-                        phdz4r[k][3] * _u1(i, j + 1, nz - 4) +
-                        phdz4r[k][2] * _u1(i, j + 1, nz - 3) +
-                        phdz4r[k][1] * _u1(i, j + 1, nz - 2) +
-                        phdz4r[k][0] * _u1(i, j + 1, nz - 1)) +
+                       (phdz4r[kb][8] * _u1(i, j + 1, nz - 9) +
+                        phdz4r[kb][7] * _u1(i, j + 1, nz - 8) +
+                        phdz4r[kb][6] * _u1(i, j + 1, nz - 7) +
+                        phdz4r[kb][5] * _u1(i, j + 1, nz - 6) +
+                        phdz4r[kb][4] * _u1(i, j + 1, nz - 5) +
+                        phdz4r[kb][3] * _u1(i, j + 1, nz - 4) +
+                        phdz4r[kb][2] * _u1(i, j + 1, nz - 3) +
+                        phdz4r[kb][1] * _u1(i, j + 1, nz - 2) +
+                        phdz4r[kb][0] * _u1(i, j + 1, nz - 1)) +
                    py4[3] * _f2_1(i, j + 2) *
-                       (phdz4r[k][8] * _u1(i, j + 2, nz - 9) +
-                        phdz4r[k][7] * _u1(i, j + 2, nz - 8) +
-                        phdz4r[k][6] * _u1(i, j + 2, nz - 7) +
-                        phdz4r[k][5] * _u1(i, j + 2, nz - 6) +
-                        phdz4r[k][4] * _u1(i, j + 2, nz - 5) +
-                        phdz4r[k][3] * _u1(i, j + 2, nz - 4) +
-                        phdz4r[k][2] * _u1(i, j + 2, nz - 3) +
-                        phdz4r[k][1] * _u1(i, j + 2, nz - 2) +
-                        phdz4r[k][0] * _u1(i, j + 2, nz - 1)));
-  vs2 = dhx4[2] * _v1(i, j, nz - 1 - k - 6) +
-              dhx4[0] * _v1(i - 2, j, nz - 1 - k - 6) +
-              dhx4[1] * _v1(i - 1, j, nz - 1 - k - 6) +
-              dhx4[3] * _v1(i + 1, j, nz - 1 - k - 6) -
-              J12i * _g_c(nz - 1 - k - 6) *
+                       (phdz4r[kb][8] * _u1(i, j + 2, nz - 9) +
+                        phdz4r[kb][7] * _u1(i, j + 2, nz - 8) +
+                        phdz4r[kb][6] * _u1(i, j + 2, nz - 7) +
+                        phdz4r[kb][5] * _u1(i, j + 2, nz - 6) +
+                        phdz4r[kb][4] * _u1(i, j + 2, nz - 5) +
+                        phdz4r[kb][3] * _u1(i, j + 2, nz - 4) +
+                        phdz4r[kb][2] * _u1(i, j + 2, nz - 3) +
+                        phdz4r[kb][1] * _u1(i, j + 2, nz - 2) +
+                        phdz4r[kb][0] * _u1(i, j + 2, nz - 1)));
+  vs2 = dhx4[2] * _v1(i, j, nz - 1 - kb - 6) +
+              dhx4[0] * _v1(i - 2, j, nz - 1 - kb - 6) +
+              dhx4[1] * _v1(i - 1, j, nz - 1 - kb - 6) +
+              dhx4[3] * _v1(i + 1, j, nz - 1 - kb - 6) -
+              J12i * _g_c(nz - 1 - kb - 6) *
                   (phx4[2] * _f1_2(i, j) *
-                       (phdz4r[k][8] * _v1(i, j, nz - 9) +
-                        phdz4r[k][7] * _v1(i, j, nz - 8) +
-                        phdz4r[k][6] * _v1(i, j, nz - 7) +
-                        phdz4r[k][5] * _v1(i, j, nz - 6) +
-                        phdz4r[k][4] * _v1(i, j, nz - 5) +
-                        phdz4r[k][3] * _v1(i, j, nz - 4) +
-                        phdz4r[k][2] * _v1(i, j, nz - 3) +
-                        phdz4r[k][1] * _v1(i, j, nz - 2) +
-                        phdz4r[k][0] * _v1(i, j, nz - 1)) +
+                       (phdz4r[kb][8] * _v1(i, j, nz - 9) +
+                        phdz4r[kb][7] * _v1(i, j, nz - 8) +
+                        phdz4r[kb][6] * _v1(i, j, nz - 7) +
+                        phdz4r[kb][5] * _v1(i, j, nz - 6) +
+                        phdz4r[kb][4] * _v1(i, j, nz - 5) +
+                        phdz4r[kb][3] * _v1(i, j, nz - 4) +
+                        phdz4r[kb][2] * _v1(i, j, nz - 3) +
+                        phdz4r[kb][1] * _v1(i, j, nz - 2) +
+                        phdz4r[kb][0] * _v1(i, j, nz - 1)) +
                    phx4[0] * _f1_2(i - 2, j) *
-                       (phdz4r[k][8] * _v1(i - 2, j, nz - 9) +
-                        phdz4r[k][7] * _v1(i - 2, j, nz - 8) +
-                        phdz4r[k][6] * _v1(i - 2, j, nz - 7) +
-                        phdz4r[k][5] * _v1(i - 2, j, nz - 6) +
-                        phdz4r[k][4] * _v1(i - 2, j, nz - 5) +
-                        phdz4r[k][3] * _v1(i - 2, j, nz - 4) +
-                        phdz4r[k][2] * _v1(i - 2, j, nz - 3) +
-                        phdz4r[k][1] * _v1(i - 2, j, nz - 2) +
-                        phdz4r[k][0] * _v1(i - 2, j, nz - 1)) +
+                       (phdz4r[kb][8] * _v1(i - 2, j, nz - 9) +
+                        phdz4r[kb][7] * _v1(i - 2, j, nz - 8) +
+                        phdz4r[kb][6] * _v1(i - 2, j, nz - 7) +
+                        phdz4r[kb][5] * _v1(i - 2, j, nz - 6) +
+                        phdz4r[kb][4] * _v1(i - 2, j, nz - 5) +
+                        phdz4r[kb][3] * _v1(i - 2, j, nz - 4) +
+                        phdz4r[kb][2] * _v1(i - 2, j, nz - 3) +
+                        phdz4r[kb][1] * _v1(i - 2, j, nz - 2) +
+                        phdz4r[kb][0] * _v1(i - 2, j, nz - 1)) +
                    phx4[1] * _f1_2(i - 1, j) *
-                       (phdz4r[k][8] * _v1(i - 1, j, nz - 9) +
-                        phdz4r[k][7] * _v1(i - 1, j, nz - 8) +
-                        phdz4r[k][6] * _v1(i - 1, j, nz - 7) +
-                        phdz4r[k][5] * _v1(i - 1, j, nz - 6) +
-                        phdz4r[k][4] * _v1(i - 1, j, nz - 5) +
-                        phdz4r[k][3] * _v1(i - 1, j, nz - 4) +
-                        phdz4r[k][2] * _v1(i - 1, j, nz - 3) +
-                        phdz4r[k][1] * _v1(i - 1, j, nz - 2) +
-                        phdz4r[k][0] * _v1(i - 1, j, nz - 1)) +
+                       (phdz4r[kb][8] * _v1(i - 1, j, nz - 9) +
+                        phdz4r[kb][7] * _v1(i - 1, j, nz - 8) +
+                        phdz4r[kb][6] * _v1(i - 1, j, nz - 7) +
+                        phdz4r[kb][5] * _v1(i - 1, j, nz - 6) +
+                        phdz4r[kb][4] * _v1(i - 1, j, nz - 5) +
+                        phdz4r[kb][3] * _v1(i - 1, j, nz - 4) +
+                        phdz4r[kb][2] * _v1(i - 1, j, nz - 3) +
+                        phdz4r[kb][1] * _v1(i - 1, j, nz - 2) +
+                        phdz4r[kb][0] * _v1(i - 1, j, nz - 1)) +
                    phx4[3] * _f1_2(i + 1, j) *
-                       (phdz4r[k][8] * _v1(i + 1, j, nz - 9) +
-                        phdz4r[k][7] * _v1(i + 1, j, nz - 8) +
-                        phdz4r[k][6] * _v1(i + 1, j, nz - 7) +
-                        phdz4r[k][5] * _v1(i + 1, j, nz - 6) +
-                        phdz4r[k][4] * _v1(i + 1, j, nz - 5) +
-                        phdz4r[k][3] * _v1(i + 1, j, nz - 4) +
-                        phdz4r[k][2] * _v1(i + 1, j, nz - 3) +
-                        phdz4r[k][1] * _v1(i + 1, j, nz - 2) +
-                        phdz4r[k][0] * _v1(i + 1, j, nz - 1)));
+                       (phdz4r[kb][8] * _v1(i + 1, j, nz - 9) +
+                        phdz4r[kb][7] * _v1(i + 1, j, nz - 8) +
+                        phdz4r[kb][6] * _v1(i + 1, j, nz - 7) +
+                        phdz4r[kb][5] * _v1(i + 1, j, nz - 6) +
+                        phdz4r[kb][4] * _v1(i + 1, j, nz - 5) +
+                        phdz4r[kb][3] * _v1(i + 1, j, nz - 4) +
+                        phdz4r[kb][2] * _v1(i + 1, j, nz - 3) +
+                        phdz4r[kb][1] * _v1(i + 1, j, nz - 2) +
+                        phdz4r[kb][0] * _v1(i + 1, j, nz - 1)));
 #else
     // Cartesian
     //TODO: Implement
@@ -1331,58 +1332,58 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xz
 #ifdef CURVILINEAR
-  float J13i = _f_1(i, j) * _g3(nz - 1 - k - 6);
+  float J13i = _f_1(i, j) * _g3(nz - 1 - kb - 6);
   J13i = 1.0 * 1.0 / J13i;
   vs1 =
-      J13i * (dz4r[k][6] * _u1(i, j, nz - 7) + dz4r[k][5] * _u1(i, j, nz - 6) +
-              dz4r[k][4] * _u1(i, j, nz - 5) + dz4r[k][3] * _u1(i, j, nz - 4) +
-              dz4r[k][2] * _u1(i, j, nz - 3) + dz4r[k][1] * _u1(i, j, nz - 2) +
-              dz4r[k][0] * _u1(i, j, nz - 1));
-  vs2 = dhx4[2] * _w1(i, j, nz - 1 - k - 6) +
-              dhx4[0] * _w1(i - 2, j, nz - 1 - k - 6) +
-              dhx4[1] * _w1(i - 1, j, nz - 1 - k - 6) +
-              dhx4[3] * _w1(i + 1, j, nz - 1 - k - 6) -
-              J13i * _g(nz - 1 - k - 6) *
+      J13i * (dz4r[kb][6] * _u1(i, j, nz - 7) + dz4r[kb][5] * _u1(i, j, nz - 6) +
+              dz4r[kb][4] * _u1(i, j, nz - 5) + dz4r[kb][3] * _u1(i, j, nz - 4) +
+              dz4r[kb][2] * _u1(i, j, nz - 3) + dz4r[kb][1] * _u1(i, j, nz - 2) +
+              dz4r[kb][0] * _u1(i, j, nz - 1));
+  vs2 = dhx4[2] * _w1(i, j, nz - 1 - kb - 6) +
+              dhx4[0] * _w1(i - 2, j, nz - 1 - kb - 6) +
+              dhx4[1] * _w1(i - 1, j, nz - 1 - kb - 6) +
+              dhx4[3] * _w1(i + 1, j, nz - 1 - kb - 6) -
+              J13i * _g(nz - 1 - kb - 6) *
                   (phx4[2] * _f1_c(i, j) *
-                       (pdhz4r[k][8] * _w1(i, j, nz - 9) +
-                        pdhz4r[k][7] * _w1(i, j, nz - 8) +
-                        pdhz4r[k][6] * _w1(i, j, nz - 7) +
-                        pdhz4r[k][5] * _w1(i, j, nz - 6) +
-                        pdhz4r[k][4] * _w1(i, j, nz - 5) +
-                        pdhz4r[k][3] * _w1(i, j, nz - 4) +
-                        pdhz4r[k][2] * _w1(i, j, nz - 3) +
-                        pdhz4r[k][1] * _w1(i, j, nz - 2) +
-                        pdhz4r[k][0] * _w1(i, j, nz - 1)) +
+                       (pdhz4r[kb][8] * _w1(i, j, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i, j, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i, j, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i, j, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i, j, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i, j, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i, j, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i, j, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i, j, nz - 1)) +
                    phx4[0] * _f1_c(i - 2, j) *
-                       (pdhz4r[k][8] * _w1(i - 2, j, nz - 9) +
-                        pdhz4r[k][7] * _w1(i - 2, j, nz - 8) +
-                        pdhz4r[k][6] * _w1(i - 2, j, nz - 7) +
-                        pdhz4r[k][5] * _w1(i - 2, j, nz - 6) +
-                        pdhz4r[k][4] * _w1(i - 2, j, nz - 5) +
-                        pdhz4r[k][3] * _w1(i - 2, j, nz - 4) +
-                        pdhz4r[k][2] * _w1(i - 2, j, nz - 3) +
-                        pdhz4r[k][1] * _w1(i - 2, j, nz - 2) +
-                        pdhz4r[k][0] * _w1(i - 2, j, nz - 1)) +
+                       (pdhz4r[kb][8] * _w1(i - 2, j, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i - 2, j, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i - 2, j, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i - 2, j, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i - 2, j, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i - 2, j, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i - 2, j, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i - 2, j, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i - 2, j, nz - 1)) +
                    phx4[1] * _f1_c(i - 1, j) *
-                       (pdhz4r[k][8] * _w1(i - 1, j, nz - 9) +
-                        pdhz4r[k][7] * _w1(i - 1, j, nz - 8) +
-                        pdhz4r[k][6] * _w1(i - 1, j, nz - 7) +
-                        pdhz4r[k][5] * _w1(i - 1, j, nz - 6) +
-                        pdhz4r[k][4] * _w1(i - 1, j, nz - 5) +
-                        pdhz4r[k][3] * _w1(i - 1, j, nz - 4) +
-                        pdhz4r[k][2] * _w1(i - 1, j, nz - 3) +
-                        pdhz4r[k][1] * _w1(i - 1, j, nz - 2) +
-                        pdhz4r[k][0] * _w1(i - 1, j, nz - 1)) +
+                       (pdhz4r[kb][8] * _w1(i - 1, j, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i - 1, j, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i - 1, j, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i - 1, j, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i - 1, j, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i - 1, j, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i - 1, j, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i - 1, j, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i - 1, j, nz - 1)) +
                    phx4[3] * _f1_c(i + 1, j) *
-                       (pdhz4r[k][8] * _w1(i + 1, j, nz - 9) +
-                        pdhz4r[k][7] * _w1(i + 1, j, nz - 8) +
-                        pdhz4r[k][6] * _w1(i + 1, j, nz - 7) +
-                        pdhz4r[k][5] * _w1(i + 1, j, nz - 6) +
-                        pdhz4r[k][4] * _w1(i + 1, j, nz - 5) +
-                        pdhz4r[k][3] * _w1(i + 1, j, nz - 4) +
-                        pdhz4r[k][2] * _w1(i + 1, j, nz - 3) +
-                        pdhz4r[k][1] * _w1(i + 1, j, nz - 2) +
-                        pdhz4r[k][0] * _w1(i + 1, j, nz - 1)));
+                       (pdhz4r[kb][8] * _w1(i + 1, j, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i + 1, j, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i + 1, j, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i + 1, j, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i + 1, j, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i + 1, j, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i + 1, j, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i + 1, j, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i + 1, j, nz - 1)));
 #else
     //TODO: Implement
 #endif
@@ -1396,58 +1397,58 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     // yz
 
 #ifdef CURVILINEAR
-  float J23i = _f_2(i, j) * _g3(nz - 1 - k - 6);
+  float J23i = _f_2(i, j) * _g3(nz - 1 - kb - 6);
   J23i = 1.0 * 1.0 / J23i;
   vs1 =
-      J23i * (dz4r[k][6] * _v1(i, j, nz - 7) + dz4r[k][5] * _v1(i, j, nz - 6) +
-              dz4r[k][4] * _v1(i, j, nz - 5) + dz4r[k][3] * _v1(i, j, nz - 4) +
-              dz4r[k][2] * _v1(i, j, nz - 3) + dz4r[k][1] * _v1(i, j, nz - 2) +
-              dz4r[k][0] * _v1(i, j, nz - 1));
-  vs2 = dy4[1] * _w1(i, j, nz - 1 - k - 6) +
-              dy4[0] * _w1(i, j - 1, nz - 1 - k - 6) +
-              dy4[2] * _w1(i, j + 1, nz - 1 - k - 6) +
-              dy4[3] * _w1(i, j + 2, nz - 1 - k - 6) -
-              J23i * _g(nz - 1 - k - 6) *
+      J23i * (dz4r[kb][6] * _v1(i, j, nz - 7) + dz4r[kb][5] * _v1(i, j, nz - 6) +
+              dz4r[kb][4] * _v1(i, j, nz - 5) + dz4r[kb][3] * _v1(i, j, nz - 4) +
+              dz4r[kb][2] * _v1(i, j, nz - 3) + dz4r[kb][1] * _v1(i, j, nz - 2) +
+              dz4r[kb][0] * _v1(i, j, nz - 1));
+  vs2 = dy4[1] * _w1(i, j, nz - 1 - kb - 6) +
+              dy4[0] * _w1(i, j - 1, nz - 1 - kb - 6) +
+              dy4[2] * _w1(i, j + 1, nz - 1 - kb - 6) +
+              dy4[3] * _w1(i, j + 2, nz - 1 - kb - 6) -
+              J23i * _g(nz - 1 - kb - 6) *
                   (py4[1] * _f2_c(i, j) *
-                       (pdhz4r[k][8] * _w1(i, j, nz - 9) +
-                        pdhz4r[k][7] * _w1(i, j, nz - 8) +
-                        pdhz4r[k][6] * _w1(i, j, nz - 7) +
-                        pdhz4r[k][5] * _w1(i, j, nz - 6) +
-                        pdhz4r[k][4] * _w1(i, j, nz - 5) +
-                        pdhz4r[k][3] * _w1(i, j, nz - 4) +
-                        pdhz4r[k][2] * _w1(i, j, nz - 3) +
-                        pdhz4r[k][1] * _w1(i, j, nz - 2) +
-                        pdhz4r[k][0] * _w1(i, j, nz - 1)) +
+                       (pdhz4r[kb][8] * _w1(i, j, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i, j, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i, j, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i, j, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i, j, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i, j, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i, j, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i, j, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i, j, nz - 1)) +
                    py4[0] * _f2_c(i, j - 1) *
-                       (pdhz4r[k][8] * _w1(i, j - 1, nz - 9) +
-                        pdhz4r[k][7] * _w1(i, j - 1, nz - 8) +
-                        pdhz4r[k][6] * _w1(i, j - 1, nz - 7) +
-                        pdhz4r[k][5] * _w1(i, j - 1, nz - 6) +
-                        pdhz4r[k][4] * _w1(i, j - 1, nz - 5) +
-                        pdhz4r[k][3] * _w1(i, j - 1, nz - 4) +
-                        pdhz4r[k][2] * _w1(i, j - 1, nz - 3) +
-                        pdhz4r[k][1] * _w1(i, j - 1, nz - 2) +
-                        pdhz4r[k][0] * _w1(i, j - 1, nz - 1)) +
+                       (pdhz4r[kb][8] * _w1(i, j - 1, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i, j - 1, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i, j - 1, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i, j - 1, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i, j - 1, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i, j - 1, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i, j - 1, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i, j - 1, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i, j - 1, nz - 1)) +
                    py4[2] * _f2_c(i, j + 1) *
-                       (pdhz4r[k][8] * _w1(i, j + 1, nz - 9) +
-                        pdhz4r[k][7] * _w1(i, j + 1, nz - 8) +
-                        pdhz4r[k][6] * _w1(i, j + 1, nz - 7) +
-                        pdhz4r[k][5] * _w1(i, j + 1, nz - 6) +
-                        pdhz4r[k][4] * _w1(i, j + 1, nz - 5) +
-                        pdhz4r[k][3] * _w1(i, j + 1, nz - 4) +
-                        pdhz4r[k][2] * _w1(i, j + 1, nz - 3) +
-                        pdhz4r[k][1] * _w1(i, j + 1, nz - 2) +
-                        pdhz4r[k][0] * _w1(i, j + 1, nz - 1)) +
+                       (pdhz4r[kb][8] * _w1(i, j + 1, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i, j + 1, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i, j + 1, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i, j + 1, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i, j + 1, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i, j + 1, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i, j + 1, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i, j + 1, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i, j + 1, nz - 1)) +
                    py4[3] * _f2_c(i, j + 2) *
-                       (pdhz4r[k][8] * _w1(i, j + 2, nz - 9) +
-                        pdhz4r[k][7] * _w1(i, j + 2, nz - 8) +
-                        pdhz4r[k][6] * _w1(i, j + 2, nz - 7) +
-                        pdhz4r[k][5] * _w1(i, j + 2, nz - 6) +
-                        pdhz4r[k][4] * _w1(i, j + 2, nz - 5) +
-                        pdhz4r[k][3] * _w1(i, j + 2, nz - 4) +
-                        pdhz4r[k][2] * _w1(i, j + 2, nz - 3) +
-                        pdhz4r[k][1] * _w1(i, j + 2, nz - 2) +
-                        pdhz4r[k][0] * _w1(i, j + 2, nz - 1)));
+                       (pdhz4r[kb][8] * _w1(i, j + 2, nz - 9) +
+                        pdhz4r[kb][7] * _w1(i, j + 2, nz - 8) +
+                        pdhz4r[kb][6] * _w1(i, j + 2, nz - 7) +
+                        pdhz4r[kb][5] * _w1(i, j + 2, nz - 6) +
+                        pdhz4r[kb][4] * _w1(i, j + 2, nz - 5) +
+                        pdhz4r[kb][3] * _w1(i, j + 2, nz - 4) +
+                        pdhz4r[kb][2] * _w1(i, j + 2, nz - 3) +
+                        pdhz4r[kb][1] * _w1(i, j + 2, nz - 2) +
+                        pdhz4r[kb][0] * _w1(i, j + 2, nz - 1)));
 #else
     // Cartesian
     //TODO: Implement
