@@ -3,6 +3,9 @@ add_subdirectory(initializations)
 add_subdirectory(metrics)
 add_subdirectory(readers)
 add_subdirectory(geometry)
+add_subdirectory(input)
+add_subdirectory(sources)
+add_subdirectory(receivers)
 
 set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h     
@@ -37,6 +40,9 @@ set(LIBRARIES
     geometry
     topography_readers
     vtk
+    topography_input
+    topography_sources
+    topography_receivers
     )
 
 set(UNOPT_LIBRARIES ${LIBRARIES} unoptimized_kernels)
@@ -46,7 +52,7 @@ set(OPT_ATTENUATION_LIBRARIES ${LIBRARIES} optimized_attenuation_kernels nvTools
 
 # Unoptimized version
 add_library(topography
-        topography.c topography.cu geometry.c host.c
+        topography.c topography.cu geometry.c host.c grids.c
         ${UNOPT_HEADERS}
         )
 
@@ -62,6 +68,7 @@ target_link_libraries(topography
 # Optimized version
 add_library(opt_topography
         topography.c opt_topography.cu velocity.cu stress.cu geometry.c host.c
+        grids.c
         ${OPT_HEADERS}
         )
 

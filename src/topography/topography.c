@@ -461,3 +461,60 @@ void topo_set_stress_offset_y(const topo_t *T, int *offset)
         offset[3] = T->off_x[3];
 }
 
+void topo_bind(topo_t *T,
+               _prec*  __restrict__ rho, 
+               _prec*  __restrict__ lami, 
+               _prec*  __restrict__ mui,
+               _prec*  __restrict__ xx, 
+               _prec*  __restrict__ yy, 
+               _prec*  __restrict__ zz,
+               _prec*  __restrict__ xy, 
+               _prec*  __restrict__ xz, 
+               _prec*  __restrict__ yz,
+               _prec*  __restrict__ r1, 
+               _prec*  __restrict__ r2,  
+               _prec*  __restrict__ r3, 
+               _prec*  __restrict__ r4, 
+               _prec*  __restrict__ r5,  
+               _prec*  __restrict__ r6,
+               _prec*  __restrict__ u1, 
+               _prec*  __restrict__ v1,    
+               _prec*  __restrict__ w1,
+               _prec*  __restrict__ f_u1, 
+               _prec*  __restrict__ f_v1,    
+               _prec*  __restrict__ f_w1,
+               _prec*  __restrict__ b_u1, 
+               _prec*  __restrict__ b_v1,    
+               _prec*  __restrict__ b_w1,
+               _prec*  __restrict__ dcrjx, 
+               _prec*  __restrict__ dcrjy,    
+               _prec*  __restrict__ dcrjz)
+{
+                    T->rho = rho; 
+                    T->lami = lami; 
+                    T->mui = mui;
+                    T->xx = xx; 
+                    T->yy = yy; 
+                    T->zz = zz;
+                    T->xy = xy; 
+                    T->xz = xz; 
+                    T->yz = yz;
+                    T->r1 = r1; 
+                    T->r2 = r2; 
+                    T->r3 = r3; 
+                    T->r4 = r4; 
+                    T->r5 = r5; 
+                    T->r6 = r6;
+                    T->u1 = u1; 
+                    T->v1 = v1; 
+                    T->w1 = w1;
+                    T->f_u1 = f_u1; 
+                    T->f_v1 = f_v1; 
+                    T->f_w1 = f_w1;
+                    T->b_u1 = b_u1; 
+                    T->b_v1 = b_v1; 
+                    T->b_w1 = b_w1;
+                    T->dcrjx = dcrjx; 
+                    T->dcrjy = dcrjy; 
+                    T->dcrjz = dcrjz;
+}

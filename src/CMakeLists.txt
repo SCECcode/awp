@@ -9,4 +9,5 @@ add_subdirectory(buffers)
 add_subdirectory(readers)
 add_subdirectory(vtk)
 add_subdirectory(test)
+add_subdirectory(checksum)
 

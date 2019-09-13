@@ -329,7 +329,34 @@ void topo_set_stress_grid_right_size(const topo_t *T, dim3 *right);
 void topo_set_stress_offset_x(const topo_t *T, int *offset);
 void topo_set_stress_offset_y(const topo_t *T, int *offset);
 
-
+void topo_bind(topo_t *T,
+               _prec*  __restrict__ rho, 
+               _prec*  __restrict__ lami, 
+               _prec*  __restrict__ mui,
+               _prec*  __restrict__ xx, 
+               _prec*  __restrict__ yy, 
+               _prec*  __restrict__ zz,
+               _prec*  __restrict__ xy, 
+               _prec*  __restrict__ xz, 
+               _prec*  __restrict__ yz,
+               _prec*  __restrict__ r1, 
+               _prec*  __restrict__ r2,  
+               _prec*  __restrict__ r3, 
+               _prec*  __restrict__ r4, 
+               _prec*  __restrict__ r5,  
+               _prec*  __restrict__ r6,
+               _prec*  __restrict__ u1, 
+               _prec*  __restrict__ v1,    
+               _prec*  __restrict__ w1,
+               _prec*  __restrict__ f_u1, 
+               _prec*  __restrict__ f_v1,    
+               _prec*  __restrict__ f_w1,
+               _prec*  __restrict__ b_u1, 
+               _prec*  __restrict__ b_v1,    
+               _prec*  __restrict__ b_w1,
+               _prec*  __restrict__ dcrjx, 
+               _prec*  __restrict__ dcrjy,    
+               _prec*  __restrict__ dcrjz);
 
 
 #ifdef __cplusplus
