@@ -14,8 +14,9 @@ energy_kernel=cuenergy_kernel
 use_2d=0
 use_acoustic=0
 use_cartesian=0
-use_cubic_interpolation=0
+use_cubic_interpolation=1
 use_loop=1
+use_awp=1
 debug=0
 prec=float
 
@@ -31,6 +32,10 @@ build:
 		$(use_acoustic) $(use_cartesian) $(use_cubic_interpolation) \
 		$(use_loop)
 
+awp:
+	$(PY) -Wignore scheme.py awp $(prec) $(debug) 0 0 0 0 0 1
+	clang-format -i awp_*.*
+
 build_energy: 
 	$(PY) -Wignore energy.py $(prec)
 
@@ -41,11 +46,11 @@ copy_energy:
 	cp $(energy_kernel).* $(awp)/
 
 format:
-	clang-format -i $(kernel).*
+	clang-format -i $(kernel)_*.*
 
 copy:
-	cp $(kernel).cu $(src)
-	cp $(kernel).cuh $(include)
+	cp $(kernel)_*.cu $(src)
+	cp $(kernel)_*.cuh $(include)
 
 build_metrics:
 	$(PY) metrics.py $(prec)

@@ -4840,10 +4840,6 @@ __global__ void dtopo_str_111(
                        phdz[6] * _u1(i + 2, j, k + 9)))) *
             f_dcrj;
 
- int mink=align+3;  
-    if (i == 60 && j == 60 && k == align+mink) {
-        printf("%f \n", _s11(i, j, k + 6));
-}
         _s22(i, j, k + 6) =
             (a * _s22(i, j, k + 6) + lam * div +
              twomu *

@@ -476,6 +476,8 @@ void topo_stress_interior_H(topo_t *T)
                    (T->stress_grid_interior.z+TBZ-1)/TBZ);
 
 
+
+        printf("Launch unoptimized stress kernel.\n");
         dtopo_str_111<<<grid, block, 0, T->stream_i>>>
                          (
                           T->xx, T->xy, T->xz, 
@@ -503,6 +505,7 @@ void topo_stress_interior_H(topo_t *T)
                           T->stress_bounds_left[1], T->stress_bounds_ydir[0], 
                           T->stress_bounds_right[0], T->stress_bounds_ydir[1]);
         CUCHK(cudaGetLastError());
+        return;
 
         // Adjust grid size for boundary computation
         grid.z = (TOP_BOUNDARY_SIZE+TBZ-1)/TBZ;

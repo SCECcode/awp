@@ -10,14 +10,18 @@
 #include <topography/initializations/constant.h>
 #include <topography/initializations/linear.h>
 #include <topography/initializations/random.h>
+#include <topography/initializations/quadratic.h>
 #include <topography/initializations/cerjan.h>
 #include <test/check.h>
 #include <test/grid_check.h>
 #include <mpi/partition.h>
+#include <vtk/vtk.h>
+#include <grid/grid_3d.h>
 
 #include <awp/kernel.h>
 
-#include <topography/opt_topography.cuh>
+#include <topography/velocity.cuh>
+#include <topography/stress_attenuation.cuh>
 #include <topography/geometry.h>
 #include <topography/host.h>
  
@@ -153,23 +157,23 @@ void init(topo_t *T)
                                            canyon_height, canyon_center);
 
         // Set random initial conditions using fixed seed
-        topo_d_random(T, 1, T->u1);
-        topo_d_random(T, 2, T->v1);
-        topo_d_random(T, 3, T->w1);
+        topo_d_quadratic_i(T, T->u1);
+        topo_d_quadratic_j(T, T->v1);
+        topo_d_quadratic_k(T, T->w1);
 
-        topo_d_random(T, 0, T->xx);
-        topo_d_random(T, 5, T->yy);
-        topo_d_random(T, 6, T->zz);
-        topo_d_random(T, 7, T->xy);
-        topo_d_random(T, 8, T->xz);
-        topo_d_random(T, 9, T->yz);
+        topo_d_constant(T, 0, T->xx);
+        topo_d_constant(T, 0, T->yy);
+        topo_d_constant(T, 0, T->zz);
+        topo_d_constant(T, 0, T->xy);
+        topo_d_constant(T, 0, T->xz);
+        topo_d_constant(T, 0, T->yz);
 
         topo_d_constant(T, 0, T->r1);
-        topo_d_constant(T, 5, T->r2);
-        topo_d_constant(T, 6, T->r3);
-        topo_d_constant(T, 7, T->r4);
-        topo_d_constant(T, 8, T->r5);
-        topo_d_constant(T, 9, T->r6);
+        topo_d_constant(T, 0, T->r2);
+        topo_d_constant(T, 0, T->r3);
+        topo_d_constant(T, 0, T->r4);
+        topo_d_constant(T, 0, T->r5);
+        topo_d_constant(T, 0, T->r6);
 
         topo_d_constant(T, 0, T->qpi);
         topo_d_constant(T, 0, T->qsi);
@@ -179,29 +183,31 @@ void init(topo_t *T)
         topo_d_constant(T, 1.0, T->dcrjz);
 
         topo_d_constant(T, 1.0, T->wwo);
+        topo_d_constanti(T, 1, T->ww);
         topo_d_constant(T, 1.0, T->vx1);
         topo_d_constant(T, 1.0, T->vx2);
         topo_d_constant(T, 1.0, T->coeff);
 
-        topo_init_material_H(T);
-
-        topo_d_random(T, 1, T->mui);
-        topo_d_random(T, 1, T->lami);
+        topo_d_linear_i(T, T->mui);
+        topo_d_linear_j(T, T->lami);
+        //topo_d_random(T, 3, T->mui);
+        //topo_d_random(T, 4, T->lami);
+        topo_d_constant(T, 0, T->lam_mu);
         topo_build(T);
+
+        topo_set_constants(T);
 }
 
 void init_awp(topo_t *T)
 {
         _prec fmajor = 0, fminor = 0, Rz[9], RzT[9];
+        printf("Initializing AWP: %d %d %d\n", nx, ny, nz);
         SetDeviceConstValue(&h, dt, &nx, &ny, &nz, 1, fmajor, fminor, Rz, RzT);
 }
 
 void run(topo_t *topo, topo_t *awp)
 {
         for(int iter = 0; iter < nt; ++iter) {
-                //topo_velocity_interior_H(T);
-                //topo_velocity_front_H(T);
-                //topo_velocity_back_H(T);
 
                topo_stress_interior_H(topo);
 
@@ -224,22 +230,21 @@ int compare(topo_t *topo, topo_t *awp)
         prec *b[3] = {topo->xx, topo->r1, topo->w1};
         const char *names[3] = {"sxx", "r1", "vz"};
         double err[3];
+        double total_error = 0;
         int nxt = nx - ngsl;
         int nyt = ny - ngsl;
-        int nzt = 20;
-        double total_error = 0;
-        int excl = 4;
+        int nzt = nz;
+        int excl = 6;
+        int nbnd = 6;
         int i0 = excl + ngsl + 2;
-        int in = i0 + nxt;
+        int in = i0 + nxt - 2 * excl;
         int j0 = excl + ngsl + 2;
-        int jn = j0 + nyt;
-        int nbnd = 8;
-        int k0 = align + excl + nbnd;
-        int kn = k0 + nzt;
+        int jn = j0 + nyt - 2 * excl;
+        int k0 = align + excl;
+        int kn = k0 + nzt - 2 * excl - nbnd;
         int size = (in - i0) * (jn - j0) * (kn - k0);
         printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
                         in, jn, kn,  size);
-        printf("line: %d slice: %d \n", topo->line, topo->slice);
         for (int i = 0; i < 2; ++i) {
              err[i] = check_flinferr(a[i], b[i], 
                              i0, in, j0, jn, k0, kn,
@@ -248,6 +253,36 @@ int compare(topo_t *topo, topo_t *awp)
                 total_error += err[i];
         }
         printf("\n");
+
+        int3_t grid_size = {nx, ny, nz};
+        int3_t shift = {0, 0, 0};
+        int3_t coordinate = {0,0,0};
+        int3_t bnd1 = {0,0,0};
+        int3_t bnd2 = {0,0,0};
+        int padding = ngsl;
+        prec gridspacing = 1.0;
+
+        grid3_t grid = grid_init(grid_size, shift, coordinate, bnd1, bnd2, padding,
+                        gridspacing);
+
+        float *x1 = (float*)malloc(sizeof(x1) * grid.mem.x);
+        float *y1 = (float*)malloc(sizeof(y1) * grid.mem.y);
+        float *z1 = (float*)malloc(sizeof(z1) * grid.mem.z);
+        grid_fill_x(x1, grid);
+        grid_fill_y(y1, grid);
+        grid_fill_z(z1, grid);
+        int mem = grid.mem.x * grid.mem.y * grid.mem.z;
+        float *x = (float*)malloc(sizeof(x) * mem);
+        float *y = (float*)malloc(sizeof(y) * mem);
+        float *z = (float*)malloc(sizeof(z) * mem);
+        grid_fill3_x(x, x1, grid);
+        grid_fill3_y(y, y1, grid);
+        grid_fill3_z(z, z1, grid);
+        vtk_write_grid("awp.vtk", x, y, z, grid);
+        vtk_append_scalar("awp.vtk", "xx", awp->xx, grid);
+        
+        vtk_write_grid("topo.vtk", x, y, z, grid);
+        vtk_append_scalar("topo.vtk", "xx", topo->xx, grid);
 
         topo_h_free(&reference);
         return total_error > 1e-6;

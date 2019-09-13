@@ -6,15 +6,20 @@
 #include <cuda_profiler_api.h>
 
 #include <argparse/argparse.h>
+#include <grid/grid_3d.h>
 #include <topography/topography.h>
 #include <topography/initializations/constant.h>
 #include <topography/initializations/random.h>
+#include <topography/initializations/linear.h>
 #include <topography/initializations/cerjan.h>
 #include <test/check.h>
+#include <test/grid_check.h>
 #include <mpi/partition.h>
+#include <vtk/vtk.h>
 
 #ifdef USE_OPTIMIZED_KERNELS
-#include <topography/opt_topography.cuh>
+#include <topography/velocity.cuh>
+#include <topography/stress_attenuation.cuh>
 #else
 #include <topography/topography.cuh>
 #endif
@@ -44,6 +49,8 @@ static cudaStream_t stream_1, stream_2, stream_i;
 static int use_optimized_kernels = USE_OPTIMIZED_KERNELS;
 static const char *outputdir;
 static const char *inputdir;
+static int run_velocity = 1;
+static int run_stress = 1;
 
 void init(topo_t *T);
 void run(topo_t *T);
@@ -86,6 +93,10 @@ int main(int argc, char **argv)
                         "Write results to output directory", NULL, 0, 0),
             OPT_STRING('i', "input", &inputdir,
                         "Read results from input directory", NULL, 0, 0),
+            OPT_INTEGER('s', "stress", &run_stress,
+                        "Run stress kernels", NULL, 0, 0),
+            OPT_INTEGER('v', "velocity", &run_velocity,
+                        "Run velocity kernels", NULL, 0, 0),
             OPT_END(),
         };
 
@@ -142,7 +153,7 @@ void init(topo_t *T)
 
         // Gaussian hill geometry
         _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
-        _prec hill_height = nz;
+        _prec hill_height = 0;
         _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
         // No canyon
         _prec3_t canyon_width = {.x = 100, .y = 100, .z = 0};
@@ -153,27 +164,74 @@ void init(topo_t *T)
                                            canyon_height, canyon_center);
 
         // Set random initial conditions using fixed seed
-        topo_d_random(T, 1, T->u1);
-        topo_d_random(T, 2, T->v1);
-        topo_d_random(T, 3, T->w1);
+        
+        topo_d_random(T, 0, T->u1);
+        topo_d_random(T, 1, T->v1);
+        topo_d_constant(T, 1, T->w1);
 
-        topo_d_random(T, 4, T->xx);
-        topo_d_random(T, 5, T->yy);
-        topo_d_random(T, 6, T->zz);
-        topo_d_random(T, 7, T->xy);
-        topo_d_random(T, 8, T->xz);
-        topo_d_random(T, 9, T->yz);
+        topo_d_constant(T, 0, T->xx);
+        topo_d_constant(T, 0, T->yy);
+        topo_d_constant(T, 0, T->zz);
+        topo_d_constant(T, 0, T->xy);
+        topo_d_constant(T, 0, T->xz);
+        topo_d_constant(T, 0, T->yz);
 
-        topo_init_material_H(T);
+        topo_d_constant(T, 0, T->r1);
+        topo_d_constant(T, 0, T->r2);
+        topo_d_constant(T, 0, T->r3);
+        topo_d_constant(T, 0, T->r4);
+        topo_d_constant(T, 0, T->r5);
+        topo_d_constant(T, 0, T->r6);
+
+        topo_d_constant(T, 0, T->qpi);
+        topo_d_constant(T, 0, T->qsi);
+        
+        topo_d_constant(T, 1.0, T->dcrjx);
+        topo_d_constant(T, 1.0, T->dcrjy);
+        topo_d_constant(T, 1.0, T->dcrjz);
+
+        topo_d_constant(T, 1.0, T->wwo);
+        topo_d_constanti(T, 1, T->ww);
+        topo_d_constant(T, 0.0, T->vx1);
+        topo_d_constant(T, 0.0, T->vx2);
+        topo_d_constant(T, 0.0, T->coeff);
+
+        topo_d_linear_k(T, T->mui);
+        topo_d_linear_k(T, T->lami);
+        topo_d_constant(T, 5, T->lam_mu);
+
         topo_build(T);
+
+#if USE_OPTIMIZED_KERNELS
+        printf("Setting constants\n");
+        topo_set_constants(T);
+#endif
 }
 
 void run(topo_t *T)
 {
         for(int iter = 0; iter < nt; ++iter) {
-                topo_velocity_interior_H(T);
-                topo_velocity_front_H(T);
-                topo_velocity_back_H(T);
+                if (run_velocity) {
+                        //topo_velocity_interior_H(T);
+                        //topo_velocity_front_H(T);
+                        //topo_velocity_back_H(T);
+                }
+
+                CUCHK(cudaStreamSynchronize(T->stream_1));
+                CUCHK(cudaStreamSynchronize(T->stream_2));
+                CUCHK(cudaStreamSynchronize(T->stream_i));
+                cudaDeviceSynchronize();
+
+                if (run_stress) {
+                        topo_stress_interior_H(T);
+                        //topo_stress_left_H(T);
+                        //topo_stress_right_H(T);
+                }
+
+                CUCHK(cudaStreamSynchronize(T->stream_1));
+                CUCHK(cudaStreamSynchronize(T->stream_2));
+                CUCHK(cudaStreamSynchronize(T->stream_i));
+                cudaDeviceSynchronize();
         }
 }
 
@@ -190,6 +248,7 @@ void write(topo_t *host, const char *outputdir)
         write_file(outputdir, "vx.bin", host->u1, size);
         write_file(outputdir, "vy.bin", host->v1, size);
         write_file(outputdir, "vz.bin", host->w1, size);
+        write_file(outputdir, "xx.bin", host->xx, size);
 }
 
 void write_file(const char *path, const char *filename, const _prec *data,
@@ -222,18 +281,68 @@ int compare(topo_t *host, const char *inputdir)
         read_file(inputdir, "vx.bin", reference.u1, size);
         read_file(inputdir, "vy.bin", reference.v1, size);
         read_file(inputdir, "vz.bin", reference.w1, size);
+        read_file(inputdir, "xx.bin", reference.xx, size);
 
-        prec *a[3] = {reference.u1, reference.v1, reference.w1};
-        prec *b[3] = {host->u1, host->v1, host->w1};
-        const char *names[3] = {"vx", "vy", "vz"};
-        double err[3];
+        prec *a[4] = {reference.u1, reference.v1, reference.w1, reference.xx};
+        prec *b[4] = {host->u1, host->v1, host->w1, host->xx};
+        const char *names[4] = {"vx", "vy", "vz", "xx"};
+        double err[4];
         double total_error = 0;
-        for (int i = 0; i < 3; ++i) {
-                err[i] = chk_inf(a[i], b[i], size);
+        int nxt = nx - ngsl;
+        int nyt = ny - ngsl;
+        int nzt = nz;
+        int excl = 6;
+        int nbnd = 0;
+        int i0 = excl + ngsl + 2;
+        int in = i0 + nxt - 2 * excl;
+        int j0 = excl + ngsl + 2;
+        int jn = j0 + nyt - 2 * excl;
+        int k0 = align + excl;
+        int kn = k0 + nzt - 2 * excl - nbnd;
+        int new_size = (in - i0) * (jn - j0) * (kn - k0);
+        total_error = 0;
+        printf("slice: %d line: %d, %d %d \n", host->slice, host->line,
+                        (2 * align + nz) * (4 + 2 * ngsl + ny), (2 * align +
+                                nz));
+        printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
+                        in, jn, kn,  new_size);
+        for (int i = 0; i < 4; ++i) {
+             err[i] = check_flinferr(a[i], b[i], 
+                             i0, in, j0, jn, k0, kn,
+                             host->line, host->slice);
                 printf("%s: %g ", names[i], err[i]);
                 total_error += err[i];
         }
-        printf("\n");
+
+        int3_t grid_size = {nx, ny, nz};
+        int3_t shift = {0, 0, 0};
+        int3_t coordinate = {0,0,0};
+        int3_t bnd1 = {0,0,0};
+        int3_t bnd2 = {0,0,0};
+        int padding = ngsl;
+        prec gridspacing = 1.0;
+
+        grid3_t grid = grid_init(grid_size, shift, coordinate, bnd1, bnd2, padding,
+                        gridspacing);
+
+        float *x1 = (float*)malloc(sizeof(x1) * grid.mem.x);
+        float *y1 = (float*)malloc(sizeof(y1) * grid.mem.y);
+        float *z1 = (float*)malloc(sizeof(z1) * grid.mem.z);
+        grid_fill_x(x1, grid);
+        grid_fill_y(y1, grid);
+        grid_fill_z(z1, grid);
+        int mem = grid.mem.x * grid.mem.y * grid.mem.z;
+        float *x = (float*)malloc(sizeof(x) * mem);
+        float *y = (float*)malloc(sizeof(y) * mem);
+        float *z = (float*)malloc(sizeof(z) * mem);
+        grid_fill3_x(x, x1, grid);
+        grid_fill3_y(y, y1, grid);
+        grid_fill3_z(z, z1, grid);
+        vtk_write_grid("awp.vtk", x, y, z, grid);
+        vtk_append_scalar("awp.vtk", "xx", host->xx, grid);
+        
+        vtk_write_grid("reference.vtk", x, y, z, grid);
+        vtk_append_scalar("reference.vtk", "xx", reference.xx, grid);
 
         topo_h_free(&reference);
         return total_error > 1e-6;

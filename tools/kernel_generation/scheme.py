@@ -20,8 +20,9 @@ from openfd import Expr
 import numpy as np
 import helper
 from openfd.dev import kernelgenerator as kg
+from openfd.dev.codeblock import CodeBlock
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 9:
     print(__doc__)
     exit(0)
 else:
@@ -33,6 +34,7 @@ else:
     use_cartesian = int(sys.argv[6])
     use_cubic_interpolation = int(sys.argv[7])
     loop = int(sys.argv[8])
+    use_awp = int(sys.argv[9])
 
 helper.set_precision(prec_str)
 use_sponge = helper.get_use_sponge_layer(debug)
@@ -46,6 +48,7 @@ print("Precision:", prec_str, "\n",
       "Use Acoustic version:", use_acoustic, "\n",
       "Use cubic interpolation of material parameters:", 
        use_cubic_interpolation, "\n",
+       "Apply loop within kernels:", loop, "\n", 
       "Restrict to 2D:", use_2d, "\n",
       "Apply free surface boundary condition:", use_free_surface_bc)
 
@@ -273,6 +276,11 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
 
     print("Generating stress kernels: %s. "%label)
 
+    if use_awp:
+        F.u1 = F.u1
+        F.u2 = F.v1
+        F.u3 = F.w1
+
     a, nu = sp.symbols('a nu')
     rho1 = fd.Variable('rho1', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'y', 1), 'z', 1)) 
     rho2 = fd.Variable('rho2', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'z', 1)) 
@@ -369,6 +377,32 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     s12_t = a * F.s12 + mu12 * (   y * vx_y   + x * vy_x  - y * q1_z  - x * q2_z)
     s13_t = a * F.s13 + mu13 * (J13i * vx_z   + x * vz_x  - x * a3_z)
     s23_t = a * F.s23 + mu23 * (J23i * vy_z   + y * vz_y  - y * b3_z)
+    
+    # This option is to obtain the formulations for the different terms used in
+    # the AWP stress kernel template
+    if use_awp == 1:
+        v1 = vx_x - wx_z
+        v2 = vy_y - wy_z
+        v3 = Jii * vz_z - wx_z - wy_z
+        vs1 = fd.Variable('vs1', dtype=fd.prec, val=v1)
+        vs2 = fd.Variable('vs2', dtype=fd.prec, val=v2)
+        vs3 = fd.Variable('vs3', dtype=fd.prec, val=v3)
+
+        v1 = vx_y  - q1_z
+        v2 = vy_x  - q2_z
+        xy_vs1 = fd.Variable('vs1', dtype=fd.prec, val=v1)
+        xy_vs2 = fd.Variable('vs2', dtype=fd.prec, val=v2)
+                                 
+        v1 = J13i * vx_z
+        v3 = vz_x  - a3_z
+        xz_vs1 = fd.Variable('vs1', dtype=fd.prec, val=v1)
+        xz_vs2 = fd.Variable('vs2', dtype=fd.prec, val=v3)
+
+        v2 = J23i * vy_z
+        v3 = vz_y  - b3_z
+        yz_vs1 = fd.Variable('vs1', dtype=fd.prec, val=v2)
+        yz_vs2 = fd.Variable('vs2', dtype=fd.prec, val=v3)
+
 
     if debug_ops:
         s11_t = P(D(F.u3, 'x', G.u3[0], interp='last'), 'z', G.s11[2])
@@ -411,10 +445,28 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
         eqs += [(F.s13, s13_t)] 
         eqs += [(F.s23, s23_t)]
 
+    if use_awp:
+        eqs = []
+        eqs += [Jii,  (Jii.symbol, 1.0 / Jii.symbol)]
+        eqs += [CodeBlock('// xx, yy, zz\n')]
+        eqs += [vs1, vs2, vs3]
+        eqs += [CodeBlock('// xy \n')]
+        eqs += [J12i, (J12i.symbol, 1.0 / J12i.symbol)]
+        eqs += [xy_vs1, xy_vs2]
+        eqs += [CodeBlock('// xz \n')]
+        eqs += [J13i, (J13i.symbol, 1.0 / J13i.symbol)]
+        eqs += [xz_vs1, xz_vs2]
+        eqs += [CodeBlock('// yz \n')]
+        eqs += [J23i, (J23i.symbol, 1.0 / J23i.symbol)]
+        eqs += [yz_vs1, yz_vs2]
+        lhs_indices = lambda x : (x[0], x[1], x[2] - 6)
+        rhs_indices = lambda x : (x[0], x[1], x[2] - 6)
+    else:
+        lhs_indices = None
+        rhs_indices = None
+
     lhs, rhs = fd.equations(eqs)
     
-    lhs_indices = None
-    rhs_indices = None
     bounds = helper.strbounds(D(F.s11,'z'), F.s11,
                               exclude_left=helper.get_exclude_left(debug))
     index_bounds = (1,1,0)
@@ -485,16 +537,27 @@ def material(label, unit_material=0):
     return kernels
 
 
+if not use_awp:
+    name = filename + '_velocity'
+    kernels = []
+    kernels = velocity("dtopo_vel",debug=debug, debug_ops=0,
+            use_cartesian=use_cartesian)
+    kernels += velocity("dtopo_buf_vel",buf=1, debug=debug,
+            use_cartesian=use_cartesian)
+    kg.write_kernels(name, kernels, header=True,
+            source_includes=['#include <topography/kernels/optimized_launch_config.cuh>',
+                             '#include <topography/kernels/%s.cuh>'%name], 
+            header_includes=['#include <awp/definitions.h>'])
+
+
+
+name = filename + '_stress'
 kernels = []
-kernels = velocity("dtopo_vel",debug=debug, debug_ops=0,
+kernels += stress('dtopo_str', debug=debug, debug_ops=0,
         use_cartesian=use_cartesian)
-kernels += velocity("dtopo_buf_vel",buf=1, debug=debug,
-        use_cartesian=use_cartesian)
-kernels += stress("dtopo_str", debug=debug, debug_ops=0,
-        use_cartesian=use_cartesian)
-kernels += material("dtopo_init_material", unit_material=1)
-kg.write_kernels(filename, kernels, header=True,
+kernels += material('dtopo_init_material', unit_material=1)
+kg.write_kernels(name, kernels, header=True,
         source_includes=['#include <topography/kernels/optimized_launch_config.cuh>',
-                         '#include <topography/kernels/%s.cuh>'%filename], 
+                         '#include <topography/kernels/%s.cuh>'%name], 
         header_includes=['#include <awp/definitions.h>'])
 

@@ -22,7 +22,6 @@ set(UNOPT_LIBRARIES
 
 set(OPT_LIBRARIES
         ${LIBRARIES}
-        opt_topography
         )
 
 # Unoptimized version
@@ -43,7 +42,9 @@ target_compile_definitions(test_unoptimized_kernels
 add_executable(test_optimized_kernels topography_kernels.cu)
 
 target_link_libraries(test_optimized_kernels 
-        ${OPT_LIBRARIES} 
+        ${LIBRARIES} 
+        opt_topography_attenuation
+        opt_topography
         )
 
 target_compile_definitions(test_optimized_kernels 
@@ -53,8 +54,9 @@ target_compile_definitions(test_optimized_kernels
 add_executable(test_attenuation test_attenuation.cu)
 
 target_link_libraries(test_attenuation 
-        ${OPT_LIBRARIES} 
+        ${LIBRARIES} 
         awp
+        opt_topography_attenuation
         topography
         )
 
