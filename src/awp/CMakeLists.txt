@@ -37,7 +37,7 @@ add_library(lpmcl3d
         utils.c
         ${HEADERS})
 
-target_link_libraries(lpmcl3d opt_topography  buffers mpi checksum)
+target_link_libraries(lpmcl3d opt_topography_attenuation opt_topography  buffers mpi checksum)
 #
 target_include_directories(lpmcl3d
         PUBLIC

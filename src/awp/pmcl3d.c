@@ -25,7 +25,7 @@
 #include <awp/init.h>
 #include <topography/topography.h>
 #include <topography/velocity.cuh>
-#include <topography/stress.cuh>
+#include <topography/stress_attenuation.cuh>
 #include <topography/sources/sources.h>
 #include <topography/receivers/receivers.h>
 #include <topography/geometry/geometry.h>
@@ -1663,6 +1663,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 topo_init_geometry(&T);
                 topo_write_geometry_vtk(&T, topo_vtk_mode);
                 topo_build(&T);
+                topo_set_constants(&T);
 
             }
 
@@ -1715,6 +1716,22 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
         CUCHK(cudaMemcpy(d_r4[p],dbg,byte_size,cudaMemcpyHostToDevice));
         CUCHK(cudaMemcpy(d_r5[p],dbg,byte_size,cudaMemcpyHostToDevice));
         CUCHK(cudaMemcpy(d_r6[p],dbg,byte_size,cudaMemcpyHostToDevice));
+
+        CUCHK(cudaMemset(d_u1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_v1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_w1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_xx[p], 0, byte_size));
+        CUCHK(cudaMemset(d_yy[p], 0, byte_size));
+        CUCHK(cudaMemset(d_zz[p], 0, byte_size));
+        CUCHK(cudaMemset(d_xy[p], 0, byte_size));
+        CUCHK(cudaMemset(d_xz[p], 0, byte_size));
+        CUCHK(cudaMemset(d_yz[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r2[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r3[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r4[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r5[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r6[p], 0, byte_size));
 
         CUCHK(cudaMemcpy(dbg,d_u1[p],byte_size,cudaMemcpyDeviceToHost));
         check_values("u1", dbg, mx, my, mz, rank); 

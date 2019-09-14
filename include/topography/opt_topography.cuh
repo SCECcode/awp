@@ -22,7 +22,7 @@ void topo_init_material_H(topo_t *T);
 #define TBY 1
 #endif
 #ifndef TBZ
-#define TBZ 64
+#define TBZ 16
 #endif
 
 // Number of boundary points. Must match the number of boundary stencils used in

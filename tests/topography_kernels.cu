@@ -11,6 +11,7 @@
 #include <topography/initializations/constant.h>
 #include <topography/initializations/random.h>
 #include <topography/initializations/linear.h>
+#include <topography/initializations/quadratic.h>
 #include <topography/initializations/cerjan.h>
 #include <test/check.h>
 #include <test/grid_check.h>
@@ -167,7 +168,7 @@ void init(topo_t *T)
         
         topo_d_random(T, 0, T->u1);
         topo_d_random(T, 1, T->v1);
-        topo_d_constant(T, 1, T->w1);
+        topo_d_random(T, 2, T->w1);
 
         topo_d_constant(T, 0, T->xx);
         topo_d_constant(T, 0, T->yy);
@@ -183,21 +184,21 @@ void init(topo_t *T)
         topo_d_constant(T, 0, T->r5);
         topo_d_constant(T, 0, T->r6);
 
-        topo_d_constant(T, 0, T->qpi);
-        topo_d_constant(T, 0, T->qsi);
+        topo_d_constant(T, 1e-10, T->qpi);
+        topo_d_constant(T, 1e-10, T->qsi);
         
         topo_d_constant(T, 1.0, T->dcrjx);
         topo_d_constant(T, 1.0, T->dcrjy);
         topo_d_constant(T, 1.0, T->dcrjz);
 
-        topo_d_constant(T, 1.0, T->wwo);
+        topo_d_constant(T, 0.5, T->wwo);
         topo_d_constanti(T, 1, T->ww);
-        topo_d_constant(T, 0.0, T->vx1);
-        topo_d_constant(T, 0.0, T->vx2);
-        topo_d_constant(T, 0.0, T->coeff);
+        topo_d_constant(T, 0.4, T->vx1);
+        topo_d_constant(T, 0.4, T->vx2);
+        topo_d_constant(T, 0.4, T->coeff);
 
-        topo_d_linear_k(T, T->mui);
-        topo_d_linear_k(T, T->lami);
+        topo_d_constant(T, 1, T->mui);
+        topo_d_constant(T, 1, T->lami);
         topo_d_constant(T, 5, T->lam_mu);
 
         topo_build(T);
@@ -249,6 +250,11 @@ void write(topo_t *host, const char *outputdir)
         write_file(outputdir, "vy.bin", host->v1, size);
         write_file(outputdir, "vz.bin", host->w1, size);
         write_file(outputdir, "xx.bin", host->xx, size);
+        write_file(outputdir, "yy.bin", host->yy, size);
+        write_file(outputdir, "zz.bin", host->zz, size);
+        write_file(outputdir, "xy.bin", host->xy, size);
+        write_file(outputdir, "xz.bin", host->xz, size);
+        write_file(outputdir, "yz.bin", host->yz, size);
 }
 
 void write_file(const char *path, const char *filename, const _prec *data,
@@ -282,23 +288,34 @@ int compare(topo_t *host, const char *inputdir)
         read_file(inputdir, "vy.bin", reference.v1, size);
         read_file(inputdir, "vz.bin", reference.w1, size);
         read_file(inputdir, "xx.bin", reference.xx, size);
+        read_file(inputdir, "yy.bin", reference.yy, size);
+        read_file(inputdir, "zz.bin", reference.zz, size);
+        read_file(inputdir, "xy.bin", reference.xy, size);
+        read_file(inputdir, "xz.bin", reference.xz, size);
+        read_file(inputdir, "yz.bin", reference.yz, size);
 
-        prec *a[4] = {reference.u1, reference.v1, reference.w1, reference.xx};
-        prec *b[4] = {host->u1, host->v1, host->w1, host->xx};
-        const char *names[4] = {"vx", "vy", "vz", "xx"};
-        double err[4];
+        prec *a[9] = {reference.u1, reference.v1, reference.w1, reference.xx,
+                reference.yy, reference.zz, reference.xy, reference.xz,
+                reference.yz};
+        prec *b[9] = {host->u1, host->v1, host->w1, host->xx, host->yy,
+                host->zz, host->xy, host->xz, host->yz};
+        const char *names[9] = {"vx", "vy", "vz", "xx", "yy", "zz", "xy", "xz",
+        "yz"};
+        double err[9];
         double total_error = 0;
         int nxt = nx - ngsl;
         int nyt = ny - ngsl;
         int nzt = nz;
-        int excl = 6;
+        int excl = 0;
         int nbnd = 0;
-        int i0 = excl + ngsl + 2;
+        int i0 = excl;
         int in = i0 + nxt - 2 * excl;
-        int j0 = excl + ngsl + 2;
+        excl = 0;
+        int j0 = excl;
         int jn = j0 + nyt - 2 * excl;
-        int k0 = align + excl;
-        int kn = k0 + nzt - 2 * excl - nbnd;
+        int k0 = align + 4 + excl;
+        excl = 0;
+        int kn = k0 + nzt - 4 - nbnd -  2 * excl;
         int new_size = (in - i0) * (jn - j0) * (kn - k0);
         total_error = 0;
         printf("slice: %d line: %d, %d %d \n", host->slice, host->line,
@@ -306,13 +323,19 @@ int compare(topo_t *host, const char *inputdir)
                                 nz));
         printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
                         in, jn, kn,  new_size);
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 9; ++i) {
+             printf("%s: \n", names[i]);
              err[i] = check_flinferr(a[i], b[i], 
                              i0, in, j0, jn, k0, kn,
                              host->line, host->slice);
-                printf("%s: %g ", names[i], err[i]);
                 total_error += err[i];
         }
+
+        for (int i = 0; i < 9; ++i) {
+                printf("%s: %g ", names[i], err[i]);
+        }
+        printf("\n");
+
 
         int3_t grid_size = {nx, ny, nz};
         int3_t shift = {0, 0, 0};

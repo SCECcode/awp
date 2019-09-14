@@ -4882,6 +4882,14 @@ __global__ void dtopo_str_111(
                       pdhz[5] * _u3(i, j + 2, k + 8) +
                       pdhz[6] * _u3(i, j + 2, k + 9))))) *
       f_dcrj;
+
+  //FIXME
+  //_s11(i, j, k + 6) = i + ngsl + 2;
+  //_s22(i, j, k + 6) = j + ngsl + 2;
+  //_s33(i, j, k + 6) = k + align + 6;
+  //_s12(i, j, k + 6) = 0;
+  //_s13(i, j, k + 6) = 0;
+  //_s23(i, j, k + 6) = 0;
 #undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz

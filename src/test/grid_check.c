@@ -59,7 +59,7 @@ double check_flinferr(const _prec *u, const _prec *v,
                 int pos = k + j*line + i*slice; 
                 double diff = fabs(u[pos] - v[pos]);
                 err = diff >  err ? diff : err;
-                if (diff > 1e-5 ){
+                if (diff > 1e-4 ){
                         printf("Error at: %d %d %d: %g %g \n", i, j, k, u[pos], v[pos]);
                 }
         }
