@@ -5807,6 +5807,14 @@ __global__ void dtopo_str_112(
                       pdhzr[k][1] * _u3(i, j + 2, nz - 2) +
                       pdhzr[k][0] * _u3(i, j + 2, nz - 1))))) *
       f_dcrj;
+
+    //FIXME
+  _s11(i, j, nz - 1 - k) = nz - 1 - k; 
+  _s22(i, j, nz - 1 - k) = 0.0;
+  _s33(i, j, nz - 1 - k) = 0.0;
+  _s12(i, j, nz - 1 - k) = 0.0;
+  _s13(i, j, nz - 1 - k) = 0.0;
+  _s23(i, j, nz - 1 - k) = 0.0;
 #undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz

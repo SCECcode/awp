@@ -154,7 +154,7 @@ void init(topo_t *T)
 
         // Gaussian hill geometry
         _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
-        _prec hill_height = 0.1;
+        _prec hill_height = 0.0;
         _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
         // No canyon
         _prec3_t canyon_width = {.x = 100, .y = 100, .z = 0};

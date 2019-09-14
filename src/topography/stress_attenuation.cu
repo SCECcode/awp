@@ -115,12 +115,41 @@ void topo_stress_interior_H(topo_t *T)
                        TOP_BOUNDARY_SIZE};
         dim3 loop(0, 0, DTOPO_STR_112_LOOP_Z);
         dim3 grid = set_grid(block, size, loop);
+        //dtopo_str_112<<<grid, block, 0, T->stream_i>>>
+        //                 (
+        //                  T->xx, T->xy, T->xz, 
+        //                  T->yy, T->yz, T->zz,
+        //                  T->u1, T->v1, T->w1, 
+        //                  T->dcrjx, T->dcrjy, T->dcrjz,
+        //                  T->metrics_f.d_f,
+        //                  T->metrics_f.d_f1_1,
+        //                  T->metrics_f.d_f1_2,
+        //                  T->metrics_f.d_f1_c,
+        //                  T->metrics_f.d_f2_1,
+        //                  T->metrics_f.d_f2_2,
+        //                  T->metrics_f.d_f2_c,
+        //                  T->metrics_f.d_f_1,
+        //                  T->metrics_f.d_f_2,
+        //                  T->metrics_f.d_f_c,
+        //                  T->metrics_g.d_g,
+        //                  T->metrics_g.d_g3,
+        //                  T->metrics_g.d_g3_c,
+        //                  T->metrics_g.d_g_c,
+        //                  T->lami,
+        //                  T->mui, T->timestep,  
+        //                  T->dth, 
+        //                  T->nx, T->ny, T->nz,
+        //                  T->stress_bounds_left[1], T->stress_bounds_ydir[0], 
+        //                  T->stress_bounds_right[0], T->stress_bounds_ydir[1]);
+
+       // printf("Running!\n");
         dtopo_str_112<<<grid, block, 0, T->stream_i>>>
                          (
-                          T->xx, T->xy, T->xz, 
-                          T->yy, T->yz, T->zz,
+                          T->xx, T->yy, T->zz, 
+                          T->xy, T->xz, T->yz,
+                          T->r1, T->r2, T->r3,
+                          T->r4, T->r5, T->r6,
                           T->u1, T->v1, T->w1, 
-                          T->dcrjx, T->dcrjy, T->dcrjz,
                           T->metrics_f.d_f,
                           T->metrics_f.d_f1_1,
                           T->metrics_f.d_f1_2,
@@ -136,49 +165,20 @@ void topo_stress_interior_H(topo_t *T)
                           T->metrics_g.d_g3_c,
                           T->metrics_g.d_g_c,
                           T->lami,
-                          T->mui, T->timestep,  
-                          T->dth, 
-                          T->nx, T->ny, T->nz,
-                          T->stress_bounds_left[1], T->stress_bounds_ydir[0], 
-                          T->stress_bounds_right[0], T->stress_bounds_ydir[1]);
-
-       // printf("Running!\n");
-       // dtopo_str_112<<<grid, block, 0, T->stream_i>>>
-       //                  (
-       //                   T->xx, T->xy, T->xz, 
-       //                   T->yy, T->yz, T->zz,
-       //                   T->r1, T->r2, T->r3,
-       //                   T->r4, T->r5, T->r6,
-       //                   T->u1, T->v1, T->w1, 
-       //                   T->metrics_f.d_f,
-       //                   T->metrics_f.d_f1_1,
-       //                   T->metrics_f.d_f1_2,
-       //                   T->metrics_f.d_f1_c,
-       //                   T->metrics_f.d_f2_1,
-       //                   T->metrics_f.d_f2_2,
-       //                   T->metrics_f.d_f2_c,
-       //                   T->metrics_f.d_f_1,
-       //                   T->metrics_f.d_f_2,
-       //                   T->metrics_f.d_f_c,
-       //                   T->metrics_g.d_g,
-       //                   T->metrics_g.d_g3,
-       //                   T->metrics_g.d_g3_c,
-       //                   T->metrics_g.d_g_c,
-       //                   T->lami,
-       //                   T->mui, 
-       //                   T->qpi,
-       //                   T->coeff,
-       //                   T->qsi,
-       //                   T->dcrjx, T->dcrjy, T->dcrjz,
-       //                   T->vx1,
-       //                   T->vx2,
-       //                   T->ww,
-       //                   T->wwo,
-       //                   T->nx, T->ny, T->nz, T->coord[0], T->coord[1], T->nz,
-       //                   T->stress_bounds_left[1] + shift, 
-       //                   T->stress_bounds_right[0]+ shift, 
-       //                   T->stress_bounds_ydir[0] + shift, 
-       //                   T->stress_bounds_ydir[1] + shift);
+                          T->mui, 
+                          T->qpi,
+                          T->coeff,
+                          T->qsi,
+                          T->dcrjx, T->dcrjy, T->dcrjz,
+                          T->vx1,
+                          T->vx2,
+                          T->ww,
+                          T->wwo,
+                          T->nx, T->ny, T->nz, T->coord[0], T->coord[1], T->nz,
+                          T->stress_bounds_left[1] + shift, 
+                          T->stress_bounds_right[0]+ shift, 
+                          T->stress_bounds_ydir[0] + shift, 
+                          T->stress_bounds_ydir[1] + shift);
 
         CUCHK(cudaGetLastError());
         }

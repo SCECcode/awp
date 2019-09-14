@@ -6,6 +6,20 @@
 #include <topography/kernels/stress_attenuation.cuh>
 #include <stdio.h>
 #define CURVILINEAR
+#define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f_1(i, j) f_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f_2(i, j) f_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f2_c(i, j) f2_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f1_1(i, j) f1_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f2_1(i, j) f2_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f2_2(i, j) f2_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f_c(i, j) f_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f1_c(i, j) f1_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _f1_2(i, j) f1_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define _g3_c(k) g3_c[(k)]
+#define _g_c(k) g_c[(k)]
+#define _g(k) g[(k)]
+#define _g3(k) g3[(k)]
 
 __constant__ _prec d_c1;
 __constant__ _prec d_c2;
@@ -134,20 +148,6 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
 
-#define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_1(i, j) f_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_2(i, j) f_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_c(i, j) f2_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_1(i, j) f1_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_1(i, j) f2_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_2(i, j) f2_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_c(i, j) f_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_c(i, j) f1_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_2(i, j) f1_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _g3_c(k) g3_c[(k)]
-#define _g_c(k) g_c[(k)]
-#define _g(k) g[(k)]
-#define _g3(k) g3[(k)]
 #define _u1(i, j, k)                                                           \
   u1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
@@ -160,9 +160,6 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     
   k    = blockIdx.x*blockDim.x+threadIdx.x+align;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
-           
-  mink = align+3;
-  maxk = nzt + align - 6;
 
   if (j >= e_j)
     return;
@@ -649,20 +646,6 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 #undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
-#undef _f
-#undef _f1_1
-#undef _f1_2
-#undef _f1_c
-#undef _f2_1
-#undef _f2_2
-#undef _f2_c
-#undef _f_1
-#undef _f_2
-#undef _f_c
-#undef _g
-#undef _g3
-#undef _g3_c
-#undef _g_c
 #undef _lami
 #undef _mui
 #undef _s11
@@ -793,6 +776,25 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
+  const float dhz4r[6][8] = {
+      {0.0000000000000000, 1.4511412472637157, -1.8534237417911470,
+       0.3534237417911469, 0.0488587527362844, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.8577143189081458, -0.5731429567244373,
+       -0.4268570432755628, 0.1422856810918542, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.1674548505882877, 0.4976354482351368,
+       -0.4976354482351368, -0.1674548505882877, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, -0.1027061113405124, 0.2624541326469860,
+       0.8288742701021167, -1.0342864927831414, 0.0456642013745513,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       -0.0416666666666667, 1.1250000000000000, -1.1250000000000000,
+       0.0416666666666667, 0.0000000000000000},
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, -0.0416666666666667, 1.1250000000000000,
+       -1.1250000000000000, 0.0416666666666667}};
   const float pdhz4r[6][9] = {
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
@@ -813,64 +815,19 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        -0.0752421418813823, 0.6740179057989464, -0.0002498459192428,
        -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
 
-#define _f(i, j) i                                                               
-//#define _f(i, j)                                                            \
-//  f[(j) + align - ngsl - 2 +                                                    \
-//       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_1(i, j)                                                            \
-  f_1[(j) + align - ngsl - 2 +                                                    \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_2(i, j)                                                            \
-  f_2[(j) + align - ngsl - 2 +                                                    \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_c(i, j)                                                            \
-  f2_c[(j) + align - ngsl - 2 +                                                    \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_1(i, j)                                                            \
-  f1_1[(j) + align - ngsl - 2 +                                                    \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_2(i, j)                                                            \
-  f2_2[(j) + align - ngsl - 2 +                                                    \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_1(i, j)                                                            \
-  f2_1[(j) + align - ngsl - 2 +                                                   \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_c(i, j)                                                            \
-  f_c[(j) + align - ngsl - 2 +                                                   \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_c(i, j)                                                            \
-  f1_c[(j) + align - ngsl - 2 +                                                    \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_2(i, j)                                                            \
-  f1_2[(j) + align - ngsl - 2 +                                                    \
-       (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _g3_c(k) g3_c[(k)]
-#define _g_c(k) g_c[(k)]
-#define _g(k) g[(k)]
-#define _g3(k) g3[(k)]
     
-  k    = blockIdx.x*blockDim.x+threadIdx.x+align;
-  kb   = k - align;
+  kb   = blockIdx.x*blockDim.x + threadIdx.x;
+  k    = kb + align + nz - 6;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
-           
-  mink = align+3;
-  maxk = nzt + align - 6;
 
-  if (j >= 4 + 2 * ngsl + ny)
-    return;
   if (j >= e_j)
     return;
 
   if (kb >= 6)
     return;
 
-  //if (k < mink || k > maxk) return;
-  
-
   i    = e_i - 1;
   pos  = i*d_slice_1+j*d_yline_1+k;
-
-
 
   u1_ip1 = u1[pos+d_slice_2];
   f_u1   = u1[pos+d_slice_1];
@@ -884,7 +841,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
 
-  for(i=e_i-1;i>s_i-1;i--)
+  for(i=e_i-1;i>=s_i;i--)
   {         
     f_vx1 = d_vx1[pos];
     f_vx2 = d_vx2[pos];
@@ -1040,10 +997,10 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   float Jii = _f_c(i, j) * _g3_c(nz - 1 - kb - 6);
   Jii = 1.0 * 1.0 / Jii;
   // xx, yy, zz
-  float vs1 = dx4[1] * _u1(i, j, nz - 1 - kb - 6) +
-              dx4[0] * _u1(i - 1, j, nz - 1 - kb - 6) +
-              dx4[2] * _u1(i + 1, j, nz - 1 - kb - 6) +
-              dx4[3] * _u1(i + 2, j, nz - 1 - kb - 6) -
+  float vs1 = dx4[1] * _u1(i, j, nz - 1 - k - 6) +
+              dx4[0] * _u1(i - 1, j, nz - 1 - k - 6) +
+              dx4[2] * _u1(i + 1, j, nz - 1 - k - 6) +
+              dx4[3] * _u1(i + 2, j, nz - 1 - k - 6) -
               Jii * _g_c(nz - 1 - k - 6) *
                   (px4[1] * _f1_1(i, j) *
                        (phdz4r[kb][8] * _u1(i, j, nz - 9) +
@@ -1085,10 +1042,10 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                         phdz4r[kb][2] * _u1(i + 2, j, nz - 3) +
                         phdz4r[kb][1] * _u1(i + 2, j, nz - 2) +
                         phdz4r[kb][0] * _u1(i + 2, j, nz - 1)));
-  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - kb - 6) +
-              dhy4[0] * _v1(i, j - 2, nz - 1 - kb - 6) +
-              dhy4[1] * _v1(i, j - 1, nz - 1 - kb - 6) +
-              dhy4[3] * _v1(i, j + 1, nz - 1 - kb - 6) -
+  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - k - 6) +
+              dhy4[0] * _v1(i, j - 2, nz - 1 - k - 6) +
+              dhy4[1] * _v1(i, j - 1, nz - 1 - k - 6) +
+              dhy4[3] * _v1(i, j + 1, nz - 1 - k - 6) -
               Jii * _g_c(nz - 1 - k - 6) *
                   (phy4[2] * _f2_2(i, j) *
                        (phdz4r[kb][8] * _v1(i, j, nz - 9) +
@@ -1131,89 +1088,10 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                         phdz4r[kb][1] * _v1(i, j + 1, nz - 2) +
                         phdz4r[kb][0] * _v1(i, j + 1, nz - 1)));
   float vs3 =
-      Jii *
-      Jii * _g_c(nz - 1 - kb - 6) *
-          (phy4[2] * _f2_2(i, j) *
-               (phdz4r[kb][8] * _v1(i, j, nz - 9) +
-                phdz4r[kb][7] * _v1(i, j, nz - 8) +
-                phdz4r[kb][6] * _v1(i, j, nz - 7) +
-                phdz4r[kb][5] * _v1(i, j, nz - 6) +
-                phdz4r[kb][4] * _v1(i, j, nz - 5) +
-                phdz4r[kb][3] * _v1(i, j, nz - 4) +
-                phdz4r[kb][2] * _v1(i, j, nz - 3) +
-                phdz4r[kb][1] * _v1(i, j, nz - 2) +
-                phdz4r[kb][0] * _v1(i, j, nz - 1)) +
-           phy4[0] * _f2_2(i, j - 2) *
-               (phdz4r[kb][8] * _v1(i, j - 2, nz - 9) +
-                phdz4r[kb][7] * _v1(i, j - 2, nz - 8) +
-                phdz4r[kb][6] * _v1(i, j - 2, nz - 7) +
-                phdz4r[kb][5] * _v1(i, j - 2, nz - 6) +
-                phdz4r[kb][4] * _v1(i, j - 2, nz - 5) +
-                phdz4r[kb][3] * _v1(i, j - 2, nz - 4) +
-                phdz4r[kb][2] * _v1(i, j - 2, nz - 3) +
-                phdz4r[kb][1] * _v1(i, j - 2, nz - 2) +
-                phdz4r[kb][0] * _v1(i, j - 2, nz - 1)) +
-           phy4[1] * _f2_2(i, j - 1) *
-               (phdz4r[kb][8] * _v1(i, j - 1, nz - 9) +
-                phdz4r[kb][7] * _v1(i, j - 1, nz - 8) +
-                phdz4r[kb][6] * _v1(i, j - 1, nz - 7) +
-                phdz4r[kb][5] * _v1(i, j - 1, nz - 6) +
-                phdz4r[kb][4] * _v1(i, j - 1, nz - 5) +
-                phdz4r[kb][3] * _v1(i, j - 1, nz - 4) +
-                phdz4r[kb][2] * _v1(i, j - 1, nz - 3) +
-                phdz4r[kb][1] * _v1(i, j - 1, nz - 2) +
-                phdz4r[kb][0] * _v1(i, j - 1, nz - 1)) +
-           phy4[3] * _f2_2(i, j + 1) *
-               (phdz4r[kb][8] * _v1(i, j + 1, nz - 9) +
-                phdz4r[kb][7] * _v1(i, j + 1, nz - 8) +
-                phdz4r[kb][6] * _v1(i, j + 1, nz - 7) +
-                phdz4r[kb][5] * _v1(i, j + 1, nz - 6) +
-                phdz4r[kb][4] * _v1(i, j + 1, nz - 5) +
-                phdz4r[kb][3] * _v1(i, j + 1, nz - 4) +
-                phdz4r[kb][2] * _v1(i, j + 1, nz - 3) +
-                phdz4r[kb][1] * _v1(i, j + 1, nz - 2) +
-                phdz4r[kb][0] * _v1(i, j + 1, nz - 1))) -
-      Jii * _g_c(nz - 1 - kb - 6) *
-          (px4[1] * _f1_1(i, j) *
-               (phdz4r[kb][8] * _u1(i, j, nz - 9) +
-                phdz4r[kb][7] * _u1(i, j, nz - 8) +
-                phdz4r[kb][6] * _u1(i, j, nz - 7) +
-                phdz4r[kb][5] * _u1(i, j, nz - 6) +
-                phdz4r[kb][4] * _u1(i, j, nz - 5) +
-                phdz4r[kb][3] * _u1(i, j, nz - 4) +
-                phdz4r[kb][2] * _u1(i, j, nz - 3) +
-                phdz4r[kb][1] * _u1(i, j, nz - 2) +
-                phdz4r[kb][0] * _u1(i, j, nz - 1)) +
-           px4[0] * _f1_1(i - 1, j) *
-               (phdz4r[kb][8] * _u1(i - 1, j, nz - 9) +
-                phdz4r[kb][7] * _u1(i - 1, j, nz - 8) +
-                phdz4r[kb][6] * _u1(i - 1, j, nz - 7) +
-                phdz4r[kb][5] * _u1(i - 1, j, nz - 6) +
-                phdz4r[kb][4] * _u1(i - 1, j, nz - 5) +
-                phdz4r[kb][3] * _u1(i - 1, j, nz - 4) +
-                phdz4r[kb][2] * _u1(i - 1, j, nz - 3) +
-                phdz4r[kb][1] * _u1(i - 1, j, nz - 2) +
-                phdz4r[kb][0] * _u1(i - 1, j, nz - 1)) +
-           px4[2] * _f1_1(i + 1, j) *
-               (phdz4r[kb][8] * _u1(i + 1, j, nz - 9) +
-                phdz4r[kb][7] * _u1(i + 1, j, nz - 8) +
-                phdz4r[kb][6] * _u1(i + 1, j, nz - 7) +
-                phdz4r[kb][5] * _u1(i + 1, j, nz - 6) +
-                phdz4r[kb][4] * _u1(i + 1, j, nz - 5) +
-                phdz4r[kb][3] * _u1(i + 1, j, nz - 4) +
-                phdz4r[kb][2] * _u1(i + 1, j, nz - 3) +
-                phdz4r[kb][1] * _u1(i + 1, j, nz - 2) +
-                phdz4r[kb][0] * _u1(i + 1, j, nz - 1)) +
-           px4[3] * _f1_1(i + 2, j) *
-               (phdz4r[kb][8] * _u1(i + 2, j, nz - 9) +
-                phdz4r[kb][7] * _u1(i + 2, j, nz - 8) +
-                phdz4r[kb][6] * _u1(i + 2, j, nz - 7) +
-                phdz4r[kb][5] * _u1(i + 2, j, nz - 6) +
-                phdz4r[kb][4] * _u1(i + 2, j, nz - 5) +
-                phdz4r[kb][3] * _u1(i + 2, j, nz - 4) +
-                phdz4r[kb][2] * _u1(i + 2, j, nz - 3) +
-                phdz4r[kb][1] * _u1(i + 2, j, nz - 2) +
-                phdz4r[kb][0] * _u1(i + 2, j, nz - 1)));
+      Jii * (dhz4r[kb][7] * _w1(i, j, nz - 8) + dhz4r[kb][6] * _w1(i, j, nz - 7) +
+             dhz4r[kb][5] * _w1(i, j, nz - 6) + dhz4r[kb][4] * _w1(i, j, nz - 5) +
+             dhz4r[kb][3] * _w1(i, j, nz - 4) + dhz4r[kb][2] * _w1(i, j, nz - 3) +
+             dhz4r[kb][1] * _w1(i, j, nz - 2) + dhz4r[kb][0] * _w1(i, j, nz - 1));
 #else
     // Cartesian      
     //TODO: Implement
@@ -1480,6 +1358,14 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     r6[pos] = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
+
+    //FIXME
+    xx[pos] = k;
+    yy[pos] = 0.0;
+    zz[pos] = 0.0;
+    xy[pos] = 0.0;
+    xz[pos] = 0.0;
+    yz[pos] = 0.0;
 
     pos     = pos_im1;
   }

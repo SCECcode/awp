@@ -30,7 +30,7 @@ energy: build_energy format_energy copy_energy
 build:
 	$(PY) -Wignore scheme.py $(kernel) $(prec) $(debug) $(use_2d) \
 		$(use_acoustic) $(use_cartesian) $(use_cubic_interpolation) \
-		$(use_loop)
+		$(use_loop) $(use_awp)
 
 awp:
 	$(PY) -Wignore scheme.py awp $(prec) $(debug) 0 0 0 0 0 1
