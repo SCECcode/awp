@@ -383,7 +383,7 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
     if use_awp == 1:
         v1 = vx_x - wx_z
         v2 = vy_y - wy_z
-        v3 = Jii * vz_z - wx_z - wy_z
+        v3 = Jii * vz_z
         vs1 = fd.Variable('vs1', dtype=fd.prec, val=v1)
         vs2 = fd.Variable('vs2', dtype=fd.prec, val=v2)
         vs3 = fd.Variable('vs3', dtype=fd.prec, val=v3)

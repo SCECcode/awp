@@ -4372,6 +4372,7 @@ __global__ void dtopo_str_111(
 #define _dcrjx(i) dcrjx[(i) + ngsl + 2]
 #define _dcrjy(j) dcrjy[(j) + ngsl + 2]
 #define _dcrjz(k) dcrjz[(k) + align]
+
 #define _f(i, j)                                                               \
   f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _f1_1(i, j)                                                            \
@@ -4446,6 +4447,7 @@ __global__ void dtopo_str_111(
 #define _u3(i, j, k)                                                           \
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
+
   float Jii = _f_c(i, j) * _g3_c(k + 6);
   Jii = 1.0 * 1.0 / Jii;
   float J12i = _f(i, j) * _g3_c(k + 6);
@@ -4883,13 +4885,6 @@ __global__ void dtopo_str_111(
                       pdhz[6] * _u3(i, j + 2, k + 9))))) *
       f_dcrj;
 
-  //FIXME
-  //_s11(i, j, k + 6) = i + ngsl + 2;
-  //_s22(i, j, k + 6) = j + ngsl + 2;
-  //_s33(i, j, k + 6) = k + align + 6;
-  //_s12(i, j, k + 6) = 0;
-  //_s13(i, j, k + 6) = 0;
-  //_s23(i, j, k + 6) = 0;
 #undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz

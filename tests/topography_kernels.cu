@@ -154,7 +154,7 @@ void init(topo_t *T)
 
         // Gaussian hill geometry
         _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
-        _prec hill_height = 0;
+        _prec hill_height = 0.1;
         _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
         // No canyon
         _prec3_t canyon_width = {.x = 100, .y = 100, .z = 0};
@@ -167,8 +167,8 @@ void init(topo_t *T)
         // Set random initial conditions using fixed seed
         
         topo_d_random(T, 0, T->u1);
-        topo_d_random(T, 1, T->v1);
-        topo_d_random(T, 2, T->w1);
+        topo_d_constant(T, 0, T->v1);
+        topo_d_constant(T, 0, T->w1);
 
         topo_d_constant(T, 0, T->xx);
         topo_d_constant(T, 0, T->yy);
@@ -184,8 +184,8 @@ void init(topo_t *T)
         topo_d_constant(T, 0, T->r5);
         topo_d_constant(T, 0, T->r6);
 
-        topo_d_constant(T, 1e-10, T->qpi);
-        topo_d_constant(T, 1e-10, T->qsi);
+        topo_d_constant(T, 0, T->qpi);
+        topo_d_constant(T, 0, T->qsi);
         
         topo_d_constant(T, 1.0, T->dcrjx);
         topo_d_constant(T, 1.0, T->dcrjy);
@@ -213,7 +213,7 @@ void run(topo_t *T)
 {
         for(int iter = 0; iter < nt; ++iter) {
                 if (run_velocity) {
-                        //topo_velocity_interior_H(T);
+                        topo_velocity_interior_H(T);
                         //topo_velocity_front_H(T);
                         //topo_velocity_back_H(T);
                 }
@@ -308,14 +308,12 @@ int compare(topo_t *host, const char *inputdir)
         int nzt = nz;
         int excl = 0;
         int nbnd = 0;
-        int i0 = excl;
-        int in = i0 + nxt - 2 * excl;
-        excl = 0;
-        int j0 = excl;
-        int jn = j0 + nyt - 2 * excl;
-        int k0 = align + 4 + excl;
-        excl = 0;
-        int kn = k0 + nzt - 4 - nbnd -  2 * excl;
+        int i0 = 0;
+        int in = i0 + nxt;
+        int j0 = 0;
+        int jn = j0 + nyt;
+        int k0 = align;
+        int kn = k0 + nzt;
         int new_size = (in - i0) * (jn - j0) * (kn - k0);
         total_error = 0;
         printf("slice: %d line: %d, %d %d \n", host->slice, host->line,
