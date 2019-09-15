@@ -214,8 +214,8 @@ void run(topo_t *T)
         for(int iter = 0; iter < nt; ++iter) {
                 if (run_velocity) {
                         topo_velocity_interior_H(T);
-                        //topo_velocity_front_H(T);
-                        //topo_velocity_back_H(T);
+                        topo_velocity_front_H(T);
+                        topo_velocity_back_H(T);
                 }
 
                 CUCHK(cudaStreamSynchronize(T->stream_1));
@@ -225,8 +225,8 @@ void run(topo_t *T)
 
                 if (run_stress) {
                         topo_stress_interior_H(T);
-                        //topo_stress_left_H(T);
-                        //topo_stress_right_H(T);
+                        topo_stress_left_H(T);
+                        topo_stress_right_H(T);
                 }
 
                 CUCHK(cudaStreamSynchronize(T->stream_1));
@@ -306,8 +306,6 @@ int compare(topo_t *host, const char *inputdir)
         int nxt = nx - ngsl;
         int nyt = ny - ngsl;
         int nzt = nz;
-        int excl = 0;
-        int nbnd = 0;
         int i0 = 0;
         int in = i0 + nxt;
         int j0 = 0;
