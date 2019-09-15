@@ -167,8 +167,8 @@ void init(topo_t *T)
         // Set random initial conditions using fixed seed
         
         topo_d_random(T, 0, T->u1);
-        topo_d_constant(T, 0, T->v1);
-        topo_d_constant(T, 0, T->w1);
+        topo_d_random(T, 0, T->v1);
+        topo_d_random(T, 0, T->w1);
 
         topo_d_constant(T, 0, T->xx);
         topo_d_constant(T, 0, T->yy);

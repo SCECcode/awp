@@ -327,13 +327,14 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     w1_im1   = w1_im2;
     w1_im2   = w1[pos_im2];
 
-    float Jii = _f_c(i, j) * _g3_c(k);
-          Jii = 1.0 * 1.0 / Jii;
 
 
     // xx, yy, zz
 
 #ifdef CURVILINEAR
+
+    float Jii = _f_c(i, j) * _g3_c(k);
+          Jii = 1.0 * 1.0 / Jii;
           
     vs1 =
       dx4[1] * _u1(i, j, k) + dx4[0] * _u1(i - 1, j, k) +
@@ -693,7 +694,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        int NX, int ny, int nz, int rankx, int ranky, 
        int nzt, int s_i, int e_i, int s_j, int e_j) 
 { 
-  register int   i,  j,  k, kb;
+  register int   i,  j,  k;
   register int   pos,     pos_ip1, pos_im2, pos_im1;
   register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
   register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
@@ -816,14 +817,18 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
 
     
-  kb   = blockIdx.x*blockDim.x + threadIdx.x;
-  k    = kb + align + nz - 6;
+  int k0   = blockIdx.x*blockDim.x + threadIdx.x;
+  k    = k0 + align + nz - 6;
+  // This index is used to access the array coefficients directly
+  int kb = 5 - k0;
+  // This index maps to the macros 
+  int kc   = -1 - k0;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
 
   if (j >= e_j)
     return;
 
-  if (kb >= 6)
+  if (k0 >= 6)
     return;
 
   i    = e_i - 1;
@@ -994,14 +999,14 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
      (2 * align + nz) * (j)]
 
 #ifdef CURVILINEAR
-  float Jii = _f_c(i, j) * _g3_c(nz - 1 - kb - 6);
+  float Jii = _f_c(i, j) * _g3_c(nz - 1 - kc - 6);
   Jii = 1.0 * 1.0 / Jii;
   // xx, yy, zz
-  float vs1 = dx4[1] * _u1(i, j, nz - 1 - k - 6) +
-              dx4[0] * _u1(i - 1, j, nz - 1 - k - 6) +
-              dx4[2] * _u1(i + 1, j, nz - 1 - k - 6) +
-              dx4[3] * _u1(i + 2, j, nz - 1 - k - 6) -
-              Jii * _g_c(nz - 1 - k - 6) *
+  float vs1 = dx4[1] * _u1(i, j, nz - 1 - kc - 6) +
+              dx4[0] * _u1(i - 1, j, nz - 1 - kc - 6) +
+              dx4[2] * _u1(i + 1, j, nz - 1 - kc - 6) +
+              dx4[3] * _u1(i + 2, j, nz - 1 - kc - 6) -
+              Jii * _g_c(nz - 1 - kc - 6) *
                   (px4[1] * _f1_1(i, j) *
                        (phdz4r[kb][8] * _u1(i, j, nz - 9) +
                         phdz4r[kb][7] * _u1(i, j, nz - 8) +
@@ -1042,11 +1047,11 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                         phdz4r[kb][2] * _u1(i + 2, j, nz - 3) +
                         phdz4r[kb][1] * _u1(i + 2, j, nz - 2) +
                         phdz4r[kb][0] * _u1(i + 2, j, nz - 1)));
-  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - k - 6) +
-              dhy4[0] * _v1(i, j - 2, nz - 1 - k - 6) +
-              dhy4[1] * _v1(i, j - 1, nz - 1 - k - 6) +
-              dhy4[3] * _v1(i, j + 1, nz - 1 - k - 6) -
-              Jii * _g_c(nz - 1 - k - 6) *
+  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - kc - 6) +
+              dhy4[0] * _v1(i, j - 2, nz - 1 - kc - 6) +
+              dhy4[1] * _v1(i, j - 1, nz - 1 - kc - 6) +
+              dhy4[3] * _v1(i, j + 1, nz - 1 - kc - 6) -
+              Jii * _g_c(nz - 1 - kc - 6) *
                   (phy4[2] * _f2_2(i, j) *
                        (phdz4r[kb][8] * _v1(i, j, nz - 9) +
                         phdz4r[kb][7] * _v1(i, j, nz - 8) +
@@ -1360,9 +1365,34 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
 
     //FIXME
-    xx[pos] = k;
-    yy[pos] = 0.0;
-    zz[pos] = 0.0;
+    //un optimized: nz - 1 - k
+    // nz - 1 - k = nz - 6 + kb
+    // -> k = 6 - kb
+    //xx[pos] =   dx4[1] * _u1(i, j, nz - 1 - kc - 6)
+    //          + dx4[0] * _u1(i - 1, j, nz - 1 - kc - 6)
+    //          + dx4[2] * _u1(i + 1, j, nz - 1 - kc - 6)
+    //          + dx4[3] * _u1(i + 2, j, nz - 1 - kc - 6);
+    //xx[pos] = dhz4r[kb][7];// * _w1(i, j, nz - 8);
+    //xx[pos] =
+    //            phdz4r[kb][8] * _u1(i, j, nz - 9)
+    //            + phdz4r[kb][7] * _u1(i, j, nz - 8)
+    //            + phdz4r[kb][6] * _u1(i, j, nz - 7)
+    //            + phdz4r[kb][5] * _u1(i, j, nz - 6)
+    //            + phdz4r[kb][4] * _u1(i, j, nz - 5)
+    //            + phdz4r[kb][3] * _u1(i, j, nz - 4)
+    //            + phdz4r[kb][2] * _u1(i, j, nz - 3)
+    //            + phdz4r[kb][1] * _u1(i, j, nz - 2)
+    //            + phdz4r[kb][0] * _u1(i, j, nz - 1);
+
+
+
+
+
+
+
+
+    yy[pos] = 0.0;                                 
+    zz[pos] = 0.0;                                    
     xy[pos] = 0.0;
     xz[pos] = 0.0;
     yz[pos] = 0.0;

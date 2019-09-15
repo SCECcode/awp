@@ -5809,10 +5809,35 @@ __global__ void dtopo_str_112(
       f_dcrj;
 
     //FIXME
-  _s11(i, j, nz - 1 - k) = nz - 1 - k; 
+        //_s11(i, j, nz - 1 - k) = dhzr[k][7];// * _u3(i, j, nz - 8);
+  //_s11(i, j, nz - 1 - k) = _u1(i, j, nz - 1 - k);
+  //_s11(i, j, nz - 1 - k) = nz - 1 - k + align;
+  //_s11(i, j, nz - 1 - k) =   dx[1] * _u1(i, j, nz - 1 - k)
+  //                         + dx[0] * _u1(i - 1, j, nz - 1 - k)
+  //                         + dx[2] * _u1(i + 1, j, nz - 1 - k)
+  //                         + dx[3] * _u1(i + 2, j, nz - 1 - k);
+  //_s11(i, j, nz - 1 - k) = 
+  //                          phdzr[k][8] * _u1(i, j, nz - 9)
+  //                          + phdzr[k][7] * _u1(i, j, nz - 8)
+  //                          + phdzr[k][6] * _u1(i, j, nz - 7)
+  //                          + phdzr[k][5] * _u1(i, j, nz - 6)
+  //                          + phdzr[k][4] * _u1(i, j, nz - 5)
+  //                          + phdzr[k][3] * _u1(i, j, nz - 4)
+  //                          + phdzr[k][2] * _u1(i, j, nz - 3)
+  //                          + phdzr[k][1] * _u1(i, j, nz - 2)
+  //                          + phdzr[k][0] * _u1(i, j, nz - 1);
+
+
+
+
+
+
+
+
+
   _s22(i, j, nz - 1 - k) = 0.0;
   _s33(i, j, nz - 1 - k) = 0.0;
-  _s12(i, j, nz - 1 - k) = 0.0;
+  _s12(i, j, nz - 1 - k) = 0.0;  
   _s13(i, j, nz - 1 - k) = 0.0;
   _s23(i, j, nz - 1 - k) = 0.0;
 #undef _dcrjx
