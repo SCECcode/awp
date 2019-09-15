@@ -154,7 +154,7 @@ void init(topo_t *T)
 
         // Gaussian hill geometry
         _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
-        _prec hill_height = 0.0;
+        _prec hill_height = 1.0;
         _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
         // No canyon
         _prec3_t canyon_width = {.x = 100, .y = 100, .z = 0};
@@ -170,12 +170,12 @@ void init(topo_t *T)
         topo_d_random(T, 0, T->v1);
         topo_d_random(T, 0, T->w1);
 
-        topo_d_constant(T, 0, T->xx);
-        topo_d_constant(T, 0, T->yy);
-        topo_d_constant(T, 0, T->zz);
-        topo_d_constant(T, 0, T->xy);
-        topo_d_constant(T, 0, T->xz);
-        topo_d_constant(T, 0, T->yz);
+        topo_d_random(T, 0, T->xx);
+        topo_d_random(T, 0, T->yy);
+        topo_d_random(T, 0, T->zz);
+        topo_d_random(T, 0, T->xy);
+        topo_d_random(T, 0, T->xz);
+        topo_d_random(T, 0, T->yz);
 
         topo_d_constant(T, 0, T->r1);
         topo_d_constant(T, 0, T->r2);

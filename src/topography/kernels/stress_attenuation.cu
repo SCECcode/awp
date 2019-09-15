@@ -889,8 +889,8 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     }
     else {
         //suggested by Kyle
-	qpaw  = 2.0f*f_wwo*qpa;
         // qpaw  = f_wwo*qpa;
+	qpaw  = 2.0f*f_wwo*qpa;
     }
     qpaw=qpaw/f_wwo;
 
@@ -904,8 +904,8 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     }
     else {
       //suggested by Kyle
-      hw  = 2.0f*f_wwo*h;
       // hw  = f_wwo*h;
+      hw  = 2.0f*f_wwo*h;
     }
     hw=hw/f_wwo;
 
@@ -918,8 +918,8 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     }
     else {
         //suggested by Kyle
-	h1w  = 2.0f*f_wwo*h1;
         // h1w  = f_wwo*h1;
+	h1w  = 2.0f*f_wwo*h1;
     }
     h1w=h1w/f_wwo;
 
@@ -943,8 +943,8 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     }
     else {
       //suggested by Kyle
-      h3w  = 2.0f*f_wwo*h3;
       //h3w  = f_wwo*h3;
+      h3w  = 2.0f*f_wwo*h3;
     }
     h3w=h3w/f_wwo;
 
@@ -997,6 +997,10 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 #define _w1(i, j, k)                                                           \
   w1[(k) + align + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
+#define _g3_c(k) g3_c[(k) + align]
+#define _g_c(k) g_c[(k) + align]
+#define _g(k) g[(k) + align]
+#define _g3(k) g3[(k) + align]
 
 #ifdef CURVILINEAR
   float Jii = _f_c(i, j) * _g3_c(nz - 1 - kc - 6);
@@ -1130,13 +1134,13 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xy
 #ifdef CURVILINEAR
-  float J12i = _f(i, j) * _g3_c(nz - 1 - kb - 6);
+  float J12i = _f(i, j) * _g3_c(nz - 1 - kc - 6);
   J12i = 1.0 * 1.0 / J12i;
-  vs1 = dy4[1] * _u1(i, j, nz - 1 - kb - 6) +
-              dy4[0] * _u1(i, j - 1, nz - 1 - kb - 6) +
-              dy4[2] * _u1(i, j + 1, nz - 1 - kb - 6) +
-              dy4[3] * _u1(i, j + 2, nz - 1 - kb - 6) -
-              J12i * _g_c(nz - 1 - kb - 6) *
+  vs1 = dy4[1] * _u1(i, j, nz - 1 - kc - 6) +
+              dy4[0] * _u1(i, j - 1, nz - 1 - kc - 6) +
+              dy4[2] * _u1(i, j + 1, nz - 1 - kc - 6) +
+              dy4[3] * _u1(i, j + 2, nz - 1 - kc - 6) -
+              J12i * _g_c(nz - 1 - kc - 6) *
                   (py4[1] * _f2_1(i, j) *
                        (phdz4r[kb][8] * _u1(i, j, nz - 9) +
                         phdz4r[kb][7] * _u1(i, j, nz - 8) +
@@ -1177,11 +1181,11 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                         phdz4r[kb][2] * _u1(i, j + 2, nz - 3) +
                         phdz4r[kb][1] * _u1(i, j + 2, nz - 2) +
                         phdz4r[kb][0] * _u1(i, j + 2, nz - 1)));
-  vs2 = dhx4[2] * _v1(i, j, nz - 1 - kb - 6) +
-              dhx4[0] * _v1(i - 2, j, nz - 1 - kb - 6) +
-              dhx4[1] * _v1(i - 1, j, nz - 1 - kb - 6) +
-              dhx4[3] * _v1(i + 1, j, nz - 1 - kb - 6) -
-              J12i * _g_c(nz - 1 - kb - 6) *
+  vs2 = dhx4[2] * _v1(i, j, nz - 1 - kc - 6) +
+              dhx4[0] * _v1(i - 2, j, nz - 1 - kc - 6) +
+              dhx4[1] * _v1(i - 1, j, nz - 1 - kc - 6) +
+              dhx4[3] * _v1(i + 1, j, nz - 1 - kc - 6) -
+              J12i * _g_c(nz - 1 - kc - 6) *
                   (phx4[2] * _f1_2(i, j) *
                        (phdz4r[kb][8] * _v1(i, j, nz - 9) +
                         phdz4r[kb][7] * _v1(i, j, nz - 8) +
@@ -1235,18 +1239,18 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xz
 #ifdef CURVILINEAR
-  float J13i = _f_1(i, j) * _g3(nz - 1 - kb - 6);
+  float J13i = _f_1(i, j) * _g3(nz - 1 - kc - 6);
   J13i = 1.0 * 1.0 / J13i;
   vs1 =
       J13i * (dz4r[kb][6] * _u1(i, j, nz - 7) + dz4r[kb][5] * _u1(i, j, nz - 6) +
               dz4r[kb][4] * _u1(i, j, nz - 5) + dz4r[kb][3] * _u1(i, j, nz - 4) +
               dz4r[kb][2] * _u1(i, j, nz - 3) + dz4r[kb][1] * _u1(i, j, nz - 2) +
               dz4r[kb][0] * _u1(i, j, nz - 1));
-  vs2 = dhx4[2] * _w1(i, j, nz - 1 - kb - 6) +
-              dhx4[0] * _w1(i - 2, j, nz - 1 - kb - 6) +
-              dhx4[1] * _w1(i - 1, j, nz - 1 - kb - 6) +
-              dhx4[3] * _w1(i + 1, j, nz - 1 - kb - 6) -
-              J13i * _g(nz - 1 - kb - 6) *
+  vs2 = dhx4[2] * _w1(i, j, nz - 1 - kc - 6) +
+              dhx4[0] * _w1(i - 2, j, nz - 1 - kc - 6) +
+              dhx4[1] * _w1(i - 1, j, nz - 1 - kc - 6) +
+              dhx4[3] * _w1(i + 1, j, nz - 1 - kc - 6) -
+              J13i * _g(nz - 1 - kc - 6) *
                   (phx4[2] * _f1_c(i, j) *
                        (pdhz4r[kb][8] * _w1(i, j, nz - 9) +
                         pdhz4r[kb][7] * _w1(i, j, nz - 8) +
@@ -1300,18 +1304,18 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     // yz
 
 #ifdef CURVILINEAR
-  float J23i = _f_2(i, j) * _g3(nz - 1 - kb - 6);
+  float J23i = _f_2(i, j) * _g3(nz - 1 - kc - 6);
   J23i = 1.0 * 1.0 / J23i;
   vs1 =
       J23i * (dz4r[kb][6] * _v1(i, j, nz - 7) + dz4r[kb][5] * _v1(i, j, nz - 6) +
               dz4r[kb][4] * _v1(i, j, nz - 5) + dz4r[kb][3] * _v1(i, j, nz - 4) +
               dz4r[kb][2] * _v1(i, j, nz - 3) + dz4r[kb][1] * _v1(i, j, nz - 2) +
               dz4r[kb][0] * _v1(i, j, nz - 1));
-  vs2 = dy4[1] * _w1(i, j, nz - 1 - kb - 6) +
-              dy4[0] * _w1(i, j - 1, nz - 1 - kb - 6) +
-              dy4[2] * _w1(i, j + 1, nz - 1 - kb - 6) +
-              dy4[3] * _w1(i, j + 2, nz - 1 - kb - 6) -
-              J23i * _g(nz - 1 - kb - 6) *
+  vs2 = dy4[1] * _w1(i, j, nz - 1 - kc - 6) +
+              dy4[0] * _w1(i, j - 1, nz - 1 - kc - 6) +
+              dy4[2] * _w1(i, j + 1, nz - 1 - kc - 6) +
+              dy4[3] * _w1(i, j + 2, nz - 1 - kc - 6) -
+              J23i * _g(nz - 1 - kc - 6) *
                   (py4[1] * _f2_c(i, j) *
                        (pdhz4r[kb][8] * _w1(i, j, nz - 9) +
                         pdhz4r[kb][7] * _w1(i, j, nz - 8) +
@@ -1363,39 +1367,6 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     r6[pos] = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
-
-    //FIXME
-    //un optimized: nz - 1 - k
-    // nz - 1 - k = nz - 6 + kb
-    // -> k = 6 - kb
-    //xx[pos] =   dx4[1] * _u1(i, j, nz - 1 - kc - 6)
-    //          + dx4[0] * _u1(i - 1, j, nz - 1 - kc - 6)
-    //          + dx4[2] * _u1(i + 1, j, nz - 1 - kc - 6)
-    //          + dx4[3] * _u1(i + 2, j, nz - 1 - kc - 6);
-    //xx[pos] = dhz4r[kb][7];// * _w1(i, j, nz - 8);
-    //xx[pos] =
-    //            phdz4r[kb][8] * _u1(i, j, nz - 9)
-    //            + phdz4r[kb][7] * _u1(i, j, nz - 8)
-    //            + phdz4r[kb][6] * _u1(i, j, nz - 7)
-    //            + phdz4r[kb][5] * _u1(i, j, nz - 6)
-    //            + phdz4r[kb][4] * _u1(i, j, nz - 5)
-    //            + phdz4r[kb][3] * _u1(i, j, nz - 4)
-    //            + phdz4r[kb][2] * _u1(i, j, nz - 3)
-    //            + phdz4r[kb][1] * _u1(i, j, nz - 2)
-    //            + phdz4r[kb][0] * _u1(i, j, nz - 1);
-
-
-
-
-
-
-
-
-    yy[pos] = 0.0;                                 
-    zz[pos] = 0.0;                                    
-    xy[pos] = 0.0;
-    xz[pos] = 0.0;
-    yz[pos] = 0.0;
 
     pos     = pos_im1;
   }
