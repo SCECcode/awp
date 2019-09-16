@@ -16,7 +16,6 @@ inline dim3 set_grid(const dim3 block, const int3_t size, const dim3 loop)
 
 void topo_set_constants(topo_t *T)
 {
-        printf("strange!");
         set_constants(T->gridspacing, T->dth * T->gridspacing, T->nx, T->ny,
                       T->nz);
 }
