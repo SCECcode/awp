@@ -84,7 +84,8 @@ target_link_libraries(opt_topography
 
 # Work in progress that takes attenuation into account
 add_library(opt_topography_attenuation
-        topography.c opt_topography.cu velocity.cu stress_attenuation.cu geometry.c host.c
+        topography.c opt_topography.cu velocity.cu stress_attenuation.cu
+        geometry.c host.c grids.c
         ${OPT_HEADERS}
         )
 

@@ -26,6 +26,9 @@ void topo_init_gaussian_hill_and_canyon(topo_t *T, const _prec3_t hill_width,
                                         const _prec canyon_height,
                                         const _prec3_t canyon_center);
 
+void topo_write_geometry_vtk(topo_t *T, const int mode);
+void topo_write_vtk(topo_t *T, const int step, int mode);
+
 #ifdef __cplusplus
 }
 #endif

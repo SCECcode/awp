@@ -289,6 +289,11 @@ int main(int argc,char **argv)
     int main_err = 0;
 
 
+    MPICHK(MPI_Init(&argc,&argv));
+     MPICHK(MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN));
+    MPICHK(MPI_Comm_rank(MPI_COMM_WORLD,&rank));
+    MPICHK(MPI_Comm_size(MPI_COMM_WORLD,&size_tot));
+
 //  variable initialization begins 
     //NZ=(int*) calloc(MAXGRIDS, sizeof(int));
     command(argc, argv, &TMAX, DH, &DT, &ARBC, &PHT, &NPC, &ND, NSRC, &NST,
@@ -311,10 +316,6 @@ int main(int argc,char **argv)
     #endif
 
 
-    MPICHK(MPI_Init(&argc,&argv));
-     MPICHK(MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN));
-    MPICHK(MPI_Comm_rank(MPI_COMM_WORLD,&rank));
-    MPICHK(MPI_Comm_size(MPI_COMM_WORLD,&size_tot));
 
     if (rank==0) fprintf(stdout, "AWP-ODC-DM: Number of grid resolutions = %d\n", ngrids);
     fflush(stdout);
