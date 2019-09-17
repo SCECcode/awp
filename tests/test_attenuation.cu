@@ -39,7 +39,7 @@ static int ny = 64;
 static int nz = 64;
 static int nt = 10;
 static prec h = 1.0;
-static prec dt = 0.5/3;
+static prec dt = 0.05/3;
 static int coord[2] = {0, 0};
 static int dim[2] = {0, 0};
 static int rank, size;
@@ -161,22 +161,26 @@ void init(topo_t *T)
         topo_d_quadratic_j(T, T->v1);
         topo_d_quadratic_k(T, T->w1);
 
-        topo_d_constant(T, 0, T->xx);
-        topo_d_constant(T, 0, T->yy);
-        topo_d_constant(T, 0, T->zz);
-        topo_d_constant(T, 0, T->xy);
-        topo_d_constant(T, 0, T->xz);
-        topo_d_constant(T, 0, T->yz);
+        topo_d_random(T, 1, T->u1);
+        topo_d_random(T, 2, T->v1);
+        topo_d_random(T, 3, T->w1);
 
-        topo_d_constant(T, 0, T->r1);
-        topo_d_constant(T, 0, T->r2);
-        topo_d_constant(T, 0, T->r3);
-        topo_d_constant(T, 0, T->r4);
-        topo_d_constant(T, 0, T->r5);
-        topo_d_constant(T, 0, T->r6);
+        topo_d_random(T, 1, T->xx);
+        topo_d_random(T, 2, T->yy);
+        topo_d_random(T, 3, T->zz);
+        topo_d_random(T, 4, T->xy);
+        topo_d_random(T, 5, T->xz);
+        topo_d_random(T, 6, T->yz);
 
-        topo_d_constant(T, 0, T->qpi);
-        topo_d_constant(T, 0, T->qsi);
+        topo_d_random(T, 1, T->r1);
+        topo_d_random(T, 2, T->r2);
+        topo_d_random(T, 3, T->r3);
+        topo_d_random(T, 4, T->r4);
+        topo_d_random(T, 5, T->r5);
+        topo_d_random(T, 6, T->r6);
+
+        topo_d_constant(T, 1.0 / 30, T->qpi);
+        topo_d_constant(T, 1.0 / 30, T->qsi);
         
         topo_d_constant(T, 1.0, T->dcrjx);
         topo_d_constant(T, 1.0, T->dcrjy);
@@ -188,8 +192,10 @@ void init(topo_t *T)
         topo_d_constant(T, 1.0, T->vx2);
         topo_d_constant(T, 1.0, T->coeff);
 
-        topo_d_linear_i(T, T->mui);
-        topo_d_linear_j(T, T->lami);
+        topo_d_constant(T, 1.0, T->mui);
+        topo_d_constant(T, 1.0, T->lami);
+        topo_d_linear_k(T, T->mui);
+        topo_d_linear_k(T, T->lami);
         //topo_d_random(T, 3, T->mui);
         //topo_d_random(T, 4, T->lami);
         topo_d_constant(T, 0, T->lam_mu);
@@ -226,10 +232,17 @@ void run(topo_t *topo, topo_t *awp)
 int compare(topo_t *topo, topo_t *awp)
 {
 
-        prec *a[3] = {awp->xx, awp->r1, awp->w1};
-        prec *b[3] = {topo->xx, topo->r1, topo->w1};
-        const char *names[3] = {"sxx", "r1", "vz"};
-        double err[3];
+        prec *a[12] = {awp->xx, awp->yy, awp->zz, awp->xy, awp->xz, awp->yz, 
+                      awp->r1, awp->r2, awp->r3, awp->r4, awp->r5, awp->r6};
+        prec *b[12] = {topo->xx, topo->yy, topo->zz, topo->xy, topo->xz,topo->yz,
+                      topo->r1, topo->r2, topo->r3, 
+                      topo->r4, topo->r5, topo->r6};
+
+        const char *names[12] = {"sxx", "syy", "szz", 
+                                 "sxy", "sxz", "syz",
+                                 "r1", "r2", "r3",
+                                 "r4", "r5", "r6"};
+        double err[12];
         double total_error = 0;
         int nxt = nx - ngsl;
         int nyt = ny - ngsl;
@@ -245,14 +258,13 @@ int compare(topo_t *topo, topo_t *awp)
         int size = (in - i0) * (jn - j0) * (kn - k0);
         printf("Comparing in region [%d %d %d] [%d %d %d], size = %d \n", i0, j0, k0,
                         in, jn, kn,  size);
-        for (int i = 0; i < 2; ++i) {
+        for (int i = 0; i < 12; ++i) {
              err[i] = check_flinferr(a[i], b[i], 
                              i0, in, j0, jn, k0, kn,
                              topo->line, topo->slice);
-                printf("%s: %g ", names[i], err[i]);
+                printf("%s: %g \n", names[i], err[i]);
                 total_error += err[i];
         }
-        printf("\n");
 
         int3_t grid_size = {nx, ny, nz};
         int3_t shift = {0, 0, 0};

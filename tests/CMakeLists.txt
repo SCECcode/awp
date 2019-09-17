@@ -50,15 +50,15 @@ target_compile_definitions(test_optimized_kernels
         PUBLIC USE_OPTIMIZED_KERNELS=1)
 
 # Attenuation test
-#add_executable(test_attenuation test_attenuation.cu)
-#
-#target_link_libraries(test_attenuation 
-#        ${LIBRARIES} 
-#        awp
-#        opt_topography_attenuation
-#        )
-#
-#target_include_directories(test_attenuation
-#        PUBLIC
-#        ${AWP_MINI_SOURCE_DIR}/include/
-#        )
+add_executable(test_attenuation test_attenuation.cu)
+
+target_link_libraries(test_attenuation 
+        ${LIBRARIES} 
+        awp
+        opt_topography_attenuation
+        )
+
+target_include_directories(test_attenuation
+        PUBLIC
+        ${AWP_MINI_SOURCE_DIR}/include/
+        )
