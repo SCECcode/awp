@@ -35,6 +35,7 @@ void sources_init(const char *filename, const grids_t *grids, int ngrids,
         if (!use) return;
 
         // FIXME: Add support for multiple grids
+        // Find the grid to use
         grids_t grid = grids[0];
 
        if (rank == 0) { 

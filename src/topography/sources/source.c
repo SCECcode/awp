@@ -140,6 +140,15 @@ void source_init_common(source_t *src, const char *filename,
                 free(z1);
 
         } 
+        // Regular AWP
+        //else {
+        //        if (input->dimension != 3) { 
+        //                // Automatically map source to free surface
+        //                for (size_t k = 0; k < src->length; ++k) {
+        //                        src->z[k] = z1[z_grid.size - 1];
+        //                }
+        //        }
+        //}
 
         // Compute interpolation coefficients on the full grid
         AWPCHK(cuinterp_init(&src->interpolation, xyz.x, xyz.y, xyz.z, full_grid,
