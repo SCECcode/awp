@@ -186,16 +186,16 @@ void init(topo_t *T)
         topo_d_constant(T, 1.0, T->dcrjy);
         topo_d_constant(T, 1.0, T->dcrjz);
 
-        topo_d_constant(T, 1.0, T->wwo);
+        topo_d_random(T, 1.0, T->wwo);
         topo_d_constanti(T, 1, T->ww);
-        topo_d_constant(T, 1.0, T->vx1);
-        topo_d_constant(T, 1.0, T->vx2);
-        topo_d_constant(T, 1.0, T->coeff);
+        topo_d_random(T, 1, T->vx1);
+        topo_d_random(T, 2, T->vx2);
+        topo_d_random(T, 3, T->coeff);
 
         topo_d_constant(T, 1.0, T->mui);
         topo_d_constant(T, 1.0, T->lami);
-        topo_d_linear_k(T, T->mui);
-        topo_d_linear_k(T, T->lami);
+        topo_d_quadratic_k(T, T->mui);
+        topo_d_quadratic_k(T, T->lami);
         //topo_d_random(T, 3, T->mui);
         //topo_d_random(T, 4, T->lami);
         topo_d_constant(T, 0, T->lam_mu);
