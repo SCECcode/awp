@@ -149,6 +149,7 @@ void source_init_common(source_t *src, const char *filename,
         //                }
         //        }
         //}
+        //
 
         // Compute interpolation coefficients on the full grid
         AWPCHK(cuinterp_init(&src->interpolation, xyz.x, xyz.y, xyz.z, full_grid,

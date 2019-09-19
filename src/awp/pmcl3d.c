@@ -1575,7 +1575,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
             grids_t grids[MAXGRIDS];
             for (p = 0; p < ngrids; p++) {
                     grids[p] = grids_init(nxt[p], nyt[p], nzt[p], coord[0],
-                                          coord[1], 0, 1, DH[p]);
+                                          coord[1], 0, usetopo, DH[p]);
             }
 
             topo_t T = topo_init(usetopo, INTOPO, 
