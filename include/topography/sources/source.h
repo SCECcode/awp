@@ -7,7 +7,7 @@
 #include <buffers/buffer.h>
 #include <test/test.h>
 #include <awp/error.h>
-#include <topography/input/input.h>
+#include <readers/input.h>
 #include <grid/grid_3d.h>
 #include <topography/metrics/metrics.h>
 #include <mpi/io.h>
@@ -21,6 +21,7 @@ typedef struct {
         prec *x;
         prec *y;
         prec *z;
+        int *type;
         size_t num_elements;
         size_t length;
         cu_interp_t interpolation;

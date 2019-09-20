@@ -53,6 +53,7 @@ void source_finalize(source_t *src)
         free(src->x);
         free(src->y);
         free(src->z);
+        free(src->type);
 }
 
 void source_init_common(source_t *src, const char *filename,
@@ -85,11 +86,13 @@ void source_init_common(source_t *src, const char *filename,
         src->x = malloc(sizeof src->x *  src->length);
         src->y = malloc(sizeof src->y *  src->length);
         src->z = malloc(sizeof src->z *  src->length);
+        src->type = malloc(sizeof src->type *  src->length);
 
         for (size_t i = 0; i < src->length; ++i) {
                 src->x[i] = input->x[src->indices[i]];
                 src->y[i] = input->y[src->indices[i]];
                 src->z[i] = input->z[src->indices[i]];
+                src->type[i] = input->type[src->indices[i]];
         }
 
         grid3_t metric_grid = grid_init_metric_grid(
@@ -123,15 +126,19 @@ void source_init_common(source_t *src, const char *filename,
                 _prec top = grid.gridspacing * (grid.size.z - 2);
                 printf("Top2: %g \n", top);
 
-                if (input->dimension == 3) { 
-                        // Map to parameter space
-                        for (size_t k = 0; k < src->length; ++k) {
-                                src->z[k] = src->z[k] / f_interp[k];
-                        }
-                } else {
+                for (size_t k = 0; k < src->length; ++k) {
                         // Automatically map source to free surface
                         for (size_t k = 0; k < src->length; ++k) {
-                                src->z[k] = z1[z_grid.size - 2];
+                                switch (src->type[k]) {
+                                        case INPUT_VOLUME_COORD:
+                                                src->z[k] = z1[z_grid.size - 2];
+                                                break;
+                                        // Map to parameter space
+                                        case INPUT_SURFACE_COORD:
+                                                src->z[k] =
+                                                    src->z[k] / f_interp[k];
+                                                break;
+                                }
                         }
                 }
 
@@ -147,17 +154,15 @@ void source_init_common(source_t *src, const char *filename,
         // Regular AWP
         else {
               _prec top = grid.gridspacing * (grid.size.z - 1);
-              if (grid.shift.z == 0) {
-              }
-              if (input->dimension == 3) { 
-                      for (size_t k = 0; k < src->length; ++k) {
-                              src->z[k] = src->z[k] + top;
-                      }
-              } 
-              else {
-                      // Automatically map source to free surface
-                      for (size_t k = 0; k < src->length; ++k) {
-                              src->z[k] = top;
+              for (size_t k = 0; k < src->length; ++k) {
+                      switch (src->type[k]) {
+                              case INPUT_VOLUME_COORD:
+                                      src->z[k] = src->z[k] + top;
+                                      break;
+                              // Map to parameter space
+                              case INPUT_SURFACE_COORD:
+                                      src->z[k] = top;
+                                      break;
                       }
               }
         }

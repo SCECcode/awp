@@ -74,6 +74,8 @@ typedef struct
 
 } input_t;
 
+enum input_types {INPUT_VOLUME_COORD = 0, INPUT_SURFACE_COORD = 1};
+
 /*
  * Default initialization of input data structure
  */ 

@@ -5,9 +5,9 @@
 
 #include <awp/definitions.h>
 #include <test/test.h>
-#include <topography/input/input.h>
 #include <topography/receivers/receivers.h>
 #include <topography/receivers/receiver.h>
+#include <readers/input.h>
 
 static int use;
 
