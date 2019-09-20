@@ -92,11 +92,12 @@ void source_init_common(source_t *src, const char *filename,
                 src->z[i] = input->z[src->indices[i]];
         }
 
+        grid3_t metric_grid = grid_init_metric_grid(
+            grid.inner_size, grid_node(), grid.coordinate, grid.boundary1,
+            grid.boundary2, grid.gridspacing);
+
         // Map input coordinates to parameter space
         if (f != NULL) {
-                grid3_t metric_grid = grid_init_metric_grid(
-                    grid.inner_size, grid_node(), grid.coordinate,
-                    grid.boundary1, grid.boundary2, grid.gridspacing);
 
                 // x, y, z grid vectors compatible with topography grid
                 grid1_t x_grid = grid_grid1_x(metric_grid);
@@ -118,6 +119,9 @@ void source_init_common(source_t *src, const char *filename,
                 metrics_interpolate_f_point(f, f_interp, f->f, x1, y1,
                                             metric_grid, src->x, src->y,
                                             src->length, input->degree);
+
+                _prec top = grid.gridspacing * (grid.size.z - 2);
+                printf("Top2: %g \n", top);
 
                 if (input->dimension == 3) { 
                         // Map to parameter space
@@ -141,15 +145,23 @@ void source_init_common(source_t *src, const char *filename,
 
         } 
         // Regular AWP
-        //else {
-        //        if (input->dimension != 3) { 
-        //                // Automatically map source to free surface
-        //                for (size_t k = 0; k < src->length; ++k) {
-        //                        src->z[k] = z1[z_grid.size - 1];
-        //                }
-        //        }
-        //}
-        //
+        else {
+              _prec top = grid.gridspacing * (grid.size.z - 1);
+              if (grid.shift.z == 0) {
+              }
+              if (input->dimension == 3) { 
+                      for (size_t k = 0; k < src->length; ++k) {
+                              src->z[k] = src->z[k] + top;
+                      }
+              } 
+              else {
+                      // Automatically map source to free surface
+                      for (size_t k = 0; k < src->length; ++k) {
+                              src->z[k] = top;
+                      }
+              }
+        }
+        
 
         // Compute interpolation coefficients on the full grid
         AWPCHK(cuinterp_init(&src->interpolation, xyz.x, xyz.y, xyz.z, full_grid,
