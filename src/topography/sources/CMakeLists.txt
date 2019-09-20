@@ -7,4 +7,4 @@ target_include_directories(topography_sources
         ${AWP_MINI_SOURCE_DIR}/include/
         )
 
-target_link_libraries(topography_sources topography_input buffers mpi metrics)
+target_link_libraries(topography_sources readers buffers mpi metrics)

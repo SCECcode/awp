@@ -3,7 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define INPUT_MAJOR 1
+#define INPUT_MAJOR 2
 #define INPUT_MINOR 0
 #define INPUT_PATCH 0
 #define INPUT_DATA_STRING_LENGTH 2048
@@ -18,14 +18,14 @@ extern "C" {
  * per row. The body section starts with the keyword "coordinates".
  *
  * Example:
- * 1.0.0
+ * 2.0.0
  * file=output
  * length=3
  *
  * coordinates
- * 1.0 0.0 0.0
- * 0.0 1.0 0.0
- * 0.0 0.0 1.0
+ * 0 1.0 0.0 0.0
+ * 0 0.0 1.0 0.0
+ * 0 0.0 0.0 1.0
  *
  *
  * Header:
@@ -42,15 +42,15 @@ extern "C" {
  *      stride=3, then output is written at steps = 1, 3, 6, 9, ... .
  * degree: Degree of interpolating polynomial. Use degree = 0 to use the nearest
  *      grid point.
- * system: Type of coordinate system to use. 
- * dimension: Dimensionality of input/output. This value is equal to the number
- *      of columns in the data section. dimension = 2 is for surface
- *      input/output.
- * num_components: Number of components of input/output data. Velocity output is
- * three components, and stress is six components.
  *
  * Body:
- *  x, y, z : Coordinate (float)
+ *  type, x, y, z : Type (int), Coordinate[3] (float)
+ *
+ * The type argument at the beginning of each entry specifies what type of
+ * coordinates used. The possible options are:
+ *  0: Volume coordinates
+ *  1: Surface coordinates. The vertical coordinate, z, is automatically
+ *      determined to follow the free surface.
  */
 
 typedef struct
@@ -65,13 +65,13 @@ typedef struct
         size_t num_writes;
         int stride;
         int degree;
-        int system;
-        int dimension;
-        int num_components;
         // Body section
         prec *x, *y, *z;
+        int *type;
 
 } input_t;
+
+enum input_types {INPUT_VOLUME_COORD = 0, INPUT_SURFACE_COORD = 1};
 
 /*
  * Default initialization of input data structure

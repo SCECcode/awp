@@ -5,6 +5,7 @@ target_link_libraries(test_interpolation
         testing
         grid
         interpolation
+        error
         )
 
 target_include_directories(test_interpolation
@@ -17,11 +18,12 @@ add_test(NAME test_interpolation COMMAND test_interpolation)
 # Interpolation (CUDA)
 
 add_executable(test_interpolationcu test_interpolation.cu)
-
-target_link_libraries(test_interpolationcu
-        testing
-        grid
+#
+target_link_libraries(test_interpolationcu 
         interpolation
+        ${MPI_C_LIBRARIES}
+        grid
+        testing
         )
 
 target_include_directories(test_interpolationcu
@@ -39,11 +41,6 @@ add_executable(test_lagrange test_lagrange.c)
 target_link_libraries(test_lagrange 
         testing
         grid
-        interpolation
-        )
-
-target_link_libraries(test_lagrange
-        testing
         interpolation
         )
 

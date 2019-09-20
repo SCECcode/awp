@@ -3,7 +3,6 @@ add_subdirectory(initializations)
 add_subdirectory(metrics)
 add_subdirectory(readers)
 add_subdirectory(geometry)
-add_subdirectory(input)
 add_subdirectory(sources)
 add_subdirectory(receivers)
 
@@ -40,9 +39,10 @@ set(LIBRARIES
     geometry
     topography_readers
     vtk
-    topography_input
     topography_sources
     topography_receivers
+    readers
+    error
     )
 
 set(UNOPT_LIBRARIES ${LIBRARIES} unoptimized_kernels)

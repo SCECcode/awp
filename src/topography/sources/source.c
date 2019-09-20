@@ -53,6 +53,7 @@ void source_finalize(source_t *src)
         free(src->x);
         free(src->y);
         free(src->z);
+        free(src->type);
 }
 
 void source_init_common(source_t *src, const char *filename,
@@ -85,18 +86,21 @@ void source_init_common(source_t *src, const char *filename,
         src->x = malloc(sizeof src->x *  src->length);
         src->y = malloc(sizeof src->y *  src->length);
         src->z = malloc(sizeof src->z *  src->length);
+        src->type = malloc(sizeof src->type *  src->length);
 
         for (size_t i = 0; i < src->length; ++i) {
                 src->x[i] = input->x[src->indices[i]];
                 src->y[i] = input->y[src->indices[i]];
                 src->z[i] = input->z[src->indices[i]];
+                src->type[i] = input->type[src->indices[i]];
         }
+
+        grid3_t metric_grid = grid_init_metric_grid(
+            grid.inner_size, grid_node(), grid.coordinate, grid.boundary1,
+            grid.boundary2, grid.gridspacing);
 
         // Map input coordinates to parameter space
         if (f != NULL) {
-                grid3_t metric_grid = grid_init_metric_grid(
-                    grid.inner_size, grid_node(), grid.coordinate,
-                    grid.boundary1, grid.boundary2, grid.gridspacing);
 
                 // x, y, z grid vectors compatible with topography grid
                 grid1_t x_grid = grid_grid1_x(metric_grid);
@@ -119,16 +123,29 @@ void source_init_common(source_t *src, const char *filename,
                                             metric_grid, src->x, src->y,
                                             src->length, input->degree);
 
-                if (input->dimension == 3) { 
-                        // Map to parameter space
-                        for (size_t k = 0; k < src->length; ++k) {
-                                src->z[k] = src->z[k] / f_interp[k];
-                        }
-                } else {
-                        // Automatically map source to free surface
-                        for (size_t k = 0; k < src->length; ++k) {
-                                src->z[k] = z1[z_grid.size - 2];
-                        }
+                _prec top = grid.gridspacing * (grid.size.z - 2);
+
+                for (size_t k = 0; k < src->length; ++k) {
+                               switch (src->type[k]) {
+                                       // Map to parameter space
+                                       case INPUT_VOLUME_COORD:
+                                               src->z[k] = (top + src->z[k]) /
+                                                           f_interp[k];
+                                               break;
+                                       case INPUT_SURFACE_COORD:
+                                               src->z[k] = z1[z_grid.size - 2];
+                                               break;
+                                        //FIXME: INPUT_BATHYMETRY_COORD
+                                        // Implement treatment for ocean
+                                        // bathemetry.
+                                        // Recommendation: Add a function
+                                        // to "receivers.c" and a function to
+                                        // to "receiver.c"
+                                        // Place the implementation in
+                                        // "receiver.c" but call this function
+                                        // for each receiver component in
+                                        // "receivers.c"
+                               }
                 }
 
                 
@@ -141,15 +158,21 @@ void source_init_common(source_t *src, const char *filename,
 
         } 
         // Regular AWP
-        //else {
-        //        if (input->dimension != 3) { 
-        //                // Automatically map source to free surface
-        //                for (size_t k = 0; k < src->length; ++k) {
-        //                        src->z[k] = z1[z_grid.size - 1];
-        //                }
-        //        }
-        //}
-        //
+        else {
+              _prec top = grid.gridspacing * (grid.size.z - 1);
+              for (size_t k = 0; k < src->length; ++k) {
+                      switch (src->type[k]) {
+                              case INPUT_VOLUME_COORD:
+                                      src->z[k] = src->z[k] + top;
+                                      break;
+                              // Map to parameter space
+                              case INPUT_SURFACE_COORD:
+                                      src->z[k] = top;
+                                      break;
+                      }
+              }
+        }
+        
 
         // Compute interpolation coefficients on the full grid
         AWPCHK(cuinterp_init(&src->interpolation, xyz.x, xyz.y, xyz.z, full_grid,

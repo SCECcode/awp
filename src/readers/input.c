@@ -19,17 +19,15 @@ int input_init_default(input_t *out)
 {
         out->gpu_buffer_size = 0;
         out->cpu_buffer_size = 0;
-        out->system = 0;
         out->degree = 0;
         out->stride = 1;
         out->steps = 1;
         out->num_writes = 1;
-        out->dimension = 3;
-        out->num_components = 3;
         sprintf(out->file, "default");
         out->x = NULL;
         out->y = NULL;
         out->z = NULL;
+        out->type = NULL;
 
         return SUCCESS;
 }
@@ -69,21 +67,12 @@ int input_write(input_t *out, const char *filename)
         fprintf(fp, "num_writes=%lu\n", out->num_writes);
         fprintf(fp, "stride=%d\n", out->stride);
         fprintf(fp, "degree=%d\n", out->degree);
-        fprintf(fp, "system=%d\n", out->system);
-        fprintf(fp, "dimension=%d\n", out->dimension);
-        fprintf(fp, "num_components=%d\n", out->num_components);
         fprintf(fp, "coordinates\n");
 
         // Data
-        if (out->dimension == 3) {
-                for (size_t i = 0; i < out->length; ++i) {
-                        fprintf(fp, "%g %g %g\n", out->x[i], out->y[i],
-                                out->z[i]);
-                }
-        } else if (out->dimension == 2) {
-                for (size_t i = 0; i < out->length; ++i) {
-                        fprintf(fp, "%g %g\n", out->x[i], out->y[i]);
-                }
+        for (size_t i = 0; i < out->length; ++i) {
+                fprintf(fp, "%d %g %g %g\n", out->type[i], out->x[i], out->y[i],
+                        out->z[i]);
         }
 
         fclose(fp);
@@ -98,6 +87,7 @@ void input_flush(void);
 
 void input_finalize(input_t *out)
 {
+        if(out->type != NULL) free(out->type);
         if(out->x != NULL) free(out->x);
         if(out->y != NULL) free(out->y);
         if(out->z != NULL) free(out->z);
@@ -160,9 +150,6 @@ int input_parse(input_t *out, const char *line)
         else if (strcmp(variable, "num_writes") == 0) {
                 out->num_writes = (size_t)atof(value);
         }
-        else if (strcmp(variable, "system") == 0) {
-                out->system = atoi(value);
-        }
         else if (strcmp(variable, "degree") == 0) {
                 out->degree = atoi(value);
         }
@@ -171,15 +158,6 @@ int input_parse(input_t *out, const char *line)
         }
         else if (strcmp(variable, "cpu_buffer_size") == 0) {
                 out->cpu_buffer_size = atoi(value);
-        }
-        else if (strcmp(variable, "dimension") == 0) {
-                out->dimension = atoi(value);
-                if (out->dimension != 2 && out->dimension != 3) {
-                        return ERR_CONFIG_PARSE_WRONG_DIMENSION;
-                }
-        }
-        else if (strcmp(variable, "num_components") == 0) {
-                out->num_components = atoi(value);
         }
         else {
                 fprintf(stderr, "Unknown argument: %s \n", variable);
@@ -227,9 +205,6 @@ int input_equals(input_t *a, input_t *b)
         equals &= a->num_writes == b->num_writes;
         equals &= a->stride == b->stride;
         equals &= a->degree == b->degree;
-        equals &= a->system == b->system;
-        equals &= a->dimension == b->dimension;
-        equals &= a->num_components == b->num_components;
         if (!equals)
                 return equals;
         return equals;
@@ -256,9 +231,6 @@ int input_broadcast(input_t *out, int rank, int root, MPI_Comm communicator)
         err |= MPI_Bcast(&out->num_writes, 1, MPI_AINT, root, communicator);
         err |= MPI_Bcast(&out->stride, 1, MPI_INT, root, communicator);
         err |= MPI_Bcast(&out->degree, 1, MPI_INT, root, communicator);
-        err |= MPI_Bcast(&out->system, 1, MPI_INT, root, communicator);
-        err |= MPI_Bcast(&out->dimension, 1, MPI_INT, root, communicator);
-        err |= MPI_Bcast(&out->num_components, 1, MPI_INT, root, communicator);
 
         if (err > 0) {
                 return ERR_CONFIG_BROADCAST;
@@ -269,6 +241,7 @@ int input_broadcast(input_t *out, int rank, int root, MPI_Comm communicator)
         }
 
         // Data section
+        err |= MPI_Bcast(out->type, out->length, MPI_PREC, root, communicator);
         err |= MPI_Bcast(out->x, out->length, MPI_PREC, root, communicator);
         err |= MPI_Bcast(out->y, out->length, MPI_PREC, root, communicator);
         err |= MPI_Bcast(out->z, out->length, MPI_PREC, root, communicator);
@@ -326,6 +299,7 @@ int _read_header(input_t *out, FILE *fp)
         }
 
         char current_string[VERSION_STRING_LENGTH];
+
         sprintf(current_string, "%d.%d.%d", INPUT_MAJOR, INPUT_MINOR,
                                             INPUT_PATCH);
         err = version_check_compatibility((const version_t *)&out->version,
@@ -372,8 +346,9 @@ int input_check_header(const input_t *out)
 int _malloc_data(input_t *out)
 {
 
-        assert(!out->x && !out->y && !out->z);
+        assert(!out->type && !out->x && !out->y && !out->z);
 
+        out->type = malloc(sizeof(out->type) * out->length);
         out->x = malloc(sizeof(out->x) * out->length);
         out->y = malloc(sizeof(out->y) * out->length);
         out->z = malloc(sizeof(out->z) * out->length);
@@ -386,38 +361,20 @@ int _malloc_data(input_t *out)
 int _read_data(input_t *out, FILE *fp)
 {
         //FIXME: Rewrite this function using strtok instead of scanf
-        // The problem with scanf is that it does not respect line numbers
-        // so if we have 
-        // 0 0 0
-        // 1 1 1
-        // and set dimension = 2 then 
-        // we will parse
-        // x[0] = 0, y[0] = 0
-        // x[1] = 0, y[1] = 1, 
-        // which is not what we want.
-        if (out->dimension == 3) {
-                for (size_t id = 0; id < out->length; ++id) {
-                        prec x, y, z;
-                        int match = fscanf(fp, "%g %g %g\n", &x, &y, &z);
-                        if (match != out->dimension) {
-                                return ERR_CONFIG_DATA_READ_ELEMENT;
-                        }
-                        out->x[id] = x;
-                        out->y[id] = y;
-                        out->z[id] = z;
-                }
-        }
-        else if(out->dimension == 2) {
-                for (size_t id = 0; id < out->length; ++id) {
-                        prec x, y;
-                        int match = fscanf(fp, "%g %g\n", &x, &y);
-                        if (match != out->dimension) {
-                                return ERR_CONFIG_DATA_READ_ELEMENT;
-                        }
-                        out->x[id] = x;
-                        out->y[id] = y;
-                        out->z[id] = 0;
-                }
+        // The problem with scanf is that it does not respect line numbers,
+        // and hence it can lead to some unexpected behavior if the input is
+        // incorrectly formatted
+        for (size_t id = 0; id < out->length; ++id) {
+             prec x, y, z;
+             int type;
+             int match = fscanf(fp, "%d %g %g %g\n", &type, &x, &y, &z);
+             if (match != 4) {
+                     return ERR_CONFIG_DATA_READ_ELEMENT;
+             }
+             out->x[id] = x;
+             out->y[id] = y;
+             out->z[id] = z;
+             out->type[id] = type;
         }
 
         return SUCCESS;

@@ -4,10 +4,10 @@
 #include <math.h>
 
 #include <awp/definitions.h>
+#include <awp/error.h>
 #include <grid/shift.h>
 #include <grid/grid_3d.h>
 #include <interpolation/interpolation.h>
-#include <interpolation/error.h>
 #include <test/test.h>
 #include <test/array.h>
 

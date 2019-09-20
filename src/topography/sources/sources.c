@@ -8,7 +8,7 @@
 #include <test/test.h>
 #include <topography/sources/source.h>
 #include <topography/sources/sources.h>
-#include <topography/input/input.h>
+#include <readers/input.h>
 
 static int use;
 

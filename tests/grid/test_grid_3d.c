@@ -5,11 +5,11 @@
 #include <math.h>
 
 #include <awp/definitions.h>
+#include <awp/error.h>
 #include <test/test.h>
 #include <test/array.h>
 #include <grid/grid_3d.h>
 #include <grid/shift.h>
-#include <grid/error.h>
 
 int test_grid_fill(int rank, int size);
 int test_grid_in_bounds(int rank, int size);

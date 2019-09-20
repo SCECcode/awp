@@ -19,7 +19,7 @@
 #include <topography/receivers/receivers.h>
 #include <topography/receivers/receiver.h>
 #include <topography/grids.h>
-#include <topography/input/input.h>
+#include <readers/input.h>
 
 int test_receivers(const char *inputfile, int rank, int size, const int px);
 
