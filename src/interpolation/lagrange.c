@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include <interpolation/lagrange.h>
-#include <interpolation/error.h>
+#include <awp/error.h>
 
 /*
  * Compute Lagrange polynomial basis and evaluate it at x0:

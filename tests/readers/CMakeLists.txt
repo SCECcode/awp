@@ -4,6 +4,7 @@ add_executable(test_input test_input.c)
 target_link_libraries(test_input 
         testing
         readers
+        error
         ${MPI_C_LIBRARIES} 
         )
 

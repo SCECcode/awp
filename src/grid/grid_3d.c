@@ -5,7 +5,7 @@
 
 #include <test/test.h>
 #include <grid/grid_3d.h>
-#include <grid/error.h>
+#include <awp/error.h>
 
 /* Initialize grid
  * 

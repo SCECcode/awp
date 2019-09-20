@@ -5,9 +5,9 @@
 #include <math.h>
 
 #include <awp/definitions.h>
+#include <awp/error.h>
 #include <test/test.h>
 #include <interpolation/lagrange.h>
-#include <interpolation/error.h>
 
 
 int test_basis(void);

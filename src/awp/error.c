@@ -73,6 +73,20 @@ const char* error_message(const int err)
                 case ERR_INTERP_MALLOC:
                         return "Memory allocation failed in cuinterpolation";
                         break;
+                case ERR_LAGRANGE_LOWER_EXTRAPOLATION:
+                        return "Evaluation point is out of bounds (lower) "\
+                               " for Lagrange interpolation.";
+                        break;
+                case ERR_LAGRANGE_UPPER_EXTRAPOLATION:
+                        return "Evaluation point is out of bounds (upper) "\
+                               " for Lagrange interpolation.";
+                        break;
+                case ERR_OUT_OF_BOUNDS_LOWER:
+                        return "Out of bounds (lower)";
+                        break;
+                case ERR_OUT_OF_BOUNDS_UPPER:
+                        return "Out of bounds (upper)";
+                        break;
                 case ERR_INTERP_WRITE_END_OF_FILE:
                         return "Tried to write past end of file.";
                         break;

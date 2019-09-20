@@ -11,7 +11,6 @@
 #include <grid/grid_3d.h>
 #include <interpolation/interpolation.h>
 #include <interpolation/interpolation.cuh>
-#include <interpolation/error.h>
 
 int test_interp(void);
 int test_write(const int rank, const int size);

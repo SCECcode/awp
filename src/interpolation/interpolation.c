@@ -8,7 +8,7 @@
 #include <grid/grid_3d.h>
 #include <interpolation/lagrange.h>
 #include <interpolation/interpolation.h>
-#include <interpolation/error.h>
+#include <awp/error.h>
 #include <test/test.h>
 
 int interp_argnearest(int *nearest, const prec *points, const int n, const prec

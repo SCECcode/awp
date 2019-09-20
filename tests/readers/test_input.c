@@ -214,15 +214,11 @@ int test_parse(void)
         err |= s_assert(out.stride == 10);
         err |= input_parse(&out, "degree=3");
         err |= s_assert(out.degree == 3);
-        err |= input_parse(&out, "system=0");
-        err |= s_assert(out.system == 0);
         err |= input_parse(&out, "steps=1e3");
         err |= s_assert(out.steps == 1000);
         err |= input_parse(&out, "num_writes=10");
         err |= s_assert(out.num_writes == 10);
         err |= input_parse(&out, "num_components=2");
-        err |= s_assert(out.num_components == 2);
-        err |= input_parse(&out, "dimension=2");
         err |= s_assert(out.num_components == 2);
         err |= input_parse(&out, "gpu_buffer_size=10");
         err |= s_assert(out.gpu_buffer_size == 10);
