@@ -42,8 +42,6 @@ extern "C" {
  *      stride=3, then output is written at steps = 1, 3, 6, 9, ... .
  * degree: Degree of interpolating polynomial. Use degree = 0 to use the nearest
  *      grid point.
- * num_components: Number of components of input/output data. Velocity output is
- * three components, and stress is six components.
  *
  * Body:
  *  type, x, y, z : Type (int), Coordinate[3] (float)
@@ -67,7 +65,6 @@ typedef struct
         size_t num_writes;
         int stride;
         int degree;
-        int num_components;
         // Body section
         prec *x, *y, *z;
         int *type;

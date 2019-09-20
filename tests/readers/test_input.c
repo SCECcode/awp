@@ -218,8 +218,6 @@ int test_parse(void)
         err |= s_assert(out.steps == 1000);
         err |= input_parse(&out, "num_writes=10");
         err |= s_assert(out.num_writes == 10);
-        err |= input_parse(&out, "num_components=2");
-        err |= s_assert(out.num_components == 2);
         err |= input_parse(&out, "gpu_buffer_size=10");
         err |= s_assert(out.gpu_buffer_size == 10);
         err |= input_parse(&out, "cpu_buffer_size=100");

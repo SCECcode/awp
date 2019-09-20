@@ -124,22 +124,28 @@ void source_init_common(source_t *src, const char *filename,
                                             src->length, input->degree);
 
                 _prec top = grid.gridspacing * (grid.size.z - 2);
-                printf("Top2: %g \n", top);
 
                 for (size_t k = 0; k < src->length; ++k) {
-                        // Automatically map source to free surface
-                        for (size_t k = 0; k < src->length; ++k) {
-                                switch (src->type[k]) {
-                                        case INPUT_VOLUME_COORD:
-                                                src->z[k] = z1[z_grid.size - 2];
-                                                break;
-                                        // Map to parameter space
-                                        case INPUT_SURFACE_COORD:
-                                                src->z[k] =
-                                                    src->z[k] / f_interp[k];
-                                                break;
-                                }
-                        }
+                               switch (src->type[k]) {
+                                       // Map to parameter space
+                                       case INPUT_VOLUME_COORD:
+                                               src->z[k] = (top + src->z[k]) /
+                                                           f_interp[k];
+                                               break;
+                                       case INPUT_SURFACE_COORD:
+                                               src->z[k] = z1[z_grid.size - 2];
+                                               break;
+                                        //FIXME: INPUT_BATHYMETRY_COORD
+                                        // Implement treatment for ocean
+                                        // bathemetry.
+                                        // Recommendation: Add a function
+                                        // to "receivers.c" and a function to
+                                        // to "receiver.c"
+                                        // Place the implementation in
+                                        // "receiver.c" but call this function
+                                        // for each receiver component in
+                                        // "receivers.c"
+                               }
                 }
 
                 

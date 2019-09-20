@@ -23,7 +23,6 @@ int input_init_default(input_t *out)
         out->stride = 1;
         out->steps = 1;
         out->num_writes = 1;
-        out->num_components = 3;
         sprintf(out->file, "default");
         out->x = NULL;
         out->y = NULL;
@@ -68,7 +67,6 @@ int input_write(input_t *out, const char *filename)
         fprintf(fp, "num_writes=%lu\n", out->num_writes);
         fprintf(fp, "stride=%d\n", out->stride);
         fprintf(fp, "degree=%d\n", out->degree);
-        fprintf(fp, "num_components=%d\n", out->num_components);
         fprintf(fp, "coordinates\n");
 
         // Data
@@ -161,9 +159,6 @@ int input_parse(input_t *out, const char *line)
         else if (strcmp(variable, "cpu_buffer_size") == 0) {
                 out->cpu_buffer_size = atoi(value);
         }
-        else if (strcmp(variable, "num_components") == 0) {
-                out->num_components = atoi(value);
-        }
         else {
                 fprintf(stderr, "Unknown argument: %s \n", variable);
                 return ERR_CONFIG_PARSE_UNKNOWN_ARG;
@@ -210,7 +205,6 @@ int input_equals(input_t *a, input_t *b)
         equals &= a->num_writes == b->num_writes;
         equals &= a->stride == b->stride;
         equals &= a->degree == b->degree;
-        equals &= a->num_components == b->num_components;
         if (!equals)
                 return equals;
         return equals;
@@ -237,7 +231,6 @@ int input_broadcast(input_t *out, int rank, int root, MPI_Comm communicator)
         err |= MPI_Bcast(&out->num_writes, 1, MPI_AINT, root, communicator);
         err |= MPI_Bcast(&out->stride, 1, MPI_INT, root, communicator);
         err |= MPI_Bcast(&out->degree, 1, MPI_INT, root, communicator);
-        err |= MPI_Bcast(&out->num_components, 1, MPI_INT, root, communicator);
 
         if (err > 0) {
                 return ERR_CONFIG_BROADCAST;
@@ -307,8 +300,6 @@ int _read_header(input_t *out, FILE *fp)
 
         char current_string[VERSION_STRING_LENGTH];
 
-        printf(current_string, "VERSION = %d.%d.%d \n", INPUT_MAJOR, INPUT_MINOR,
-                                            INPUT_PATCH);
         sprintf(current_string, "%d.%d.%d", INPUT_MAJOR, INPUT_MINOR,
                                             INPUT_PATCH);
         err = version_check_compatibility((const version_t *)&out->version,
