@@ -36,14 +36,18 @@ typedef struct {
 
 
 source_t source_init(const char *file_end, const input_t *input,
-                     const grid3_t grid, const f_grid_t *f, const int rank,
+                     const grid3_t grid, const f_grid_t *f, 
+                     const int *grid_number,
+                     const int rank,
                      const MPI_Comm comm);
 
 void source_finalize(source_t *src);
 void source_init_common(source_t *src, const char *filename,
                         const input_t *input, const grid3_t grid, 
                         const f_grid_t *f,
-                        const int rank, const MPI_Comm comm);
+                        const int *grid_number,
+                        const int rank, 
+                        const MPI_Comm comm);
 MPI_Comm source_communicator(source_t *src, const int rank,
                              const MPI_Comm comm);
 void source_read(source_t *src, size_t step);

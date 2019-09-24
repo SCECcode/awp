@@ -36,9 +36,11 @@ void receivers_init(const char *filename, const grids_t *grids, int ngrids,
 
         grids_t grid = grids[0];
 
-        rx = receiver_init("x", &input, grid.x, f, rank, comm);
-        ry = receiver_init("y", &input, grid.y, f, rank, comm);
-        rz = receiver_init("z", &input, grid.z, f, rank, comm);
+       int *grid_number;
+
+        rx = receiver_init("x", &input, grid.x, f, grid_number, rank, comm);
+        ry = receiver_init("y", &input, grid.y, f, grid_number, rank, comm);
+        rz = receiver_init("z", &input, grid.z, f, grid_number, rank, comm);
 }
 
 void receivers_finalize(void)

@@ -5,7 +5,9 @@
 
 typedef source_t recv_t;
 recv_t receiver_init(const char *filename, const input_t *input,
-                     const grid3_t grid, const f_grid_t *f, const int rank,
+                     const grid3_t grid, const f_grid_t *f, 
+                     const int *grid_number,
+                     const int rank,
                      const MPI_Comm comm);
 void receiver_finalize(recv_t *recv);
 void receiver_write(recv_t *recv, size_t step, const char *filename,

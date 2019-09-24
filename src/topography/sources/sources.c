@@ -43,12 +43,14 @@ void sources_init(const char *filename, const grids_t *grids, int ngrids,
        }
        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
-       Mxx = source_init("xx", &input, grid.xx, f, rank, comm);
-       Myy = source_init("yy", &input, grid.yy, f, rank, comm);
-       Mzz = source_init("zz", &input, grid.zz, f, rank, comm);
-       Mxy = source_init("xy", &input, grid.xy, f, rank, comm);
-       Mxz = source_init("xz", &input, grid.xz, f, rank, comm);
-       Myz = source_init("yz", &input, grid.yz, f, rank, comm);
+       int *grid_number;
+
+       Mxx = source_init("xx", &input, grid.xx, f, grid_number, rank, comm);
+       Myy = source_init("yy", &input, grid.yy, f, grid_number, rank, comm);
+       Mzz = source_init("zz", &input, grid.zz, f, grid_number, rank, comm);
+       Mxy = source_init("xy", &input, grid.xy, f, grid_number, rank, comm);
+       Mxz = source_init("xz", &input, grid.xz, f, grid_number, rank, comm);
+       Myz = source_init("yz", &input, grid.yz, f, grid_number, rank, comm);
 }
 
 void sources_read(size_t step)

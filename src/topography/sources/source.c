@@ -20,12 +20,14 @@ void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
 source_t source_init(const char *file_end, const input_t *input,
                      const grid3_t grid, 
-                     const f_grid_t *f, const int rank,
+                     const f_grid_t *f, 
+                     const int *grid_number,
+                     const int rank,
                      const MPI_Comm comm)
 {
         source_t src;
 
-        source_init_common(&src, file_end, input, grid, f, rank, comm);
+        source_init_common(&src, file_end, input, grid, f, grid_number, rank, comm);
 
         if (!src.use) {
                 return src;
@@ -58,7 +60,8 @@ void source_finalize(source_t *src)
 
 void source_init_common(source_t *src, const char *filename,
                         const input_t *input, const grid3_t grid, 
-                        const f_grid_t *f,
+                        const f_grid_t *f, 
+                        const int *grid_number,
                         const int rank, const MPI_Comm comm)
 {
         sprintf(src->filename, "%s_%s", input->file, filename);
@@ -89,7 +92,9 @@ void source_init_common(source_t *src, const char *filename,
         src->type = malloc(sizeof src->type *  src->length);
 
         for (size_t i = 0; i < src->length; ++i) {
-                src->x[i] = input->x[src->indices[i]];
+                // Shift by 0.5 such that x = 0, y = 0 is located at a material
+                // or topography grid point.
+                src->x[i] = input->x[src->indices[i]] - 0.5 * grid.gridspacing;
                 src->y[i] = input->y[src->indices[i]];
                 src->z[i] = input->z[src->indices[i]];
                 src->type[i] = input->type[src->indices[i]];
@@ -115,6 +120,7 @@ void source_init_common(source_t *src, const char *filename,
                 grid_fill1(y1, y_grid);
                 grid_fill1(z1, z_grid);
 
+
                 // Interpolate topography data to source location in
                 // (x,y) space
                 prec *f_interp = malloc(sizeof f_interp * src->length);
@@ -137,7 +143,7 @@ void source_init_common(source_t *src, const char *filename,
                                                break;
                                         //FIXME: INPUT_BATHYMETRY_COORD
                                         // Implement treatment for ocean
-                                        // bathemetry.
+                                        // bathymetry.
                                         // Recommendation: Add a function
                                         // to "receivers.c" and a function to
                                         // to "receiver.c"
@@ -159,7 +165,9 @@ void source_init_common(source_t *src, const char *filename,
         } 
         // Regular AWP
         else {
+
               _prec top = grid.gridspacing * (grid.size.z - 1);
+
               for (size_t k = 0; k < src->length; ++k) {
                       switch (src->type[k]) {
                               case INPUT_VOLUME_COORD:

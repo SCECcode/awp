@@ -15,13 +15,16 @@ void receiver_init_indexed(recv_t *recv, const input_t *input,
                            size_t num_reads);
 
 recv_t receiver_init(const char *filename, const input_t *input,
-                     const grid3_t grid, const f_grid_t *f, const int rank,
+                     const grid3_t grid, const f_grid_t *f, 
+                     const int *grid_number,
+                     const int rank,
                      const MPI_Comm comm) 
 {
         recv_t recv;
 
         strcpy(recv.filename, filename);
-        source_init_common(&recv, filename, input, grid, f, rank, comm);
+        source_init_common(&recv, filename, input, grid, f, grid_number, rank,
+                           comm);
 
         if (!recv.use) {
                 return recv;
