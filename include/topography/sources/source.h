@@ -4,6 +4,7 @@
 #include <mpi.h>
 
 #include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <buffers/buffer.h>
 #include <test/test.h>
 #include <awp/error.h>
@@ -18,14 +19,17 @@ typedef struct {
         int *indices;
         int *offsets;
         int *blocklen;
-        // parameter space coordinates
-        prec *x;
-        prec *y;
-        prec *z;
-        int *type;
-        size_t num_elements;
         size_t length;
-        cu_interp_t interpolation;
+        // parameter space coordinates
+        prec *x[MAXGRIDS];
+        prec *y[MAXGRIDS];
+        prec *z[MAXGRIDS];
+        int *type[MAXGRIDS];
+        size_t lengths[MAXGRIDS];
+        int data_offset[MAXGRIDS];
+        int *grid_number;
+        size_t num_elements;
+        cu_interp_t interpolation[MAXGRIDS];
         mpi_io_idx_t io;
         buffer_t buffer;
         prec *host_buffer_extra;
@@ -62,7 +66,7 @@ MPI_Comm source_communicator(source_t *src, const int rank,
                              const MPI_Comm comm);
 void source_read(source_t *src, size_t step);
 void source_add_cartesian(prec *out, source_t *src, const size_t step,
-                          const prec h, const prec dt);
+                          const prec h, const prec dt, const int grid_num);
 
 void source_add_curvilinear(prec *out, source_t *src, const size_t step,
                             const prec h, const prec dt, const prec *f,

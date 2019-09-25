@@ -110,7 +110,7 @@ int test_sources(const char *inputfile, int rank, int size, const int px)
         for (size_t step = 0; step < input.steps; ++step) {
                 sources_read(step);
                 sources_add_cartesian(d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, step,
-                                      h, dt);
+                                      h, dt, 0);
         }
 
         err = test_finalize(&test, err);

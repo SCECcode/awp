@@ -127,9 +127,9 @@ void source_init_common(source_t *src, const char *filename,
         printf("x = %d y = %d \n", grid.size.x, grid.size.y);
 
 
-
         AWPCHK(dist_indices(&src->indices, &src->length, input->x,
                             input->y, input->length, grid));
+
 
 
         src->use = src->length > 0 ? 1 : 0;
@@ -140,111 +140,121 @@ void source_init_common(source_t *src, const char *filename,
                 return;
         }
 
-
-        // Init arrays that contains local coordinates
-        src->x = malloc(sizeof src->x *  src->length);
-        src->y = malloc(sizeof src->y *  src->length);
-        src->z = malloc(sizeof src->z *  src->length);
-        src->type = malloc(sizeof src->type *  src->length);
-
-
-        for (size_t i = 0; i < src->length; ++i) {
-                // Shift by 0.5 such that x = 0, y = 0 is located at a material
-                // or topography grid point.
-                src->x[i] = input->x[src->indices[i]] - 0.5 * grid.gridspacing;
-                src->y[i] = input->y[src->indices[i]];
-                src->z[i] = input->z[src->indices[i]];
-                src->type[i] = input->type[src->indices[i]];
+        int *grid_number = malloc(sizeof grid_number * src->length);
+        source_find_grid_number(input, grids, grid_number, ngrids);
+        for (int i = 0; i < src->length; ++i) {
+                for (int j = 0; j < ngrids; ++j) {
+                        if (grid_number[i] == j) src->lengths[j] += 1;
+                }
         }
 
-        grid3_t metric_grid = grid_init_metric_grid(
-            grid.inner_size, grid_node(), grid.coordinate, grid.boundary1,
-            grid.boundary2, grid.gridspacing);
+        src->data_offset[0] = 0;
+        for (int j = 1; j < ngrids; ++j) {
+                src->data_offset[j] = src->data_offset[j-1] + src->lengths[j];
+        }
 
+        int idx = -1;
+        for (int j = 0; j < ngrids; ++j) {
+                grid = grids_select(grid_type, &grids[j]);
 
-        // Map input coordinates to parameter space
-        if (f != NULL) {
+                // Init arrays that contains local coordinates
+                src->x[j] = malloc(sizeof src->x * src->lengths[j]);
+                src->y[j] = malloc(sizeof src->y * src->lengths[j]);
+                src->z[j] = malloc(sizeof src->z * src->lengths[j]);
+                src->type[j] = malloc(sizeof src->type *  src->lengths[j]);
 
-                // x, y, z grid vectors compatible with topography grid
-                grid1_t x_grid = grid_grid1_x(metric_grid);
-                grid1_t y_grid = grid_grid1_y(metric_grid);
-                grid1_t z_grid = grid_grid1_z(metric_grid);
+                for (size_t i = 0; i < src->lengths[j]; ++i) {
+                        idx++;
+                        if (grid_number[i] != j) continue;
+                        // Shift by 0.5 such that x = 0, y = 0 is located at a material
+                        // or topography grid point.
+                        src->x[j][i] = input->x[src->indices[idx]] - 0.5 * grid.gridspacing;
+                        src->y[j][i] = input->y[src->indices[idx]];
+                        src->z[j][i] = input->z[src->indices[idx]];
+                        src->type[j][i] = input->type[src->indices[idx]];
+                }
+        
+                grid3_t metric_grid = grid_init_metric_grid( grid.inner_size,
+                                grid_node(), grid.coordinate, grid.boundary1,
+                                grid.boundary2, grid.gridspacing);
 
-                prec *x1 = malloc(sizeof x1 * x_grid.size);
-                prec *y1 = malloc(sizeof y1 * y_grid.size);
-                prec *z1 = malloc(sizeof z1 * z_grid.size);
+                if (f != NULL && j == 0) {
+                        // x, y, z grid vectors compatible with topography grid
+                        grid1_t x_grid = grid_grid1_x(metric_grid);
+                        grid1_t y_grid = grid_grid1_y(metric_grid);
+                        grid1_t z_grid = grid_grid1_z(metric_grid);
 
-                grid_fill1(x1, x_grid);
-                grid_fill1(y1, y_grid);
-                grid_fill1(z1, z_grid);
+                        prec *x1 = malloc(sizeof x1 * x_grid.size);
+                        prec *y1 = malloc(sizeof y1 * y_grid.size);
+                        prec *z1 = malloc(sizeof z1 * z_grid.size);
 
+                        grid_fill1(x1, x_grid);
+                        grid_fill1(y1, y_grid);
+                        grid_fill1(z1, z_grid);
 
-                // Interpolate topography data to source location in
-                // (x,y) space
-                prec *f_interp = malloc(sizeof f_interp * src->length);
+                        // Interpolate topography data to source location in
+                        // (x,y) space
+                        prec *f_interp =
+                            malloc(sizeof f_interp * src->lengths[j]);
 
-                metrics_interpolate_f_point(f, f_interp, f->f, x1, y1,
-                                            metric_grid, src->x, src->y,
-                                            src->length, input->degree);
+                        metrics_interpolate_f_point(f, f_interp, f->f, x1, y1,
+                                                    metric_grid, src->x[j], src->y[j],
+                                                    src->lengths[j], input->degree);
 
-                _prec top = grid.gridspacing * (grid.size.z - 2);
+                        _prec top = grid.gridspacing * (grid.size.z - 2);
 
-                for (size_t k = 0; k < src->length; ++k) {
-                               switch (src->type[k]) {
-                                       // Map to parameter space
-                                       case INPUT_VOLUME_COORD:
-                                               src->z[k] = (top + src->z[k]) /
-                                                           f_interp[k];
-                                               break;
-                                       case INPUT_SURFACE_COORD:
-                                               src->z[k] = z1[z_grid.size - 2];
-                                               break;
-                                        //FIXME: INPUT_BATHYMETRY_COORD
-                                        // Implement treatment for ocean
-                                        // bathymetry.
-                                        // Recommendation: Add a function
-                                        // to "receivers.c" and a function to
-                                        // to "receiver.c"
-                                        // Place the implementation in
-                                        // "receiver.c" but call this function
-                                        // for each receiver component in
-                                        // "receivers.c"
-                               }
+                        for (size_t k = 0; k < src->lengths[j]; ++k) {
+                                switch (src->type[j][k]) {
+                                        // Map to parameter space
+                                        case INPUT_VOLUME_COORD:
+                                                src->z[j][k] =
+                                                    (top + src->z[j][k]) /
+                                                    f_interp[k];
+                                                break;
+                                        case INPUT_SURFACE_COORD:
+                                                src->z[j][k] = z1[z_grid.size - 2];
+                                                break;
+                                                // FIXME: INPUT_BATHYMETRY_COORD
+                                                // Implement treatment for ocean
+                                                // bathymetry.
+                                                // Recommendation: Add a
+                                                // function to "receivers.c" and
+                                                // a function to to "receiver.c"
+                                                // Place the implementation in
+                                                // "receiver.c" but call this
+                                                // function for each receiver
+                                                // component in "receivers.c"
+                                }
+                        }
+
+                        // TODO: Add inversion step if grid stretching function
+                        // is used
+
+                        free(f_interp);
+                        free(x1);
+                        free(y1);
+                        free(z1);
+
+                } 
+                // Regular AWP
+                else {
+
+                      _prec top = grid.gridspacing * (grid.size.z - 1);
+
+                      for (size_t k = 0; k < src->lengths[j]; ++k) {
+                              switch (src->type[j][k]) {
+                                      case INPUT_VOLUME_COORD:
+                                              src->z[j][k] = src->z[j][k] + top;
+                                              break;
+                                      // Map to parameter space
+                                      case INPUT_SURFACE_COORD:
+                                              src->z[j][k] = top;
+                                              break;
+                              }
+                      }
                 }
 
-                
-                // TODO: Add inversion step if grid stretching function is used
-
-                free(f_interp);
-                free(x1);
-                free(y1);
-                free(z1);
-
-        } 
-        // Regular AWP
-        else {
-
-              _prec top = grid.gridspacing * (grid.size.z - 1);
-
-              for (size_t k = 0; k < src->length; ++k) {
-                      switch (src->type[k]) {
-                              case INPUT_VOLUME_COORD:
-                                      src->z[k] = src->z[k] + top;
-                                      break;
-                              // Map to parameter space
-                              case INPUT_SURFACE_COORD:
-                                      src->z[k] = top;
-                                      break;
-                      }
-              }
-        }
-
-        
-
         // Init grid that covers interior and halo regions
-//        for (int k = 0; k < ngrids; ++k) {
-//
-//        }
         grid3_t full_grid = grid_init_metric_grid(
                     grid.inner_size, grid.shift, grid.coordinate,
                     grid.boundary1, grid.boundary2, grid.gridspacing);
@@ -252,10 +262,14 @@ void source_init_common(source_t *src, const char *filename,
         grid_data_init(&xyz, full_grid);
 
         // Compute interpolation coefficients on the full grid
-        AWPCHK(cuinterp_init(&src->interpolation, xyz.x, xyz.y, xyz.z, full_grid,
-                                     src->x, src->y, src->z, src->length,
-                                     input->degree));
+        AWPCHK(cuinterp_init(&src->interpolation[j], xyz.x, xyz.y, xyz.z,
+                                full_grid, src->x[j], src->y[j], src->z[j],
+                                src->lengths[j], input->degree));
         grid_data_free(&xyz);
+        } // end loop j
+
+        free(grid_number);
+        
 
         src->buffer = buffer_init(src->length,
                                  input->gpu_buffer_size,
@@ -304,14 +318,18 @@ void source_read(source_t *src, size_t step)
 }
 
 void source_add_cartesian(prec *out, source_t *src, const size_t step,
-                          const prec h, const prec dt)
+                          const prec h, const prec dt, const int grid_num)
 {
         if (!src->use || !buffer_is_device_ready(&src->buffer, step)) 
                 return;
 
+        printf("buffer is ready at step = %ld for grid = %d \n", step, grid_num);
 
-        prec *source_data = buffer_get_device_ptr(&src->buffer, step);
-        cusource_add_cartesian_H(&src->interpolation, out, source_data, h, dt);
+
+        prec *source_data = buffer_get_device_ptr(&src->buffer, step) 
+                            + src->data_offset[grid_num];
+        cusource_add_cartesian_H(&src->interpolation[grid_num], 
+                                 out, source_data, h, dt);
 }
 
 void source_add_curvilinear(prec *out, source_t *src, const size_t step,
@@ -324,7 +342,8 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
 
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
-        cusource_add_curvilinear_H(&src->interpolation, out, source_data, h, dt,
+        // FIXME: Add proper DM support
+        cusource_add_curvilinear_H(&src->interpolation[0], out, source_data, h, dt,
                                    f, ny, dg);
 }
 

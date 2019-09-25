@@ -2181,8 +2181,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0],
                                d_yz[0], cur_step, DH[0], DT, &T.metrics_f, &T.metrics_g);
          } else {
+                 //TODO, add grid id
          sources_add_cartesian(d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0],
-                               d_yz[0], cur_step, DH[0], DT);
+                               d_yz[0], cur_step, DH[0], DT, 0);
          }
 
          //update source input

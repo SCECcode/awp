@@ -64,16 +64,16 @@ void sources_read(size_t step)
 
 void sources_add_cartesian(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,
                            prec *d_xz, prec *d_yz, const size_t step,
-                           const prec h, const prec dt) 
+                           const prec h, const prec dt, const int grid_num) 
 {
         if (!use) return;
 
-        source_add_cartesian(d_xx, &Mxx, step, h, dt);
-        source_add_cartesian(d_yy, &Myy, step, h, dt);
-        source_add_cartesian(d_zz, &Mzz, step, h, dt);
-        source_add_cartesian(d_xy, &Mxy, step, h, dt);
-        source_add_cartesian(d_xz, &Mxz, step, h, dt);
-        source_add_cartesian(d_yz, &Myz, step, h, dt);
+        source_add_cartesian(d_xx, &Mxx, step, h, dt, grid_num);
+        source_add_cartesian(d_yy, &Myy, step, h, dt, grid_num);
+        source_add_cartesian(d_zz, &Mzz, step, h, dt, grid_num);
+        source_add_cartesian(d_xy, &Mxy, step, h, dt, grid_num);
+        source_add_cartesian(d_xz, &Mxz, step, h, dt, grid_num);
+        source_add_cartesian(d_yz, &Myz, step, h, dt, grid_num);
 }
 
 void sources_add_curvilinear(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,

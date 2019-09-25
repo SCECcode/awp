@@ -38,6 +38,7 @@
  * macro that disables assert() )
  */
 #ifndef TEST_H
+#ifndef CUCHK
 #ifndef NDEBUG
 #define CUCHK(call) {                                                         \
   cudaError_t err = call;                                                     \
@@ -50,6 +51,7 @@
 }                                                                             
 #else
 #define CUCHK(call) {}
+#endif
 #endif
 #endif
 

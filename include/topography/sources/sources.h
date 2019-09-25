@@ -14,7 +14,7 @@ void sources_init(const char *filename, const grids_t *grids, int ngrids,
 void sources_read(const size_t step);
 void sources_add_cartesian(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,
                            prec *d_xz, prec *d_yz, const size_t step,
-                           const prec h, const prec dt);
+                           const prec h, const prec dt, const int grid_num);
 void sources_add_curvilinear(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,
                            prec *d_xz, prec *d_yz, 
                            const size_t step,
