@@ -34,13 +34,10 @@ void receivers_init(const char *filename, const grids_t *grids, int ngrids,
         }
         AWPCHK(input_broadcast(&input, rank, 0, comm));
 
-        grids_t grid = grids[0];
 
-       int *grid_number;
-
-        rx = receiver_init("x", &input, grid.x, f, grid_number, rank, comm);
-        ry = receiver_init("y", &input, grid.y, f, grid_number, rank, comm);
-        rz = receiver_init("z", &input, grid.z, f, grid_number, rank, comm);
+        rx = receiver_init("x", X, &input, grids, ngrids, f, rank, comm);
+        ry = receiver_init("y", Y, &input, grids, ngrids, f, rank, comm);
+        rz = receiver_init("z", Z, &input, grids, ngrids, f, rank, comm);
 }
 
 void receivers_finalize(void)

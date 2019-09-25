@@ -9,6 +9,7 @@
 #include <awp/error.h>
 #include <readers/input.h>
 #include <grid/grid_3d.h>
+#include <topography/grids.h>
 #include <topography/metrics/metrics.h>
 #include <mpi/io.h>
 #include <interpolation/interpolation.cuh>
@@ -35,17 +36,26 @@ typedef struct {
 } source_t;
 
 
-source_t source_init(const char *file_end, const input_t *input,
-                     const grid3_t grid, const f_grid_t *f, 
-                     const int *grid_number,
+source_t source_init(const char *file_end, 
+                     const enum grid_types grid_type,
+                     const input_t *input,
+                     const grids_t *grids, 
+                     const int ngrids,
+                     const f_grid_t *f, 
                      const int rank,
                      const MPI_Comm comm);
 
 void source_finalize(source_t *src);
+
+void source_find_grid_number(const input_t *input, const
+                             const grids_t *grids, int *grid_number, 
+                             const int num_grids);
 void source_init_common(source_t *src, const char *filename,
-                        const input_t *input, const grid3_t grid, 
+                        const enum grid_types grid_type, 
+                        const input_t *input, 
+                        const grids_t *grids, 
+                        const int ngrids,
                         const f_grid_t *f,
-                        const int *grid_number,
                         const int rank, 
                         const MPI_Comm comm);
 MPI_Comm source_communicator(source_t *src, const int rank,

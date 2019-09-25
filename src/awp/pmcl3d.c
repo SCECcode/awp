@@ -1573,7 +1573,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 #if TOPO
             // Initialize grids
             grids_t grids[MAXGRIDS];
+            int istopo = usetopo;
             for (p = 0; p < ngrids; p++) {
+                    // Disable topography in grids below the top grid
+                    if (p > 0) istopo = 0;
                     grids[p] = grids_init(nxt[p], nyt[p], nzt[p], coord[0],
                                           coord[1], 0, usetopo, DH[p]);
             }

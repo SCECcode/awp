@@ -18,16 +18,19 @@
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
-source_t source_init(const char *file_end, const input_t *input,
-                     const grid3_t grid, 
+source_t source_init(const char *file_end, 
+                     const enum grid_types grid_type, 
+                     const input_t *input,
+                     const grids_t *grids, 
+                     const int ngrids,
                      const f_grid_t *f, 
-                     const int *grid_number,
                      const int rank,
                      const MPI_Comm comm)
 {
         source_t src;
 
-        source_init_common(&src, file_end, input, grid, f, grid_number, rank, comm);
+        source_init_common(&src, file_end, grid_type, input, grids, ngrids, f,
+                           rank, comm);
 
         if (!src.use) {
                 return src;
@@ -58,13 +61,72 @@ void source_finalize(source_t *src)
         free(src->type);
 }
 
+void source_find_grid_number(const input_t *input, const
+                             const grids_t *grids, int *grid_number, 
+                             const int num_grids)
+{
+
+        prec *z1 = malloc(sizeof z1 * grids[0].z.size.z);
+
+        for (int j = 0; j < input->length; ++j) {
+                grid_number[j] = -1;
+        }
+
+        grid1_t z_grid = grid_grid1_z(grids[0].z);
+        grid_fill1(z1, z_grid);
+
+        _prec top = z1[z_grid.end];
+        _prec lower = 0;
+        _prec upper = 0;
+        for (int i = 0; i < num_grids; ++i) {
+                z_grid = grid_grid1_z(grids[i].z);
+                grid_fill1(z1, z_grid);
+                upper  -= lower;
+                lower  -= z1[z_grid.end];
+                printf("Grid %d: %g < z <= %g \n", i, lower, upper);
+                for (int j = 0; j < input->length; ++j) {
+                        _prec z = input->z[j];
+                        // Take into account that topography can yield positive
+                        // z-values
+                        if (z > 0) {
+                                grid_number[j] = 0;
+                        }
+                        if (lower < z && z <= upper) {
+                                grid_number[j] = i;
+                        }
+                }
+
+        }
+
+        free(z1);
+
+        for (int j = 0; j < input->length; ++j) {
+                if (grid_number[j] == -1) {
+                        fprintf(stderr, 
+                                "Failed to assign source/receiver id=%d "\
+                                " to a grid.\n", j);
+                        exit(1);
+                }
+
+        }
+
+}
+
 void source_init_common(source_t *src, const char *filename,
-                        const input_t *input, const grid3_t grid, 
+                        const enum grid_types grid_type,
+                        const input_t *input, 
+                        const grids_t *grids, 
+                        const int ngrids,
                         const f_grid_t *f, 
-                        const int *grid_number,
                         const int rank, const MPI_Comm comm)
 {
         sprintf(src->filename, "%s_%s", input->file, filename);
+
+        printf("file = %s \n", filename);
+        grid3_t grid = grids_select(grid_type, &grids[0]);
+        printf("x = %d y = %d \n", grid.size.x, grid.size.y);
+
+
 
         AWPCHK(dist_indices(&src->indices, &src->length, input->x,
                             input->y, input->length, grid));
@@ -78,18 +140,13 @@ void source_init_common(source_t *src, const char *filename,
                 return;
         }
 
-        // Init grid that covers interior and halo regions
-        grid3_t full_grid = grid_init_metric_grid(
-                    grid.inner_size, grid.shift, grid.coordinate,
-                    grid.boundary1, grid.boundary2, grid.gridspacing);
-        grid_data_t xyz;
-        grid_data_init(&xyz, full_grid);
 
         // Init arrays that contains local coordinates
         src->x = malloc(sizeof src->x *  src->length);
         src->y = malloc(sizeof src->y *  src->length);
         src->z = malloc(sizeof src->z *  src->length);
         src->type = malloc(sizeof src->type *  src->length);
+
 
         for (size_t i = 0; i < src->length; ++i) {
                 // Shift by 0.5 such that x = 0, y = 0 is located at a material
@@ -103,6 +160,7 @@ void source_init_common(source_t *src, const char *filename,
         grid3_t metric_grid = grid_init_metric_grid(
             grid.inner_size, grid_node(), grid.coordinate, grid.boundary1,
             grid.boundary2, grid.gridspacing);
+
 
         // Map input coordinates to parameter space
         if (f != NULL) {
@@ -180,7 +238,18 @@ void source_init_common(source_t *src, const char *filename,
                       }
               }
         }
+
         
+
+        // Init grid that covers interior and halo regions
+//        for (int k = 0; k < ngrids; ++k) {
+//
+//        }
+        grid3_t full_grid = grid_init_metric_grid(
+                    grid.inner_size, grid.shift, grid.coordinate,
+                    grid.boundary1, grid.boundary2, grid.gridspacing);
+        grid_data_t xyz;
+        grid_data_init(&xyz, full_grid);
 
         // Compute interpolation coefficients on the full grid
         AWPCHK(cuinterp_init(&src->interpolation, xyz.x, xyz.y, xyz.z, full_grid,
@@ -194,6 +263,7 @@ void source_init_common(source_t *src, const char *filename,
 
         // Extra space for host buffer
         src->host_buffer_extra = malloc(src->buffer.h_buffer_bytes);
+
 }
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads)

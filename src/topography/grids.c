@@ -63,3 +63,41 @@ void grid_data_free(grid_data_t *grid_data)
         free(grid_data->z);
 }
 
+grid3_t grids_select(const enum grid_types grid_type, const grids_t *grids)
+{
+        switch (grid_type) {
+                case X:
+                        return grids->x;
+                        break;
+                case Y:
+                        return grids->y;
+                        break;
+                case Z:
+                        return grids->z;
+                        break;
+                case XX:
+                        return grids->xx;
+                        break;
+                case YY:
+                        return grids->yy;
+                        break;
+                case ZZ:
+                        return grids->zz;
+                        break;
+                case XY:
+                        return grids->xy;
+                        break;
+                case XZ:
+                        return grids->xz;
+                        break;
+                case YZ:
+                        return grids->yz;
+                        break;
+                default:
+                        fprintf(stderr, "Unknown grid type\n");
+                        exit(1);
+                        break;
+                }
+
+}
+
