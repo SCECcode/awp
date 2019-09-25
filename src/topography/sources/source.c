@@ -85,6 +85,9 @@ void source_find_grid_number(const input_t *input, const
                 grid_fill1(z1, z_grid);
                 upper  = upper + lower;
                 lower  = lower - z1[z_grid.end];
+                _prec overlap = z_grid.gridspacing * 4;
+                lower = lower + overlap;
+                printf("Overlap: %g \n", overlap);
                 printf("Grid %d: %g < z <= %g \n", i, lower, upper);
                 for (int j = 0; j < input->length; ++j) {
                         _prec z = input->z[j];
@@ -98,6 +101,13 @@ void source_find_grid_number(const input_t *input, const
                                                 input->y[j], input->z[j]); 
                                 grid_number[j] = i;
                         }
+
+                        if (lower - overlap <= z && z <= lower) {
+                                fprintf(stderr, 
+                                "Source/receiver id=%d is in overlap zone.\n",
+                                j);
+                        }
+
                 }
 
         }
@@ -197,6 +207,7 @@ void source_init_common(source_t *src, const char *filename,
         }
 
         int idx = -1;
+        _prec overlap = 0.0;
         for (int j = 0; j < ngrids; ++j) {
                 if (src->lengths[j] == 0) {
                         src->x[j] = NULL;
@@ -274,12 +285,14 @@ void source_init_common(source_t *src, const char *filename,
                 // Regular AWP
                 else {
 
+
                       _prec top = grid.gridspacing * (grid.size.z - 1);
+                      overlap += grid.gridspacing * 4;
 
                       for (size_t k = 0; k < src->lengths[j]; ++k) {
                               switch (src->type[j][k]) {
                                       case INPUT_VOLUME_COORD:
-                                              src->z[j][k] = src->z[j][k] + top;
+                                              src->z[j][k] = src->z[j][k] + top + overlap;
                                               break;
                                       // Map to parameter space
                                       case INPUT_SURFACE_COORD:
@@ -301,6 +314,11 @@ void source_init_common(source_t *src, const char *filename,
                                 full_grid, src->x[j], src->y[j], src->z[j],
                                 src->global_indices[j],
                                 src->lengths[j], input->degree));
+        printf("idx = %d %d %d \n", 
+                        src->interpolation[j].ix[0],
+                        src->interpolation[j].iy[0],
+                        src->interpolation[j].iz[0]);
+                                
         grid_data_free(&xyz);
         } // end loop j
 
