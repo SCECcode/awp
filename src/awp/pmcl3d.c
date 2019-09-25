@@ -1788,8 +1788,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     }
     fflush(stdout);
 
-    // FIXME: Add support for DM
-    receivers_write(d_u1[0], d_v1[0], d_w1[0], 0, nt);
+    for (p=0; p<ngrids; p++){
+        receivers_write(d_u1[p], d_v1[p], d_w1[p], 0, nt, p);
+    }
     if(rank ==0) printf("Read sources\n");
     sources_read(0);
     fflush(stdout);
@@ -2427,8 +2428,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          }
          CUCHK(cudaDeviceSynchronize());
 
-         // FIXME: Add support for DM
-         receivers_write(d_u1[0], d_v1[0], d_w1[0], cur_step, nt);
+         for (p=0; p<ngrids; p++) {
+                receivers_write(d_u1[p], d_v1[p], d_w1[p], cur_step, nt, p);
+         }
 
          if(cur_step%NTISKP == 0){
 #ifdef TOPO

@@ -21,13 +21,13 @@ typedef struct {
         int *blocklen;
         size_t length;
         // parameter space coordinates
+        int *global_indices[MAXGRIDS];
         prec *x[MAXGRIDS];
         prec *y[MAXGRIDS];
         prec *z[MAXGRIDS];
         int *type[MAXGRIDS];
         size_t lengths[MAXGRIDS];
         int data_offset[MAXGRIDS];
-        int *grid_number;
         size_t num_elements;
         cu_interp_t interpolation[MAXGRIDS];
         mpi_io_idx_t io;
@@ -36,6 +36,7 @@ typedef struct {
         MPI_Comm comm;
         int use;
         char filename[STR_LEN*2];
+        int ngrids;
 
 } source_t;
 

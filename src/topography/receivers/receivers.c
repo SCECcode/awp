@@ -49,7 +49,8 @@ void receivers_finalize(void)
 }
 
 void receivers_write(const prec *d_vx, const prec *d_vy, const prec *d_vz,
-                     const size_t step, const size_t num_steps) {
+                     const size_t step, const size_t num_steps,
+                     const int grid_num) {
         if (!use) return;
         char outputname[STR_LEN];
         leading_zeros = ceil(log10((double)num_steps)) + 1;
@@ -59,17 +60,17 @@ void receivers_write(const prec *d_vx, const prec *d_vy, const prec *d_vz,
         receiver_filename(outputname, rx.filename, input.gpu_buffer_size,
                           input.cpu_buffer_size, input.num_writes, input.stride,
                           step, num_steps);
-        receiver_write(&rx, step, outputname, d_vx);
+        receiver_write(&rx, step, outputname, d_vx, grid_num);
         
         receiver_filename(outputname, ry.filename, input.gpu_buffer_size,
                           input.cpu_buffer_size, input.num_writes, input.stride,
                           step, num_steps);
-        receiver_write(&ry, step, outputname, d_vy);
+        receiver_write(&ry, step, outputname, d_vy, grid_num);
         
         receiver_filename(outputname, rz.filename, input.gpu_buffer_size,
                           input.cpu_buffer_size, input.num_writes, input.stride,
                           step, num_steps);
-        receiver_write(&rz, step, outputname, d_vz);
+        receiver_write(&rz, step, outputname, d_vz, grid_num);
 }
 
 size_t receivers_last_step(void)

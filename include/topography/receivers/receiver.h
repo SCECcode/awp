@@ -14,7 +14,7 @@ recv_t receiver_init(const char *filename,
                      const MPI_Comm comm);
 void receiver_finalize(recv_t *recv);
 void receiver_write(recv_t *recv, size_t step, const char *filename,
-                const prec *in);
+                const prec *in, const int grid_num);
 /* Determine filename of output file depending on which time step to write to
  * file and buffer settings etc. The closest time step not included in the file
  * is appended to the filename.

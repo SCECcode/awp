@@ -46,21 +46,26 @@ void receiver_finalize(recv_t *recv)
 }
 
 void receiver_write(recv_t *recv, size_t step, const char *filename,
-                const prec *in)
+                const prec *in, const int grid_num)
 {
         if (!recv->use)
                 return;
 
-        if (buffer_is_device_ready(&recv->buffer, step)) {
-                prec *d_ptr = buffer_get_device_ptr(&recv->buffer, step);
-                cuinterp_interp_H(&recv->interpolation, d_ptr, in);
+        if (recv->lengths[grid_num] != 0 &&
+            buffer_is_device_ready(&recv->buffer, step)) {
+                prec *d_ptr = recv->data_offset[grid_num] * sizeof d_ptr +
+                              buffer_get_device_ptr(&recv->buffer, step);
+                cuinterp_interp_H(&recv->interpolation[grid_num], d_ptr, in);
         }
 
-        if (buffer_is_device_full(&recv->buffer, step)) {
+        if (grid_num == 0 &&
+            buffer_is_device_full(&recv->buffer, step)) {
                 buffer_copy_to_host(&recv->buffer, step);
         }
 
-        if (buffer_is_host_full(&recv->buffer, step)) {
+        if (grid_num == 0 && buffer_is_host_full(&recv->buffer, step)) {
+                printf("Writing for grid: %d at step = %ld, length = %d \n",
+                                grid_num, step, recv->lengths[grid_num]);
              prec *host_ptr = recv->buffer.h_buffer;
              // Transpose data from (time, index) to (index, time)
              // (last index is contiguous)

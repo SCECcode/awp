@@ -25,9 +25,9 @@ typedef struct
         size_t size_l;
         size_t size_i;
         prec *lx, *ly, *lz;
-        int *ix, *iy, *iz;
+        int *ix, *iy, *iz, *ridx;
         prec *d_lx, *d_ly, *d_lz;
-        int *d_ix, *d_iy, *d_iz;
+        int *d_ix, *d_iy, *d_iz, *d_ridx;
         grid3_t grid;
 } cu_interp_t;
 
@@ -66,10 +66,10 @@ extern "C" {
  *
  *  Return value:
  *       Error code (SUCCESS, ...)
- */  
-int cuinterp_init(cu_interp_t *out, const prec *x, const prec *y,
-                    const prec *z, grid3_t grid, const prec *qx, const prec *qy,
-                    const prec *qz, const int num_query, const int degree);
+ */
+int cuinterp_init(cu_interp_t *out, const prec *x, const prec *y, const prec *z,
+                  grid3_t grid, const prec *qx, const prec *qy, const prec *qz,
+                  const int *indices, const int num_query, const int degree);
 int cuinterp_lagrange_h(cu_interp_t *host, const prec *x, const prec *y,
                         const prec *z, const grid3_t grid, const prec *qx,
                         const prec *qy, const prec *qz);
@@ -83,6 +83,7 @@ __global__ void cuinterp_dinterp(prec *out, const prec *in,
                                  const prec *lx, const prec *ly, const prec *lz,
                                  const int num_basis, const int *ix,
                                  const int *iy, const int *iz,
+                                 const int *ridx,
                                  const int num_query, const grid3_t grid);
 
 #ifdef __cplusplus

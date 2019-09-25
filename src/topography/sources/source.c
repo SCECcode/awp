@@ -55,10 +55,12 @@ void source_finalize(source_t *src)
         free(src->blocklen);
         free(src->offsets);
         free(src->host_buffer_extra);
-        free(src->x);
-        free(src->y);
-        free(src->z);
-        free(src->type);
+        for (int i = 0; i < src->ngrids; ++i) {
+                if (src->x[i] != NULL) free(src->x[i]);
+                if (src->y[i] != NULL) free(src->y[i]);
+                if (src->z[i] != NULL) free(src->z[i]);
+                if (src->type[i] != NULL) free(src->type[i]);
+        }
 }
 
 void source_find_grid_number(const input_t *input, const
@@ -81,8 +83,8 @@ void source_find_grid_number(const input_t *input, const
         for (int i = 0; i < num_grids; ++i) {
                 z_grid = grid_grid1_z(grids[i].z);
                 grid_fill1(z1, z_grid);
-                upper  -= lower;
-                lower  -= z1[z_grid.end];
+                upper  = upper + lower;
+                lower  = lower - z1[z_grid.end];
                 printf("Grid %d: %g < z <= %g \n", i, lower, upper);
                 for (int j = 0; j < input->length; ++j) {
                         _prec z = input->z[j];
@@ -92,6 +94,8 @@ void source_find_grid_number(const input_t *input, const
                                 grid_number[j] = 0;
                         }
                         if (lower < z && z <= upper) {
+                                printf("x = %g y = %g z = %g \n", input->x[j],
+                                                input->y[j], input->z[j]); 
                                 grid_number[j] = i;
                         }
                 }
@@ -132,12 +136,17 @@ void source_init_common(source_t *src, const char *filename,
 
 
 
+        src->ngrids = ngrids;
         src->use = src->length > 0 ? 1 : 0;
 
         MPI_Comm_split(comm, src->use, rank, &src->comm);
 
         if (!src->use) {
                 return;
+        }
+
+        for (int j = 0; j < ngrids; ++j) {
+                src->lengths[j] = 0;
         }
 
         int *grid_number = malloc(sizeof grid_number * src->length);
@@ -148,6 +157,21 @@ void source_init_common(source_t *src, const char *filename,
                 }
         }
 
+        for (int j = 0; j < ngrids; ++j) {
+                src->global_indices[j] =
+                    malloc(sizeof src->global_indices[j] * src->lengths[j]);
+        }
+
+        for (int i = 0; i < src->length; ++i) {
+                int local_idx = 0;
+                for (int j = 0; j < ngrids; ++j) {
+                        if (grid_number[i] == j) {
+                                src->global_indices[j][local_idx] = i;
+                                local_idx++;
+                        }
+                }
+        }
+
         src->data_offset[0] = 0;
         for (int j = 1; j < ngrids; ++j) {
                 src->data_offset[j] = src->data_offset[j-1] + src->lengths[j];
@@ -155,6 +179,15 @@ void source_init_common(source_t *src, const char *filename,
 
         int idx = -1;
         for (int j = 0; j < ngrids; ++j) {
+                if (src->lengths[j] == 0) {
+                        src->x[j] = NULL;
+                        src->y[j] = NULL;
+                        src->z[j] = NULL;
+                        src->type[j] = NULL;
+                        
+                        continue;
+                }
+                printf("grid number = %d, sources = %ld \n", j, src->lengths[j]);
                 grid = grids_select(grid_type, &grids[j]);
 
                 // Init arrays that contains local coordinates
@@ -264,6 +297,7 @@ void source_init_common(source_t *src, const char *filename,
         // Compute interpolation coefficients on the full grid
         AWPCHK(cuinterp_init(&src->interpolation[j], xyz.x, xyz.y, xyz.z,
                                 full_grid, src->x[j], src->y[j], src->z[j],
+                                src->global_indices[j],
                                 src->lengths[j], input->degree));
         grid_data_free(&xyz);
         } // end loop j
