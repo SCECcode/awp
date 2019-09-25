@@ -27,7 +27,6 @@ typedef struct {
         prec *z[MAXGRIDS];
         int *type[MAXGRIDS];
         size_t lengths[MAXGRIDS];
-        int data_offset[MAXGRIDS];
         size_t num_elements;
         cu_interp_t interpolation[MAXGRIDS];
         mpi_io_idx_t io;

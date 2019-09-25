@@ -63,16 +63,15 @@ void receiver_write(recv_t *recv, size_t step, const char *filename,
         }
 
         if (grid_num + 1 == recv->ngrids && buffer_is_host_full(&recv->buffer, step)) {
-                printf("Writing for grid: %d at step = %ld, length = %d \n",
-                                grid_num, step, recv->lengths[grid_num]);
-             prec *host_ptr = recv->buffer.h_buffer;
-             // Transpose data from (time, index) to (index, time)
-             // (last index is contiguous)
-             size_t cols = recv->length;
-             size_t rows = recv->buffer.num_host * recv->buffer.num_device;
-             array_transpose(recv->host_buffer_extra, host_ptr, rows, cols);
-             SWAP(recv->host_buffer_extra, recv->buffer.h_buffer, prec*);
-             mpi_io_idx_write(&recv->io, recv->buffer.h_buffer, filename);
+                printf("Writing for grid: %d at step = %ld \n", grid_num, step);
+                prec *host_ptr = recv->buffer.h_buffer;
+                // Transpose data from (time, index) to (index, time)
+                // (last index is contiguous)
+                size_t cols = recv->length;
+                size_t rows = recv->buffer.num_host * recv->buffer.num_device;
+                array_transpose(recv->host_buffer_extra, host_ptr, rows, cols);
+                SWAP(recv->host_buffer_extra, recv->buffer.h_buffer, prec *);
+                mpi_io_idx_write(&recv->io, recv->buffer.h_buffer, filename);
         }
 }
 

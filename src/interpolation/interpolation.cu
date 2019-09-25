@@ -185,7 +185,7 @@ __global__ void cuinterp_dinterp(prec *out, const prec *in,
         if (q >= num_query) {
                 return;
         }
-        out[q] = 0.0;
+        out[ridx[q]] = 0.0;
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {

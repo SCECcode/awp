@@ -173,20 +173,18 @@ void source_init_common(source_t *src, const char *filename,
 
         for (int j = 0; j < ngrids; ++j) {
                 int local_idx = 0;
-                        for (int i = 0; i < src->length; ++i) {
-                        if (grid_number[i] == j) {
-                                src->global_indices[j][local_idx] = i;
-                                // Shift by 0.5 such that x = 0, y = 0 is
-                                // located at a material or topography grid
-                                // point.
-                                src->x[j][local_idx] = input->x[src->indices[i]] -
-                                               0.5 * grid.gridspacing;
-                                src->y[j][local_idx] = input->y[src->indices[i]];
-                                src->z[j][local_idx] = input->z[src->indices[i]];
-                                src->type[j][local_idx] =
-                                    input->type[src->indices[i]];
-                                local_idx++;
-                        }
+                for (int i = 0; i < src->length; ++i) {
+                        if (grid_number[i] != j) continue;
+                        src->global_indices[j][local_idx] = i;
+                        // Shift by 0.5 such that x = 0, y = 0 is
+                        // located at a material or topography grid
+                        // point.
+                        src->x[j][local_idx] =
+                            input->x[src->indices[i]] - 0.5 * grid.gridspacing;
+                        src->y[j][local_idx] = input->y[src->indices[i]];
+                        src->z[j][local_idx] = input->z[src->indices[i]];
+                        src->type[j][local_idx] = input->type[src->indices[i]];
+                        local_idx++;
                 }
         }
 
@@ -196,12 +194,6 @@ void source_init_common(source_t *src, const char *filename,
                 for (int i = 0; i < src->lengths[j]; ++i) {
                         printf("global_indices[%d] = %d \n", i, src->global_indices[j][i]);
                 }
-        }
-
-
-        src->data_offset[0] = 0;
-        for (int j = 1; j < ngrids; ++j) {
-                src->data_offset[j] = src->data_offset[j-1] + src->lengths[j];
         }
 
         int idx = -1;
@@ -370,8 +362,7 @@ void source_add_cartesian(prec *out, source_t *src, const size_t step,
         printf("buffer is ready at step = %ld for grid = %d \n", step, grid_num);
 
 
-        prec *source_data = buffer_get_device_ptr(&src->buffer, step) 
-                            + src->data_offset[grid_num];
+        prec *source_data = buffer_get_device_ptr(&src->buffer, step);
         cusource_add_cartesian_H(&src->interpolation[grid_num], 
                                  out, source_data, h, dt);
 }
