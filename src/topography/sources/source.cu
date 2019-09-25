@@ -17,7 +17,7 @@ void cusource_add_cartesian_H(const cu_interp_t *I, prec *out, const prec *in,
 
         cusource_add_cartesian<<<grid, block>>>(
             out, in, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix, I->d_iy,
-            I->d_iz, h, dt, I->num_query, I->grid);
+            I->d_iz, I->d_ridx, h, dt, I->num_query, I->grid);
         CUCHK(cudaGetLastError());
 }
 
@@ -25,6 +25,7 @@ __global__ void cusource_add_cartesian(prec *out, const prec *in,
                                  const prec *lx, const prec *ly, const prec *lz,
                                  const int num_basis, const int *ix,
                                  const int *iy, const int *iz,
+                                 const int *lidx,
                                  const prec h, const prec dt,
                                  const int num_query, const grid3_t grid)
 {
@@ -41,7 +42,7 @@ __global__ void cusource_add_cartesian(prec *out, const prec *in,
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
                 out[pos] += - dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
-                            in[q];
+                            in[lidx[q]];
         }
         }
         }
@@ -57,7 +58,7 @@ void cusource_add_curvilinear_H(const cu_interp_t *I, prec *out, const prec *in,
 
         cusource_add_curvilinear<<<grid, block>>>(
             out, in, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix, I->d_iy,
-            I->d_iz, h, dt, I->num_query, I->grid, f, ny, dg);
+            I->d_iz, I->d_ridx, h, dt, I->num_query, I->grid, f, ny, dg);
         CUCHK(cudaGetLastError());
 }
 
@@ -65,6 +66,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                                  const prec *lx, const prec *ly, const prec *lz,
                                  const int num_basis, const int *ix,
                                  const int *iy, const int *iz,
+                                 const int *lidx,
                                  const prec h, const prec dt,
                                  const int num_query, const grid3_t grid,
                                  const prec *f, const int ny, const prec *dg)
@@ -90,7 +92,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
                 out[pos] += - dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
-                            in[q] * Ji;
+                            in[lidx[q]] * Ji;
         }
         }
         }

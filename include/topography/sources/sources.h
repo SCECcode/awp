@@ -19,7 +19,8 @@ void sources_add_curvilinear(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,
                            prec *d_xz, prec *d_yz, 
                            const size_t step,
                            const prec h, const prec dt, 
-                           const f_grid_t *f, const g_grid_t *g);
+                           const f_grid_t *f, const g_grid_t *g,
+                           const int grid_num);
 void sources_finalize(void);
 
 #endif

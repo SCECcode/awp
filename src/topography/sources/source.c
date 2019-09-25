@@ -359,8 +359,6 @@ void source_add_cartesian(prec *out, source_t *src, const size_t step,
         if (!src->use || !buffer_is_device_ready(&src->buffer, step)) 
                 return;
 
-        printf("buffer is ready at step = %ld for grid = %d \n", step, grid_num);
-
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
         cusource_add_cartesian_H(&src->interpolation[grid_num], 
@@ -370,7 +368,7 @@ void source_add_cartesian(prec *out, source_t *src, const size_t step,
 void source_add_curvilinear(prec *out, source_t *src, const size_t step,
                             const prec h, const prec dt, const prec *f,
                             const int ny, 
-                            const prec *dg) 
+                            const prec *dg, const int grid_num) 
 {
         if (!src->use || !buffer_is_device_ready(&src->buffer, step)) 
                 return;
@@ -378,7 +376,7 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
         // FIXME: Add proper DM support
-        cusource_add_curvilinear_H(&src->interpolation[0], out, source_data, h, dt,
+        cusource_add_curvilinear_H(&src->interpolation[grid_num], out, source_data, h, dt,
                                    f, ny, dg);
 }
 
