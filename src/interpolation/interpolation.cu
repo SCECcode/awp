@@ -30,6 +30,10 @@ int cuinterp_init(cu_interp_t *out, const prec *x, const prec *y, const prec *z,
                 return err;
         }
 
+        for (int i = 0; i < num_query; ++i) {
+                out->ridx[i] = indices[i];
+        }
+
         cuinterp_lagrange_h(out, x, y, z, grid, qx, qy, qz);
         cuinterp_htod(out);
 

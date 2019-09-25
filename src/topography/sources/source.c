@@ -151,26 +151,53 @@ void source_init_common(source_t *src, const char *filename,
 
         int *grid_number = malloc(sizeof grid_number * src->length);
         source_find_grid_number(input, grids, grid_number, ngrids);
+
+        for (int i = 0; i < src->length; ++i) {
+                printf("Grid number[%d] = %d \n", i, grid_number[i]);
+        }
         for (int i = 0; i < src->length; ++i) {
                 for (int j = 0; j < ngrids; ++j) {
                         if (grid_number[i] == j) src->lengths[j] += 1;
                 }
         }
 
+        // Init arrays that contains local coordinates
         for (int j = 0; j < ngrids; ++j) {
                 src->global_indices[j] =
-                    malloc(sizeof src->global_indices[j] * src->lengths[j]);
+                    calloc(sizeof src->global_indices[j], src->lengths[j]);
+                src->x[j] = malloc(sizeof src->x * src->lengths[j]);
+                src->y[j] = malloc(sizeof src->y * src->lengths[j]);
+                src->z[j] = malloc(sizeof src->z * src->lengths[j]);
+                src->type[j] = malloc(sizeof src->type *  src->lengths[j]);
         }
 
-        for (int i = 0; i < src->length; ++i) {
+        for (int j = 0; j < ngrids; ++j) {
                 int local_idx = 0;
-                for (int j = 0; j < ngrids; ++j) {
+                        for (int i = 0; i < src->length; ++i) {
                         if (grid_number[i] == j) {
                                 src->global_indices[j][local_idx] = i;
+                                // Shift by 0.5 such that x = 0, y = 0 is
+                                // located at a material or topography grid
+                                // point.
+                                src->x[j][local_idx] = input->x[src->indices[i]] -
+                                               0.5 * grid.gridspacing;
+                                src->y[j][local_idx] = input->y[src->indices[i]];
+                                src->z[j][local_idx] = input->z[src->indices[i]];
+                                src->type[j][local_idx] =
+                                    input->type[src->indices[i]];
                                 local_idx++;
                         }
                 }
         }
+
+
+        for (int j = 0; j < ngrids; ++j) {
+                printf("Grid: %d \n", j);
+                for (int i = 0; i < src->lengths[j]; ++i) {
+                        printf("global_indices[%d] = %d \n", i, src->global_indices[j][i]);
+                }
+        }
+
 
         src->data_offset[0] = 0;
         for (int j = 1; j < ngrids; ++j) {
@@ -189,23 +216,6 @@ void source_init_common(source_t *src, const char *filename,
                 }
                 printf("grid number = %d, sources = %ld \n", j, src->lengths[j]);
                 grid = grids_select(grid_type, &grids[j]);
-
-                // Init arrays that contains local coordinates
-                src->x[j] = malloc(sizeof src->x * src->lengths[j]);
-                src->y[j] = malloc(sizeof src->y * src->lengths[j]);
-                src->z[j] = malloc(sizeof src->z * src->lengths[j]);
-                src->type[j] = malloc(sizeof src->type *  src->lengths[j]);
-
-                for (size_t i = 0; i < src->lengths[j]; ++i) {
-                        idx++;
-                        if (grid_number[i] != j) continue;
-                        // Shift by 0.5 such that x = 0, y = 0 is located at a material
-                        // or topography grid point.
-                        src->x[j][i] = input->x[src->indices[idx]] - 0.5 * grid.gridspacing;
-                        src->y[j][i] = input->y[src->indices[idx]];
-                        src->z[j][i] = input->z[src->indices[idx]];
-                        src->type[j][i] = input->type[src->indices[idx]];
-                }
         
                 grid3_t metric_grid = grid_init_metric_grid( grid.inner_size,
                                 grid_node(), grid.coordinate, grid.boundary1,

@@ -1788,7 +1788,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     }
     fflush(stdout);
 
-    for (p=0; p<ngrids; p++){
+    for (p=0; p<2; p++){
         receivers_write(d_u1[p], d_v1[p], d_w1[p], 0, nt, p);
     }
     if(rank ==0) printf("Read sources\n");
@@ -2428,7 +2428,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          }
          CUCHK(cudaDeviceSynchronize());
 
-         for (p=0; p<ngrids; p++) {
+         for (p=0; p<2; p++) {
                 receivers_write(d_u1[p], d_v1[p], d_w1[p], cur_step, nt, p);
          }
 
