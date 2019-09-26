@@ -2179,17 +2179,20 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
          sources_read(cur_step);
          if (T.use) {
-                sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0],
-                               d_yz[0], cur_step, DH[0], DT, &T.metrics_f, &T.metrics_g,
-                               0);
-                for (p=1; p<ngrids; p++){
-                        sources_add_cartesian(d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0],
-                               d_yz[0], cur_step, DH[0], DT, p);
+                 sources_add_curvilinear(d_xx[p], d_yy[p], d_zz[p], d_xy[p],
+                                         d_xz[p], d_yz[p], cur_step, DH[p], DT,
+                                         &T.metrics_f, &T.metrics_g, p);
+                 for (p = 1; p < ngrids; p++) {
+                         sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
+                                               d_xy[p], d_xz[p], d_yz[p],
+                                               cur_step, DH[p], DT, p);
                 }
          } else {
-                 //TODO, add grid id
-         sources_add_cartesian(d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0],
-                               d_yz[0], cur_step, DH[0], DT, 0);
+                for (p=0; p<ngrids; p++){
+                        sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
+                                              d_xy[p], d_xz[p], d_yz[p],
+                                              cur_step, DH[p], DT, p);
+                }
          }
 
          //update source input
