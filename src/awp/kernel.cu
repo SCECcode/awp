@@ -3,14 +3,16 @@
 #include "awp/kernel.h"
 #include "awp/pmcl3d_cons.h"
 #include <cuda.h>
+#include <time.h>
+#include <stdio.h>
 
-__constant__ _prec d_c1;
-__constant__ _prec d_c2;
-__constant__ _prec d_dth[MAXGRIDS];
-__constant__ _prec d_dt1;
-__constant__ _prec d_dh1[MAXGRIDS];
-__constant__ _prec d_DT;
-__constant__ _prec d_DH[MAXGRIDS];
+__constant__ float d_c1;
+__constant__ float d_c2;
+__constant__ float d_dth[MAXGRIDS];
+__constant__ float d_dt1;
+__constant__ float d_dh1[MAXGRIDS];
+__constant__ float d_DT;
+__constant__ float d_DH[MAXGRIDS];
 __constant__ int   d_nxt[MAXGRIDS];
 __constant__ int   d_nyt[MAXGRIDS];
 __constant__ int   d_nzt[MAXGRIDS];
@@ -18,6 +20,11 @@ __constant__ int   d_slice_1[MAXGRIDS];
 __constant__ int   d_slice_2[MAXGRIDS];
 __constant__ int   d_yline_1[MAXGRIDS];
 __constant__ int   d_yline_2[MAXGRIDS];
+
+texture<float, 1, cudaReadModeElementType> p_vx1;
+texture<float, 1, cudaReadModeElementType> p_vx2;
+texture<int, 1, cudaReadModeElementType> p_ww;
+texture<float, 1, cudaReadModeElementType> p_wwo;
 
 //Parameters used for STF filtering (Daniel)
 __constant__ int d_filtorder;
@@ -27,12 +34,12 @@ __constant__ double d_srcfilt_b[MAXFILT], d_srcfilt_a[MAXFILT];
 #define LDG(x) x
 
 //Compute initial stress on GPU (Daniel)
-__constant__ _prec d_fmajor;
-__constant__ _prec d_fminor;
-__constant__ _prec d_Rz[9];
-__constant__ _prec d_RzT[9];
+__constant__ float d_fmajor;
+__constant__ float d_fminor;
+__constant__ float d_Rz[9];
+__constant__ float d_RzT[9];
 
-__device__ void matmul3(register _prec *a, register _prec *b, register _prec *c){
+__device__ void matmul3(register float *a, register float *b, register float *c){
    register int i, j, k;
    
    for (i=0; i<3; i++)
@@ -40,9 +47,9 @@ __device__ void matmul3(register _prec *a, register _prec *b, register _prec *c)
          for (k=0; k<3; k++) c[i*3+j]+=a[i*3+k]*b[k*3+j];
 }
 
-__device__ void rotate_principal(register _prec sigma2, register _prec pfluid, register _prec *ssp){
+__device__ void rotate_principal(register float sigma2, register float pfluid, register float *ssp){
 
-      register _prec ss[9], tmp[9];
+      register float ss[9], tmp[9];
       register int k;
 
       for (k=0; k<9; k++) ss[k] = tmp[k] = ssp[k] = 0.;
@@ -58,31 +65,28 @@ __device__ void rotate_principal(register _prec sigma2, register _prec pfluid, r
       ssp[4] -= pfluid;
       ssp[8] -= pfluid;
 
-      /*cuPrintf("ssp:%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e\n", 
-         ssp[0], ssp[4], ssp[8], 
-         ssp[1], ssp[2], ssp[5]);*/
 }
 
 //end of routines for on-GPU initial stress computation (Daniel)
 
-void SetDeviceConstValue(_prec *DH, _prec DT, int *nxt, int *nyt, int *nzt, int ngrids,
-   _prec fmajor, _prec fminor, _prec *Rz, _prec *RzT)
+extern "C"
+void SetDeviceConstValue(float *DH, float DT, int *nxt, int *nyt, int *nzt, int ngrids,
+   float fmajor, float fminor, float *Rz, float *RzT)
 {
-    _prec h_c1, h_c2, *h_dth, h_dt1, *h_dh1;
+    float h_c1, h_c2, *h_dth, h_dt1, *h_dh1;
     int   *slice_1,  *slice_2,  *yline_1,  *yline_2;
     int k;
-    int num_bytes;
 
     h_c1  = 9.0/8.0;
     h_c2  = -1.0/24.0;
     h_dt1 = 1.0/DT;
 
-    h_dth=(_prec* ) calloc(ngrids, sizeof(_prec));
-    h_dh1=(_prec* ) calloc(ngrids, sizeof(_prec));
-    slice_1=(int*) calloc(ngrids, sizeof(_prec));
-    slice_2=(int*) calloc(ngrids, sizeof(_prec));
-    yline_1=(int*) calloc(ngrids, sizeof(_prec));
-    yline_2=(int*) calloc(ngrids, sizeof(_prec));
+    h_dth=(float*) calloc(ngrids, sizeof(float));
+    h_dh1=(float*) calloc(ngrids, sizeof(float));
+    slice_1=(int*) calloc(ngrids, sizeof(float));
+    slice_2=(int*) calloc(ngrids, sizeof(float));
+    yline_1=(int*) calloc(ngrids, sizeof(float));
+    yline_2=(int*) calloc(ngrids, sizeof(float));
 
     for (k=0; k<ngrids; k++){
        h_dth[k] = DT/DH[k];
@@ -93,13 +97,13 @@ void SetDeviceConstValue(_prec *DH, _prec DT, int *nxt, int *nyt, int *nzt, int 
        yline_2[k]  = (nzt[k]+2*align)*2;
     }
 
-    CUCHK(cudaMemcpyToSymbol(d_c1,      &h_c1,    sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_c2,      &h_c2,    sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_dt1,     &h_dt1,   sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_DT,      &DT,      sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_dth,     h_dth,   sizeof(_prec) * ngrids));
-    CUCHK(cudaMemcpyToSymbol(d_dh1,     h_dh1,   sizeof(_prec) * ngrids));
-    CUCHK(cudaMemcpyToSymbol(d_DH,      DH,      sizeof(_prec) * ngrids));
+    CUCHK(cudaMemcpyToSymbol(d_c1,      &h_c1,    sizeof(float)));
+    CUCHK(cudaMemcpyToSymbol(d_c2,      &h_c2,    sizeof(float)));
+    CUCHK(cudaMemcpyToSymbol(d_dt1,     &h_dt1,   sizeof(float)));
+    CUCHK(cudaMemcpyToSymbol(d_DT,      &DT,      sizeof(float)));
+    CUCHK(cudaMemcpyToSymbol(d_dth,     h_dth,   sizeof(float) * ngrids));
+    CUCHK(cudaMemcpyToSymbol(d_dh1,     h_dh1,   sizeof(float) * ngrids));
+    CUCHK(cudaMemcpyToSymbol(d_DH,      DH,      sizeof(float) * ngrids));
     CUCHK(cudaMemcpyToSymbol(d_nxt,     nxt,     sizeof(int) * ngrids));
     CUCHK(cudaMemcpyToSymbol(d_nyt,     nyt,     sizeof(int) * ngrids));
     CUCHK(cudaMemcpyToSymbol(d_nzt,     nzt,     sizeof(int) * ngrids));
@@ -109,13 +113,35 @@ void SetDeviceConstValue(_prec *DH, _prec DT, int *nxt, int *nyt, int *nzt, int 
     CUCHK(cudaMemcpyToSymbol(d_yline_2, yline_2, sizeof(int) * ngrids));
 
     //Compute initial stress on GPU (Daniel)
-    CUCHK(cudaMemcpyToSymbol(d_fmajor, &fmajor, sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_fminor, &fminor, sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_Rz, Rz, 9*sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_RzT, RzT, 9*sizeof(_prec)));
+    CUCHK(cudaMemcpyToSymbol(d_fmajor, &fmajor, sizeof(float)));
+    CUCHK(cudaMemcpyToSymbol(d_fminor, &fminor, sizeof(float)));
+    CUCHK(cudaMemcpyToSymbol(d_Rz, Rz, 9*sizeof(float)));
+    CUCHK(cudaMemcpyToSymbol(d_RzT, RzT, 9*sizeof(float)));
     return;
 }
 
+extern "C"
+void BindArrayToTexture(float* vx1, float* vx2,int* ww, float* wwo, int memsize)   
+{
+   cudaBindTexture(0, p_vx1,  vx1,  memsize);
+   cudaBindTexture(0, p_vx2,  vx2,  memsize);
+   cudaBindTexture(0, p_ww,   ww,   memsize);
+   cudaBindTexture(0, p_wwo,   wwo,   memsize);
+   cudaDeviceSynchronize ();
+   return;
+}
+
+extern "C"
+void UnBindArrayFromTexture()
+{
+   cudaUnbindTexture(p_vx1);
+   cudaUnbindTexture(p_vx2);
+   cudaUnbindTexture(p_ww);
+   cudaUnbindTexture(p_wwo);
+   return;
+}
+
+extern "C"
 void SetDeviceFilterParameters(int filtorder, double *srcfilt_b, double *srcfilt_a){
     CUCHK(cudaMemcpyToSymbol(d_filtorder, &filtorder, sizeof(int)));
     CUCHK(cudaMemcpyToSymbol(d_srcfilt_b, srcfilt_b, (filtorder+1)*sizeof(double)));
@@ -123,21 +149,21 @@ void SetDeviceFilterParameters(int filtorder, double *srcfilt_b, double *srcfilt
 }
 
 template <int BLOCK_Z, int BLOCK_Y>
-__global__ void dvelcx_opt(_prec * __restrict__ u1,
-                           _prec * __restrict__ v1, 
-                           _prec * __restrict__ w1,
-                           const _prec *xx,    const _prec *yy,    const _prec *zz,
-                           const _prec *xy,    const _prec *xz,    const _prec *yz, 
-                           const _prec *dcrjx, const _prec *dcrjy, const _prec *dcrjz,
-                           const _prec *d_1,   
+__global__ void dvelcx_opt(float * __restrict__ u1,
+                           float * __restrict__ v1, 
+                           float * __restrict__ w1,
+                           const float *xx,    const float *yy,    const float *zz,
+                           const float *xy,    const float *xz,    const float *yz, 
+                           const float *dcrjx, const float *dcrjy, const float *dcrjz,
+                           const float *d_1,   
                            const int s_i,
                            const int e_i,
                            const int d_i,
                            const int ngrids) {
-    register _prec f_xx,    xx_im1,  xx_ip1,  xx_im2;
-    register _prec f_xy,    xy_ip1,  xy_ip2,  xy_im1;
-    register _prec f_xz,    xz_ip1,  xz_ip2,  xz_im1;
-    register _prec f_dcrj, f_dcrjy, f_dcrjz, f_yz;
+    register float f_xx,    xx_im1,  xx_ip1,  xx_im2;
+    register float f_xy,    xy_ip1,  xy_ip2,  xy_im1;
+    register float f_xz,    xz_ip1,  xz_ip2,  xz_im1;
+    register float f_dcrj, f_dcrjy, f_dcrjz, f_yz;
 
     const int k = blockIdx.x*BLOCK_SIZE_Z+threadIdx.x+align;
     const int j = blockIdx.y*BLOCK_SIZE_Y+threadIdx.y+2+ngsl;
@@ -159,8 +185,8 @@ __global__ void dvelcx_opt(_prec * __restrict__ u1,
     xz_im1  = xz[pos];
     f_dcrjz = dcrjz[k];
     f_dcrjy = dcrjy[j];
-    _prec f_d_1 = d_1[pos+d_slice_1[d_i]]; //f_d_1_ip1 will get this value
-    _prec f_d_1_km1 = d_1[pos+d_slice_1[d_i]-1]; //f_d_1_ik1 will get this value
+    float f_d_1 = d_1[pos+d_slice_1[d_i]]; //f_d_1_ip1 will get this value
+    float f_d_1_km1 = d_1[pos+d_slice_1[d_i]-1]; //f_d_1_ik1 will get this value
     for(int i=e_i; i >= s_i; i--)   
     {
         pos = i*d_slice_1[d_i]+j*d_yline_1[d_i]+k;
@@ -200,20 +226,20 @@ __global__ void dvelcx_opt(_prec * __restrict__ u1,
         f_yz     = yz[pos];
 
         // d_1[pos] pipeline
-        _prec f_d_1_ip1 = f_d_1;
+        float f_d_1_ip1 = f_d_1;
         f_d_1 = d_1[pos];
 
         // d_1[pos-1] pipeline
-        _prec f_d_1_ik1 = f_d_1_km1;
+        float f_d_1_ik1 = f_d_1_km1;
         f_d_1_km1 = d_1[pos_km1];
 
         f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
         //f_d1     = 0.25*(d_1[pos] + d_1[pos_jm1] + d_1[pos_km1] + d_1[pos_jk1]);
         //f_d2     = 0.25*(d_1[pos] + d_1[pos_ip1] + d_1[pos_km1] + d_1[pos_ik1]);
         //f_d3     = 0.25*(d_1[pos] + d_1[pos_ip1] + d_1[pos_jm1] + d_1[pos_ijk]);
-        _prec f_d1     = 0.25*(f_d_1 + d_1[pos_jm1] + f_d_1_km1 + d_1[pos_jk1]);
-        _prec f_d2     = 0.25*(f_d_1 + f_d_1_ip1    + f_d_1_km1 + f_d_1_ik1);
-        _prec f_d3     = 0.25*(f_d_1 + f_d_1_ip1    + d_1[pos_jm1] + d_1[pos_ijk]);
+        float f_d1     = 0.25*(f_d_1 + d_1[pos_jm1] + f_d_1_km1 + d_1[pos_jk1]);
+        float f_d2     = 0.25*(f_d_1 + f_d_1_ip1    + f_d_1_km1 + f_d_1_ik1);
+        float f_d3     = 0.25*(f_d_1 + f_d_1_ip1    + d_1[pos_jm1] + d_1[pos_ijk]);
 
         f_d1     = d_dth[d_i]/f_d1;
         f_d2     = d_dth[d_i]/f_d2;
@@ -222,44 +248,39 @@ __global__ void dvelcx_opt(_prec * __restrict__ u1,
     	u1[pos]  = (u1[pos] + f_d1*( d_c1*(f_xx        - xx_im1)      + d_c2*(xx_ip1      - xx_im2) 
                                    + d_c1*(f_xy        - xy[pos_jm1]) + d_c2*(xy[pos_jp1] - xy[pos_jm2])
                                    + d_c1*(f_xz        - xz[pos_km1]) + d_c2*(xz[pos_kp1] - xz[pos_km2]) ))*f_dcrj; 
-
-        //if ((d_i==0) && (k==80) && (i==69) && (j==69)) {
-        //   printf("velocities: %e %e %e \n", 
-        //      u1[pos], v1[pos], w1[pos]);
-        //}
         /*if ((d_i==0) && (k==32) && (i==94) && (j==97)) {
-           cuPrintf("after update: u1[%d]=%e, f_d1=%e, xx=%.20g, %20g, %20g, %20g\n", 
+           printf("after update: u1[%d]=%e, f_d1=%e, xx=%.20g, %20g, %20g, %20g\n", 
               pos, u1[pos], f_d1, f_xx, xx_im1, xx_ip1, xx_im2);
-           cuPrintf("xy=%.20g %.20g %.20g %.20g\n", f_xy, xy[pos_jm1], xy[pos_jp1], xy[pos_jm2]);
-           cuPrintf("yz=%.20g %.20g %.20g %.20g\n", f_xz, xz[pos_km1], xz[pos_kp1], xz[pos_km2]);
-           cuPrintf("f_dcrj=%e, d_c1=%e, d_c2=%e\n", f_dcrj, d_c1, d_c2);
+           printf("xy=%.20g %.20g %.20g %.20g\n", f_xy, xy[pos_jm1], xy[pos_jp1], xy[pos_jm2]);
+           printf("yz=%.20g %.20g %.20g %.20g\n", f_xz, xz[pos_km1], xz[pos_kp1], xz[pos_km2]);
+           printf("f_dcrj=%e, d_c1=%e, d_c2=%e\n", f_dcrj, d_c1, d_c2);
         }*/
-        /*if ((k==43) && (i==102) && (j==100)) cuPrintf("before update: v1[%d]=%e\n", pos, v1[pos]);*/
+        /*if ((k==43) && (i==102) && (j==100)) printf("before update: v1[%d]=%e\n", pos, v1[pos]);*/
         v1[pos]  = (v1[pos] + f_d2*( d_c1*(xy_ip1      - f_xy)        + d_c2*(xy_ip2      - xy_im1)
                                    + d_c1*(yy[pos_jp1] - yy[pos])     + d_c2*(yy[pos_jp2] - yy[pos_jm1])
                                    + d_c1*(f_yz        - yz[pos_km1]) + d_c2*(yz[pos_kp1] - yz[pos_km2]) ))*f_dcrj;
         /*if ((k==51) && (i==102) && (j==100)) {
-           cuPrintf("after update: v1[%d]=%e, f_d2=%e, xy=%.20g, %.20g, %.20g, %.20g\n", 
+           printf("after update: v1[%d]=%e, f_d2=%e, xy=%.20g, %.20g, %.20g, %.20g\n", 
               pos, v1[pos], f_d2, xy_ip1, f_xy, xy_ip2, xy_im1);
-           cuPrintf("yy=%.20g %.20g %.20g %.20g\n", yy[pos_jp1], yy[pos], yy[pos_jp2], yy[pos_jm1]);
-           cuPrintf("yz=%.20g %.20g %.20g %.20g\n", f_yz, yz[pos_km1], yz[pos_kp1], yz[pos_km2]);
-           cuPrintf("f_dcrj=%e, d_c1=%e, d_c2=%e\n", f_dcrj, d_c1, d_c2);
+           printf("yy=%.20g %.20g %.20g %.20g\n", yy[pos_jp1], yy[pos], yy[pos_jp2], yy[pos_jm1]);
+           printf("yz=%.20g %.20g %.20g %.20g\n", f_yz, yz[pos_km1], yz[pos_kp1], yz[pos_km2]);
+           printf("f_dcrj=%e, d_c1=%e, d_c2=%e\n", f_dcrj, d_c1, d_c2);
         }*/
 
-        //if ((k==39) && (i==102) && (j==104)) cuPrintf("before update: w1[%d]=%e\n", pos, w1[pos]);
+        //if ((k==39) && (i==102) && (j==104)) printf("before update: w1[%d]=%e\n", pos, w1[pos]);
 
         w1[pos]  = (w1[pos] + f_d3*( d_c1*(xz_ip1      - f_xz)        + d_c2*(xz_ip2      - xz_im1)
                                    + d_c1*(f_yz        - yz[pos_jm1]) + d_c2*(yz[pos_jp1] - yz[pos_jm2])
                                    + d_c1*(zz[pos_kp1] - zz[pos])     + d_c2*(zz[pos_kp2] - zz[pos_km1]) ))*f_dcrj;
 
         /*if ((k==39) && (i==102) && (j==104)) {
-           cuPrintf("after update: w1[%d]=%e, f_d3=%e, f_xz=%e, xz_ip1=%e, xz_ip2=%e, xz_im1=%e\n", 
+           printf("after update: w1[%d]=%e, f_d3=%e, f_xz=%e, xz_ip1=%e, xz_ip2=%e, xz_im1=%e\n", 
               pos, w1[pos], f_d3, f_xz, xz_ip1, xz_ip2, xz_im1);
-           cuPrintf("f_yz=%e, yz[%d]=%e, yz[%d]=%e, yz[%d]=%e\n", f_yz, pos_jm1, yz[pos_jm1], pos_jp1, yz[pos_jp1], 
+           printf("f_yz=%e, yz[%d]=%e, yz[%d]=%e, yz[%d]=%e\n", f_yz, pos_jm1, yz[pos_jm1], pos_jp1, yz[pos_jp1], 
              pos_jm2, yz[pos_jm2]);
-           cuPrintf("zz[%d]=%e, zz[%d]=%e, zz[%d]=%e, zz[%d]=%e\n", pos_kp1, zz[pos_kp1], pos, zz[pos], 
+           printf("zz[%d]=%e, zz[%d]=%e, zz[%d]=%e, zz[%d]=%e\n", pos_kp1, zz[pos_kp1], pos, zz[pos], 
              pos_kp2, zz[pos_kp2], pos_km1, zz[pos_km1]);
-           cuPrintf("f_dcrj=%e, d_c1=%e, d_c2=%e\n", f_dcrj, d_c1, d_c2);
+           printf("f_dcrj=%e, d_c1=%e, d_c2=%e\n", f_dcrj, d_c1, d_c2);
         }*/
     }
 
@@ -271,93 +292,102 @@ __global__ void print_const(int ngrids)
 {
     int p;
     for (p=0; p<ngrids; p++){
-       //cuPrintf("device constants[%d]:\nd_yline_=%d,%d, d_slice=%d,%d,nxt,nyt,nzt=%d,%d,%d\n",
-       //      p, d_yline_1[p], d_yline_2[p], d_slice_1[p], d_slice_2[p], d_nxt[p], d_nyt[p], d_nzt[p]);
-       //cuPrintf("d_DH=%e, d_dth=%e, d_dh1=%e\n", d_DH[p], d_dth[p], d_dh1[p]); 
+       printf("device constants[%d]:\nd_yline_=%d,%d, d_slice=%d,%d,nxt,nyt,nzt=%d,%d,%d\n",
+	     p, d_yline_1[p], d_yline_2[p], d_slice_1[p], d_slice_2[p], d_nxt[p], d_nyt[p], d_nzt[p]);
+       printf("d_DH=%e, d_dth=%e, d_dh1=%e\n", d_DH[p], d_dth[p], d_dh1[p]); 
     }
-    /*cuPrintf("d_filtorder=%d\n", d_filtorder);
+    /*printf("d_filtorder=%d\n", d_filtorder);
     if (d_filtorder > 0){
        for (p=0; p<d_filtorder+1; p++){
-           cuPrintf("d_srcfilt_b[%d] = %le, d_srcfilt_a[%d] = %le\n", p, d_srcfilt_b[p], p, 
+           printf("d_srcfilt_b[%d] = %le, d_srcfilt_a[%d] = %le\n", p, d_srcfilt_b[p], p, 
                d_srcfilt_a[p]);
        }
     }*/
 }
 
-void print_const_H(int ngrids)
-{
-    dim3 block (1, 1, 1);
-    dim3 grid (1, 1, 1);
-    //cudaPrintfInit();
-    //print_const<<<grid, block, 0>>>(ngrids);
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
-    return;
-}
 
-void dvelcx_H_opt(_prec*  u1,    _prec*  v1,    _prec*  w1,    
-                  _prec*  xx,  _prec*  yy, _prec*  zz, _prec*  xy,      _prec*  xz, _prec*  yz,
-                  _prec*  dcrjx, _prec*  dcrjy, _prec*  dcrjz,
-                  _prec*  d_1, int nyt,   int nzt,  
+extern "C"
+void dvelcx_H_opt(float* u1,    float* v1,    float* w1,    
+                  float* xx,  float* yy, float* zz, float* xy,      float* xz, float* yz,
+                  float* dcrjx, float* dcrjy, float* dcrjz,
+                  float* d_1, int nyt,   int nzt,  
                   cudaStream_t St, int s_i,   int e_i, int d_i, int ngrids)
 {
     dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
     dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (nyt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
     CUCHK(cudaFuncSetCacheConfig(dvelcx_opt<BLOCK_SIZE_Z, BLOCK_SIZE_Y>, cudaFuncCachePreferL1));
     CUCHK(cudaGetLastError());
-    //cudaPrintfInit();
-    //fprintf(stdout, "launching dvelcx_opt\n");
     dvelcx_opt<BLOCK_SIZE_Z, BLOCK_SIZE_Y><<<grid, block, 0, St>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, dcrjx, dcrjy, dcrjz, d_1, 
          s_i, e_i, d_i, ngrids);
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
     CUCHK(cudaGetLastError());
     return;
 }
-void dvelcy_H(_prec*  u1,       _prec*  v1,    _prec*  w1,    _prec*  xx,  _prec*  yy, _prec*  zz, _prec*  xy,   _prec*  xz,   _prec*  yz,
-              _prec*  dcrjx,    _prec*  dcrjy, _prec*  dcrjz, _prec*  d_1, int nxt,   int nzt,   _prec*  s_u1, _prec*  s_v1, _prec*  s_w1,  
+extern "C"
+void dvelcy_H(float* u1,       float* v1,    float* w1,    float* xx,  float* yy, float* zz, float* xy,   float* xz,   float* yz,
+              float* dcrjx,    float* dcrjy, float* dcrjz, float* d_1, int nxt,   int nzt,   float* s_u1, float* s_v1, float* s_w1,  
               cudaStream_t St, int s_j,      int e_j,      int rank, int d_i)
 {
     if(rank==-1) return;
     dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
     dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (nxt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    CUCHK(cudaFuncSetCacheConfig(dvelcy, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(dvelcy, cudaFuncCachePreferL1);
     CUCHK(cudaGetLastError());
     dvelcy<<<grid, block, 0, St>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, dcrjx, dcrjy, dcrjz, d_1, s_u1, s_v1, s_w1, s_j, e_j, d_i);
     CUCHK(cudaGetLastError());
     return;
 }
 
-void update_bound_y_H(_prec*  u1,   _prec*  v1, _prec*  w1, _prec*  f_u1,      _prec*  f_v1,      _prec*  f_w1,  _prec*  b_u1, _prec*  b_v1, 
-                      _prec*  b_w1, int nxt,   int nzt,   cudaStream_t St1, cudaStream_t St2, int rank_f,  int rank_b, int d_i)
+extern "C"
+void update_bound_y_H(float* u1,   float* v1, float* w1, float* f_u1,      float* f_v1,      float* f_w1,  float* b_u1, float* b_v1, 
+                      float* b_w1, int nxt,   int nzt,   cudaStream_t St1, cudaStream_t St2, int rank_f,  int rank_b, int d_i)
 {
      if(rank_f==-1 && rank_b==-1) return;
      dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
      dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (nxt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-     CUCHK(cudaFuncSetCacheConfig(update_boundary_y, cudaFuncCachePreferL1));
+     cudaFuncSetCacheConfig(update_boundary_y, cudaFuncCachePreferL1);
      update_boundary_y<<<grid, block, 0, St1>>>(u1, v1, w1, f_u1, f_v1, f_w1, rank_f, Front, d_i);
      update_boundary_y<<<grid, block, 0, St2>>>(u1, v1, w1, b_u1, b_v1, b_w1, rank_b, Back, d_i);
      return;
 }
 
+extern "C"
+void dstrqc_H(float* xx,       float* yy,     float* zz,    float* xy,    float* xz, float* yz,
+              float* r1,       float* r2,     float* r3,    float* r4,    float* r5, float* r6,
+              float* u1,       float* v1,     float* w1,    float* lam,   float* mu, float* qp,float* coeff, 
+              float* qs,       float* dcrjx,  float* dcrjy, float* dcrjz, int nyt,   int nzt, 
+              cudaStream_t St, float* lam_mu, 
+              float *vx1, float *vx2, int *ww, float *wwo,
+              int NX,       int NPC, int rankx,    int ranky, int  s_i,  
+              int e_i,         int s_j,       int e_j, int d_i)
+{
+    dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
+    dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (e_j-s_j+1+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
+    cudaFuncSetCacheConfig(dstrqc, cudaFuncCachePreferL1);
+    dstrqc<<<grid, block, 0, St>>>(xx,    yy,    zz,  xy,  xz, yz, r1, r2,    r3,    r4,    r5,     r6, 
+                                   u1,    v1,    w1,  lam, mu, qp,coeff, qs, dcrjx, dcrjy, dcrjz, lam_mu, 
+                                   vx1, vx2, ww, wwo, 
+                                   NX, NPC, rankx, ranky, nzt, s_i, e_i, s_j, e_j, d_i);
+    return;
+}
+
 template<int BLOCKX, int BLOCKY>
 __global__ void 
 __launch_bounds__(512,2)
-dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict__ zz,
-           _prec*  __restrict__ xy, _prec*  __restrict__ xz, _prec*  __restrict__ yz,
-       _prec*  __restrict__ r1, _prec*  __restrict__ r2,  _prec*  __restrict__ r3, 
-       _prec*  __restrict__ r4, _prec*  __restrict__ r5,  _prec*  __restrict__ r6,
-       _prec*  __restrict__ u1, 
-       _prec*  __restrict__ v1,    
-       _prec*  __restrict__ w1,    
-       _prec*  lam,   
-       _prec*  mu,     
-       _prec*  qp,
-       _prec*  coeff, 
-       _prec*  qs, 
-       _prec*  dcrjx, _prec*  dcrjy, _prec*  dcrjz, _prec*  lam_mu, 
-       //_prec *d_vx1, _prec *d_vx2, _prec *d_ww, _prec *d_wwo, //pengs version
-       _prec *d_vx1, _prec *d_vx2, int *d_ww, _prec *d_wwo,
+dstrqc_new(float* __restrict__ xx, float* __restrict__ yy, float* __restrict__ zz,
+           float* __restrict__ xy, float* __restrict__ xz, float* __restrict__ yz,
+       float* __restrict__ r1, float* __restrict__ r2,  float* __restrict__ r3, 
+       float* __restrict__ r4, float* __restrict__ r5,  float* __restrict__ r6,
+       float* __restrict__ u1, 
+       float* __restrict__ v1,    
+       float* __restrict__ w1,    
+       float* lam,   
+       float* mu,     
+       float* qp,
+       float* coeff, 
+       float* qs, 
+       float* dcrjx, float* dcrjy, float* dcrjz, float* lam_mu, 
+       //float *d_vx1, float *d_vx2, float *d_ww, float *d_wwo, //pengs version
+       float *d_vx1, float *d_vx2, int *d_ww, float *d_wwo,
        int NX, int NPC, int rankx, int ranky, int nzt, int s_i, int e_i, int s_j, int e_j, int d_i) 
 { 
 //#define SMEM  /*this does not work with DM.  Do not use. */
@@ -367,21 +397,21 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
   register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
   register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
   register int   pos_ik1, pos_jk1, pos_ijk, pos_ijk1,f_ww;
-  register _prec vs1, vs2, vs3, a1, tmp, vx1,f_wwo;
-  register _prec xl,  xm,  xmu1, xmu2, xmu3;
-  register _prec qpa, h,   h1,   h2,   h3;
-  register _prec qpaw,hw,h1w,h2w,h3w; 
-  register _prec f_vx1, f_vx2,  f_dcrj, f_r,  f_dcrjy, f_dcrjz;
-  register _prec f_rtmp;
-  register _prec f_u1, u1_ip1, u1_ip2, u1_im1;
-  register _prec f_v1, v1_im1, v1_ip1, v1_im2;
-  register _prec f_w1, w1_im1, w1_im2, w1_ip1;
-  _prec f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
+  register float vs1, vs2, vs3, a1, tmp, vx1,f_wwo;
+  register float xl,  xm,  xmu1, xmu2, xmu3;
+  register float qpa, h,   h1,   h2,   h3;
+  register float qpaw,hw,h1w,h2w,h3w; 
+  register float f_vx1, f_vx2,  f_dcrj, f_r,  f_dcrjy, f_dcrjz;
+  register float f_rtmp;
+  register float f_u1, u1_ip1, u1_ip2, u1_im1;
+  register float f_v1, v1_im1, v1_ip1, v1_im2;
+  register float f_w1, w1_im1, w1_im2, w1_ip1;
+  float f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
 #ifdef REGQ
-  _prec mu_i, mu_ip1, lam_i, lam_ip1, qp_i, qp_ip1, qs_i, qs_ip1;
-  _prec mu_jk1, mu_ijk1, lam_jk1, lam_ijk1, qp_jk1, qp_ijk1, qs_jk1, qs_ijk1;
-  _prec mu_jm1, mu_ijk, lam_jm1, lam_ijk, qp_jm1, qp_ijk, qs_jm1, qs_ijk;
-  _prec mu_km1, mu_ik1, lam_km1, lam_ik1, qp_km1, qp_ik1, qs_km1, qs_ik1;
+  float mu_i, mu_ip1, lam_i, lam_ip1, qp_i, qp_ip1, qs_i, qs_ip1;
+  float mu_jk1, mu_ijk1, lam_jk1, lam_ijk1, qp_jk1, qp_ijk1, qs_jk1, qs_ijk1;
+  float mu_jm1, mu_ijk, lam_jm1, lam_ijk, qp_jm1, qp_ijk, qs_jm1, qs_ijk;
+  float mu_km1, mu_ik1, lam_km1, lam_ik1, qp_km1, qp_ik1, qs_km1, qs_ik1;
 #endif
   int maxk, mink=align+3;
     
@@ -395,10 +425,10 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
 
   if (k < mink || k > maxk || j > e_j) return;
   
-  //if (k==align) cuPrintf("inside dstrqc_new(): j=%d\n", j);
+  //if (k==align) printf("inside dstrqc_new(): j=%d\n", j);
 
 #ifdef SMEM
-  __shared__ _prec s_u1[BLOCKX+3][BLOCKY+3], s_v1[BLOCKX+3][BLOCKY+3], s_w1[BLOCKX+3][BLOCKY+3];
+  __shared__ float s_u1[BLOCKX+3][BLOCKY+3], s_v1[BLOCKX+3][BLOCKY+3], s_w1[BLOCKX+3][BLOCKY+3];
 #endif
 
   i    = e_i;
@@ -537,9 +567,7 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
 //                qpaw=qpaw/2.;
     }
     else {
-        //suggested by Kyle
-	qpaw  = 2.0f*f_wwo*qpa;
-        // qpaw  = f_wwo*qpa;
+      qpaw  = f_wwo*qpa;
     }
 //                 printf("qpaw %f\n",qpaw);
 //              printf("qpaw1 %g\n",qpaw);
@@ -560,9 +588,7 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  hw=hw/2.0f;
     }
     else {
-      //suggested by Kyle
-      hw  = 2.0f*f_wwo*h;
-      // hw  = f_wwo*h;
+      hw  = f_wwo*h;
     }
     hw=hw/f_wwo;
 
@@ -575,9 +601,7 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  h1w=h1w/2.0f;
     }
     else {
-        //suggested by Kyle
-	h1w  = 2.0f*f_wwo*h1;
-        // h1w  = f_wwo*h1;
+      h1w  = f_wwo*h1;
     }
     h1w=h1w/f_wwo;
 
@@ -590,9 +614,7 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  h2w=h2w/2.;
     }
     else {
-        //suggested by Kyle
-        //h2w  = f_wwo*h2;
-	h2w  = 2.0f*f_wwo*h2;
+      h2w  = f_wwo*h2;
     }
     h2w=h2w/f_wwo;
 
@@ -604,9 +626,7 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
       //                  h3w=h3w/2.0f;
     }
     else {
-      //suggested by Kyle
-      h3w  = 2.0f*f_wwo*h3;
-      //h3w  = f_wwo*h3;
+      h3w  = f_wwo*h3;
     }
     h3w=h3w/f_wwo;
 
@@ -734,12 +754,12 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
 
     tmp      = xl*(vs1+vs2+vs3);
     #ifdef ELA
-    if (k==41 && i==102 && j==102) cuPrintf("before update xx=%.20g\n", xx[pos]);
+    if (k==41 && i==102 && j==102) printf("before update xx=%.20g\n", xx[pos]);
     xx[pos]  = (xx[pos] + tmp - xm*(vs2+vs3))*f_dcrj;
     yy[pos]  = (yy[pos] + tmp - xm*(vs1+vs3))*f_dcrj;
     zz[pos]  = (zz[pos] + tmp - xm*(vs1+vs2))*f_dcrj;
     if (k==41 && i==102 && j==102)
-       cuPrintf("after update xx=%.30g, xm=%.30g, vs1=%.30g, vs2=%.30g, vs3=%.30g, f_drj=%.30g\n", 
+       printf("after update xx=%.30g, xm=%.30g, vs1=%.30g, vs2=%.30g, vs3=%.30g, f_drj=%.30g\n", 
 	     xx[pos], xm, vs1, vs2, vs3, f_dcrj);
     #else
     a1       = qpa*(vs1+vs2+vs3);
@@ -814,9 +834,9 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
     xz[pos] = (f_xz + d_DT*f_rtmp)*f_dcrj;
     #endif
     /*if (k==85 && i==38 and j==38){
-       cuPrintf("xz=%e, pos=%d, f_rtmp=%e, f_wwo=%e, f_vx2=%e, r5=%e, vs2=%e, vs1=%e\n",
+       printf("xz=%e, pos=%d, f_rtmp=%e, f_wwo=%e, f_vx2=%e, r5=%e, vs2=%e, vs1=%e\n",
 		 xz[pos], pos, f_rtmp, f_wwo, f_vx2, r5[pos], vs2, vs1 );
-       cuPrintf("u1[%d]=%e, f_u1=%e, u1[%d]=%e, u1[%d]=%e\n",
+       printf("u1[%d]=%e, f_u1=%e, u1[%d]=%e, u1[%d]=%e\n",
                  pos_kp1, u1[pos_kp1], f_u1, pos_kp2, u1[pos_kp2], pos_km1, u1[pos_km1]);
     }*/
 	 
@@ -860,23 +880,22 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
 
 
 
-void dstrqc_H_new(_prec*  xx,       _prec*  yy,     _prec*  zz,    _prec*  xy,    _prec*  xz, _prec*  yz,
-                  _prec*  r1,       _prec*  r2,     _prec*  r3,    _prec*  r4,    _prec*  r5, _prec*  r6,
-                  _prec*  u1,       _prec*  v1,     _prec*  w1,    _prec*  lam,   _prec*  mu, _prec*  qp,_prec*  coeff, 
-                  _prec*  qs,       _prec*  dcrjx,  _prec*  dcrjy, _prec*  dcrjz, int nyt,   int nzt, 
-                  cudaStream_t St, _prec*  lam_mu, 
-                  //_prec *vx1, _prec *vx2, _prec *ww, _prec *wwo, //peng's version
-                  _prec *vx1, _prec *vx2, int *ww, _prec *wwo,
+extern "C"
+void dstrqc_H_new(float* xx,       float* yy,     float* zz,    float* xy,    float* xz, float* yz,
+                  float* r1,       float* r2,     float* r3,    float* r4,    float* r5, float* r6,
+                  float* u1,       float* v1,     float* w1,    float* lam,   float* mu, float* qp,float* coeff, 
+                  float* qs,       float* dcrjx,  float* dcrjy, float* dcrjz, int nyt,   int nzt, 
+                  cudaStream_t St, float* lam_mu, 
+                  //float *vx1, float *vx2, float *ww, float *wwo, //peng's version
+                  float *vx1, float *vx2, int *ww, float *wwo,
                   int NX,          int NPC,       int rankx,    int ranky, int  s_i,  
                   int e_i,         int s_j,       int e_j, int d_i)
 {
-    //fprintf(stderr, "nzt=%d, e_j=%d, s_j=%d\n", nzt, e_j, s_j);
-    //cudaPrintfInit();
     if (0 == (nzt % 64) && 0 == (( e_j-s_j+1) % 8)) {
       const int blockx = 64, blocky = 8;
       dim3 block(blockx, blocky, 1);
       dim3 grid ((nzt+block.x-1)/block.x, (e_j-s_j+1+block.y-1)/block.y,1);
-       CUCHK(cudaFuncSetCacheConfig(dstrqc_new<blockx,blocky>, cudaFuncCachePreferShared)) ;
+      CUCHK( cudaFuncSetCacheConfig(dstrqc_new<blockx,blocky>, cudaFuncCachePreferShared) );
       dstrqc_new<blockx,blocky><<<grid, block, 0, St>>>(xx, yy, zz, xy,  xz, yz, r1, r2,    r3,    r4,    r5,     r6, 
                                      u1, v1, w1, lam, mu, qp,coeff, qs, dcrjx, dcrjy, dcrjz, lam_mu, 
                                      vx1, vx2, ww, wwo,
@@ -885,7 +904,7 @@ void dstrqc_H_new(_prec*  xx,       _prec*  yy,     _prec*  zz,    _prec*  xy,  
       const int blockx = BLOCK_SIZE_Z, blocky = BLOCK_SIZE_Y;
       dim3 block(blockx, blocky, 1);
       dim3 grid ((nzt+block.x-1)/block.x, (e_j-s_j+1+block.y-1)/block.y,1);
-       CUCHK(cudaFuncSetCacheConfig(dstrqc_new<blockx,blocky>, cudaFuncCachePreferShared)) ;
+      CUCHK( cudaFuncSetCacheConfig(dstrqc_new<blockx,blocky>, cudaFuncCachePreferShared) );
       dstrqc_new<blockx,blocky><<<grid, block, 0, St>>>(xx, yy, zz, xy,  xz, yz, r1, r2,    r3,    r4,    r5,     r6, 
                                      u1, v1, w1, lam, mu, qp,coeff, qs, dcrjx, dcrjy, dcrjz, lam_mu, 
                                      vx1, vx2, ww, wwo,
@@ -893,20 +912,19 @@ void dstrqc_H_new(_prec*  xx,       _prec*  yy,     _prec*  zz,    _prec*  xy,  
 
     }
     cudaError_t cerr;
-    cerr=cudaGetLastError();
+    CUCHK(cerr=cudaGetLastError());
     if(cerr!=cudaSuccess) printf("CUDA ERROR: dstrqc_H_new after kernel: %s\n",cudaGetErrorString(cerr));
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
     return;
 }
 
 
 /* kernel function to apply free-surface B.C. to stresses - (Daniel) */
-void fstr_H(_prec*  zz, _prec*  xz, _prec*  yz, cudaStream_t St, int s_i, int e_i, int s_j, int e_j)
+extern "C"
+void fstr_H(float* zz, float* xz, float* yz, cudaStream_t St, int s_i, int e_i, int s_j, int e_j)
 {
     dim3 block (2, BLOCK_SIZE_Y, 1);
     dim3 grid (1,(e_j-s_j+1+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    CUCHK(cudaFuncSetCacheConfig(fstr, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(fstr, cudaFuncCachePreferL1);
     fstr<<<grid, block, 0, St>>>(zz, xz, yz, s_i, e_i, s_j);
     return;
 }
@@ -914,31 +932,31 @@ void fstr_H(_prec*  zz, _prec*  xz, _prec*  yz, cudaStream_t St, int s_i, int e_
 
 __global__ void 
 __launch_bounds__(512,2)
-drprecpc_calc_opt(_prec *xx, _prec *yy, _prec *zz, 
-                  const _prec*  __restrict__ xy, 
-                  const _prec*  __restrict__ xz, 
-                  const _prec*  __restrict__ yz, 
-                  _prec *mu, _prec *d1, 
-                  _prec *sigma2, 
-                  _prec *yldfac,_prec *cohes, _prec *phi,
-                  _prec *neta,
+drprecpc_calc_opt(float *xx, float *yy, float *zz, 
+                  const float* __restrict__ xy, 
+                  const float* __restrict__ xz, 
+                  const float* __restrict__ yz, 
+                  float *mu, float *d1, 
+                  float *sigma2, 
+                  float *yldfac,float *cohes, float *phi,
+                  float *neta,
                   int nzt, int s_i, int e_i, int s_j, int e_j,  int d_i) { 
   register int i,j,k,pos;
   register int pos_im1,pos_ip1,pos_jm1,pos_km1;
   register int pos_ip1jm1;
   register int pos_ip1km1,pos_jm1km1;
-  register _prec Sxx, Syy, Szz, Sxy, Sxz, Syz;
-  register _prec Sxxp, Syyp, Szzp, Sxyp, Sxzp, Syzp;
-  register _prec depxx, depyy, depzz, depxy, depxz, depyz;
-  register _prec SDxx, SDyy, SDzz;
-  register _prec iyldfac, Tv, sigma_m, taulim, taulim2, rphi;
-  register _prec xm, iixx, iiyy, iizz;
-  register _prec mu_, secinv, sqrtSecinv;
+  register float Sxx, Syy, Szz, Sxy, Sxz, Syz;
+  register float Sxxp, Syyp, Szzp, Sxyp, Sxzp, Syzp;
+  register float depxx, depyy, depzz, depxy, depxz, depyz;
+  register float SDxx, SDyy, SDzz;
+  register float iyldfac, Tv, sigma_m, taulim, taulim2, rphi;
+  register float xm, iixx, iiyy, iizz;
+  register float mu_, secinv, sqrtSecinv;
   register int   jj,kk;
 
   // Compute initial stress on GPU (Daniel)
-  register _prec ini[9], ini_ip1[9];
-  register _prec depth, pfluid;
+  register float ini[9], ini_ip1[9];
+  register float depth, pfluid;
   register int srfpos;
 
   k    = blockIdx.x*blockDim.x+threadIdx.x+align;
@@ -954,17 +972,17 @@ drprecpc_calc_opt(_prec *xx, _prec *yy, _prec *zz,
   jj   = j - (2+ngsl);
 
   srfpos = d_nzt[d_i] + align - 1;
-  depth = (_prec) (srfpos - k) * d_DH[d_i];
+  depth = (float) (srfpos - k) * d_DH[d_i];
 
   if (depth > 0) pfluid = (depth + d_DH[d_i]*0.5) * 9.81e3;
   else pfluid = d_DH[d_i] / 2. * 9.81e3;
  
-  //cuPrintf("k=%d, depth=%f, pfluid=%e\n", k, depth, pfluid);
+  //printf("k=%d, depth=%f, pfluid=%e\n", k, depth, pfluid);
 
-  _prec sigma2_ip1, sigma2_i;
-  _prec xy_ip1, xy_i, xz_ip1, xz_i, yz_ip1, yz_i;
-  _prec mu_ip1, mu_i;
-  _prec xz_km1, xz_ip1km1, xy_jm1, xy_ip1jm1;
+  float sigma2_ip1, sigma2_i;
+  float xy_ip1, xy_i, xz_ip1, xz_i, yz_ip1, yz_i;
+  float mu_ip1, mu_i;
+  float xz_km1, xz_ip1km1, xy_jm1, xy_ip1jm1;
   sigma2_i = sigma2[pos + d_slice_1[d_i]];
   xy_i    = xy   [pos + d_slice_1[d_i]];
   xz_i    = xz   [pos + d_slice_1[d_i]];
@@ -999,7 +1017,7 @@ drprecpc_calc_opt(_prec *xx, _prec *yy, _prec *zz,
 // start drprnn
     rotate_principal(sigma2_i, pfluid, ini);
     rotate_principal(sigma2_ip1, pfluid, ini_ip1);
-    /*cuPrintf("ini[8] = %5.2e, ini[4]=%5.2e sigma2=%5.2e pfluid=%5.2e\n", 
+    /*printf("ini[8] = %5.2e, ini[4]=%5.2e sigma2=%5.2e pfluid=%5.2e\n", 
          ini[8], ini[4], sigma2[pos], pfluid);*/
     /*iixx  = 0.5f*(inixx_i + inixx_ip1);
     iiyy  = 0.5f*(iniyy_i + iniyy_ip1);
@@ -1084,16 +1102,17 @@ drprecpc_calc_opt(_prec *xx, _prec *yy, _prec *zz,
 }
 
 // drprecpc is for plasticity computation for cerjan and wave propagation
-void drprecpc_calc_H_opt(_prec *xx, _prec *yy, _prec *zz, _prec *xy, _prec *xz, _prec *yz,
-        _prec *mu, _prec *d1, _prec *sigma2,
-        _prec *yldfac,_prec *cohes, _prec *phi,
-        _prec *neta,
+extern "C"
+void drprecpc_calc_H_opt(float *xx, float *yy, float *zz, float *xy, float *xz, float *yz,
+        float *mu, float *d1, float *sigma2,
+        float *yldfac,float *cohes, float *phi,
+        float *neta,
         int nzt,
         int xls, int xre, int yls, int yre, cudaStream_t St, int d_i){
 
     dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
     dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, ((yre-yls+1)+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    CUCHK(cudaFuncSetCacheConfig(drprecpc_calc_opt, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(drprecpc_calc_opt, cudaFuncCachePreferL1);
 
     //split into tho routines, one for the normal, one for shear stress components (Daniel)
     drprecpc_calc_opt<<<grid, block, 0, St>>>(xx,yy,zz,xy,xz,yz,mu,d1,
@@ -1104,9 +1123,10 @@ void drprecpc_calc_H_opt(_prec *xx, _prec *yy, _prec *zz, _prec *xy, _prec *xz, 
 return;
 }
 
-void drprecpc_app_H(_prec *xx, _prec *yy, _prec *zz, 
-        _prec *xy, _prec *xz, _prec *yz,
-        _prec *mu, _prec *sigma2, _prec *yldfac, 
+extern "C"
+void drprecpc_app_H(float *xx, float *yy, float *zz, 
+        float *xy, float *xz, float *yz,
+        float *mu, float *sigma2, float *yldfac, 
         int nzt, int xls, int xre, int yls, int yre, cudaStream_t St, int d_i){
 
     dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
@@ -1115,7 +1135,7 @@ void drprecpc_app_H(_prec *xx, _prec *yy, _prec *zz,
 
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: drprecpc_app before kernel: %s\n",cudaGetErrorString(cerr));
-    CUCHK(cudaFuncSetCacheConfig(drprecpc_app, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(drprecpc_app, cudaFuncCachePreferL1);
     drprecpc_app<<<grid, block, 0, St>>>(xx,yy,zz,xy,xz,yz,mu,
         sigma2,yldfac,xls,xre,yls,d_i);
     cerr=cudaGetLastError();
@@ -1124,9 +1144,10 @@ void drprecpc_app_H(_prec *xx, _prec *yy, _prec *zz,
 return;
 }
 
+extern "C"
 void addsrc_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  cudaStream_t St,
-              _prec*  axx, _prec*  ayy,    _prec*  azz, _prec*  axz, _prec*  ayz, _prec*  axy,
-              _prec*  xx,  _prec*  yy,     _prec*  zz,  _prec*  xy,  _prec*  yz,  _prec*  xz, int d_i)
+              float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+              float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz, int d_i)
 {
     dim3 grid, block;
     if(npsrc < 256)
@@ -1142,28 +1163,25 @@ void addsrc_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  cud
     cudaError_t cerr;
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc before kernel: %s\n",cudaGetErrorString(cerr));
-    //cudaPrintfInit();
     addsrc_cu<<<grid, block, 0, St>>>(i,  READ_STEP, dim, psrc, npsrc, axx, ayy, azz, axz, ayz, axy,
                                       xx, yy,        zz,  xy,   yz,  xz, d_i);
     cerr=cudaGetLastError();
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc after kernel: %s\n",cudaGetErrorString(cerr));
     return;
 }
 
-__global__ void dvelcy(_prec*  u1,    _prec*  v1,    _prec*  w1,    _prec*  xx,  _prec*  yy,   _prec*  zz,   _prec*  xy, _prec*  xz, _prec*  yz,
-                       _prec*  dcrjx, _prec*  dcrjy, _prec*  dcrjz, _prec*  d_1, _prec*  s_u1, _prec*  s_v1, _prec*  s_w1, int s_j, int e_j,
+__global__ void dvelcy(float* u1,    float* v1,    float* w1,    float* xx,  float* yy,   float* zz,   float* xy, float* xz, float* yz,
+                       float* dcrjx, float* dcrjy, float* dcrjz, float* d_1, float* s_u1, float* s_v1, float* s_w1, int s_j, int e_j,
                        int d_i)
 {
     register int   i, j, k, pos,     j2,      pos2, pos_jm1, pos_jm2;
     register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
     register int   pos_im2, pos_im1, pos_ip1, pos_ip2;
     register int   pos_jk1, pos_ik1, pos_ijk;
-    register _prec f_xy,    xy_jp1,  xy_jm1,  xy_jm2;
-    register _prec f_yy,    yy_jp2,  yy_jp1,  yy_jm1;
-    register _prec f_yz,    yz_jp1,  yz_jm1,  yz_jm2;
-    register _prec f_d1,    f_d2,    f_d3,    f_dcrj, f_dcrjx, f_dcrjz, f_xz;
+    register float f_xy,    xy_jp1,  xy_jm1,  xy_jm2;
+    register float f_yy,    yy_jp2,  yy_jp1,  yy_jm1;
+    register float f_yz,    yz_jp1,  yz_jm1,  yz_jm2;
+    register float f_d1,    f_d2,    f_d3,    f_dcrj, f_dcrjx, f_dcrjz, f_xz;
 
     if (k > d_nzt[d_i]+align-3 && d_i > 0) return;
 
@@ -1240,7 +1258,7 @@ __global__ void dvelcy(_prec*  u1,    _prec*  v1,    _prec*  w1,    _prec*  xx, 
     return;
 }
 
-__global__ void update_boundary_y(_prec*  u1, _prec*  v1, _prec*  w1, _prec*  s_u1, _prec*  s_v1, _prec*  s_w1, int rank, int flag, int d_i)
+__global__ void update_boundary_y(float* u1, float* v1, float* w1, float* s_u1, float* s_v1, float* s_w1, int rank, int flag, int d_i)
 {
     register int i, j, k, pos, posj;
     k     = blockIdx.x*BLOCK_SIZE_Z+threadIdx.x+align;
@@ -1275,7 +1293,7 @@ __global__ void update_boundary_y(_prec*  u1, _prec*  v1, _prec*  w1, _prec*  s_
 }
 
 /* kernel functions to apply free-surface B.C.s to stress */
-__global__ void fstr (_prec*  zz, _prec*  xz, _prec*  yz, int s_i, int e_i, int s_j)
+__global__ void fstr (float* zz, float* xz, float* yz, int s_i, int e_i, int s_j)
 {
     register int i, j, k;
     register int pos, pos_im1; 
@@ -1308,25 +1326,345 @@ __global__ void fstr (_prec*  zz, _prec*  xz, _prec*  yz, int s_i, int e_i, int 
 
 }
 
+/* Old dstrqc routine */
+__global__ void dstrqc(float* xx, float* yy,    float* zz,    float* xy,    float* xz,     float* yz,
+                       float* r1, float* r2,    float* r3,    float* r4,    float* r5,     float* r6,
+                       float* u1, float* v1,    float* w1,    float* lam,   float* mu,     float* qp,float* coeff, 
+                       float* qs, float* dcrjx, float* dcrjy, float* dcrjz, float* lam_mu, 
+                       float *d_vx1, float *d_vx2, int *d_ww, float *d_wwo,
+                       int NX, int NPC, int rankx, int ranky, int nzt, int s_i, int e_i, int s_j, int e_j, int d_i)
+{
+    register int   i,  j,  k,  g_i;
+    register int   pos,     pos_ip1, pos_im2, pos_im1;
+    register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
+    register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
+    register int   pos_ik1, pos_jk1, pos_ijk, pos_ijk1,f_ww;
+    register float vs1, vs2, vs3, a1, tmp, vx1,f_wwo;
+    register float xl,  xm,  xmu1, xmu2, xmu3;
+    register float qpa, h,   h1,   h2,   h3;
+     register float qpaw,hw,h1w,h2w,h3w; 
+    register float f_vx1, f_vx2,  f_dcrj, f_r,  f_dcrjy, f_dcrjz;
+      register float f_rtmp;
+    register float f_u1, u1_ip1, u1_ip2, u1_im1;
+    register float f_v1, v1_im1, v1_ip1, v1_im2;
+    register float f_w1, w1_im1, w1_im2, w1_ip1;
+    int maxk, mink = align+3;
+    
+    k    = blockIdx.x*BLOCK_SIZE_Z+threadIdx.x+align;
+    j    = blockIdx.y*BLOCK_SIZE_Y+threadIdx.y+s_j;
+
+    if (d_i == 0) {
+       maxk = nzt + align -1;
+    }
+    else maxk = nzt + align -3;
+
+    if (k < mink || k > maxk || j > e_j) return;
+ 
+    i    = e_i;
+    pos  = i*d_slice_1[d_i]+j*d_yline_1[d_i]+k;
+
+    u1_ip1 = u1[pos+d_slice_2[d_i]];
+    f_u1   = u1[pos+d_slice_1[d_i]];
+    u1_im1 = u1[pos];    
+    f_v1   = v1[pos+d_slice_1[d_i]];
+    v1_im1 = v1[pos];
+    v1_im2 = v1[pos-d_slice_1[d_i]];
+    f_w1   = w1[pos+d_slice_1[d_i]];
+    w1_im1 = w1[pos];
+    w1_im2 = w1[pos-d_slice_1[d_i]];
+    f_dcrjz = dcrjz[k];
+    f_dcrjy = dcrjy[j];
+    for(i=e_i;i>=s_i;i--)
+    {
+        /*f_vx1    = tex1Dfetch(p_vx1, pos);
+        f_vx2    = tex1Dfetch(p_vx2, pos);
+        f_ww     = tex1Dfetch(p_ww, pos);
+        f_wwo     = tex1Dfetch(p_wwo, pos);*/
+        f_vx1 = d_vx1[pos];
+        f_vx2 = d_vx2[pos];
+        f_ww  = d_ww[pos];
+        f_wwo = d_wwo[pos];
+        /*
+        if(f_wwo!=f_wwo){
+          xx[pos] = yy[pos] = zz[pos] = xy[pos] = xz[pos] = yz[pos] = 1.0;
+          r1[pos] = r2[pos] = r3[pos] = r4[pos] = r5[pos] = r6[pos] = 1.0;
+          return;
+        }
+*/
+        f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
+
+        pos_km2  = pos-2;
+        pos_km1  = pos-1;
+        pos_kp1  = pos+1;
+        pos_kp2  = pos+2;
+        pos_jm2  = pos-d_yline_2[d_i];
+        pos_jm1  = pos-d_yline_1[d_i];
+        pos_jp1  = pos+d_yline_1[d_i];
+        pos_jp2  = pos+d_yline_2[d_i];
+        pos_im2  = pos-d_slice_2[d_i];
+        pos_im1  = pos-d_slice_1[d_i];
+        pos_ip1  = pos+d_slice_1[d_i];
+        pos_jk1  = pos-d_yline_1[d_i]-1;
+        pos_ik1  = pos+d_slice_1[d_i]-1;
+        pos_ijk  = pos+d_slice_1[d_i]-d_yline_1[d_i];
+        pos_ijk1 = pos+d_slice_1[d_i]-d_yline_1[d_i]-1;
+
+        xl       = 8.0/(  lam[pos]      + lam[pos_ip1] + lam[pos_jm1] + lam[pos_ijk]
+                        + lam[pos_km1]  + lam[pos_ik1] + lam[pos_jk1] + lam[pos_ijk1] );
+        xm       = 16.0/( mu[pos]       + mu[pos_ip1]  + mu[pos_jm1]  + mu[pos_ijk]
+                        + mu[pos_km1]   + mu[pos_ik1]  + mu[pos_jk1]  + mu[pos_ijk1] );
+        xmu1     = 2.0/(  mu[pos]       + mu[pos_km1] );
+        xmu2     = 2.0/(  mu[pos]       + mu[pos_jm1] );
+        xmu3     = 2.0/(  mu[pos]       + mu[pos_ip1] );
+        xl       = xl  +  xm;
+        qpa      = 0.0625*( qp[pos]     + qp[pos_ip1] + qp[pos_jm1] + qp[pos_ijk]
+                          + qp[pos_km1] + qp[pos_ik1] + qp[pos_jk1] + qp[pos_ijk1] );
+
+//                        www=f_ww;
+        if(1./(qpa*2.0)<=200.0)
+        {
+//      printf("coeff[f_ww*2-2] %g\n",coeff[f_ww*2-2]);
+                  qpaw=coeff[f_ww*2-2]*(2.*qpa)*(2.*qpa)+coeff[f_ww*2-1]*(2.*qpa);
+//              qpaw=coeff[www*2-2]*(2.*qpa)*(2.*qpa)+coeff[www*2-1]*(2.*qpa);
+//                qpaw=qpaw/2.;
+                  }
+               else {
+                  qpaw  = 2.0f*f_wwo*qpa;  //Fix for Q(f) suggested by Kyle
+		  	}
+//                 printf("qpaw %f\n",qpaw);
+//              printf("qpaw1 %g\n",qpaw);
+        qpaw=qpaw/f_wwo;
+//      printf("qpaw2 %g\n",qpaw);
+
+
+
+        h        = 0.0625*( qs[pos]     + qs[pos_ip1] + qs[pos_jm1] + qs[pos_ijk]
+                          + qs[pos_km1] + qs[pos_ik1] + qs[pos_jk1] + qs[pos_ijk1] );
+
+       if(1./(h*2.0)<=200.0)
+        {
+                  hw=coeff[f_ww*2-2]*(2.*h)*(2.*h)+coeff[f_ww*2-1]*(2.*h);
+                  //                  hw=hw/2.;
+                  }
+               else {
+                  hw  = 2.0f*f_wwo*h;  //Fix for Q(f) suggested by Kyle
+                }
+        hw=hw/f_wwo;
+
+
+        h1       = 0.250*(  qs[pos]     + qs[pos_km1] );
+
+        if(1./(h1*2.0)<=200.0)
+        {
+                  h1w=coeff[f_ww*2-2]*(2.*h1)*(2.*h1)+coeff[f_ww*2-1]*(2.*h1);
+                  //                  h1w=h1w/2.;
+                  }
+                         else {
+                  h1w  = 2.0f*f_wwo*h1; //Fix for Q(f) suggested by Kyle
+                }
+        h1w=h1w/f_wwo;
+
+
+
+        h2       = 0.250*(  qs[pos]     + qs[pos_jm1] );
+        if(1./(h2*2.0)<=200.0)
+        {
+                  h2w=coeff[f_ww*2-2]*(2.*h2)*(2.*h2)+coeff[f_ww*2-1]*(2.*h2);
+                  //                  h2w=h2w/2.;
+                  }
+                         else {
+                  h2w  = 2.0f*f_wwo*h2; //Fix for Q(f) suggested by Kyle
+                }
+        h2w=h2w/f_wwo;
+
+
+        h3       = 0.250*(  qs[pos]     + qs[pos_ip1] );
+        if(1./(h3*2.0)<=200.0)
+        {
+                  h3w=coeff[f_ww*2-2]*(2.*h3)*(2.*h3)+coeff[f_ww*2-1]*(2.*h3);
+                  //                  h3w=h3w/2.;
+                  }
+                         else {
+                  h3w  = 2.0f*f_wwo*h3; //Fix for Q(f) suggested by Kyle
+                }
+        h3w=h3w/f_wwo;
+
+	h        = -xm*hw*d_dh1[d_i];
+        h1       = -xmu1*h1w*d_dh1[d_i];
+        h2       = -xmu2*h2w*d_dh1[d_i];
+        h3       = -xmu3*h3w*d_dh1[d_i];
+
+
+        //        h1       = -xmu1*hw1*d_dh1[d_i];
+        //h2       = -xmu2*hw2*d_dh1[d_i];
+        //h3       = -xmu3*hw3*d_dh1[d_i];
+
+
+        qpa      = -qpaw*xl*d_dh1[d_i];
+        //        qpa      = -qpaw*xl*d_dh1[d_i];
+
+        xm       = xm*d_dth[d_i];
+        xmu1     = xmu1*d_dth[d_i];
+        xmu2     = xmu2*d_dth[d_i];
+        xmu3     = xmu3*d_dth[d_i];
+        xl       = xl*d_dth[d_i];
+      //  f_vx2    = f_vx2*f_vx1;
+        h        = h*f_vx1;
+        h1       = h1*f_vx1;
+        h2       = h2*f_vx1;
+        h3       = h3*f_vx1;
+        qpa      = qpa*f_vx1;
+
+        xm       = xm+d_DT*h;
+        xmu1     = xmu1+d_DT*h1;
+        xmu2     = xmu2+d_DT*h2;
+        xmu3     = xmu3+d_DT*h3;
+        vx1      = d_DT*(1+f_vx2*f_vx1);
+        
+        u1_ip2   = u1_ip1;
+        u1_ip1   = f_u1;
+        f_u1     = u1_im1;
+        u1_im1   = u1[pos_im1];
+        v1_ip1   = f_v1;
+        f_v1     = v1_im1;
+        v1_im1   = v1_im2;
+        v1_im2   = v1[pos_im2];
+        w1_ip1   = f_w1;
+        f_w1     = w1_im1;
+        w1_im1   = w1_im2;
+        w1_im2   = w1[pos_im2];
+
+        if (d_i == 0){ /*Apply FS condition on uppermost grid only*/
+	  if(k == d_nzt[d_i]+align-1) {
+	      u1[pos_kp1] = f_u1 - (f_w1 - w1_im1);
+	      v1[pos_kp1] = f_v1 - (w1[pos_jp1] - f_w1);
+
+	      g_i  = d_nxt[d_i]*rankx + i - ngsl - 1;
+
+	      if(g_i<NX)
+		      vs1 = u1_ip1 - (w1_ip1 - f_w1);
+	      else
+		      vs1 = 0.0;
+
+	      g_i  = d_nyt[d_i]*ranky + j - ngsl - 1;
+	      if(g_i>1 || NPC == 2) //periodic BCs
+		      vs2 = v1[pos_jm1] - (f_w1 - w1[pos_jm1]);
+	      else
+		      vs2 = 0.0;
+
+	      w1[pos_kp1] = w1[pos_km1] - lam_mu[i*(d_nyt[d_i]+4+ngsl2) + j]*((vs1 - u1[pos_kp1]) + (u1_ip1 - f_u1)
+                           + (v1[pos_kp1] - vs2) + (f_v1   - v1[pos_jm1]) );
+	  }
+	  else if(k == d_nzt[d_i]+align-2) {
+		  u1[pos_kp2] = u1[pos_kp1] - (w1[pos_kp1]   - w1[pos_im1+1]);
+		  v1[pos_kp2] = v1[pos_kp1] - (w1[pos_jp1+1] - w1[pos_kp1]);
+	  }
+        }
+ 
+    	vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
+        vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
+        vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
+ 
+        tmp      = xl*(vs1+vs2+vs3);
+        a1       = qpa*(vs1+vs2+vs3);
+        tmp      = tmp+d_DT*a1;
+
+        f_r      = r1[pos];
+	 f_rtmp   = -h*(vs2+vs3) + a1; 
+	 xx[pos]  = xx[pos]  + tmp - xm*(vs2+vs3) + vx1*f_r;  
+	 r1[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+	  xx[pos]  = (xx[pos] + d_DT*f_rtmp)*f_dcrj;
+
+        f_r      = r2[pos];
+	 f_rtmp   = -h*(vs1+vs3) + a1;  
+        yy[pos]  = (yy[pos]  + tmp - xm*(vs1+vs3) + vx1*f_r)*f_dcrj;
+
+	 r2[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+	  yy[pos]  = (yy[pos] + d_DT*f_rtmp)*f_dcrj;
+	
+        f_r      = r3[pos];
+	f_rtmp   = -h*(vs1+vs2) + a1;
+        zz[pos]  = (zz[pos]  + tmp - xm*(vs1+vs2) + vx1*f_r)*f_dcrj;
+	 r3[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1);  
+	 zz[pos]  = (zz[pos] + d_DT*f_rtmp)*f_dcrj;
+
+        vs1      = d_c1*(u1[pos_jp1] - f_u1)   + d_c2*(u1[pos_jp2] - u1[pos_jm1]);
+        vs2      = d_c1*(f_v1        - v1_im1) + d_c2*(v1_ip1      - v1_im2);
+        f_r      = r4[pos];
+ 	f_rtmp   = h1*(vs1+vs2); 
+	 xy[pos]  = xy[pos]  + xmu1*(vs1+vs2) + vx1*f_r;
+	 r4[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1);
+	 xy[pos]  = (xy[pos] + d_DT*f_rtmp)*f_dcrj;
+ 
+        //moved to separate subroutine fstr, to be executed after plasticity (Daniel)
+        /*if(k == d_nzt+align-1)
+        {
+                zz[pos+1] = -zz[pos];
+        	xz[pos]   = 0.0;
+                yz[pos]   = 0.0;
+        }
+        else
+        {*/
+        	vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
+        	vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
+        	f_r     = r5[pos];
+		 f_rtmp  = h2*(vs1+vs2);
+		  xz[pos] = xz[pos]  + xmu2*(vs1+vs2) + vx1*f_r; 
+		   r5[pos] = f_vx2*f_r + f_wwo*f_rtmp; 
+		   f_rtmp  = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+		   xz[pos] = (xz[pos] + d_DT*f_rtmp)*f_dcrj;
+	 
+
+        	vs1     = d_c1*(v1[pos_kp1] - f_v1) + d_c2*(v1[pos_kp2] - v1[pos_km1]);
+        	vs2     = d_c1*(w1[pos_jp1] - f_w1) + d_c2*(w1[pos_jp2] - w1[pos_jm1]);
+        	f_r     = r6[pos];
+		f_rtmp  = h3*(vs1+vs2);
+		yz[pos] = yz[pos]  + xmu3*(vs1+vs2) + vx1*f_r;
+		 r6[pos] = f_vx2*f_r + f_wwo*f_rtmp;
+		  f_rtmp  = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+		  yz[pos] = (yz[pos] + d_DT*f_rtmp)*f_dcrj; 
+
+                // also moved to fstr (Daniel)
+                /*if(k == d_nzt+align-2)
+                {
+                    zz[pos+3] = -zz[pos];
+                    xz[pos+2] = -xz[pos];
+                    yz[pos+2] = -yz[pos];                                               
+		}
+		else if(k == d_nzt+align-3)
+		{
+                    xz[pos+4] = -xz[pos];
+                    yz[pos+4] = -yz[pos];
+		}*/
+ 	/*}*/
+        pos     = pos_im1;
+    }
+    return;
+}
+
 // treatment of shear stress components moved to separate kernel code (Daniel)
-__global__ void drprecpc_app(_prec *xx, _prec *yy, _prec *zz, 
-      _prec *xy, _prec *xz, _prec *yz, 
-      _prec *mu, _prec *sigma2, 
-      _prec *yldfac, int s_i, int e_i, int s_j, int d_i){
+__global__ void drprecpc_app(float *xx, float *yy, float *zz, 
+      float *xy, float *xz, float *yz, 
+      float *mu, float *sigma2, 
+      float *yldfac, int s_i, int e_i, int s_j, int d_i){
 
     register int i,j,k,pos;
     register int pos_im1,pos_ip1,pos_jp1,pos_kp1;
     register int pos_im1jp1,pos_im1kp1,pos_ip1jp1;
     register int pos_ip1kp1,pos_jp1kp1,pos_ip1jp1kp1;
-    register _prec iyldfac; 
-    register _prec xm, tst, iist;
-    register _prec mu_;
-    register _prec Sxx, Syy, Szz;
-    register _prec iixx, iiyy, iizz, SDxx, SDyy, SDzz, sigma_m;
-    register _prec ini[9], ini_ip1[9], ini_kp1[9], ini_ip1kp1[9];
-    register _prec ini_jp1[9], ini_ip1jp1[9], ini_jp1kp1[9], ini_ip1jp1kp1[9];
+    register float iyldfac; 
+    register float xm, tst, iist;
+    register float mu_;
+    register float Sxx, Syy, Szz;
+    register float iixx, iiyy, iizz, SDxx, SDyy, SDzz, sigma_m;
+    register float ini[9], ini_ip1[9], ini_kp1[9], ini_ip1kp1[9];
+    register float ini_jp1[9], ini_ip1jp1[9], ini_jp1kp1[9], ini_ip1jp1kp1[9];
     register int srfpos;
-    register _prec depth, pfluid, depth_kp1, pfluid_kp1;
+    register float depth, pfluid, depth_kp1, pfluid_kp1;
 
     k    = blockIdx.x*BLOCK_SIZE_Z+threadIdx.x+align;
     j    = blockIdx.y*BLOCK_SIZE_Y+threadIdx.y+s_j;
@@ -1334,8 +1672,8 @@ __global__ void drprecpc_app(_prec *xx, _prec *yy, _prec *zz,
     pos  = i*d_slice_1[d_i]+j*d_yline_1[d_i]+k;
 
     srfpos = d_nzt[d_i] + align - 1;
-    depth = (_prec) (srfpos - k) * d_DH[d_i];
-    depth_kp1 = (_prec) (srfpos - k + 1) * d_DH[d_i];
+    depth = (float) (srfpos - k) * d_DH[d_i];
+    depth_kp1 = (float) (srfpos - k + 1) * d_DH[d_i];
 
     if (depth > 0) pfluid = (depth + d_DH[d_i]/2.) * 9.81e3;
     else pfluid = d_DH[d_i] / 2. * 9.81e3;
@@ -1343,8 +1681,8 @@ __global__ void drprecpc_app(_prec *xx, _prec *yy, _prec *zz,
     if (depth_kp1 > 0) pfluid_kp1 = (depth_kp1 + d_DH[d_i]/2.) * 9.81e3;
     else pfluid_kp1 = d_DH[d_i] / 2. * 9.81e3;
 
-    //cuPrintf("k=%d, depth=%f, pfluid=%e\n", k, depth, pfluid);
-    //cuPrintf("k=%d, depth=%f, pfluid=%e\n", k+1, depth_kp1, pfluid_kp1);
+    //printf("k=%d, depth=%f, pfluid=%e\n", k, depth, pfluid);
+    //printf("k=%d, depth=%f, pfluid=%e\n", k+1, depth_kp1, pfluid_kp1);
 
     for(i=e_i;i>=s_i;--i){
 
@@ -1440,14 +1778,14 @@ __global__ void drprecpc_app(_prec *xx, _prec *yy, _prec *zz,
 }
 
 __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,
-                          _prec*  axx, _prec*  ayy,    _prec*  azz, _prec*  axz, _prec*  ayz, _prec*  axy,
-                          _prec*  xx,  _prec*  yy,     _prec*  zz,  _prec*  xy,  _prec*  yz,  _prec*  xz, int d_i)
+                          float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+                          float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz, int d_i)
 {
-        register _prec vtst;
+        register float vtst;
         register int idx, idy, idz, j, pos;
         j = blockIdx.x*blockDim.x+threadIdx.x;
         if(j >= npsrc) return;
-        vtst = (_prec)d_DT/(d_DH[d_i]*d_DH[d_i]*d_DH[d_i]);
+        vtst = (float)d_DT/(d_DH[d_i]*d_DH[d_i]*d_DH[d_i]);
 
         i   = i - 1;
         idx = psrc[j*dim]   + 1 + ngsl;
@@ -1455,8 +1793,9 @@ __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
         idz = psrc[j*dim+2] + align - 1;
         pos = idx*d_slice_1[d_i] + idy*d_yline_1[d_i] + idz;
 
-        /*cuPrintf("addsrc_cu: (%d,%d,%d) (%e,%e,%e,%e,%e,%e)\n", idx, idy, idz, 
+        /*printf("addsrc_cu: (%d,%d,%d) (%e,%e,%e,%e,%e,%e)\n", idx, idy, idz, 
            axx[j*READ_STEP+i], ayy[j*READ_STEP+i], azz[j*READ_STEP+i], axz[j*READ_STEP+i], ayz[j*READ_STEP+i], axy[j*READ_STEP+i]);*/
+
 	xx[pos] = xx[pos] - vtst*axx[j*READ_STEP+i];
 	yy[pos] = yy[pos] - vtst*ayy[j*READ_STEP+i];
 	zz[pos] = zz[pos] - vtst*azz[j*READ_STEP+i];
@@ -1467,9 +1806,10 @@ __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
         return;
 }
 
+extern "C"
 void frcvel_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  int tskp, cudaStream_t St,
-              _prec*  axx, _prec*  ayy,    _prec*  azz, _prec*  axz, _prec*  ayz, _prec*  axy,
-              _prec*  u1,  _prec*  v1,     _prec*  w1, int ymin, int ymax, int d_i)
+              float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+              float* u1,  float* v1,     float* w1, int ymin, int ymax, int d_i)
 {
     dim3 grid, block;
     if(npsrc < 256)
@@ -1485,24 +1825,21 @@ void frcvel_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  int
     cudaError_t cerr;
     CUCHK(cudaGetLastError());
     //if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc before kernel: %s\n",cudaGetErrorString(cerr));
-    //cudaPrintfInit();
     frcvel_cu<<<grid, block, 0, St>>>(i,  READ_STEP, dim, psrc, npsrc, tskp, axx, ayy, azz, axz, ayz, axy,
                                       u1, v1, w1, ymin, ymax, d_i);
     CUCHK(cudaGetLastError());
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
     //if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc after kernel: %s\n",cudaGetErrorString(cerr));
     return;
 }
 
 __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc, int tskp,
-                          _prec*  axx, _prec*  ayy,    _prec*  azz, _prec*  axz, _prec*  ayz, _prec*  axy,
-                          _prec*  u1,  _prec*  v1,     _prec*  w1, int xmin, int xmax, int d_i)
+                          float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+                          float* u1,  float* v1,     float* w1, int xmin, int xmax, int d_i)
 {
         register int idx, idy, idz, j, pos;
         register int i0, i1;
-        register _prec u1_p, u1_n, v1_p, v1_n, w1_p, w1_n;
-        register _prec u1_i, v1_i, w1_i, pfact;
+        register float u1_p, u1_n, v1_p, v1_n, w1_p, w1_n;
+        register float u1_i, v1_i, w1_i, pfact;
         /*register int pos_jm1, pos_jp1, pos_jm2;*/
         bool abvmin, blwmax;
  
@@ -1517,7 +1854,7 @@ __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
         pfact = float(i + 1 - i0) / float(tskp);
         // Cosine interpolation
         //pfact = -cosf(float(i + 1 - i0) / float(tskp) * M_PI)/2 + 0.5;
-        //if (j==0) cuPrintf("inside frcvel_cu: i=%d, i0=%d i1=%d\n", i, i0, i1);
+        //if (j==0) printf("inside frcvel_cu: i=%d, i0=%d i1=%d\n", i, i0, i1);
 
         i0 /= tskp;
         i1 /= tskp;
@@ -1526,7 +1863,7 @@ __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
         idy = psrc[j*dim+1] + 1 + ngsl;
         idz = psrc[j*dim+2] + align - 1;
         pos = idx*d_slice_1[d_i] + idy*d_yline_1[d_i] + idz;
-        //cuPrintf("%d %d %d\n", psrc[j*dim], psrc[j*dim+1], psrc[j*dim+2]);
+        //printf("%d %d %d\n", psrc[j*dim], psrc[j*dim+1], psrc[j*dim+2]);
 
         /* only add velocities inside a given zone */
         if ((xmin == -1) || (idx >= xmin)) abvmin = 1;
@@ -1552,11 +1889,11 @@ __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
 	      w1_i = w1_p + (w1_n - w1_p) * pfact;
 
 	      /*if (j==0){
-		 cuPrintf("u1[%d]=%e, u1[%d]=%e, u1_i=%e\n", i0, u1_p, i1, u1_n, u1_i);
+		 printf("u1[%d]=%e, u1[%d]=%e, u1_i=%e\n", i0, u1_p, i1, u1_n, u1_i);
 	      }*/
 
 	      if (i == (READ_STEP*tskp-1)){
-		 //if (j==0) cuPrintf("inside frcvel_cu: last step at i=%d\n", i);
+		 //if (j==0) printf("inside frcvel_cu: last step at i=%d\n", i);
 		 /* copy last value back to beginning of array */
 		 axx[j]= axx[i1*npsrc+j];
 		 ayy[j]= ayy[i1*npsrc+j];
@@ -1574,7 +1911,7 @@ __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
 	      w1[pos] = w1_i;
 
 	      /*if (((psrc[j*dim] == 90) && (psrc[j*dim+1] == 10)) && (psrc[j*dim+2] == 180)){
-		 cuPrintf("dbg1>> i=%d, pos=%ld, %e, %e, %e\n", i, pos, 
+		 printf("dbg1>> i=%d, pos=%ld, %e, %e, %e\n", i, pos, 
 		    axx[i*npsrc+j], ayy[i*npsrc+j], azz[i*npsrc+j]);
 	      }*/
 	   }
@@ -1585,7 +1922,7 @@ __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
 	      v1[pos] += ayy[READ_STEP*npsrc+j] * d_DT;
 	      w1[pos] += azz[READ_STEP*npsrc+j] * d_DT;
 	      /*if (((psrc[j*dim] == 90) && (psrc[j*dim+1] == 10)) && (psrc[j*dim+2] == 180)){
-		 cuPrintf("i=%d, pos=%ld, %e, %e, %e\n", i, pos, 
+		 printf("i=%d, pos=%ld, %e, %e, %e\n", i, pos, 
 		    axx[(READ_STEP-1)*npsrc+j], ayy[(READ_STEP-1)*npsrc+j], azz[(READ_STEP-1)*npsrc+j]);
 	      }*/
 	   }
@@ -1596,34 +1933,35 @@ __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
 
 
 /* kernel function to apply free-surface B.C. to velocities - (Daniel) */
-void fvel_H(_prec*  u1, _prec*  v1, _prec*  w1, cudaStream_t St, _prec*  lam_mu, int NX, int rankx, int ranky, 
+extern "C"
+void fvel_H(float* u1, float* v1, float* w1, cudaStream_t St, float* lam_mu, int NX, int rankx, int ranky, 
      int s_i, int e_i, int s_j, int e_j)
 {
     dim3 block (2, BLOCK_SIZE_Y, 1);
     dim3 grid (1,(e_j-s_j+1+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    CUCHK(cudaFuncSetCacheConfig(fstr, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(fvel, cudaFuncCachePreferL1);
     fvel<<<grid, block, 0, St>>>(u1, v1, w1, lam_mu, NX, rankx, ranky, s_i, e_i, s_j);
     return;
 }
 
 
 /* kernel functions to apply free-surface B.C.s to velocity */
-__global__ void fvel (_prec*  u1, _prec*  v1, _prec*  w1, _prec*  lam_mu, int NX, int rankx, int ranky, int s_i, int e_i, int s_j)
+__global__ void fvel (float* u1, float* v1, float* w1, float* lam_mu, int NX, int rankx, int ranky, int s_i, int e_i, int s_j)
 {
     register int i, j, k;
-    //register _prec w1_im1, w1_im2, u1_ip1, f_u1, f_v1, f_w1;
+    //register float w1_im1, w1_im2, u1_ip1, f_u1, f_v1, f_w1;
     //register int pos, pos_km1, pos_kp1, pos_kp2, pos_jm1, pos_jp1, pos_im1;
     register int g_i;
-    register _prec vs1, vs2;
+    register float vs1, vs2;
 
     register int   pos,     pos_ip1, pos_im2, pos_im1;
     register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
     register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
     register int   pos_ik1, pos_jk1, pos_ijk, pos_ijk1,f_ww;
 
-    register _prec f_u1, u1_ip1, u1_ip2, u1_im1;
-    register _prec f_v1, v1_im1, v1_ip1, v1_im2;
-    register _prec f_w1, w1_im1, w1_im2, w1_ip1;
+    register float f_u1, u1_ip1, u1_ip2, u1_im1;
+    register float f_v1, v1_im1, v1_ip1, v1_im2;
+    register float f_w1, w1_im1, w1_im2, w1_ip1;
 
     k    = d_nzt[0]+align-1;
     j    = blockIdx.y*BLOCK_SIZE_Y+threadIdx.y+s_j;
@@ -1695,7 +2033,8 @@ __global__ void fvel (_prec*  u1, _prec*  v1, _prec*  w1, _prec*  lam_mu, int NX
 
 }
 
-void update_yldfac_buffer_x_H(_prec*  yldfac, _prec *buf_L, _prec *buf_R, int nyt, int nzt, cudaStream_t St1, cudaStream_t St2, 
+extern "C"
+void update_yldfac_buffer_x_H(float* yldfac, float *buf_L, float *buf_R, int nyt, int nzt, cudaStream_t St1, cudaStream_t St2, 
      int rank_L, int rank_R, int d_i) {
      if(rank_L==-1 && rank_R==-1) return;
 
@@ -1703,19 +2042,16 @@ void update_yldfac_buffer_x_H(_prec*  yldfac, _prec *buf_L, _prec *buf_R, int ny
      dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (nyt+ngsl2+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y, 1);*/
      dim3 block (1, BLOCK_SIZE_Y, BLOCK_SIZE_Z);
      dim3 grid (1, (nyt+ngsl2+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y, (nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_yldfac_buffer_x, cudaFuncCachePreferL1));
      update_yldfac_buffer_x<<<grid, block, 0, St1>>>(yldfac, buf_L, rank_L, Left, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_yldfac_buffer_x<<<grid, block, 0, St2>>>(yldfac, buf_R, rank_R, Right, d_i);
-      CUCHK(cudaGetLastError()) ;
-     //cudaPrintfDisplay(stdout, 1);
-     //cudaPrintfEnd();
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* buffer exchanged for the swap area */
-__global__ void update_yldfac_buffer_x(_prec*  yldfac, _prec *buf, int rank, int flag, int d_i)
+__global__ void update_yldfac_buffer_x(float* yldfac, float *buf, int rank, int flag, int d_i)
 {
     register int i, j, k, pos, bpos;
     register int b_slice_1, b_yline_1;
@@ -1751,7 +2087,7 @@ __global__ void update_yldfac_buffer_x(_prec*  yldfac, _prec *buf, int rank, int
 	   buf[bpos] = yldfac[pos];
 
 	   /*if (((flag == Right) && (i==103)) && ((j==46) && (k==132))){
-	      cuPrintf("swap send: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
+	      printf("swap send: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
 	   }*/
 
 	}
@@ -1759,25 +2095,23 @@ __global__ void update_yldfac_buffer_x(_prec*  yldfac, _prec *buf, int rank, int
     return;
 }
 
-void update_yldfac_data_x_H(_prec*  yldfac, _prec *buf_L, _prec *buf_R, int nyt, int nzt, cudaStream_t St1, cudaStream_t St2, 
+extern "C"
+void update_yldfac_data_x_H(float* yldfac, float *buf_L, float *buf_R, int nyt, int nzt, cudaStream_t St1, cudaStream_t St2, 
      int rank_L, int rank_R, int d_i) {
      if(rank_L==-1 && rank_R==-1) return;
 
      dim3 block (1, BLOCK_SIZE_Y, BLOCK_SIZE_Z);
      dim3 grid (1, (nyt+ngsl2+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,(nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_yldfac_buffer_x, cudaFuncCachePreferL1));
      update_yldfac_data_x<<<grid, block, 0, St1>>>(yldfac, buf_L, rank_L, Left, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_yldfac_data_x<<<grid, block, 0, St2>>>(yldfac, buf_R, rank_R, Right, d_i);
-      CUCHK(cudaGetLastError()) ;
-     //cudaPrintfDisplay(stdout, 1);
-     //cudaPrintfEnd();
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* copy exchanged buffer data back to swap zone*/
-__global__ void update_yldfac_data_x(_prec*  yldfac, _prec *buf, int rank, int flag, int d_i)
+__global__ void update_yldfac_data_x(float* yldfac, float *buf, int rank, int flag, int d_i)
 {
     register int i, j, k, pos, bpos;
     register int b_slice_1, b_yline_1;
@@ -1813,7 +2147,7 @@ __global__ void update_yldfac_data_x(_prec*  yldfac, _prec *buf, int rank, int f
 	   yldfac[pos] = buf[bpos];
 
 	   /*if (((flag == Left) && (i==3)) && ((j==46) && (k==132))){
-	      cuPrintf("swap recv: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
+	      printf("swap recv: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
 	   }*/
 
 	}
@@ -1821,25 +2155,23 @@ __global__ void update_yldfac_data_x(_prec*  yldfac, _prec *buf, int rank, int f
     return;
 }
 
-void update_yldfac_buffer_y_H(_prec*  yldfac, _prec *buf_F, _prec *buf_B, int nxt, int nzt,
+extern "C"
+void update_yldfac_buffer_y_H(float* yldfac, float *buf_F, float *buf_B, int nxt, int nzt,
    cudaStream_t St1, cudaStream_t St2, int rank_F, int rank_B, int d_i) {
      if(rank_F==-1 && rank_B==-1) return;
 
      dim3 block (BLOCK_SIZE_X, 1, BLOCK_SIZE_Z);
      dim3 grid ((nxt+BLOCK_SIZE_X-1)/BLOCK_SIZE_X, 1, (nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_yldfac_buffer_y, cudaFuncCachePreferL1));
      update_yldfac_buffer_y<<<grid, block, 0, St1>>>(yldfac, buf_F, rank_F, Front, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_yldfac_buffer_y<<<grid, block, 0, St2>>>(yldfac, buf_B, rank_B, Back, d_i);
-      CUCHK(cudaGetLastError()) ;
-     /*cudaPrintfDisplay(stdout, 1);
-     CUCHK(cudaPrintfEnd());*/
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* buffer exchanged for the swap area along Y*/
-__global__ void update_yldfac_buffer_y(_prec*  yldfac, _prec *buf, int rank, int flag, int d_i)
+__global__ void update_yldfac_buffer_y(float* yldfac, float *buf, int rank, int flag, int d_i)
 {
     register int i, j, k, pos, bpos;
     register int b_slice_1, b_yline_1;
@@ -1876,7 +2208,7 @@ __global__ void update_yldfac_buffer_y(_prec*  yldfac, _prec *buf, int rank, int
 	   buf[bpos] = yldfac[pos];
 
 	   /*if (((flag == Back) && (i==103)) && ((j==33) && (k==132))){
-	      cuPrintf("swap send: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
+	      printf("swap send: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
 	   }*/
 
 	}
@@ -1884,25 +2216,23 @@ __global__ void update_yldfac_buffer_y(_prec*  yldfac, _prec *buf, int rank, int
     return;
 }
 
-void update_yldfac_data_y_H(_prec*  yldfac, _prec *buf_F, _prec *buf_B, int nxt, int nzt,
+extern "C"
+void update_yldfac_data_y_H(float* yldfac, float *buf_F, float *buf_B, int nxt, int nzt,
     cudaStream_t St1, cudaStream_t St2, int rank_F, int rank_B, int d_i) {
      if(rank_F==-1 && rank_B==-1) return;
 
      dim3 block (BLOCK_SIZE_X, 1, BLOCK_SIZE_Z);
      dim3 grid ((nxt+BLOCK_SIZE_X-1)/BLOCK_SIZE_X, 1,(nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_yldfac_buffer_y, cudaFuncCachePreferL1));
      update_yldfac_data_y<<<grid, block, 0, St1>>>(yldfac, buf_F, rank_F, Front, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_yldfac_data_y<<<grid, block, 0, St2>>>(yldfac, buf_B, rank_B, Back, d_i);
-      CUCHK(cudaGetLastError()) ;
-     /*cudaPrintfDisplay(stdout, 1);
-     CUCHK(cudaPrintfEnd());*/
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* copy exchanged buffer data back to swap zone*/
-__global__ void update_yldfac_data_y(_prec*  yldfac, _prec *buf, int rank, int flag, int d_i)
+__global__ void update_yldfac_data_y(float* yldfac, float *buf, int rank, int flag, int d_i)
 {
     register int i, j, k, pos, bpos;
     register int b_slice_1, b_yline_1;
@@ -1940,7 +2270,7 @@ __global__ void update_yldfac_data_y(_prec*  yldfac, _prec *buf, int rank, int f
 	   yldfac[pos] = buf[bpos];
 
 	   /*if (((flag == Front) && (i==103)) && ((j==3) && (k==132))){
-	      cuPrintf("swap recv: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
+	      printf("swap recv: buf[%d] = %.16g, yldfac[%d] = %.16g\n", bpos, buf[bpos], pos, yldfac[pos]);
 	   }*/
 
 	}
@@ -1948,20 +2278,20 @@ __global__ void update_yldfac_data_y(_prec*  yldfac, _prec *buf, int rank, int f
     return;
 }
 
-__global__ void dvelc2(_prec*  u1,    _prec*  v1,    _prec*  w1,    _prec*  xx,  _prec*  yy, _prec*  zz, _prec*  xy, 
-             _prec*  xz, _prec*  yz, _prec*  dcrjx, _prec*  dcrjy, _prec*  dcrjz, _prec*  d_1, int d_i)
+__global__ void dvelc2(float* u1,    float* v1,    float* w1,    float* xx,  float* yy, float* zz, float* xy, 
+             float* xz, float* yz, float* dcrjx, float* dcrjy, float* dcrjz, float* d_1, int d_i)
 {
     register int   i, j, k, pos,     pos_im1;
     register int   pos_km1, pos_kp1;
     register int   pos_jm1, pos_jp1;
     register int   pos_ip1, pos_jk1, pos_ik1, pos_ijk;
-    register _prec f_d1,    f_d2,    f_d3,    f_dcrj;
+    register float f_d1,    f_d2,    f_d3,    f_dcrj;
 
     i = blockIdx.x*blockDim.x+threadIdx.x+2+ngsl;
     j = blockIdx.y*blockDim.y+threadIdx.y+2+ngsl;
 
     if(1+ngsl<i && i<d_nxt[d_i]+2+ngsl && 1+ngsl<j && j<d_nyt[d_i]+2+ngsl) {
-    //cuPrintf(">> in dvelc2: i=%d\n", i);
+    //printf(">> in dvelc2: i=%d\n", i);
 // w is updated along first line
     k = 2 + align;
     pos = i*d_slice_1[d_i] + j*d_yline_1[d_i] + k;
@@ -2004,34 +2334,35 @@ __global__ void dvelc2(_prec*  u1,    _prec*  v1,    _prec*  w1,    _prec*  xx, 
      return;
 }
 
-void dvelc2_H(_prec*  u1,    _prec*  v1,    _prec*  w1,    _prec*  xx,  _prec*  yy, _prec*  zz, _prec*  xy, _prec*  xz, _prec*  yz,
-             _prec*  dcrjx, _prec*  dcrjy, _prec*  dcrjz, _prec*  d_1, int nxt,   int nyt, cudaStream_t St, int d_i)
+extern "C"
+void dvelc2_H(float* u1,    float* v1,    float* w1,    float* xx,  float* yy, float* zz, float* xy, float* xz, float* yz,
+             float* dcrjx, float* dcrjy, float* dcrjz, float* d_1, int nxt,   int nyt, cudaStream_t St, int d_i)
 {
     dim3 block (BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
     dim3 grid ((nxt+BLOCK_SIZE_X-1)/BLOCK_SIZE_X, (nyt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    CUCHK(cudaFuncSetCacheConfig(dvelc2, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(dvelc2, cudaFuncCachePreferL1);
 
-    //cudaPrintfInit();
     dvelc2<<<grid,block,0,St>>>(u1,v1,w1,xx,yy,zz,xy,xz,yz,dcrjx,dcrjy,dcrjz,d_1,d_i);
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
 }
 
 
-__global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *yyl, _prec *zzl, 
-        _prec *xyl, _prec * xzl, _prec*  yzl,
-        _prec *u1h, _prec *v1h, _prec*  w1h, _prec *xxh, _prec *yyh, _prec *zzh, 
-        _prec *xyh, _prec *xzh, _prec*  yzh, int rank, int d_i)
+__global__ void intp3d(float *u1l, float* v1l, float *w1l, float *xxl, float *yyl, float *zzl, 
+        float *xyl, float * xzl, float* yzl,
+        float *u1h, float *v1h, float* w1h, float *xxh, float *yyh, float *zzh, 
+        float *xyh, float *xzh, float* yzh, int rank, int d_i)
 {
     register int i,j,k,ii,jj,posl;
     register int posl_ip1,posl_jp1,posl_ij1;
     register int ih,jh,kh,posh,index;
-    register _prec w[4],var[4];
+    register float w[4],var[4];
+    register int maxindex;
 
     w[0]=1.;
     w[1]=2./3.;
     w[2]=1./3.;
     w[3]=0.;
+
+    maxindex=(d_nxt[d_i-1]+4+ngsl2)*(d_nyt[d_i-1]+4+ngsl2)*(d_nzt[d_i-1]+2*align)-1;
 
     i = blockIdx.x*blockDim.x+threadIdx.x+ngsl;
     j = blockIdx.y*blockDim.y+threadIdx.y+ngsl;
@@ -2039,7 +2370,7 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
 //
     if (ngsl<=i && i<=d_nxt[d_i]+3+ngsl && ngsl<=j && j<=d_nyt[d_i]+3+ngsl)
 
-    //cuPrintf(">> in intp3d: i=%d\n", i);
+    //printf(">> in intp3d: i=%d\n", i);
     {
 
         k = d_nzt[d_i] + align - 3;
@@ -2066,11 +2397,14 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii-1) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1];
-                xzh[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4-ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4-jj] +
-                             var[3]*w[4-ii]*w[4-jj];
+                   //This would be the correct way, but the if condition results in different results during 
+                   //each run (thread divergence issues?)
+                   //if ((ih+ii) < (d_nxt[d_i-1]+4+ngsl2) && (jh+jj) < (d_nyt[d_i-1]+4+ngsl2)){
+		   index = min(posh + (ii-1) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1], maxindex);
+		   xzh[index] =    var[0]*w[ii-1]*w[jj-1] +
+				   var[1]*w[4-ii]*w[jj-1] +
+				   var[2]*w[ii-1]*w[4-jj] +
+				   var[3]*w[4-ii]*w[4-jj];
             }
         }
 
@@ -2084,11 +2418,11 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii) * d_slice_1[d_i-1] + (jj) * d_yline_1[d_i-1];
-                yzh[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4 - ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4 - jj] +
-                             var[3]*w[4-ii]*w[4 - jj];
+		   index = min(posh + (ii) * d_slice_1[d_i-1] + (jj) * d_yline_1[d_i-1], maxindex);
+		   yzh[index] =    var[0]*w[ii-1]*w[jj-1] +
+				   var[1]*w[4 - ii]*w[jj-1] +
+				   var[2]*w[ii-1]*w[4 - jj] +
+				   var[3]*w[4-ii]*w[4 - jj];
             }
         }
 
@@ -2096,29 +2430,23 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
   	var[1] = w1l[posl_ip1];
  	var[2] = w1l[posl_jp1];
  	var[3] = w1l[posl_ij1];
-        /*if (((rank==1) && (i==4)) && (j==35)){
-           cuPrintf("%d>> var=[%.16g, %.16g, %.16g, %.16g]\n", rank, var[0], var[1], var[2], var[3]);
-           cuPrintf("%d>>i=%d, j=%d, k=%d\n", rank, i, j, k);
-           cuPrintf("%d>>posl, ip1, jp1, ij1=%d %d %d %d\n", rank, posl, posl_ip1, posl_jp1, posl_ij1);
-        }*/
-        /*if (((rank==0) && (i==36)) && (j==35)){
-           cuPrintf("%d>> var=[%.16g, %.16g, %.16g, %.16g]\n", rank, var[0], var[1], var[2], var[3]);
-           cuPrintf("%d>> i=%d, j=%d, k=%d\n", rank, i, j, k);
-           cuPrintf("%d>> posl, ip1, jp1, ij1=%d %d %d %d\n", rank, posl, posl_ip1, posl_jp1, posl_ij1);
-        }*/
+
         for(jj = 1; jj<=4; jj++ )
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1];
-                w1h[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4-ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4-jj] +
-                             var[3]*w[4-ii]*w[4-jj];
+		   index = min(posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1], maxindex);
+		   w1h[index] =    var[0]*w[ii-1]*w[jj-1] +
+				   var[1]*w[4-ii]*w[jj-1] +
+				   var[2]*w[ii-1]*w[4-jj] +
+				   var[3]*w[4-ii]*w[4-jj];
             }
         }
 
-        var[0] = xxl[posl];
+    /* xx,yy,zz,u1,v1 and xy can not be interpolated horizontally from kh=align+1 (not vertically aligned) */
+    /* Uncommented this code segment.  Daniel Roten, December 6 2018 */
+
+    /*    var[0] = xxl[posl];
   	var[1] = xxl[posl_ip1];
  	var[2] = xxl[posl_jp1];
  	var[3] = xxl[posl_ij1];
@@ -2126,11 +2454,11 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1];
-                xxh[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4-ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4-jj] +
-                             var[3]*w[4-ii]*w[4-jj];
+		   index = min(posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1], maxindex);
+		   xxh[index] = var[0]*w[ii-1]*w[jj-1] +
+				var[1]*w[4-ii]*w[jj-1] +
+				var[2]*w[ii-1]*w[4-jj] +
+				var[3]*w[4-ii]*w[4-jj];
             }
         }
 
@@ -2142,11 +2470,11 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1];
-                yyh[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4-ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4-jj] +
-                             var[3]*w[4-ii]*w[4-jj];
+		   index = min(posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1], maxindex);
+		   yyh[index] = var[0]*w[ii-1]*w[jj-1] +
+				var[1]*w[4-ii]*w[jj-1] +
+				var[2]*w[ii-1]*w[4-jj] +
+				var[3]*w[4-ii]*w[4-jj];
             }
         }
 
@@ -2158,11 +2486,11 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1];
-                zzh[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4-ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4-jj] +
-                             var[3]*w[4-ii]*w[4-jj];
+		   index = min(posh + (ii) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1], maxindex);
+		   zzh[index] = var[0]*w[ii-1]*w[jj-1] +
+				var[1]*w[4-ii]*w[jj-1] +
+				var[2]*w[ii-1]*w[4-jj] +
+				var[3]*w[4-ii]*w[4-jj];
             }
         }
 
@@ -2175,11 +2503,11 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii-1) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1];
-                u1h[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4-ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4-jj] +
-                             var[3]*w[4-ii]*w[4-jj];
+		   index = min(posh + (ii-1) * d_slice_1[d_i-1] + (jj-1) * d_yline_1[d_i-1], maxindex);
+		   u1h[index] = var[0]*w[ii-1]*w[jj-1] +
+				var[1]*w[4-ii]*w[jj-1] +
+				var[2]*w[ii-1]*w[4-jj] +
+				var[3]*w[4-ii]*w[4-jj];
             }
         }
 
@@ -2192,11 +2520,11 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii) * d_slice_1[d_i-1] + (jj) * d_yline_1[d_i-1];
-                v1h[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4 - ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4 - jj] +
-                             var[3]*w[4-ii]*w[4 - jj];
+		   index = min(posh + (ii) * d_slice_1[d_i-1] + (jj) * d_yline_1[d_i-1], maxindex);
+		   v1h[index] = var[0]*w[ii-1]*w[jj-1] +
+				var[1]*w[4 - ii]*w[jj-1] +
+				var[2]*w[ii-1]*w[4 - jj] +
+				var[3]*w[4-ii]*w[4 - jj];
             }
         }
 
@@ -2209,13 +2537,13 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
         {
             for(ii = 1; ii<=4; ii++ )
             {
-                index = posh + (ii-1) * d_slice_1[d_i-1] + (jj) * d_yline_1[d_i-1];
-                xyh[index] = var[0]*w[ii-1]*w[jj-1] +
-                             var[1]*w[4 - ii]*w[jj-1] +
-                             var[2]*w[ii-1]*w[4 - jj] +
-                             var[3]*w[4-ii]*w[4 - jj];
+		   index = min(posh + (ii-1) * d_slice_1[d_i-1] + (jj) * d_yline_1[d_i-1], maxindex);
+		   xyh[index] = var[0]*w[ii-1]*w[jj-1] +
+				var[1]*w[4 - ii]*w[jj-1] +
+				var[2]*w[ii-1]*w[4 - jj] +
+				var[3]*w[4-ii]*w[4 - jj];
             }
-        }
+        } */
     } // if (1<i && i<d_nxtl+1 && 1<j && j<d_nytl+1)
 //
 
@@ -2223,11 +2551,11 @@ __global__ void intp3d(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *y
 }
 
 // 2nd order stress update
-__global__ void dstrqc2(_prec*  xx, _prec*  yy,    _prec*  zz,    _prec*  xy,    _prec*  xz,  _prec*  yz,
-                       _prec*  r1, _prec*  r2,    _prec*  r3,    _prec*  r4,    _prec*  r5,  _prec*  r6,
-                       _prec*  u1, _prec*  v1,    _prec*  w1,    _prec*  lam,   _prec*  mu,  _prec*  qp,
-                       _prec*  qs, _prec*  dcrjx, _prec*  dcrjy, _prec*  dcrjz, 
-                       _prec*  coeff, _prec *d_vx1, _prec *d_vx2, int *d_ww, _prec *d_wwo,
+__global__ void dstrqc2(float* xx, float* yy,    float* zz,    float* xy,    float* xz,  float* yz,
+                       float* r1, float* r2,    float* r3,    float* r4,    float* r5,  float* r6,
+                       float* u1, float* v1,    float* w1,    float* lam,   float* mu,  float* qp,
+                       float* qs, float* dcrjx, float* dcrjy, float* dcrjz, 
+                       float* coeff, float *d_vx1, float *d_vx2, int *d_ww, float *d_wwo,
                        int s_i, int e_i, int s_j, int e_j, int d_i)
 {
     register int   i,  j,  k;
@@ -2235,13 +2563,13 @@ __global__ void dstrqc2(_prec*  xx, _prec*  yy,    _prec*  zz,    _prec*  xy,   
     register int   pos_km1, pos_kp1;
     register int   pos_jm1, pos_jp1;
     register int   pos_ik1, pos_jk1, pos_ijk, pos_ijk1;
-    register _prec vs1, vs2, vs3, a1, tmp, vx1;
-    register _prec xl,  xm,  xmu1, xmu2, xmu3;
-    register _prec qpa, h,   h1,   h2,   h3;
-    register _prec f_vx1, f_vx2,  f_dcrj, f_r;
-    register _prec f_rtmp;
+    register float vs1, vs2, vs3, a1, tmp, vx1;
+    register float xl,  xm,  xmu1, xmu2, xmu3;
+    register float qpa, h,   h1,   h2,   h3;
+    register float f_vx1, f_vx2,  f_dcrj, f_r;
+    register float f_rtmp;
     register int f_ww;
-    register _prec qpaw, hw, h1w, h2w, h3w, f_wwo;
+    register float qpaw, hw, h1w, h2w, h3w, f_wwo;
 
 	i = blockIdx.x*blockDim.x+threadIdx.x+2;
 	j = blockIdx.y*blockDim.y+threadIdx.y+2;
@@ -2428,16 +2756,17 @@ __global__ void dstrqc2(_prec*  xx, _prec*  yy,    _prec*  zz,    _prec*  xy,   
 	return;
 }
 
-void dstrqc2_H(_prec*  xx, _prec*  yy,    _prec*  zz,    _prec*  xy,    _prec*  xz,  _prec*  yz,
-              _prec*  r1, _prec*  r2,    _prec*  r3,    _prec*  r4,    _prec*  r5,  _prec*  r6,
-              _prec*  u1, _prec*  v1,    _prec*  w1,    _prec*  lam,   _prec*  mu,  _prec*  qp,
-              _prec*  qs, _prec*  dcrjx, _prec*  dcrjy, _prec*  dcrjz, int nxt,    int nyt,
+extern "C"
+void dstrqc2_H(float* xx, float* yy,    float* zz,    float* xy,    float* xz,  float* yz,
+              float* r1, float* r2,    float* r3,    float* r4,    float* r5,  float* r6,
+              float* u1, float* v1,    float* w1,    float* lam,   float* mu,  float* qp,
+              float* qs, float* dcrjx, float* dcrjy, float* dcrjz, int nxt,    int nyt,
               cudaStream_t St, 
-              _prec*  coeff, _prec *vx1, _prec *vx2, int *ww, _prec *wwo,
+              float* coeff, float *vx1, float *vx2, int *ww, float *wwo,
               int s_i, int e_i, int s_j, int e_j, int d_i) {
     dim3 block (BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
     dim3 grid ((nxt+BLOCK_SIZE_X+ngsl2-1)/BLOCK_SIZE_X, (nyt+BLOCK_SIZE_Y+ngsl2-1)/BLOCK_SIZE_Y,1);
-    CUCHK(cudaFuncSetCacheConfig(dstrqc2, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(dstrqc2, cudaFuncCachePreferL1);
     dstrqc2<<<grid, block, 0, St>>>(xx, yy, zz, xy, xz, yz, r1, r2, r3, r4, r5, r6, u1, v1, w1,
                             lam, mu, qp, qs, dcrjx, dcrjy, dcrjz, coeff, vx1, vx2, ww, wwo, 
                             s_i, e_i, s_j, e_j, d_i);
@@ -2445,30 +2774,38 @@ void dstrqc2_H(_prec*  xx, _prec*  yy,    _prec*  zz,    _prec*  xy,    _prec*  
     return;
 }
 
-void intp3d_H(_prec *u1l, _prec*  v1l, _prec *w1l, _prec *xxl, _prec *yyl, _prec *zzl, 
-        _prec *xyl, _prec * xzl, _prec*  yzl,
-        _prec *u1h, _prec *v1h, _prec*  w1h, _prec *xxh, _prec *yyh, _prec *zzh, 
-        _prec *xyh, _prec *xzh, _prec*  yzh,
+extern "C"
+void intp3d_H(float *u1l, float* v1l, float *w1l, float *xxl, float *yyl, float *zzl, 
+        float *xyl, float * xzl, float* yzl,
+        float *u1h, float *v1h, float* w1h, float *xxh, float *yyh, float *zzh, 
+        float *xyh, float *xzh, float* yzh,
         int nxtl, int nytl, int rank, cudaStream_t St, int d_i) {
 
     /* here, d_i is the grid number of the "low" grid, to which xzl, yzl, and w1l pertain */
 
     dim3 block (BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
     dim3 grid ((nxtl+BLOCK_SIZE_X+ngsl2-1)/BLOCK_SIZE_X, (nytl+BLOCK_SIZE_Y+ngsl2-1)/BLOCK_SIZE_Y,1);
-    CUCHK(cudaFuncSetCacheConfig(intp3d, cudaFuncCachePreferL1));
-    //cudaPrintfInit();
+    /*cudaEvent_t start, stop;
+    float duration = 0;*/
+    cudaFuncSetCacheConfig(intp3d, cudaFuncCachePreferL1);
+   
+    /*cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);*/
     intp3d<<<grid, block, 0, St>>>(u1l,v1l,w1l,xxl,yyl,zzl,xyl,xzl,yzl,
                                    u1h,v1h,w1h,xxh,yyh,zzh,xyh,xzh,yzh,
                                    rank,d_i); 
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
+    /*cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&duration, start, stop);
+    fprintf(stdout, "Time for intp3d: %f ms\n", duration);*/
     return;
 }
 
 /* This helper functions is for accessing data that may be located beyond the ghost cell and padding region
    of a subdomain, but that is stored in buffers already copied to the GPU.
    It is used by the swap kernel if the transpose matrix swap is invoked */
-__device__ _prec bgcaccess(_prec *dsub, int varpos, _prec *buf_L, _prec *buf_R, _prec *buf_F, _prec *buf_B,
+__device__ float bgcaccess(float *dsub, int varpos, float *buf_L, float *buf_R, float *buf_F, float *buf_B,
       int ipos, int jpos, int kpos, int d_i){
    register long int blr_slice_1, blr_yline_1;
    register long int bfb_slice_1, bfb_yline_1;
@@ -2478,8 +2815,8 @@ __device__ _prec bgcaccess(_prec *dsub, int varpos, _prec *buf_L, _prec *buf_R, 
    register int xs_left = -WWL, xs_right = d_nxt[d_i]+4+ngsl2-6;  /*check this ! */
    register int ys_front = -WWL, ys_back = d_nyt[d_i]+4+ngsl2-6; 
    register int ys_lr = -WWL;
-   register int zs=align+2, ze=align+7;
-   _prec nval;
+   register int zs=align+1, ze=align+8;
+   float nval;
 
    blr_slice_1  = (d_nyt[d_i]+4+ngsl2+2*WWL)*(ze-zs+1);
    blr_yline_1  = ze-zs+1;
@@ -2513,11 +2850,11 @@ __device__ _prec bgcaccess(_prec *dsub, int varpos, _prec *buf_L, _prec *buf_R, 
    return(nval);
 }
 
-__global__ void swap(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec*  xzl,_prec*  yzl,_prec*  u1l, _prec*  v1l, _prec*  w1l,
-                     _prec * xxh, _prec*  yyh, _prec*  zzh, _prec*  xyh, _prec*  xzh, _prec*  yzh,_prec*  u1h, _prec*  v1h, _prec*  w1h, 
-                     _prec *buf_L, _prec *buf_R, _prec *buf_F, _prec *buf_B, int rank, int d_i) {
+__global__ void swap(float * xxl, float* yyl, float* zzl, float* xyl,float* xzl,float* yzl,float* u1l, float* v1l, float* w1l,
+                     float * xxh, float* yyh, float* zzh, float* xyh, float* xzh, float* yzh,float* u1h, float* v1h, float* w1h, 
+                     float *buf_L, float *buf_R, float *buf_F, float *buf_B, int rank, int d_i) {
     register int i,j,k,ih,jh,kh,posl,posh,ii,jj,poshij;
-    register _prec sum1, sum2, sum3;
+    register float sum1, sum2, sum3;
     //register int b_slice_1, b_yline_1;
     register long int b_offset, bpos, bposij;
     //register int zs=2, ze=7;
@@ -2585,10 +2922,10 @@ __global__ void swap(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec*  
 	      sum3 = sum3 + 1/ttlwght*(1.+WWL-abs(ii))*(1.+WWL-abs(jj))*
                      bgcaccess(zzh, sbvpos_zz, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i);
 	      /*if (i==4 && j==4 && rank == 3)
-		 cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		 printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		    bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));
 	      if (i==36 && j==36 && rank == 0)
-		 cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		 printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		    bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));*/
 	   }
         xxl[posl] = sum1;
@@ -2606,11 +2943,11 @@ __global__ void swap(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec*  
 	      sum1 = sum1 + 1/ttlwght*(1.+WWL-abs(ii))*(1.+WWL-abs(jj))*
                      bgcaccess(xzh, sbvpos_xz, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i);
 	      //if (i==36 && j==4 && rank == 1){
-		 //cuPrintf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e, xzh in buf=%e\n", rank, ii, jj, poshij, 
+		 //printf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e, xzh in buf=%e\n", rank, ii, jj, poshij, 
 		 //   xzh[poshij], newxz);
 		 //}
 	      //if (i==36 && j==36 && rank == 0){
-		 //cuPrintf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e\n", rank, ii, jj, poshij, 
+		 //printf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e\n", rank, ii, jj, poshij, 
 		  //  xzh[poshij]);
 		 //}
 
@@ -2675,32 +3012,32 @@ __global__ void swap(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec*  
 	      sum3 = sum3 + 1/ttlwght*(1.+WWL-abs(ii))*(1.+WWL-abs(jj))*
                      bgcaccess(zzh, sbvpos_zz, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i);
 	      /*if (i==37 && j==39 && rank == 0)
-		 cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		 printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		    bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));*/
 	      /*if (i==38 && j==5 && rank == 1)
-		 cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		 printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		    bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));*/
 	   }
         xxl[posl] = sum1;
         yyl[posl] = sum2;
         zzl[posl] = sum3;
-	/*if (i==4 && j==4 && rank == 0) cuPrintf("%d: xxl=%e\n", rank, xxl[posl]);
-	if (i==39 && j==4 && rank == 1) cuPrintf("%d: xxl=%e\n", rank, xxl[posl]);*/
+	/*if (i==4 && j==4 && rank == 0) printf("%d: xxl=%e\n", rank, xxl[posl]);
+	if (i==39 && j==4 && rank == 1) printf("%d: xxl=%e\n", rank, xxl[posl]);*/
     }
 
     return;
 }
 
-__global__ void swap3(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec*  xzl,_prec*  yzl,_prec*  u1l, _prec*  v1l, _prec*  w1l,
-                     _prec * xxh, _prec*  yyh, _prec*  zzh, _prec*  xyh, _prec*  xzh, _prec*  yzh,_prec*  u1h, _prec*  v1h, _prec*  w1h, 
-                     _prec *buf_L, _prec *buf_R, _prec *buf_F, _prec *buf_B, int rank, int d_i) {
+__global__ void swap3(float * xxl, float* yyl, float* zzl, float* xyl,float* xzl,float* yzl,float* u1l, float* v1l, float* w1l,
+                     float * xxh, float* yyh, float* zzh, float* xyh, float* xzh, float* yzh,float* u1h, float* v1h, float* w1h, 
+                     float *buf_L, float *buf_R, float *buf_F, float *buf_B, int rank, int d_i) {
     register int i,j,k,ih,jh,kh,posl,posh,ii,jj,kk,poshij;
-    register _prec sum1, sum2, sum3;
+    register float sum1, sum2, sum3;
     //register int b_slice_1, b_yline_1;
     register long int b_offset, bpos, bposij;
     //register int zs=2, ze=7;
     register double ttlwght2=0., ttlwght3=0., ttlwght4=0.;
-    register int wwl_kk2=2, wwl_kk3, wwl_kk4;
+    register int wwl_kk2=1, wwl_kk3, wwl_kk4;
 
     /*b_slice_1  = (2+ngsl+WWL)*(ze-zs+1);
     b_yline_1  = ze-zs+1;
@@ -2710,7 +3047,7 @@ __global__ void swap3(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec* 
     j = blockIdx.y*blockDim.y+threadIdx.y+ngsl;
 
     if (WWL >= 3) wwl_kk3 = 3; else wwl_kk3=WWL;
-    if (WWL >= 4) wwl_kk3 = 4; else wwl_kk4=WWL;
+    if (WWL >= 4) wwl_kk4 = 4; else wwl_kk4=WWL;
 
     for(jj=-WWL;jj<=WWL;jj++)
       for(ii=-WWL;ii<=WWL;ii++){
@@ -2773,10 +3110,10 @@ __global__ void swap3(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec* 
 		 sum3 = sum3 + 1/ttlwght2*(1.+WWL-abs(ii))*(1.+WWL-abs(jj))*(1.+WWL-abs(kk))*
 			bgcaccess(zzh, sbvpos_zz, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh+kk, d_i);
 		 /*if (i==4 && j==4 && rank == 3)
-		    cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		    printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		       bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));
 		 if (i==36 && j==36 && rank == 0)
-		    cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		    printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		       bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));*/
 	   }
         xxl[posl] = sum1;
@@ -2795,11 +3132,11 @@ __global__ void swap3(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec* 
 		 sum1 = sum1 + 1/ttlwght3*(1.+WWL-abs(ii))*(1.+WWL-abs(jj))*(1.+WWL-abs(kk))*
 			bgcaccess(xzh, sbvpos_xz, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh+kk, d_i);
 		 //if (i==36 && j==4 && rank == 1){
-		    //cuPrintf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e, xzh in buf=%e\n", rank, ii, jj, poshij, 
+		    //printf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e, xzh in buf=%e\n", rank, ii, jj, poshij, 
 		    //   xzh[poshij], newxz);
 		    //}
 		 //if (i==36 && j==36 && rank == 0){
-		    //cuPrintf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e\n", rank, ii, jj, poshij, 
+		    //printf("%d: ii=%d, jj=%d, poshij=%d, xzh=%e\n", rank, ii, jj, poshij, 
 		     //  xzh[poshij]);
 		    //}
 
@@ -2862,44 +3199,42 @@ __global__ void swap3(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec* 
 		 sum3 = sum3 + 1/ttlwght4*(1.+WWL-abs(ii))*(1.+WWL-abs(jj))*(1.+WWL-abs(kk))*
 			bgcaccess(zzh, sbvpos_zz, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh+kk, d_i);
 		 /*if (i==37 && j==39 && rank == 0)
-		    cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		    printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		       bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));*/
 		 /*if (i==38 && j==5 && rank == 1)
-		    cuPrintf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
+		    printf("%d: ii=%d, jj=%d, xxh=%e\n", rank, ii, jj, 
 		       bgcaccess(xxh, sbvpos_xx, buf_L, buf_R, buf_F, buf_B, ih+ii, jh+jj, kh, d_i));*/
 	   }
         xxl[posl] = sum1;
         yyl[posl] = sum2;
         zzl[posl] = sum3;
-	/*if (i==4 && j==4 && rank == 0) cuPrintf("%d: xxl=%e\n", rank, xxl[posl]);
-	if (i==39 && j==4 && rank == 1) cuPrintf("%d: xxl=%e\n", rank, xxl[posl]);*/
+	/*if (i==4 && j==4 && rank == 0) printf("%d: xxl=%e\n", rank, xxl[posl]);
+	if (i==39 && j==4 && rank == 1) printf("%d: xxl=%e\n", rank, xxl[posl]);*/
     }
 
     return;
 }
 
-void swap_H(_prec * xxl, _prec*  yyl, _prec*  zzl, _prec*  xyl,_prec*  xzl,_prec*  yzl,_prec*  u1l, _prec*  v1l, _prec*  w1l,
-            _prec * xxh, _prec*  yyh, _prec*  zzh, _prec*  xyh, _prec*  xzh, _prec*  yzh,_prec*  u1h, _prec*  v1h, _prec*  w1h, 
-            int nxtl,int nytl, _prec *buf_L, _prec *buf_R, _prec *buf_F, _prec *buf_B, int rank, cudaStream_t St, int d_i) {
+extern "C"
+void swap_H(float * xxl, float* yyl, float* zzl, float* xyl,float* xzl,float* yzl,float* u1l, float* v1l, float* w1l,
+            float * xxh, float* yyh, float* zzh, float* xyh, float* xzh, float* yzh,float* u1h, float* v1h, float* w1h, 
+            int nxtl,int nytl, float *buf_L, float *buf_R, float *buf_F, float *buf_B, int rank, cudaStream_t St, int d_i) {
 
     /* here, d_i is the grid number of the "high" grid, to which xxh, yyh, ... pertain */
 
     dim3 block (BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
     dim3 grid ((nxtl+BLOCK_SIZE_X+ngsl-1)/(BLOCK_SIZE_X), (nytl+BLOCK_SIZE_Y+ngsl-1)/(BLOCK_SIZE_Y),1);
-    CUCHK(cudaFuncSetCacheConfig(swap, cudaFuncCachePreferL1));
-    //cudaPrintfInit();
+    cudaFuncSetCacheConfig(swap, cudaFuncCachePreferL1);
     swap3<<<grid,block,0,St>>>(xxl,yyl,zzl,xyl,xzl,yzl,u1l,v1l,w1l,xxh,yyh,zzh,xyh,xzh,yzh,u1h,v1h,w1h,
                          buf_L, buf_R, buf_F, buf_B, rank, d_i);
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
     return;
 }
 
-__global__ void print_nonzero(_prec *array, int nx, int ny, int nz, int d_i)
+__global__ void print_nonzero(float *array, int nx, int ny, int nz, int d_i)
 {
     int ix, iy, iz;
 
-    //cuPrintf("nonzeros in grid %d: =====================================================\n", d_i);
+    printf("nonzeros in grid %d: =====================================================\n", d_i);
     for (iz=0; iz<nz; iz++)
     {
         for (iy=0; iy<ny; iy++)
@@ -2911,49 +3246,44 @@ __global__ void print_nonzero(_prec *array, int nx, int ny, int nz, int d_i)
                 // {
                 //     printf("|   [%d][%d][%d] = %+le\n", ix, iy, iz, array[idx]);
                 // }
-                //if (array[idx] != 0.0)
-                   //cuPrintf("%d %d %d %e\n", ix, iy, iz, array[idx]);
+                if (array[idx] != 0.0)
+                   printf("%d %d %d %e\n", ix, iy, iz, array[idx]);
             }
         }
     }
 }
 
-void print_nonzero_H(_prec *array, int nx, int ny, int nz, int d_i)
+void print_nonzero_H(float *array, int nx, int ny, int nz, int d_i)
 {
-    //cudaPrintfInit();
     print_nonzero<<<1,1>>>(array, nx, ny, nz, d_i);
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
 }
 
-__global__ void print_nonzero_mat(_prec *array, int nx, int ny, int nz, int d_i,
-    _prec *d1, _prec *mu, _prec *lam, _prec *qp, _prec *qs, int rank)
+__global__ void print_nonzero_mat(float *array, int nx, int ny, int nz, int d_i,
+    float *d1, float *mu, float *lam, float *qp, float *qs, int rank)
 {
     int ix, iy, iz;
 
-    //cuPrintf("nonzeros in grid %d: =====================================================\n", d_i);
+    printf("nonzeros in grid %d: =====================================================\n", d_i);
     for (iz=0; iz<nz; iz++) {
         for (iy=0; iy<ny; iy++) {
             for (ix=0; ix<nx; ix++) {
                 int idx = ix*ny*nz + iy*nz + iz;
-                //if (array[idx] != 0.0)
-                   //cuPrintf("%d: mat @ %d %d %d: %e, %e, %e, %e, %e; val=%e\n", rank, ix, iy, iz, d1[idx], mu[idx], lam[idx], qp[idx], 
-                      //qs[idx], array[idx]);
+                if (array[idx] != 0.0)
+                   printf("%d: mat @ %d %d %d: %e, %e, %e, %e, %e; val=%e\n", rank, ix, iy, iz, d1[idx], mu[idx], lam[idx], qp[idx], 
+                      qs[idx], array[idx]);
             }
         }
     }
 }
 
-void print_nonzero_mat_H(_prec *array, int nx, int ny, int nz, int d_i, 
-     _prec *d1, _prec *mu, _prec *lam, _prec *qp, _prec *qs, int rank)
+extern "C"
+void print_nonzero_mat_H(float *array, int nx, int ny, int nz, int d_i, 
+     float *d1, float *mu, float *lam, float *qp, float *qs, int rank)
 {
-    //cudaPrintfInit();
     print_nonzero_mat<<<1,1>>>(array, nx, ny, nz, d_i, d1, mu, lam, qp, qs, rank);
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
 }
 
-__global__ void print_nan(_prec *array, int nx, int ny, int nz, char *vname)
+__global__ void print_nan(float *array, int nx, int ny, int nz, char *vname)
 {
     int ix, iy, iz;
 
@@ -2964,41 +3294,37 @@ __global__ void print_nan(_prec *array, int nx, int ny, int nz, char *vname)
             for (ix=0; ix<nx; ix++)
             {
                 int idx = ix*ny*nz + iy*nz + iz;
-                //if (array[idx] != array[idx])
-                   //cuPrintf("%s(%d,%d,%d)=%e\n", vname, ix, iy, iz, array[idx]);
+                if (array[idx] != array[idx])
+                   printf("%s(%d,%d,%d)=%e\n", vname, ix, iy, iz, array[idx]);
             }
         }
     }
 }
 
-void print_nan_H(_prec *array, int nx, int ny, int nz, char *vname)
+extern "C"
+void print_nan_H(float *array, int nx, int ny, int nz, char *vname)
 {
-    //cudaPrintfInit();
     print_nan<<<1,1>>>(array, nx, ny, nz, vname);
-    //cudaPrintfDisplay(stdout, 1);
-    //cudaPrintfEnd();
 }
 
-void update_swapzone_buffer_x_H(_prec*  u1, _prec*  v1, _prec*  w1, _prec*  xx, _prec*  yy, _prec*  zz, _prec *xy, _prec *xz, _prec *yz, 
-   _prec *buf_L, _prec *buf_R, int nyt, cudaStream_t St1, cudaStream_t St2, int rank_L, int rank_R, int zs, int ze, int d_i) {
+extern "C"
+void update_swapzone_buffer_x_H(float* u1, float* v1, float* w1, float* xx, float* yy, float* zz, float *xy, float *xz, float *yz, 
+   float *buf_L, float *buf_R, int nyt, cudaStream_t St1, cudaStream_t St2, int rank_L, int rank_R, int zs, int ze, int d_i) {
      if(rank_L==-1 && rank_R==-1) return;
 
      dim3 block (1, BLOCK_SIZE_Y, 1);
      dim3 grid (1, (nyt+4+ngsl2+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_swapzone_buffer_x, cudaFuncCachePreferL1));
      update_swapzone_buffer_x<<<grid, block, 0, St1>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_L, rank_L, Left, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_swapzone_buffer_x<<<grid, block, 0, St2>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_R, rank_R, Right, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
-     //cudaPrintfDisplay(stdout, 1);
-     //cudaPrintfEnd();
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* buffer exchanged for the swap area */
-__global__ void update_swapzone_buffer_x(_prec*  u1, _prec*  v1, _prec*  w1, _prec *xx, _prec *yy, _prec *zz, _prec *xy, _prec *xz, _prec *yz,
-   _prec *buf, int rank, int flag, int zs, int ze, int d_i)
+__global__ void update_swapzone_buffer_x(float* u1, float* v1, float* w1, float *xx, float *yy, float *zz, float *xy, float *xz, float *yz,
+   float *buf, int rank, int flag, int zs, int ze, int d_i)
 {
     register int i, j, k, pos, bpos;
     register long int b_offset;
@@ -3058,7 +3384,7 @@ __global__ void update_swapzone_buffer_x(_prec*  u1, _prec*  v1, _prec*  w1, _pr
               buf[bpos] = yz[pos];
 
               /*if (((flag == Right) && (i==37)) && ((j==36) && (k==64))){
-                 cuPrintf("swap send: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
+                 printf("swap send: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
               }*/
 
            }
@@ -3067,26 +3393,24 @@ __global__ void update_swapzone_buffer_x(_prec*  u1, _prec*  v1, _prec*  w1, _pr
     return;
 }
 
-void update_swapzone_data_x_H(_prec*  u1, _prec*  v1, _prec*  w1, _prec*  xx, _prec*  yy, _prec*  zz, _prec *xy, _prec *xz, _prec *yz, 
-   _prec *buf_L, _prec *buf_R, int nyt, cudaStream_t St1, cudaStream_t St2, int rank_L, int rank_R, int zs, int ze, int d_i) {
+extern "C"
+void update_swapzone_data_x_H(float* u1, float* v1, float* w1, float* xx, float* yy, float* zz, float *xy, float *xz, float *yz, 
+   float *buf_L, float *buf_R, int nyt, cudaStream_t St1, cudaStream_t St2, int rank_L, int rank_R, int zs, int ze, int d_i) {
      if(rank_L==-1 && rank_R==-1) return;
 
      dim3 block (1, BLOCK_SIZE_Y, 1);
      dim3 grid (1, (nyt+4+ngsl2+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_swapzone_buffer_x, cudaFuncCachePreferL1));
      update_swapzone_data_x<<<grid, block, 0, St1>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_L, rank_L, Left, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_swapzone_data_x<<<grid, block, 0, St2>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_R, rank_R, Right, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
-     //cudaPrintfDisplay(stdout, 1);
-     //cudaPrintfEnd();
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* copy exchanged buffer data back to swap zone*/
-__global__ void update_swapzone_data_x(_prec*  u1, _prec*  v1, _prec*  w1, _prec *xx, _prec *yy, _prec *zz, _prec *xy, _prec *xz, _prec *yz,
-   _prec *buf, int rank, int flag, int zs, int ze, int d_i)
+__global__ void update_swapzone_data_x(float* u1, float* v1, float* w1, float *xx, float *yy, float *zz, float *xy, float *xz, float *yz,
+   float *buf, int rank, int flag, int zs, int ze, int d_i)
 {
     register int i, j, k, pos, bpos;
     register long int b_offset;
@@ -3149,7 +3473,7 @@ __global__ void update_swapzone_data_x(_prec*  u1, _prec*  v1, _prec*  w1, _prec
               yz[pos] = buf[bpos];
 
               /*if (((flag == Left) && (i==5)) && ((j==36) && (k==64))){
-                 cuPrintf("swap recv: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
+                 printf("swap recv: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
               }*/
 
            }
@@ -3158,26 +3482,24 @@ __global__ void update_swapzone_data_x(_prec*  u1, _prec*  v1, _prec*  w1, _prec
     return;
 }
 
-void update_swapzone_buffer_y_H(_prec*  u1, _prec*  v1, _prec*  w1, _prec*  xx, _prec*  yy, _prec*  zz, _prec *xy, _prec *xz, _prec *yz, 
-   _prec *buf_F, _prec *buf_B, int nxt, cudaStream_t St1, cudaStream_t St2, int rank_F, int rank_B, int zs, int ze, int d_i) {
+extern "C"
+void update_swapzone_buffer_y_H(float* u1, float* v1, float* w1, float* xx, float* yy, float* zz, float *xy, float *xz, float *yz, 
+   float *buf_F, float *buf_B, int nxt, cudaStream_t St1, cudaStream_t St2, int rank_F, int rank_B, int zs, int ze, int d_i) {
      if(rank_F==-1 && rank_B==-1) return;
 
      dim3 block (BLOCK_SIZE_X, 1, 1);
      dim3 grid ((nxt+BLOCK_SIZE_X-1)/BLOCK_SIZE_X, 1,1);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_swapzone_buffer_y, cudaFuncCachePreferL1));
      update_swapzone_buffer_y<<<grid, block, 0, St1>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_F, rank_F, Front, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_swapzone_buffer_y<<<grid, block, 0, St2>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_B, rank_B, Back, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
-     //cudaPrintfDisplay(stdout, 1);
-     //cudaPrintfEnd();
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* buffer exchanged for the swap area along Y*/
-__global__ void update_swapzone_buffer_y(_prec*  u1, _prec*  v1, _prec*  w1, _prec *xx, _prec *yy, _prec *zz, _prec *xy, _prec *xz, _prec *yz,
-   _prec *buf, int rank, int flag, int zs, int ze, int d_i)
+__global__ void update_swapzone_buffer_y(float* u1, float* v1, float* w1, float *xx, float *yy, float *zz, float *xy, float *xz, float *yz,
+   float *buf, int rank, int flag, int zs, int ze, int d_i)
 {
     register int i, j, k, pos, bpos;
     register long int b_offset;
@@ -3237,7 +3559,7 @@ __global__ void update_swapzone_buffer_y(_prec*  u1, _prec*  v1, _prec*  w1, _pr
               buf[bpos] = yz[pos];
 
               /*if (((flag == Back) && (i==96)) && ((j==97) && (k==3))){
-                 cuPrintf("swap send: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
+                 printf("swap send: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
               }*/
 
            }
@@ -3246,26 +3568,24 @@ __global__ void update_swapzone_buffer_y(_prec*  u1, _prec*  v1, _prec*  w1, _pr
     return;
 }
 
-void update_swapzone_data_y_H(_prec*  u1, _prec*  v1, _prec*  w1, _prec*  xx, _prec*  yy, _prec*  zz, _prec *xy, _prec *xz, _prec *yz, 
-   _prec *buf_F, _prec *buf_B, int nxt, cudaStream_t St1, cudaStream_t St2, int rank_F, int rank_B, int zs, int ze, int d_i) {
+extern "C"
+void update_swapzone_data_y_H(float* u1, float* v1, float* w1, float* xx, float* yy, float* zz, float *xy, float *xz, float *yz, 
+   float *buf_F, float *buf_B, int nxt, cudaStream_t St1, cudaStream_t St2, int rank_F, int rank_B, int zs, int ze, int d_i) {
      if(rank_F==-1 && rank_B==-1) return;
 
      dim3 block (BLOCK_SIZE_X, 1, 1);
      dim3 grid ((nxt+BLOCK_SIZE_X-1)/BLOCK_SIZE_X, 1,1);
-     //cudaPrintfInit();
      CUCHK(cudaFuncSetCacheConfig(update_swapzone_buffer_y, cudaFuncCachePreferL1));
      update_swapzone_data_y<<<grid, block, 0, St1>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_F, rank_F, Front, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
+     CUCHK( cudaGetLastError() );
      update_swapzone_data_y<<<grid, block, 0, St2>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, buf_B, rank_B, Back, zs, ze, d_i);
-      CUCHK(cudaGetLastError()) ;
-     //cudaPrintfDisplay(stdout, 1);
-     //cudaPrintfEnd();
+     CUCHK( cudaGetLastError() );
      return;
 }
 
 /* copy exchanged buffer data back to swap zone*/
-__global__ void update_swapzone_data_y(_prec*  u1, _prec*  v1, _prec*  w1, _prec *xx, _prec *yy, _prec *zz, _prec *xy, _prec *xz, _prec *yz,
-   _prec *buf, int rank, int flag, int zs, int ze, int d_i)
+__global__ void update_swapzone_data_y(float* u1, float* v1, float* w1, float *xx, float *yy, float *zz, float *xy, float *xz, float *yz,
+   float *buf, int rank, int flag, int zs, int ze, int d_i)
 {
     register int i, j, k, pos, bpos;
     register long int b_offset;
@@ -3327,7 +3647,7 @@ __global__ void update_swapzone_data_y(_prec*  u1, _prec*  v1, _prec*  w1, _prec
               yz[pos] = buf[bpos];
 
               /*if (((flag == Front) && (i==96)) && ((j==1) && (k==3))){
-                 cuPrintf("swap recv: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
+                 printf("swap recv: buf[%d] = %.16g, yz[%d] = %.16g\n", bpos, buf[bpos], pos, yz[pos]);
               }*/
 
            }
@@ -3336,10 +3656,11 @@ __global__ void update_swapzone_data_y(_prec*  u1, _prec*  v1, _prec*  w1, _prec
     return;
 }
 
-void addkinsrc_H(int i,   int dim,    int* psrc,  int npsrc,  cudaStream_t St, _prec*  mu,
-              _prec*  axx, _prec*  ayy,    _prec*  azz, _prec*  axz, _prec*  ayz, _prec*  axy,
-              _prec*  xx,  _prec*  yy,     _prec*  zz,  _prec*  xy,  _prec*  yz,  _prec*  xz, 
-              _prec*  mom, double *srcfilt_d, int d_i)
+extern "C"
+void addkinsrc_H(int i,   int dim,    int* psrc,  int npsrc,  cudaStream_t St, float* mu,
+              float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+              float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz, 
+              float* mom, double *srcfilt_d, int d_i)
 {
     dim3 grid, block;
     if(npsrc < 256)
@@ -3355,18 +3676,15 @@ void addkinsrc_H(int i,   int dim,    int* psrc,  int npsrc,  cudaStream_t St, _
     cudaError_t cerr;
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addkinsrc before kernel: %s\n",cudaGetErrorString(cerr));
-    /*cudaPrintfInit();*/
     addkinsrc_cu<<<grid, block, 0, St>>>(i, dim, psrc, npsrc, mu, axx, ayy, azz, axz, ayz, axy,
                                       xx, yy, zz,  xy,   yz,  xz, mom, srcfilt_d, d_i);
     cerr=cudaGetLastError();
-    /*cudaPrintfDisplay(stdout, 1);
-    CUCHK(cudaPrintfEnd());*/
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addkinsrc after kernel: %s\n",cudaGetErrorString(cerr));
     return;
 }
 
-__device__ void compmt(_prec str, _prec dip, _prec rake, 
-        _prec *xx, _prec *yy, _prec *zz, _prec *xz, _prec *yz, _prec *xy ){
+__device__ void compmt(float str, float dip, float rake, 
+        float *xx, float *yy, float *zz, float *xz, float *yz, float *xy ){
 
       //angles must be provided in rads
 
@@ -3388,8 +3706,8 @@ __device__ void compmt(_prec str, _prec dip, _prec rake,
       *zz= sinf(2.*dip)*sinf(rake);
 }
 
-__device__ _prec brune(_prec freq, _prec time){
-   register _prec stf, omega;
+__device__ float brune(float freq, float time){
+   register float stf, omega;
    omega=freq * M_PI * 2.;
    if (time > 0.)
       stf = powf(omega, 2.) * time * expf(-omega*time);
@@ -3399,8 +3717,8 @@ __device__ _prec brune(_prec freq, _prec time){
 }
 
 /* Liu et al. (2006) source time function.  tau = risetime */
-__device__ _prec liu(_prec tau, _prec time){
-   register _prec tau1, tau2, CN, stf;
+__device__ float liu(float tau, float time){
+   register float tau1, tau2, CN, stf;
 
    tau1 = 0.13 * tau;
    tau2 = tau-tau1;
@@ -3434,19 +3752,19 @@ __device__ double lfilter(int order, double *b, double *a, double x, double *d){
    return y;
 }
 
-__global__ void addkinsrc_cu(int i, int dim,    int* psrc,  int npsrc, _prec*  mu,
-                          _prec*  axx, _prec*  ayy,    _prec*  azz, _prec*  axz, _prec*  ayz, _prec*  axy,
-                          _prec*  xx,  _prec*  yy,     _prec*  zz,  _prec*  xy,  _prec*  yz,  _prec*  xz,  
-                          _prec*  mom, double *d_srcfilt_d, int d_i)
+__global__ void addkinsrc_cu(int i, int dim,    int* psrc,  int npsrc, float* mu,
+                          float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+                          float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz,  
+                          float* mom, double *d_srcfilt_d, int d_i)
 {
 
-        register _prec vtst;
+        register float vtst;
         register int idx, idy, idz, j, pos;
 
-        register _prec atime, freq, stf;
-        register _prec axxt, ayyt, azzt, axzt, ayzt, axyt; 
+        register float atime, freq, stf;
+        register float axxt, ayyt, azzt, axzt, ayzt, axyt; 
         register int stf_type;
-        register _prec slip, ruptime, risetime, strike, dip, rake, area;
+        register float slip, ruptime, risetime, strike, dip, rake, area;
 
         register int READ_STEP = 2;
         register double *stff[MAXFILT];
@@ -3483,10 +3801,10 @@ __global__ void addkinsrc_cu(int i, int dim,    int* psrc,  int npsrc, _prec*  m
 	      stf = 0.;               
 
            if (d_filtorder > 0)
-	      stf = (_prec) lfilter(d_filtorder, d_srcfilt_b, d_srcfilt_a, (double) stf, 
+	      stf = (float) lfilter(d_filtorder, d_srcfilt_b, d_srcfilt_a, (double) stf, 
 		   d_srcfilt_d+j*(d_filtorder+1));
 	   
-	   vtst = (_prec)d_DT/(d_DH[d_i]*d_DH[d_i]*d_DH[d_i]);
+	   vtst = (float)d_DT/(d_DH[d_i]*d_DH[d_i]*d_DH[d_i]);
 
 	   idx = psrc[j*dim]   + 1 + ngsl;
 	   idy = psrc[j*dim+1] + 1 + ngsl;
@@ -3496,16 +3814,16 @@ __global__ void addkinsrc_cu(int i, int dim,    int* psrc,  int npsrc, _prec*  m
            stf *= slip*area/mu[pos];
            mom[j] += stf * d_DT;
 
-           //cuPrintf("stf: %d %e %e %e %e\n", j, atime, stf, slip, area);
-           //cuPrintf("mom: %d %e\n", j, mom[j]);
-
-           //if (j == 0)
-   	      /*cuPrintf("addkinsrc_cu: (%d,%d,%d) (%e, %e,%e,%e,%e,%e,%e)\n", idx, idy, idz, 
-	         stf, axxt, ayyt, azzt, axzt, ayzt, axyt);*/
-	      /*cuPrintf("addkinsrc_cu: (%d,%d,%d) (%e, %e)\n", idx, idy, idz, 
-	         stf, 1./mu[pos]);*/
+           //printf("stf: %d %e %e %e %e\n", j, atime, stf, slip, area);
+           //printf("mom: %d %e\n", j, mom[j]);
 
            stf *= vtst;
+
+           /*if (j == 0)
+   	      printf("addkinsrc_cu: (%d,%d,%d) (%e, %e,%e,%e,%e,%e,%e)\n", idx, idy, idz, 
+	         stf, axxt, ayyt, azzt, axzt, ayzt, axyt);
+	      printf("addkinsrc_cu: (%d,%d,%d) (%e, %e, %e m^2, %f m)\n", idx, idy, idz, 
+	         stf, 1./mu[pos], area, slip);*/
 
 	   xx[pos] = xx[pos] - stf*axxt;
 	   yy[pos] = yy[pos] - stf*ayyt;
@@ -3519,10 +3837,11 @@ __global__ void addkinsrc_cu(int i, int dim,    int* psrc,  int npsrc, _prec*  m
         return;
 }
 
+extern "C"
 void addplanesrc_H(int i,  int dim,   int NST,  cudaStream_t St,
-              _prec *mu, _prec *lambda, int ND, int nxt, int nyt, 
-              _prec*  axx, _prec*  ayy,    _prec*  azz,
-              _prec*  xx,  _prec*  yy,     _prec*  zz,  _prec*  xy,  _prec*  yz,  _prec*  xz, int d_i){
+              float *mu, float *lambda, int ND, int nxt, int nyt, 
+              float* axx, float* ayy,    float* azz,
+              float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz, int d_i){
 
     dim3 grid, block;
     int nx, ny;
@@ -3546,35 +3865,32 @@ void addplanesrc_H(int i,  int dim,   int NST,  cudaStream_t St,
     cudaError_t cerr;
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addplanesrc before kernel: %s\n",cudaGetErrorString(cerr));
-    /*CUCHK(cudaPrintfInit());*/
     addplanesrc_cu<<<grid, block, 0, St>>>(i, dim, NST, mu, lambda, ND, axx, ayy, azz, 
                                       xx, yy, zz, xy, yz, xz, d_i);
-    /*CUCHK(cudaPrintfDisplay(stdout, 1));
-    CUCHK(cudaPrintfEnd());*/
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addplanesrc after kernel: %s\n",cudaGetErrorString(cerr));
 }
 
 
-__global__ void addplanesrc_cu(int n, int dim,  int NST, _prec*  mu, _prec*  lambda, int ND,
-                          _prec*  axx, _prec*  ayy,    _prec*  azz,
-                          _prec*  xx,  _prec*  yy,     _prec*  zz,  _prec*  xy,  _prec*  yz,  _prec*  xz,  
+__global__ void addplanesrc_cu(int n, int dim,  int NST, float* mu, float* lambda, int ND,
+                          float* axx, float* ayy,    float* azz,
+                          float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz,  
                           int d_i)
 {
         register int j, i, k, pos;
-        register _prec vtst;
+        register float vtst;
 
         i = blockIdx.x*blockDim.x+threadIdx.x + 4;
         j = blockIdx.y*blockDim.y+threadIdx.y + 4;
 
-        vtst = (_prec) d_DT/d_DH[d_i];
+        vtst = (float) d_DT/d_DH[d_i];
 
         k = align + ND + 1;
 
         pos = i*d_slice_1[d_i] + j*d_yline_1[d_i] + k;
 
-        //cuPrintf("i=%d,j=%d,k=%d, pos=%d\n", i, j, k, pos);
-        //cuPrintf("i=%d,j=%d,k=%d, pos=%d, xz[%d]=%e, axx[%d]=%e\n", i, j, k, pos, pos, xz[pos], n, axx[n]);
+        //printf("i=%d,j=%d,k=%d, pos=%d\n", i, j, k, pos);
+        //printf("i=%d,j=%d,k=%d, pos=%d, xz[%d]=%e, axx[%d]=%e\n", i, j, k, pos, pos, xz[pos], n, axx[n]);
 	xz[pos] -= vtst*2./mu[pos]*axx[n];
 	yz[pos] -= vtst*2./mu[pos]*ayy[n];
 
@@ -3584,4 +3900,62 @@ __global__ void addplanesrc_cu(int n, int dim,  int NST, _prec*  mu, _prec*  lam
         zz[pos] -= vtst*2./(lambda[pos]+2.*mu[pos])*azz[n];
 
         return;
+}
+
+extern "C"
+void velbuffer_H(const float *u1, const float *v1, const float *w1, const float *neta,
+       float *Bufx, float *Bufy, float *Bufz, float *Bufeta, int NVE, 
+       int nbgx, int nedx, int nskpx, int nbgy, int nedy, int nskpy, int nbgz, int nedz, int nskpz,
+       int rec_nxt, int rec_nyt, int rec_nzt, cudaStream_t St, int FOLLOWBATHY, const int* bathy, int d_i){
+
+    dim3 block (BLOCK_SIZE_Y, BLOCK_SIZE_Y, BLOCK_SIZE_Z);
+    dim3 grid ((rec_nxt+BLOCK_SIZE_X-1)/BLOCK_SIZE_X, 
+               (rec_nyt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,
+               (rec_nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z);
+
+    cudaFuncSetCacheConfig(velbuffer, cudaFuncCachePreferL1);
+    CUCHK(cudaGetLastError());
+    velbuffer <<<grid, block, 0, St>>>(u1, v1, w1, neta, Bufx, Bufy, Bufz, Bufeta, NVE, 
+         nbgx, nedx, nskpx, nbgy, nedy, nskpy, nbgz, nedz, nskpz, rec_nxt, rec_nyt, FOLLOWBATHY, bathy, d_i);
+
+    CUCHK(cudaGetLastError());
+}
+
+__global__ void velbuffer(const float *u1, const float *v1, const float *w1, const float *neta,
+       float *Bufx, float *Bufy, float *Bufz, float *Bufeta, int NVE, 
+       int nbgx, int nedx, int nskpx, int nbgy, int nedy, int nskpy, int nbgz, int nedz, int nskpz,
+       int rec_nxt, int rec_nyt, int FOLLOWBATHY, const int *bathy, int d_i)
+{
+    register int i, j, k, ko;
+
+    int tmpInd, pos, bpos;
+
+    i = 2+ngsl+nbgx + (blockIdx.x*blockDim.x+threadIdx.x) * nskpx;
+    j = 2+ngsl+nbgy + (blockIdx.y*blockDim.y+threadIdx.y) * nskpy;
+    k = nbgz + (blockIdx.z*blockDim.z+threadIdx.z) * nskpz;
+
+    if (i > 2+ngsl+nedx) return;
+    if (j > 2+ngsl+nedy) return;
+    if (k > nedz) return;
+   
+    if (FOLLOWBATHY && d_i == 0){
+       bpos=j*(d_nxt[0]+4+ngsl2)+i;
+       ko=bathy[bpos] - k;
+    }
+    else ko=d_nzt[d_i]+align-1-k;
+                      
+    pos = i*d_slice_1[d_i]+j*d_yline_1[d_i]+ko;
+
+    tmpInd =  (k - nbgz)/nskpz*rec_nxt*rec_nyt + 
+	       (j-2-ngsl-nbgy)/nskpy*rec_nxt + 
+	       (i-2-ngsl-nbgx)/nskpx;
+
+    /*if (i==48 && j==48 && k==1) 
+        printf("velbuffer: i=%d,j=%d,k=%d,pos=%d,tmpInd=%d,u1=%e\n", i,j,k,pos,tmpInd,u1[pos]);*/
+
+    Bufx[tmpInd] = u1[pos];
+    Bufy[tmpInd] = v1[pos];
+    Bufz[tmpInd] = w1[pos];
+
+    if (NVE == 3) Bufeta[tmpInd] = neta[pos];
 }
