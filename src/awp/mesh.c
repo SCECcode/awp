@@ -5,6 +5,7 @@
  *    MEDIARESTART=3 is added for partitioned large mesh reading
  *
 ***************************************************************************/
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <math.h>
 #include <complex.h>
