@@ -1484,6 +1484,132 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        intlev[p] = nzt[p] + align - 3;
     }
 
+#if TOPO
+            // Initialize grids
+            grids_t grids[MAXGRIDS];
+            int istopo = usetopo;
+            for (p = 0; p < ngrids; p++) {
+                    // Disable topography in grids below the top grid
+                    if (p > 0) istopo = 0;
+                    grids[p] = grids_init(nxt[p], nyt[p], nzt[p], coord[0],
+                                          coord[1], 0, usetopo, DH[p]);
+            }
+
+            topo_t T = topo_init(usetopo, INTOPO, 
+                                 rank, 
+                                 x_rank_L, x_rank_R,
+                                 y_rank_F, y_rank_B, coord,
+                                 dim[0], dim[1],
+                                 nxt[0], nyt[0], nzt[0], 
+                                 DT, *DH,
+                                 stream_1, stream_2, stream_i
+                                 );
+            topo_bind(&T, d_d1[0], d_lam[0], d_mu[0], 
+                      d_qp[0], d_coeff, d_qs[0], d_vx1[0], d_vx2[0], d_ww[0],
+                      d_wwo[0], d_xx[0], d_yy[0], d_zz[0],
+                      d_xy[0], d_xz[0], d_yz[0], d_r1[0], d_r2[0], d_r3[0],
+                      d_r4[0], d_r5[0], d_r6[0], d_u1[0], d_v1[0], d_w1[0],
+                      d_f_u1[0], d_f_v1[0], d_f_w1[0], d_b_u1[0], d_b_v1[0],
+                      d_b_w1[0], d_dcrjx[0], d_dcrjy[0], d_dcrjz[0]);
+            topo_init_metrics(&T);
+            int topo_vtk_mode = 0;
+            if (T.use) {
+                topo_init_grid(&T);
+                topo_init_geometry(&T);
+                topo_build(&T);
+                topo_set_constants(&T);
+            }
+
+
+            if(rank == 0)printf("Initialize source and receivers\n");
+            fflush(stdout);
+
+            f_grid_t *metrics_f = NULL;
+            if (T.use) {
+                metrics_f = &T.metrics_f;
+            }
+
+            sources_init(SOURCEFILE, grids, ngrids, metrics_f, MCW, rank,
+                         size_tot);
+            receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
+                           size_tot);
+            if(rank == 0)printf("done.\n");
+            fflush(stdout);
+#endif
+
+      //Initialize all variables to zero
+      for (p=0; p<ngrids; p++){
+        int mx = nxt[p] + 4 + ngsl2;
+        int my = nyt[p] + 4 + ngsl2;
+        int mz = nzt[p] + 2 * align;
+        int byte_size = mx * my * mz * sizeof(_prec);
+        float *dbg = malloc(byte_size);
+        zeros(dbg, mx, my, mz);
+        CUCHK(cudaMemcpy(d_u1[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_v1[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_w1[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_xx[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_yy[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_zz[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_xy[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_xz[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_yz[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_r1[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_r2[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_r3[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_r4[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_r5[p],dbg,byte_size,cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(d_r6[p],dbg,byte_size,cudaMemcpyHostToDevice));
+
+        CUCHK(cudaMemset(d_u1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_v1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_w1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_xx[p], 0, byte_size));
+        CUCHK(cudaMemset(d_yy[p], 0, byte_size));
+        CUCHK(cudaMemset(d_zz[p], 0, byte_size));
+        CUCHK(cudaMemset(d_xy[p], 0, byte_size));
+        CUCHK(cudaMemset(d_xz[p], 0, byte_size));
+        CUCHK(cudaMemset(d_yz[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r1[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r2[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r3[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r4[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r5[p], 0, byte_size));
+        CUCHK(cudaMemset(d_r6[p], 0, byte_size));
+
+        CUCHK(cudaMemcpy(dbg,d_u1[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("u1", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_v1[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("v1", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_w1[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("w1", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_xx[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("xx", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_yy[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("yy", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_zz[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("zz", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_xy[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("xy", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_xz[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("xz", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_yz[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("yz", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_r1[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("r1", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_r2[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("r2", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_r3[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("r3", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_r4[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("r4", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_r5[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("r5", dbg, mx, my, mz, rank); 
+        CUCHK(cudaMemcpy(dbg,d_r6[p],byte_size,cudaMemcpyDeviceToHost));
+        check_values("r6", dbg, mx, my, mz, rank); 
+        free(dbg);
+     }
+
     size_t  cmemfreeMin;
     cudaMemGetInfo(&cmemfree, &cmemtotal);
     if(sizeof(size_t)==8) 
@@ -1511,10 +1637,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          CUCHK(cudaStreamSynchronize(stream_i));
          CUCHK(cudaStreamSynchronize(stream_1));
          CUCHK(cudaStreamSynchronize(stream_2));
+
+         if(rank==0 && cur_step%100==0) printf("Time Step =                   %ld    OF  Total Timesteps = %ld\n", cur_step, nt); 
          if(rank==0) printf("Time Step =                   %ld    OF  Total Timesteps = %ld\n", cur_step, nt); 
          fflush(stdout);
          fflush(stderr);
-         if(cur_step==100 && rank==0) printf("Time per timestep:\t%f seconds\n",(gethrtime()+time_un)/100);
+         if(cur_step%100==0 && rank==0) printf("Time per timestep:\t%f seconds\n",(gethrtime()+time_un)/cur_step);
          CUCHK(cudaGetLastError());
          //cerr=cudaGetLastError();
          
@@ -1531,6 +1659,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    PostRecvMsg_Y(RF_vel[p], RB_vel[p], MCW, request_y[p], &count_y[p], msg_v_size_y[p], y_rank_F, y_rank_B, p);
 	    //PostRecvMsg_X(RL_vel[p], RR_vel[p], MCW, request_x[p], &count_x[p], msg_v_size_x[p], x_rank_L, x_rank_R, p);
 	    //velocity computation in y boundary, two ghost cell regions
+            //
 	    dvelcy_H(d_u1[p], d_v1[p], d_w1[p], d_xx[p],   d_yy[p],   d_zz[p],   d_xy[p],       
                      d_xz[p], d_yz[p], d_dcrjx[p], d_dcrjy[p], d_dcrjz[p],
 		     d_d1[p], nxt[p],  nzt[p],  d_f_u1[p], d_f_v1[p], d_f_w1[p], 
