@@ -123,10 +123,10 @@ void SetDeviceConstValue(float *DH, float DT, int *nxt, int *nyt, int *nzt, int 
 extern "C"
 void BindArrayToTexture(float* vx1, float* vx2,int* ww, float* wwo, int memsize)   
 {
-   cudaBindTexture(0, p_vx1,  vx1,  memsize);
-   cudaBindTexture(0, p_vx2,  vx2,  memsize);
-   cudaBindTexture(0, p_ww,   ww,   memsize);
-   cudaBindTexture(0, p_wwo,   wwo,   memsize);
+   CUCHK(cudaBindTexture(0, p_vx1,  vx1,  memsize));
+   CUCHK(cudaBindTexture(0, p_vx2,  vx2,  memsize));
+   CUCHK(cudaBindTexture(0, p_ww,   ww,   memsize));
+   CUCHK(cudaBindTexture(0, p_wwo,   wwo,   memsize));
    cudaDeviceSynchronize ();
    return;
 }
@@ -134,10 +134,10 @@ void BindArrayToTexture(float* vx1, float* vx2,int* ww, float* wwo, int memsize)
 extern "C"
 void UnBindArrayFromTexture()
 {
-   cudaUnbindTexture(p_vx1);
-   cudaUnbindTexture(p_vx2);
-   cudaUnbindTexture(p_ww);
-   cudaUnbindTexture(p_wwo);
+   CUCHK(cudaUnbindTexture(p_vx1));
+   CUCHK(cudaUnbindTexture(p_vx2));
+   CUCHK(cudaUnbindTexture(p_ww));
+   CUCHK(cudaUnbindTexture(p_wwo));
    return;
 }
 
@@ -338,7 +338,7 @@ void dvelcy_H(float* u1,       float* v1,    float* w1,    float* xx,  float* yy
     if(rank==-1) return;
     dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
     dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (nxt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    cudaFuncSetCacheConfig(dvelcy, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(dvelcy, cudaFuncCachePreferL1));
     CUCHK(cudaGetLastError());
     dvelcy<<<grid, block, 0, St>>>(u1, v1, w1, xx, yy, zz, xy, xz, yz, dcrjx, dcrjy, dcrjz, d_1, s_u1, s_v1, s_w1, s_j, e_j, d_i);
     CUCHK(cudaGetLastError());
@@ -352,7 +352,7 @@ void update_bound_y_H(float* u1,   float* v1, float* w1, float* f_u1,      float
      if(rank_f==-1 && rank_b==-1) return;
      dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
      dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (nxt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-     cudaFuncSetCacheConfig(update_boundary_y, cudaFuncCachePreferL1);
+     CUCHK(cudaFuncSetCacheConfig(update_boundary_y, cudaFuncCachePreferL1));
      update_boundary_y<<<grid, block, 0, St1>>>(u1, v1, w1, f_u1, f_v1, f_w1, rank_f, Front, d_i);
      update_boundary_y<<<grid, block, 0, St2>>>(u1, v1, w1, b_u1, b_v1, b_w1, rank_b, Back, d_i);
      return;
@@ -369,7 +369,7 @@ void dstrqc_H(float* xx,       float* yy,     float* zz,    float* xy,    float*
 {
     dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
     dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (e_j-s_j+1+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    cudaFuncSetCacheConfig(dstrqc, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(dstrqc, cudaFuncCachePreferL1));
     dstrqc<<<grid, block, 0, St>>>(xx,    yy,    zz,  xy,  xz, yz, r1, r2,    r3,    r4,    r5,     r6, 
                                    u1,    v1,    w1,  lam, mu, qp,coeff, qs, dcrjx, dcrjy, dcrjz, lam_mu, 
                                    vx1, vx2, ww, wwo, 
@@ -931,7 +931,7 @@ void fstr_H(float* zz, float* xz, float* yz, cudaStream_t St, int s_i, int e_i, 
 {
     dim3 block (2, BLOCK_SIZE_Y, 1);
     dim3 grid (1,(e_j-s_j+1+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    cudaFuncSetCacheConfig(fstr, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(fstr, cudaFuncCachePreferL1));
     fstr<<<grid, block, 0, St>>>(zz, xz, yz, s_i, e_i, s_j);
     return;
 }
@@ -1119,7 +1119,7 @@ void drprecpc_calc_H_opt(float *xx, float *yy, float *zz, float *xy, float *xz, 
 
     dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
     dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, ((yre-yls+1)+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    cudaFuncSetCacheConfig(drprecpc_calc_opt, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(drprecpc_calc_opt, cudaFuncCachePreferL1));
 
     //split into tho routines, one for the normal, one for shear stress components (Daniel)
     drprecpc_calc_opt<<<grid, block, 0, St>>>(xx,yy,zz,xy,xz,yz,mu,d1,
@@ -1142,7 +1142,7 @@ void drprecpc_app_H(float *xx, float *yy, float *zz,
 
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: drprecpc_app before kernel: %s\n",cudaGetErrorString(cerr));
-    cudaFuncSetCacheConfig(drprecpc_app, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(drprecpc_app, cudaFuncCachePreferL1));
     drprecpc_app<<<grid, block, 0, St>>>(xx,yy,zz,xy,xz,yz,mu,
         sigma2,yldfac,xls,xre,yls,d_i);
     cerr=cudaGetLastError();
@@ -1946,7 +1946,7 @@ void fvel_H(float* u1, float* v1, float* w1, cudaStream_t St, float* lam_mu, int
 {
     dim3 block (2, BLOCK_SIZE_Y, 1);
     dim3 grid (1,(e_j-s_j+1+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    cudaFuncSetCacheConfig(fvel, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(fvel, cudaFuncCachePreferL1));
     fvel<<<grid, block, 0, St>>>(u1, v1, w1, lam_mu, NX, rankx, ranky, s_i, e_i, s_j);
     return;
 }
@@ -2347,7 +2347,7 @@ void dvelc2_H(float* u1,    float* v1,    float* w1,    float* xx,  float* yy, f
 {
     dim3 block (BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
     dim3 grid ((nxt+BLOCK_SIZE_X-1)/BLOCK_SIZE_X, (nyt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
-    cudaFuncSetCacheConfig(dvelc2, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(dvelc2, cudaFuncCachePreferL1));
 
     dvelc2<<<grid,block,0,St>>>(u1,v1,w1,xx,yy,zz,xy,xz,yz,dcrjx,dcrjy,dcrjz,d_1,d_i);
 }
@@ -2773,7 +2773,7 @@ void dstrqc2_H(float* xx, float* yy,    float* zz,    float* xy,    float* xz,  
               int s_i, int e_i, int s_j, int e_j, int d_i) {
     dim3 block (BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
     dim3 grid ((nxt+BLOCK_SIZE_X+ngsl2-1)/BLOCK_SIZE_X, (nyt+BLOCK_SIZE_Y+ngsl2-1)/BLOCK_SIZE_Y,1);
-    cudaFuncSetCacheConfig(dstrqc2, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(dstrqc2, cudaFuncCachePreferL1));
     dstrqc2<<<grid, block, 0, St>>>(xx, yy, zz, xy, xz, yz, r1, r2, r3, r4, r5, r6, u1, v1, w1,
                             lam, mu, qp, qs, dcrjx, dcrjy, dcrjz, coeff, vx1, vx2, ww, wwo, 
                             s_i, e_i, s_j, e_j, d_i);
@@ -2794,17 +2794,17 @@ void intp3d_H(float *u1l, float* v1l, float *w1l, float *xxl, float *yyl, float 
     dim3 grid ((nxtl+BLOCK_SIZE_X+ngsl2-1)/BLOCK_SIZE_X, (nytl+BLOCK_SIZE_Y+ngsl2-1)/BLOCK_SIZE_Y,1);
     /*cudaEvent_t start, stop;
     float duration = 0;*/
-    cudaFuncSetCacheConfig(intp3d, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(intp3d, cudaFuncCachePreferL1));
    
     /*cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);*/
+    CUCHK(cudaEventCreate(&stop));
+    CUCHK(cudaEventRecord(start));*/
     intp3d<<<grid, block, 0, St>>>(u1l,v1l,w1l,xxl,yyl,zzl,xyl,xzl,yzl,
                                    u1h,v1h,w1h,xxh,yyh,zzh,xyh,xzh,yzh,
                                    rank,d_i); 
     /*cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&duration, start, stop);
+    CUCHK(cudaEventSynchronize(stop));
+    CUCHK(cudaEventElapsedTime(&duration, start, stop));
     fprintf(stdout, "Time for intp3d: %f ms\n", duration);*/
     return;
 }
@@ -3231,7 +3231,7 @@ void swap_H(float * xxl, float* yyl, float* zzl, float* xyl,float* xzl,float* yz
 
     dim3 block (BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
     dim3 grid ((nxtl+BLOCK_SIZE_X+ngsl-1)/(BLOCK_SIZE_X), (nytl+BLOCK_SIZE_Y+ngsl-1)/(BLOCK_SIZE_Y),1);
-    cudaFuncSetCacheConfig(swap, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(swap, cudaFuncCachePreferL1));
     swap3<<<grid,block,0,St>>>(xxl,yyl,zzl,xyl,xzl,yzl,u1l,v1l,w1l,xxh,yyh,zzh,xyh,xzh,yzh,u1h,v1h,w1h,
                          buf_L, buf_R, buf_F, buf_B, rank, d_i);
     return;
@@ -3920,7 +3920,7 @@ void velbuffer_H(const float *u1, const float *v1, const float *w1, const float 
                (rec_nyt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,
                (rec_nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z);
 
-    cudaFuncSetCacheConfig(velbuffer, cudaFuncCachePreferL1);
+    CUCHK(cudaFuncSetCacheConfig(velbuffer, cudaFuncCachePreferL1));
     CUCHK(cudaGetLastError());
     velbuffer <<<grid, block, 0, St>>>(u1, v1, w1, neta, Bufx, Bufy, Bufz, Bufeta, NVE, 
          nbgx, nedx, nskpx, nbgy, nedy, nskpy, nbgz, nedz, nskpz, rec_nxt, rec_nyt, FOLLOWBATHY, bathy, d_i);

@@ -51,7 +51,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
   if(!coords[0] && !coords[1]) printf("tau: %e,%e; %e,%e; %e,%e; %e,%e\n",
 				      tau[0][0][0],tau[1][0][0],tau[0][1][0],tau[1][1][0],
 				      tau[0][0][1],tau[1][0][1],tau[0][1][1],tau[1][1][1]);
-  MPI_Comm_rank(MCW,&rank);        
+  MPICHK(MPI_Comm_rank(MCW,&rank));        
   if(MEDIASTART==0)
   {
     //    *taumax = 1./(2*pi*FL);
@@ -162,32 +162,32 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
     		    roffset[2] = nxt*coords[0]*nvar;
     		    err = MPI_Type_create_subarray(3, rmtype, rptype, roffset, MPI_ORDER_C, MPI_FLOAT, &readtype);
 		    if(err != MPI_SUCCESS){
-		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
+		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
 		      printf("%d) ERROR! MPI-IO mesh reading create subarray: %s\n",rank,mpiErrStr);
 		    }
     		    err = MPI_Type_commit(&readtype);
 		    if(err != MPI_SUCCESS){
-		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
+		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
 		      printf("%d) ERROR! MPI-IO mesh reading commit: %s\n",rank,mpiErrStr);
 		    }
 		    err = MPI_File_open(MCW,filename,MPI_MODE_RDONLY,MPI_INFO_NULL,&fh);
 		    if(err != MPI_SUCCESS){
-		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
+		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
 		      printf("%d) ERROR! MPI-IO mesh reading file open: %s\n",rank,mpiErrStr);
 		    }
 		    err = MPI_File_set_view(fh, 0, MPI_FLOAT, readtype, "native", MPI_INFO_NULL);
 		    if(err != MPI_SUCCESS){
-		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
+		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
 		      printf("%d) ERROR! MPI-IO mesh reading file set view: %s\n",rank,mpiErrStr);
 		    }
 		    err = MPI_File_read_all(fh, tmpta, nvar*nxt*nyt*nzt, MPI_FLOAT, &filestatus);
 		    if(err != MPI_SUCCESS){
-		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
+		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
 		      printf("%d) ERROR! MPI-IO mesh reading file read: %s\n",rank,mpiErrStr);
 		    }
 		    err = MPI_File_close(&fh);
 		    if(err != MPI_SUCCESS){
-		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
+		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
 		      printf("%d) ERROR! MPI-IO mesh reading file close: %s\n",rank,mpiErrStr);
 		    }
 		    if(!rank) printf("Media file is read using MPI-IO\n");
@@ -207,7 +207,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
                     tmpvs[i][j][k]!=tmpvs[i][j][k] ||
                     tmpdd[i][j][k]!=tmpdd[i][j][k]){
 		  printf("%d) tmpvp,vs,dd is NAN!\n",rank);
-                      MPI_Abort(MPI_COMM_WORLD,1);
+                      MPICHK(MPI_Abort(MPI_COMM_WORLD,1));
                 }
          }
          //printf("%d) vp,vs,dd[0^3]=%f,%f,%f\n",rank,tmpvp[0][0][0],
@@ -1204,7 +1204,7 @@ void inidrpr_hoekbrown_light(int nxt, int nyt, int nzt, int nve, int *coords,
      fid=fopen("nonlinear.dat", "r");
      if (fid == NULL) {
         perror("could not open nonlinear.dat");
-        MPI_Finalize();
+        MPICHK(MPI_Finalize());
      }
      getline(&nline, &linecap, fid);
      sscanf(nline, "%f %f", strike, strike+2);
@@ -1240,22 +1240,22 @@ void inidrpr_hoekbrown_light(int nxt, int nyt, int nzt, int nve, int *coords,
         fprintf(stdout, "using eq. %d in Chang et al. (2006) for sigma_ci\n", sigma_ci_type);
      else {
         fprintf(stdout, "Error. sigma_ci_type must be 0, 3 or 12.\n");
-        MPI_Finalize();
+        MPICHK(MPI_Finalize());
      }
      fprintf(stdout, "fault position: %d\n", fltpos);
      /*fprintf(stdout, "ground water table: %d\n", gwt);*/
   }
 
-  MPI_Bcast(strike, 3, MPI_REAL, 0, MCW);
-  MPI_Bcast(dip, 3, MPI_REAL, 0, MCW);
-  MPI_Bcast(fmajor, 1, MPI_REAL, 0, MCW);
-  MPI_Bcast(fminor, 1, MPI_REAL, 0, MCW);
-  MPI_Bcast(&sigma_ci_type, 1, MPI_INT, 0, MCW);
-  MPI_Bcast(&sigma_ci, 1, MPI_REAL, 0, MCW);
-  MPI_Bcast(&GSI, 1, MPI_REAL, 0, MCW);
-  MPI_Bcast(&mi, 1, MPI_REAL, 0, MCW);
-  MPI_Bcast(&gsi100, 1, MPI_REAL, 0, MCW);
-  MPI_Bcast(&fltpos, 1, MPI_INT, 0, MCW);
+  MPICHK(MPI_Bcast(strike, 3, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(dip, 3, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(fmajor, 1, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(fminor, 1, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(&sigma_ci_type, 1, MPI_INT, 0, MCW));
+  MPICHK(MPI_Bcast(&sigma_ci, 1, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(&GSI, 1, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(&mi, 1, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(&gsi100, 1, MPI_REAL, 0, MCW));
+  MPICHK(MPI_Bcast(&fltpos, 1, MPI_INT, 0, MCW));
   /*MPI_Bcast(&gwt, 1, MPI_FLOAT, 0, MCW);*/
 
   for(j=2;j<nyt+2+ngsl2;j++)
