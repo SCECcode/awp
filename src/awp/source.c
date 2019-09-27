@@ -26,7 +26,7 @@ int read_src_ifault_2(int rank, int READ_STEP,
 
   // First time entering this function
   if(idx == 1){
-    sprintf(fname, "%s%07d", INSRC, rank);
+    sprintf(fname, "%s_%07d", INSRC, rank);
     printf("SOURCE reading first time: %s\n",fname);
     f = fopen(fname, "rb");
     if(f == NULL){
@@ -59,7 +59,7 @@ int read_src_ifault_2(int rank, int READ_STEP,
     fclose(f);
   }
   if(*NPSRC > 0){
-    sprintf(fname, "%s%07d_%03d", INSRC_I2, rank, idx);
+    sprintf(fname, "%s_%07d_%03d", INSRC_I2, rank, idx);
     printf("SOURCE reading: %s\n",fname);
     f = fopen(fname, "rb");
     if(f == NULL){
@@ -86,27 +86,27 @@ int read_src_ifault_2(int rank, int READ_STEP,
       taxz = *axz;
       tayz = *ayz;
     }
-    fread(tmpta, sizeof(_prec), (*NPSRC)*READ_STEP, f);
+    fread(tmpta, sizeof(float), (*NPSRC)*READ_STEP, f);
     for(i=0; i<*NPSRC; i++)
       for(j=0; j<READ_STEP; j++)
         taxx[i*READ_STEP+j] = tmpta[j*(*NPSRC)+i];
-    fread(tmpta, sizeof(_prec), (*NPSRC)*READ_STEP, f);
+    fread(tmpta, sizeof(float), (*NPSRC)*READ_STEP, f);
     for(i=0; i<*NPSRC; i++)
       for(j=0; j<READ_STEP; j++)
         tayy[i*READ_STEP+j] = tmpta[j*(*NPSRC)+i];
-    fread(tmpta, sizeof(_prec), (*NPSRC)*READ_STEP, f);
+    fread(tmpta, sizeof(float), (*NPSRC)*READ_STEP, f);
     for(i=0; i<*NPSRC; i++)
       for(j=0; j<READ_STEP; j++)
         tazz[i*READ_STEP+j] = tmpta[j*(*NPSRC)+i];
-    fread(tmpta, sizeof(_prec), (*NPSRC)*READ_STEP, f);
+    fread(tmpta, sizeof(float), (*NPSRC)*READ_STEP, f);
     for(i=0; i<*NPSRC; i++)
       for(j=0; j<READ_STEP; j++)
         taxz[i*READ_STEP+j] = tmpta[j*(*NPSRC)+i];
-    fread(tmpta, sizeof(_prec), (*NPSRC)*READ_STEP, f);
+    fread(tmpta, sizeof(float), (*NPSRC)*READ_STEP, f);
     for(i=0; i<*NPSRC; i++)
       for(j=0; j<READ_STEP; j++)
         tayz[i*READ_STEP+j] = tmpta[j*(*NPSRC)+i];
-    fread(tmpta, sizeof(_prec), (*NPSRC)*READ_STEP, f);
+    fread(tmpta, sizeof(float), (*NPSRC)*READ_STEP, f);
     for(i=0; i<*NPSRC; i++)
       for(j=0; j<READ_STEP; j++)
         taxy[i*READ_STEP+j] = tmpta[j*(*NPSRC)+i];
@@ -167,7 +167,7 @@ int inisource(int      rank,    int     IFAULT, int     NSRC,   int     READ_STE
          }
          for(i=0;i<NSRC;i++)
          { 
-            if(fread(tmpsrc,sizeof(int),3,file) && fread(tmpta,sizeof(_prec),NST*6,file))
+            if(fread(tmpsrc,sizeof(int),3,file) && fread(tmpta,sizeof(float),NST*6,file))
             {
                tpsrc[i*maxdim]   = tmpsrc[0];
                tpsrc[i*maxdim+1] = tmpsrc[1];
@@ -186,13 +186,13 @@ int inisource(int      rank,    int     IFAULT, int     NSRC,   int     READ_STE
          Delloc1D(tmpta);
          fclose(file);
       }
-      MPICHK(MPI_Bcast(tpsrc, NSRC*maxdim,    MPI_INT,  master, MCW));
-      MPICHK(MPI_Bcast(taxx,  NSRC*READ_STEP, MPI_FLOAT, master, MCW)); 
-      MPICHK(MPI_Bcast(tayy,  NSRC*READ_STEP, MPI_FLOAT, master, MCW));
-      MPICHK(MPI_Bcast(tazz,  NSRC*READ_STEP, MPI_FLOAT, master, MCW));
-      MPICHK(MPI_Bcast(taxz,  NSRC*READ_STEP, MPI_FLOAT, master, MCW));
-      MPICHK(MPI_Bcast(tayz,  NSRC*READ_STEP, MPI_FLOAT, master, MCW));
-      MPICHK(MPI_Bcast(taxy,  NSRC*READ_STEP, MPI_FLOAT, master, MCW));
+      MPI_Bcast(tpsrc, NSRC*maxdim,    MPI_INT,  master, MCW);
+      MPI_Bcast(taxx,  NSRC*READ_STEP, MPI_REAL, master, MCW); 
+      MPI_Bcast(tayy,  NSRC*READ_STEP, MPI_REAL, master, MCW);
+      MPI_Bcast(tazz,  NSRC*READ_STEP, MPI_REAL, master, MCW);
+      MPI_Bcast(taxz,  NSRC*READ_STEP, MPI_REAL, master, MCW);
+      MPI_Bcast(tayz,  NSRC*READ_STEP, MPI_REAL, master, MCW);
+      MPI_Bcast(taxy,  NSRC*READ_STEP, MPI_REAL, master, MCW);
       for(i=0;i<NSRC;i++)
       {
           if( tpsrc[i*maxdim]   >= nbx && tpsrc[i*maxdim]   <= nex && tpsrc[i*maxdim+1] >= nby 
@@ -263,13 +263,13 @@ int inisource(int      rank,    int     IFAULT, int     NSRC,   int     READ_STE
    return 0;
 }
 
-void addsrc(int i,      _prec DH,   _prec DT,   int NST,    int npsrc,  int READ_STEP, int dim, PosInf psrc,
+void addsrc(int i,      float DH,   float DT,   int NST,    int npsrc,  int READ_STEP, int dim, PosInf psrc,
             Grid1D axx, Grid1D ayy, Grid1D azz, Grid1D axz, Grid1D ayz, Grid1D axy,
             Grid3D xx,  Grid3D yy,  Grid3D zz,  Grid3D xy,  Grid3D yz,  Grid3D xz)
 {
-  _prec vtst;
+  float vtst;
   int idx, idy, idz, j;
-  vtst = (_prec)DT/(DH*DH*DH);
+  vtst = (float)DT/(DH*DH*DH);
   fprintf(stdout, "vtst=%.15g\n", vtst);
 
   i   = i - 1;
@@ -298,21 +298,21 @@ void addsrc(int i,      _prec DH,   _prec DT,   int NST,    int npsrc,  int READ
 }
 
 /* this routine interpolates between adjacent values */
-void frcvel(int i,      _prec DH,   _prec DT,   int NST,    int npsrc,  int READ_STEP, int tskp, int dim, PosInf psrc,
+void frcvel(int i,      float DH,   float DT,   int NST,    int npsrc,  int READ_STEP, int tskp, int dim, PosInf psrc,
             Grid1D axx, Grid1D ayy, Grid1D azz, Grid1D axz, Grid1D ayz, Grid1D axy,
             Grid3D u1,  Grid3D v1,  Grid3D w1, int rank)
 {
   int idx, idy, idz, j;
   int i0, i1;
-  _prec u1_p, u1_n, v1_p, v1_n, w1_p, w1_n;
-  _prec pfact;
+  float u1_p, u1_n, v1_p, v1_n, w1_p, w1_n;
+  float pfact;
 
   i   = i - 1;
 
-  i0=(int) tskp * floorf(((_prec) i + 1.) / (_prec) tskp);
-  i1=(int) tskp * ceilf(((_prec) i + 1.) / (_prec) tskp);
+  i0=(int) tskp * floorf(((float) i + 1.) / (float) tskp);
+  i1=(int) tskp * ceilf(((float) i + 1.) / (float) tskp);
 
-  pfact = (_prec) (i - i0) / (_prec) tskp;
+  pfact = (float) (i - i0) / (float) tskp;
 
   fprintf(stdout, "i=%d, i0=%d, i1=%d\n", i, i0, i1);
 
@@ -356,9 +356,9 @@ void errhandle(int ierr, char *where){
    if (ierr != 0) {
       fprintf(stderr, "error in %s\n", where);
       errstr=calloc(500, sizeof(char));
-      MPICHK(MPI_Error_string(ierr, errstr, &errlen));
+      MPI_Error_string(ierr, errstr, &errlen);
       fprintf(stderr, "%s", errstr);
-      MPICHK(MPI_Finalize());
+      MPI_Finalize();
    }
 }
 
@@ -366,7 +366,7 @@ void errhandle(int ierr, char *where){
 /* read time segment ouf of subvolume of AWP output.
  *  * Note: here, indices start at 0 */
 void read_awp_subvolume(MPI_File fh, int *griddims, int *extent, int *timerange, 
-    MPI_Comm comm, int seismio, _prec *buf){
+    MPI_Comm comm, int seismio, float *buf){
     int nx, ny, nz;
     int i0, i1, j0, j1, k0, k1;
     int t0, t1, nt;
@@ -407,14 +407,14 @@ void read_awp_subvolume(MPI_File fh, int *griddims, int *extent, int *timerange,
     map=(MPI_Aint*) calloc (np, sizeof(MPI_Aint));
 
     for (t=t0; t<t1; t++){
-       toff = (MPI_Aint) nel * (MPI_Aint) sizeof(_mpi_prec) * (MPI_Aint) t;
+       toff = (MPI_Aint) nel * (MPI_Aint) sizeof(MPI_FLOAT) * (MPI_Aint) t;
        
        if (seismio) { /* order in files is from bottom of mesh to top */
 	  for (k=k0; k<k1; k++){
 	    for (j=j0; j<j1; j++){
 	       blen[p] = nx1; 
 	       nskp = (MPI_Aint) k * nx * ny + (MPI_Aint) j*nx + (MPI_Aint) i0;
-	       map[p] = nskp * (MPI_Aint) sizeof(_mpi_prec) + toff;
+	       map[p] = nskp * (MPI_Aint) sizeof(MPI_FLOAT) + toff;
 	       if (map[p] < 0) fprintf(stderr, "Error.  Displacement %ld < 0\n", map[p]);
 	       p++;
 	    }
@@ -426,23 +426,23 @@ void read_awp_subvolume(MPI_File fh, int *griddims, int *extent, int *timerange,
 	       blen[p] = nx1; 
                kp = nz - k - 1;
 	       nskp = (MPI_Aint) kp * nx * ny + (MPI_Aint) j*nx + (MPI_Aint) i0;
-	       map[p] = nskp * (MPI_Aint) sizeof(_mpi_prec) + toff;
+	       map[p] = nskp * (MPI_Aint) sizeof(MPI_FLOAT) + toff;
 	       if (map[p] < 0) fprintf(stderr, "Error.  Displacement %ld < 0\n", map[p]);
 	       p++;
 	    }
 	  }
        }
     }
-    ierr=MPI_Type_create_hindexed(np, blen, map, _mpi_prec, &filetype);
+    ierr=MPI_Type_create_hindexed(np, blen, map, MPI_FLOAT, &filetype);
     errhandle(ierr, "MPI_Type_create_indexed_block");
 
     ierr=MPI_Type_commit(&filetype);
     errhandle(ierr, "MPI_Type_commit");
 
-    ierr=MPI_File_set_view(fh, disp, _mpi_prec, filetype, "native", MPI_INFO_NULL);
+    ierr=MPI_File_set_view(fh, disp, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
     errhandle(ierr, "MPI_File_set_view");
 
-    ierr=MPI_File_read_all(fh, buf, npt, _mpi_prec, MPI_STATUS_IGNORE);
+    ierr=MPI_File_read_all(fh, buf, npt, MPI_FLOAT, MPI_STATUS_IGNORE);
     errhandle(ierr, "MPI_File_read_all");
 
     ierr=MPI_Type_free(&filetype);
@@ -525,12 +525,12 @@ int read_src_ifault_4 (int rank, int READ_STEP, char *INSRC,
 	  fclose(fid);
        }
 
-       MPICHK(MPI_Bcast(fbc_ext, 6, MPI_INT, 0, MPI_COMM_WORLD));
-       MPICHK(MPI_Bcast(fbc_off, 3, MPI_INT, 0, MPI_COMM_WORLD));
-       MPICHK(MPI_Bcast(fbc_pmask, 100, MPI_CHAR, 0, MPI_COMM_WORLD));
-       MPICHK(MPI_Bcast(fbc_dim, 3, MPI_INT, 0, MPI_COMM_WORLD));
-       MPICHK(MPI_Bcast(fbc_seismio, 1, MPI_INT, 0, MPI_COMM_WORLD));
-       MPICHK(MPI_Bcast(fbc_tskp, 1, MPI_INT, 0, MPI_COMM_WORLD));
+       MPI_Bcast(fbc_ext, 6, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(fbc_off, 3, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(fbc_pmask, 100, MPI_CHAR, 0, MPI_COMM_WORLD);
+       MPI_Bcast(fbc_dim, 3, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(fbc_seismio, 1, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(fbc_tskp, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
        nbx     = nxt*coords[0] + 1 - 2*loop; 
        nby     = nyt*coords[1] + 1 - 2*loop;
@@ -662,9 +662,9 @@ int read_src_ifault_4 (int rank, int READ_STEP, char *INSRC,
       }
 
       time(&time1);
-      MPICHK(MPI_Recv(taxx+npsrc, npsrc*READ_STEP, _mpi_prec, rank+size, MPIRANKSRC+100, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-      MPICHK(MPI_Recv(tayy+npsrc, npsrc*READ_STEP, _mpi_prec, rank+size, MPIRANKSRC+101, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-      MPICHK(MPI_Recv(tazz+npsrc, npsrc*READ_STEP, _mpi_prec, rank+size, MPIRANKSRC+102, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+      MPI_Recv(taxx+npsrc, npsrc*READ_STEP, MPI_FLOAT, rank+size, MPIRANKSRC+100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(tayy+npsrc, npsrc*READ_STEP, MPI_FLOAT, rank+size, MPIRANKSRC+101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(tazz+npsrc, npsrc*READ_STEP, MPI_FLOAT, rank+size, MPIRANKSRC+102, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       time(&time2);
       fprintf(stdout, "(%d) Time for MPI_Recv(): %4.f seconds.\n", rank, difftime(time2, time1));
 
@@ -692,12 +692,12 @@ int background_velocity_reader(int rank, int size, int NST, int READ_STEP, MPI_C
    time_t time1, time2;
    int fbc_tskp;
 
-   MPICHK(MPI_Bcast(fbc_ext, 6, MPI_INT, 0, MPI_COMM_WORLD));
-   MPICHK(MPI_Bcast(fbc_off, 3, MPI_INT, 0, MPI_COMM_WORLD));
-   MPICHK(MPI_Bcast(fbc_pmask, 100, MPI_CHAR, 0, MPI_COMM_WORLD));
-   MPICHK(MPI_Bcast(fbc_dim, 3, MPI_INT, 0, MPI_COMM_WORLD));
-   MPICHK(MPI_Bcast(&fbc_seismio, 1, MPI_INT, 0, MPI_COMM_WORLD));
-   MPICHK(MPI_Bcast(&fbc_tskp, 1, MPI_INT, 0, MPI_COMM_WORLD));
+   MPI_Bcast(fbc_ext, 6, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(fbc_off, 3, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(fbc_pmask, 100, MPI_CHAR, 0, MPI_COMM_WORLD);
+   MPI_Bcast(fbc_dim, 3, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&fbc_seismio, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&fbc_tskp, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
    fprintf(stdout, "(%d) fbc_off=%d, %d, %d\n", rank, fbc_off[0], fbc_off[1], fbc_off[2]);
 
@@ -718,7 +718,7 @@ int background_velocity_reader(int rank, int size, int NST, int READ_STEP, MPI_C
    ierr=MPI_Recv(coords, 3, MPI_INT, rank-size, MPIRANKSRC+8, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
    if (npsrc > 0) color=1;
-   MPICHK(MPI_Comm_split(MCS, color, 1, &fbc_comm));
+   MPI_Comm_split(MCS, color, 1, &fbc_comm);
 
    if (npsrc > 0){
 
@@ -768,11 +768,11 @@ int background_velocity_reader(int rank, int size, int NST, int READ_STEP, MPI_C
          time(&time2);
          fprintf(stdout, "(%d) Time for reading(): %4.f seconds.\n", rank, difftime(time2, time1));
 
-         MPICHK(MPI_Send(taxx, npsrc*READ_STEP, _mpi_prec, rank-size, MPIRANKSRC+100, MPI_COMM_WORLD));
-         MPICHK(MPI_Send(tayy, npsrc*READ_STEP, _mpi_prec, rank-size, MPIRANKSRC+101, MPI_COMM_WORLD));
-         MPICHK(MPI_Send(tazz, npsrc*READ_STEP, _mpi_prec, rank-size, MPIRANKSRC+102, MPI_COMM_WORLD));
+         MPI_Send(taxx, npsrc*READ_STEP, MPI_FLOAT, rank-size, MPIRANKSRC+100, MPI_COMM_WORLD);
+         MPI_Send(tayy, npsrc*READ_STEP, MPI_FLOAT, rank-size, MPIRANKSRC+101, MPI_COMM_WORLD);
+         MPI_Send(tazz, npsrc*READ_STEP, MPI_FLOAT, rank-size, MPIRANKSRC+102, MPI_COMM_WORLD);
 
-         MPICHK(MPI_Barrier(fbc_comm));
+         MPI_Barrier(fbc_comm);
      
       }
       fprintf(stdout, "done.\n");
@@ -810,9 +810,9 @@ int ini_plane_wave(int rank, MPI_Comm MCW, char *INSRC, int NST, Grid1D* taxx, G
       fclose(fid);
    }
   
-   MPICHK(MPI_Bcast(velx, NST, MPI_FLOAT, 0, MCW));
-   MPICHK(MPI_Bcast(vely, NST, MPI_FLOAT, 0, MCW));
-   MPICHK(MPI_Bcast(velz, NST, MPI_FLOAT, 0, MCW));
+   MPI_Bcast(velx, NST, MPI_REAL, 0, MCW);
+   MPI_Bcast(vely, NST, MPI_REAL, 0, MCW);
+   MPI_Bcast(velz, NST, MPI_REAL, 0, MCW);
 
    *taxx=velx;
    *tayy=vely;
@@ -822,4 +822,3 @@ int ini_plane_wave(int rank, MPI_Comm MCW, char *INSRC, int NST, Grid1D* taxx, G
 
    return(err);
 }
-

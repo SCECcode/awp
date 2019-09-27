@@ -13,15 +13,15 @@
 #define M_PI           3.14159265358979323846
 #endif
 
-void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D qs, _prec *taumax, _prec *taumin,
+void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D qs, float *taumax, float *taumin,
 	     Grid3D tau, Grid3D weights,Grid1D coeff, 
-	     int nvar, _prec FP,  _prec FAC, _prec Q0, _prec EX, int nxt, int nyt, int nzt, int PX, int PY, int NX, int NY, 
+	     int nvar, float FP,  float FAC, float Q0, float EX, int nxt, int nyt, int nzt, int PX, int PY, int NX, int NY, 
              int NZ, int *coords, MPI_Comm MCW, int IDYNA, int NVE, int SoCalQ, char *INVEL, 
-             _prec *vse, _prec *vpe, _prec *dde)
+             float *vse, float *vpe, float *dde)
 {
   int merr;
   int i,j,k,err;
-  _prec vp,vs,dd,pi; 
+  float vp,vs,dd,pi; 
   int   rmtype[3], rptype[3], roffset[3];
   MPI_Datatype readtype;
   MPI_Status   filestatus;
@@ -51,7 +51,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
   if(!coords[0] && !coords[1]) printf("tau: %e,%e; %e,%e; %e,%e; %e,%e\n",
 				      tau[0][0][0],tau[1][0][0],tau[0][1][0],tau[1][1][0],
 				      tau[0][0][1],tau[1][0][1],tau[0][1][1],tau[1][1][1]);
-  MPICHK(MPI_Comm_rank(MCW,&rank));        
+  MPI_Comm_rank(MCW,&rank);        
   if(MEDIASTART==0)
   {
     //    *taumax = 1./(2*pi*FL);
@@ -64,9 +64,9 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
     }
     else
     {
-       vp=1500.0; // 4800.0;
-       vs=500.0; // 2800.0;
-       dd=2000.0; //2500.0;
+       vp=6000.0; // 4800.0;
+       vs=3464.0; // 2800.0;
+       dd=2670.0; //2500.0;
     }
 
     for(i=0;i<nxt+4+ngsl2;i++)
@@ -142,7 +142,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
                 printf("can't open file %s", filename);
                 return;
              }
-             if(!fread(tmpta,sizeof(_prec),nvar*nxt*nyt*nzt,file))
+             if(!fread(tmpta,sizeof(float),nvar*nxt*nyt*nzt,file))
              {
                 printf("can't read file %s", filename);
                 return;
@@ -160,34 +160,34 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
     		    roffset[0] = 0;
     		    roffset[1] = nyt*coords[1];
     		    roffset[2] = nxt*coords[0]*nvar;
-    		    err = MPI_Type_create_subarray(3, rmtype, rptype, roffset, MPI_ORDER_C, _mpi_prec, &readtype);
+    		    err = MPI_Type_create_subarray(3, rmtype, rptype, roffset, MPI_ORDER_C, MPI_FLOAT, &readtype);
 		    if(err != MPI_SUCCESS){
-		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
 		      printf("%d) ERROR! MPI-IO mesh reading create subarray: %s\n",rank,mpiErrStr);
 		    }
     		    err = MPI_Type_commit(&readtype);
 		    if(err != MPI_SUCCESS){
-		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
 		      printf("%d) ERROR! MPI-IO mesh reading commit: %s\n",rank,mpiErrStr);
 		    }
 		    err = MPI_File_open(MCW,filename,MPI_MODE_RDONLY,MPI_INFO_NULL,&fh);
 		    if(err != MPI_SUCCESS){
-		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
 		      printf("%d) ERROR! MPI-IO mesh reading file open: %s\n",rank,mpiErrStr);
 		    }
-		    err = MPI_File_set_view(fh, 0, _mpi_prec, readtype, "native", MPI_INFO_NULL);
+		    err = MPI_File_set_view(fh, 0, MPI_FLOAT, readtype, "native", MPI_INFO_NULL);
 		    if(err != MPI_SUCCESS){
-		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
 		      printf("%d) ERROR! MPI-IO mesh reading file set view: %s\n",rank,mpiErrStr);
 		    }
-		    err = MPI_File_read_all(fh, tmpta, nvar*nxt*nyt*nzt, _mpi_prec, &filestatus);
+		    err = MPI_File_read_all(fh, tmpta, nvar*nxt*nyt*nzt, MPI_FLOAT, &filestatus);
 		    if(err != MPI_SUCCESS){
-		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
 		      printf("%d) ERROR! MPI-IO mesh reading file read: %s\n",rank,mpiErrStr);
 		    }
 		    err = MPI_File_close(&fh);
 		    if(err != MPI_SUCCESS){
-		      MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+		      MPI_Error_string(err, mpiErrStr, &mpiErrStrLen);
 		      printf("%d) ERROR! MPI-IO mesh reading file close: %s\n",rank,mpiErrStr);
 		    }
 		    if(!rank) printf("Media file is read using MPI-IO\n");
@@ -207,7 +207,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
                     tmpvs[i][j][k]!=tmpvs[i][j][k] ||
                     tmpdd[i][j][k]!=tmpdd[i][j][k]){
 		  printf("%d) tmpvp,vs,dd is NAN!\n",rank);
-                      MPICHK(MPI_Abort(MPI_COMM_WORLD,1));
+                      MPI_Abort(MPI_COMM_WORLD,1);
                 }
          }
          //printf("%d) vp,vs,dd[0^3]=%f,%f,%f\n",rank,tmpvp[0][0][0],
@@ -230,8 +230,8 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
           }
       }
       
-      _prec w0=0.0f, ww1=0.0f, w2=0.0f, tmp1=0.0f, tmp2=0.0f;
-      _prec qpinv=0.0f, qsinv=0.0f, vpvs=0.0f;
+      float w0=0.0f, ww1=0.0f, w2=0.0f, tmp1=0.0f, tmp2=0.0f;
+      float qpinv=0.0f, qsinv=0.0f, vpvs=0.0f;
       if(NVE==1 || NVE==3)
       {
          w0=2*pi*FP;
@@ -250,12 +250,12 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
       vse[1] = -1.0e10;
       vpe[1] = -1.0e10;
       dde[1] = -1.0e10;
-      _prec facex = (_prec)pow(FAC,EX);
-      _prec mu1, denom;
-      _prec val[2];
+      float facex = (float)pow(FAC,EX);
+      float mu1, denom;
+      float val[2];
       int ii,jj,kk,iii,jjj,kkk,num;
-      _prec weights_los[2][2][2];
-      _prec weights_lop[2][2][2];
+      float weights_los[2][2][2];
+      float weights_lop[2][2][2];
       double complex value;
       double complex sqrtm1;
       sqrtm1=1.0 *I;
@@ -391,7 +391,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 	    // QF - end  
 
             if (tmpvs[i][j][k] == 0.f) {
-                //tmpvs[i][j][k] = 1.000;
+                tmpvs[i][j][k] = 0.001;
                 tmpsq[i][j][k] = 50.;
                 tmppq[i][j][k] = 100.;
             }
@@ -580,16 +580,16 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
            }
         }
 
-      _prec tmpvse[2],tmpvpe[2],tmpdde[2];
-      merr = MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MAX,MCW);
-      merr = MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MAX,MCW);
-      merr = MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MAX,MCW);
+      float tmpvse[2],tmpvpe[2],tmpdde[2];
+      merr = MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MAX,MCW);
+      merr = MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MAX,MCW);
+      merr = MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MAX,MCW);
       vse[1] = tmpvse[1];
       vpe[1] = tmpvpe[1];
       dde[1] = tmpdde[1];
-      merr = MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MIN,MCW);
-      merr = MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MIN,MCW);
-      merr = MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MIN,MCW);
+      merr = MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MIN,MCW);
+      merr = MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MIN,MCW);
+      merr = MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MIN,MCW);
       vse[0] = tmpvse[0];
       vpe[0] = tmpvpe[0];
       dde[0] = tmpdde[0];
@@ -601,11 +601,11 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
   return;
 }
 
-_prec*  matmul3(_prec *a, _prec *b){
+float* matmul3(float *a, float *b){
    int i, j, k;
-   _prec *c;
+   float *c;
    
-   c=(_prec* ) calloc(9, sizeof(_prec));
+   c=(float*) calloc(9, sizeof(float));
    for (i=0; i<3; i++){
       for (j=0; j<3; j++){
          for (k=0; k<3; k++) c[i*3+j]+=a[i*3+k]*b[k*3+j];
@@ -614,11 +614,11 @@ _prec*  matmul3(_prec *a, _prec *b){
    return(c);
 }
 
-_prec*  transpose(_prec *a){
-   _prec *b;
+float* transpose(float *a){
+   float *b;
    int k, l;
 
-   b=(_prec* ) calloc(9, sizeof(_prec));
+   b=(float*) calloc(9, sizeof(float));
    for (l=0; l<3; l++){
       for (k=0; k<3; k++){
           b[l*3+k]=a[k*3+l];
@@ -628,15 +628,15 @@ _prec*  transpose(_prec *a){
    return(b);
 }
 
-_prec*  rotate_principal(_prec sigma1, _prec sigma2, _prec sigma3, _prec *strike, _prec *dip){
+float* rotate_principal(float sigma1, float sigma2, float sigma3, float *strike, float *dip){
 
-      _prec alpha[3], beta[3];
-      _prec *ss, *Rz, *ssp;
+      float alpha[3], beta[3];
+      float *ss, *Rz, *ssp;
       int k;
 
-      ssp=(_prec* ) calloc(9, sizeof(_prec));
-      ss=(_prec* ) calloc(9, sizeof(_prec));
-      Rz=(_prec* ) calloc(9, sizeof(_prec));
+      ssp=(float*) calloc(9, sizeof(float));
+      ss=(float*) calloc(9, sizeof(float));
+      Rz=(float*) calloc(9, sizeof(float));
 
       ss[0] = sigma1;
       ss[4] = sigma2;
@@ -668,11 +668,11 @@ _prec*  rotate_principal(_prec sigma1, _prec sigma2, _prec sigma3, _prec *strike
 }
 
 
-void tausub( Grid3D tau, _prec taumin,_prec taumax) 
+void tausub( Grid3D tau, float taumin,float taumax) 
 {
   int idx, idy, idz;
-  _prec tautem[2][2][2];
-  _prec tmp;
+  float tautem[2][2][2];
+  float tmp;
 
   tautem[0][0][0]=1.0;
   tautem[1][0][0]=6.0;
@@ -698,7 +698,7 @@ void tausub( Grid3D tau, _prec taumin,_prec taumax)
 }
 
 
-void weights_sub(Grid3D weights,Grid1D coeff, _prec ex, _prec fac){
+void weights_sub(Grid3D weights,Grid1D coeff, float ex, float fac){
 
   int i,j,k;
 
@@ -1123,8 +1123,8 @@ void init_texture(int nxt,  int nyt,  int nzt,  Grid3D tau1,  Grid3D tau2,  Grid
   return;
 }
 
-void hoek_brown(_prec sigma_0, _prec sigma_ci, _prec GSI, _prec mi, _prec D, 
-    int tunnel, _prec *phi, _prec *cohes){
+void hoek_brown(float sigma_0, float sigma_ci, float GSI, float mi, float D, 
+    int tunnel, float *phi, float *cohes){
 
 
    double mb, s, a, sigma_cm, sigma_3max, sigma_3n, tmp;
@@ -1156,38 +1156,38 @@ void hoek_brown(_prec sigma_0, _prec sigma_ci, _prec GSI, _prec mi, _prec D,
       ((1.+a)*(2.+a)* sqrt(1.+(6*a*mb*pow(s+mb*sigma_3n,a-1.))
       /((1.+a)*(2.+a))));
 
-   *phi=(_prec)  phi2;
-   *cohes=(_prec) cohes2;
+   *phi=(float)  phi2;
+   *cohes=(float) cohes2;
 
 }
 
 // for SAF dynamic rupture simulations
 void inidrpr_hoekbrown_light(int nxt, int nyt, int nzt, int nve, int *coords,
-    _prec dh, int rank, 
+    float dh, int rank, 
     Grid3D mu, Grid3D lam, Grid3D d1, 
     Grid3D sigma2,
     Grid3D cohes, Grid3D phi, 
-    _prec *fmajor, _prec *fminor, _prec *strike, _prec *dip, MPI_Comm MCW, int d_i){
+    float *fmajor, float *fminor, float *strike, float *dip, MPI_Comm MCW, int d_i){
 
   int i,j,k;
   // free surface index
   int sInd = nzt+align-1;
-  _prec depth, tvp, itime;
-  //_prec strike[3], dip[3], *ssp;
+  float depth, tvp, itime;
+  //float strike[3], dip[3], *ssp;
 
-  _prec sigma_ci, GSI, mi, D=0;
+  float sigma_ci, GSI, mi, D=0;
   int sigma_ci_type, tunnel=1;
-  _prec gsi100, GSI_d;
+  float gsi100, GSI_d;
   int fltpos;
-  /*_prec gwt;*/
+  /*float gwt;*/
   int ypos;
-  _prec fltdist;
-  _prec GSI_wallrock, GSI_core;
+  float fltdist;
+  float GSI_wallrock, GSI_core;
 
   FILE *fid;
   char *nline=NULL;
   size_t linecap;
-  _prec tvs;
+  float tvs;
  
   /* the intermediate principal stress is always assumed vertical*/
   strike[1] = 0.;
@@ -1204,7 +1204,7 @@ void inidrpr_hoekbrown_light(int nxt, int nyt, int nzt, int nve, int *coords,
      fid=fopen("nonlinear.dat", "r");
      if (fid == NULL) {
         perror("could not open nonlinear.dat");
-        MPICHK(MPI_Finalize());
+        MPI_Finalize();
      }
      getline(&nline, &linecap, fid);
      sscanf(nline, "%f %f", strike, strike+2);
@@ -1240,23 +1240,23 @@ void inidrpr_hoekbrown_light(int nxt, int nyt, int nzt, int nve, int *coords,
         fprintf(stdout, "using eq. %d in Chang et al. (2006) for sigma_ci\n", sigma_ci_type);
      else {
         fprintf(stdout, "Error. sigma_ci_type must be 0, 3 or 12.\n");
-        MPICHK(MPI_Finalize());
+        MPI_Finalize();
      }
      fprintf(stdout, "fault position: %d\n", fltpos);
      /*fprintf(stdout, "ground water table: %d\n", gwt);*/
   }
 
-  MPICHK(MPI_Bcast(strike, 3, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(dip, 3, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(fmajor, 1, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(fminor, 1, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(&sigma_ci_type, 1, MPI_INT, 0, MCW));
-  MPICHK(MPI_Bcast(&sigma_ci, 1, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(&GSI, 1, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(&mi, 1, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(&gsi100, 1, MPI_FLOAT, 0, MCW));
-  MPICHK(MPI_Bcast(&fltpos, 1, MPI_INT, 0, MCW));
-  /*MPI_Bcast(&gwt, 1, _mpi_prec, 0, MCW);*/
+  MPI_Bcast(strike, 3, MPI_REAL, 0, MCW);
+  MPI_Bcast(dip, 3, MPI_REAL, 0, MCW);
+  MPI_Bcast(fmajor, 1, MPI_REAL, 0, MCW);
+  MPI_Bcast(fminor, 1, MPI_REAL, 0, MCW);
+  MPI_Bcast(&sigma_ci_type, 1, MPI_INT, 0, MCW);
+  MPI_Bcast(&sigma_ci, 1, MPI_REAL, 0, MCW);
+  MPI_Bcast(&GSI, 1, MPI_REAL, 0, MCW);
+  MPI_Bcast(&mi, 1, MPI_REAL, 0, MCW);
+  MPI_Bcast(&gsi100, 1, MPI_REAL, 0, MCW);
+  MPI_Bcast(&fltpos, 1, MPI_INT, 0, MCW);
+  /*MPI_Bcast(&gwt, 1, MPI_FLOAT, 0, MCW);*/
 
   for(j=2;j<nyt+2+ngsl2;j++)
     for(i=2;i<nxt+2+ngsl2;i++){
@@ -1304,7 +1304,7 @@ void inidrpr_hoekbrown_light(int nxt, int nyt, int nzt, int nve, int *coords,
         }
 
         ypos = coords[1] * nyt + j - 2 - ngsl;
-        fltdist = fabsf((_prec) ypos + 0.5 - (_prec) fltpos) * dh;
+        fltdist = fabsf((float) ypos + 0.5 - (float) fltpos) * dh;
         if (fltdist < 225.) {
           GSI_d = GSI_core;
         }
@@ -1354,9 +1354,9 @@ return;
 
 
 /* computes rotation matrix used for stress field computation later*/
-void rotation_matrix(_prec *strike, _prec *dip, _prec *Rz, _prec *RzT){
+void rotation_matrix(float *strike, float *dip, float *Rz, float *RzT){
    int k;
-   _prec alpha[3], beta[3];
+   float alpha[3], beta[3];
 
    for (k=0; k<3; k++){
       alpha[k] = strike[k] / 180. * M_PI;
@@ -1462,4 +1462,3 @@ int checkmesh_ww(int nxtl, int nytl, int nztl, int nxth, int nyth, int nzth, Gri
 
    return(corrected);
 }
-

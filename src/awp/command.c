@@ -48,9 +48,6 @@
 *  CHKFILE      <STRING>      -c              Checkpoint statistics file to write to                           *
 *  FOLLOWBATHY  <STRING>                      surface output follows ocean bathymetry
 *  INTOPO       <STRING>                      topography input file
-*
-*  CHECKSUM     <STRING>                      Checksum file
-*
 *  SOURCEFILE   <STRING>                      Source input file that uses
 *                                                coordinates instead of indices
 *                                                to specify the position
@@ -129,8 +126,6 @@ const int   def_FOLLOWBATHY     = 0;
 
 const char def_INTOPO[IN_FILE_LEN] = "input/topography";
 
-const char def_CHECKSUM[IN_FILE_LEN] = "output_ckp/checksum";
-
 const char def_SOURCEFILE[IN_FILE_LEN] = "";
 const char def_RECVFILE[IN_FILE_LEN] = "";
 
@@ -155,7 +150,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              _prec *FAC, _prec *Q0, _prec *EX, _prec *FP, int *IDYNA,
              int *SoCalQ, char *INSRC, char *INVEL, char *OUT, char *INSRC_I2,
              char *CHKFILE, int *NGRIDS, int *FOLLOWBATHY, char *INTOPO,
-             int *USETOPO, char *CHECKSUM, int *USECHECKSUM, char *SOURCEFILE,
+             int *USETOPO, char *SOURCEFILE,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE)
 {
         int p;
@@ -269,7 +264,6 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
             {"CHKFILE", required_argument, NULL, 'c'},
             {"FOLLOWBATHY", required_argument, NULL, 7},
             {"INTOPO", required_argument, NULL, 103},
-            {"CHECKSUM", required_argument, NULL, 106},
             {"SOURCEFILE", required_argument, NULL, 107},
             {"RECVFILE", required_argument, NULL, 109},
         };
@@ -424,10 +418,6 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                 strcpy(INTOPO, optarg);
                                 *USETOPO = 1;
                                 break;
-                        case 106:
-                                strcpy(CHECKSUM, optarg);
-                                *USECHECKSUM = 1;
-                                break;
                         case 107:
                                 strcpy(SOURCEFILE, optarg);
                                 *USESOURCEFILE = 1;
@@ -497,9 +487,6 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                     "\n\t[(-104 | --FOLLOWBATHY) 0|1]\n\n");  // FIXME: Looks strange, I think id 104 is unused. Id 7 is used earlier <ooreilly@usc.edu>
                                 printf(
                                     "\n\t[(-103 | --INTOPO) <topography "
-                                    "file>]\n\n");
-                                printf(
-                                    "\n\t[(-106 | --CHECKSUM) <checksum "
                                     "file>]\n\n");
                                 printf(
                                     "\n\t[(-107 | --SOURCEFILE) <source "

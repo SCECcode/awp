@@ -305,6 +305,14 @@ __global__ void print_const(int ngrids)
     }*/
 }
 
+void print_const_H(int ngrids)
+{
+    dim3 block (1, 1, 1);
+    dim3 grid (1, 1, 1);
+    print_const<<<grid, block, 0>>>(ngrids);
+    return;
+}
+
 
 extern "C"
 void dvelcx_H_opt(float* u1,    float* v1,    float* w1,    
@@ -350,7 +358,6 @@ void update_bound_y_H(float* u1,   float* v1, float* w1, float* f_u1,      float
      return;
 }
 
-extern "C"
 void dstrqc_H(float* xx,       float* yy,     float* zz,    float* xy,    float* xz, float* yz,
               float* r1,       float* r2,     float* r3,    float* r4,    float* r5, float* r6,
               float* u1,       float* v1,     float* w1,    float* lam,   float* mu, float* qp,float* coeff, 
