@@ -3909,7 +3909,6 @@ __global__ void addplanesrc_cu(int n, int dim,  int NST, float* mu, float* lambd
         return;
 }
 
-extern "C"
 void velbuffer_H(const float *u1, const float *v1, const float *w1, const float *neta,
        float *Bufx, float *Bufy, float *Bufz, float *Bufeta, int NVE, 
        int nbgx, int nedx, int nskpx, int nbgy, int nedy, int nskpy, int nbgz, int nedz, int nskpz,
