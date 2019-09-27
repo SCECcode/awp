@@ -958,8 +958,7 @@ drprecpc_calc_opt(float *xx, float *yy, float *zz,
   register float SDxx, SDyy, SDzz;
   register float iyldfac, Tv, sigma_m, taulim, taulim2, rphi;
   register float xm, iixx, iiyy, iizz;
-  register float mu_, secinv, sqrtSecinv;
-  register int   jj,kk;
+  register float secinv, sqrtSecinv;
 
   // Compute initial stress on GPU (Daniel)
   register float ini[9], ini_ip1[9];
@@ -975,9 +974,6 @@ drprecpc_calc_opt(float *xx, float *yy, float *zz,
   i    = e_i;
   pos  = i*d_slice_1[d_i]+j*d_yline_1[d_i]+k;
 
-  kk   = k - align;
-  jj   = j - (2+ngsl);
-
   srfpos = d_nzt[d_i] + align - 1;
   depth = (float) (srfpos - k) * d_DH[d_i];
 
@@ -987,22 +983,17 @@ drprecpc_calc_opt(float *xx, float *yy, float *zz,
   //printf("k=%d, depth=%f, pfluid=%e\n", k, depth, pfluid);
 
   float sigma2_ip1, sigma2_i;
-  float xy_ip1, xy_i, xz_ip1, xz_i, yz_ip1, yz_i;
+  float xy_ip1, xy_i, xz_ip1, xz_i;
   float mu_ip1, mu_i;
-  float xz_km1, xz_ip1km1, xy_jm1, xy_ip1jm1;
   sigma2_i = sigma2[pos + d_slice_1[d_i]];
   xy_i    = xy   [pos + d_slice_1[d_i]];
   xz_i    = xz   [pos + d_slice_1[d_i]];
   mu_i    = mu   [pos + d_slice_1[d_i]];
-  xz_km1  = xz   [pos + d_slice_1[d_i] - 1];
-  xy_jm1  = xy   [pos + d_slice_1[d_i] - d_yline_1[d_i]];
   for(i=e_i;i>=s_i;--i){
     sigma2_ip1 = sigma2_i;
     xy_ip1    = xy_i;
     xz_ip1    = xz_i;
     mu_ip1    = mu_i;
-    xz_ip1km1 = xz_km1;
-    xy_ip1jm1 = xy_jm1;
 
     pos_im1 = pos - d_slice_1[d_i];
     pos_ip1 = pos + d_slice_1[d_i];
@@ -1014,9 +1005,7 @@ drprecpc_calc_opt(float *xx, float *yy, float *zz,
 
     sigma2_i = sigma2[pos];
     xy_i    = xy   [pos];
-    xy_jm1  = xy   [pos_jm1];
     xz_i    = xz   [pos];
-    xz_km1  = xz   [pos_km1];
     mu_i    = mu   [pos];
 
     // mu_ = mu[pos];
@@ -1189,6 +1178,8 @@ __global__ void dvelcy(float* u1,    float* v1,    float* w1,    float* xx,  flo
     register float f_yy,    yy_jp2,  yy_jp1,  yy_jm1;
     register float f_yz,    yz_jp1,  yz_jm1,  yz_jm2;
     register float f_d1,    f_d2,    f_d3,    f_dcrj, f_dcrjx, f_dcrjz, f_xz;
+
+    k = 0;
 
     if (k > d_nzt[d_i]+align-3 && d_i > 0) return;
 
@@ -1664,8 +1655,7 @@ __global__ void drprecpc_app(float *xx, float *yy, float *zz,
     register int pos_im1jp1,pos_im1kp1,pos_ip1jp1;
     register int pos_ip1kp1,pos_jp1kp1,pos_ip1jp1kp1;
     register float iyldfac; 
-    register float xm, tst, iist;
-    register float mu_;
+    register float iist;
     register float Sxx, Syy, Szz;
     register float iixx, iiyy, iizz, SDxx, SDyy, SDzz, sigma_m;
     register float ini[9], ini_ip1[9], ini_kp1[9], ini_ip1kp1[9];
@@ -1704,7 +1694,6 @@ __global__ void drprecpc_app(float *xx, float *yy, float *zz,
       pos_jp1kp1 = pos_jp1 + 1;
       pos_ip1jp1kp1 = pos_ip1 + d_yline_1[d_i] + 1;
 
-      mu_ = mu[pos];
 
 //start drprnn
       if(yldfac[pos] < 1.){
@@ -1738,9 +1727,7 @@ __global__ void drprecpc_app(float *xx, float *yy, float *zz,
         rotate_principal(sigma2[pos_kp1], pfluid_kp1, ini_kp1);
 
         iist = 0.5*(ini[2] + ini_kp1[2]);
-        tst = xz[pos];
         xz[pos] = (xz[pos] + iist)*iyldfac - iist;
-        xm = 2./(mu_+mu[pos_kp1]);
       }
 // end drprxz / start drpryz
       iyldfac = 0.25*(yldfac[pos] + yldfac[pos_jp1]
@@ -1761,11 +1748,7 @@ __global__ void drprecpc_app(float *xx, float *yy, float *zz,
             + ini_jp1[5] + ini_ip1jp1[5]
             + ini_jp1kp1[5] + ini_ip1jp1kp1[5]);
 
-        tst = yz[pos];
         yz[pos] = (yz[pos] + iist)*iyldfac - iist;
-        xm = 8./(mu_ + mu[pos_ip1] + mu[pos_kp1]
-            + mu[pos_ip1kp1] + mu[pos_jp1] + mu[pos_ip1jp1]
-            + mu[pos_jp1kp1] + mu[pos_ip1jp1kp1]);
       }
 // end drpryz / start drprxy
       iyldfac = 0.25*(yldfac[pos] + yldfac[pos_jp1]
@@ -1774,9 +1757,7 @@ __global__ void drprecpc_app(float *xx, float *yy, float *zz,
         rotate_principal(sigma2[pos], pfluid, ini);
         rotate_principal(sigma2[pos_jp1], pfluid, ini_jp1);
         iist = 0.5*(ini[1] + ini_jp1[1]);
-        tst = xy[pos];
         xy[pos] = (xy[pos] + iist)*iyldfac - iist;
-        xm = 2./(mu_ + mu[pos_jp1]);
       } 
 
       pos = pos_im1;
@@ -1829,13 +1810,10 @@ void frcvel_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  int
        block.x = 256;
        grid.x  = int((npsrc+255)/256);
     }
-    cudaError_t cerr;
     CUCHK(cudaGetLastError());
-    //if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc before kernel: %s\n",cudaGetErrorString(cerr));
     frcvel_cu<<<grid, block, 0, St>>>(i,  READ_STEP, dim, psrc, npsrc, tskp, axx, ayy, azz, axz, ayz, axy,
                                       u1, v1, w1, ymin, ymax, d_i);
     CUCHK(cudaGetLastError());
-    //if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc after kernel: %s\n",cudaGetErrorString(cerr));
     return;
 }
 
@@ -1847,7 +1825,6 @@ __global__ void frcvel_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
         register int i0, i1;
         register float u1_p, u1_n, v1_p, v1_n, w1_p, w1_n;
         register float u1_i, v1_i, w1_i, pfact;
-        /*register int pos_jm1, pos_jp1, pos_jm2;*/
         bool abvmin, blwmax;
  
         j = blockIdx.x*blockDim.x+threadIdx.x;
@@ -1956,18 +1933,15 @@ void fvel_H(float* u1, float* v1, float* w1, cudaStream_t St, float* lam_mu, int
 __global__ void fvel (float* u1, float* v1, float* w1, float* lam_mu, int NX, int rankx, int ranky, int s_i, int e_i, int s_j)
 {
     register int i, j, k;
-    //register float w1_im1, w1_im2, u1_ip1, f_u1, f_v1, f_w1;
-    //register int pos, pos_km1, pos_kp1, pos_kp2, pos_jm1, pos_jp1, pos_im1;
     register int g_i;
     register float vs1, vs2;
 
-    register int   pos,     pos_ip1, pos_im2, pos_im1;
-    register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
-    register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
-    register int   pos_ik1, pos_jk1, pos_ijk, pos_ijk1,f_ww;
+    register int   pos,     pos_im2, pos_im1;
+    register int   pos_km1, pos_kp1;
+    register int   pos_jm1, pos_jp1;
 
-    register float f_u1, u1_ip1, u1_ip2, u1_im1;
-    register float f_v1, v1_im1, v1_ip1, v1_im2;
+    register float f_u1, u1_ip1, u1_im1;
+    register float f_v1, v1_im1, v1_im2;
     register float f_w1, w1_im1, w1_im2, w1_ip1;
 
     k    = d_nzt[0]+align-1;
@@ -1987,27 +1961,16 @@ __global__ void fvel (float* u1, float* v1, float* w1, float* lam_mu, int NX, in
 
     for(i=e_i;i>=s_i;i--)
     {
-        pos_km2  = pos-2;
         pos_km1  = pos-1;
         pos_kp1  = pos+1;
-        pos_kp2  = pos+2;
-        pos_jm2  = pos-d_yline_2[0];
         pos_jm1  = pos-d_yline_1[0];
         pos_jp1  = pos+d_yline_1[0];
-        pos_jp2  = pos+d_yline_2[0];
         pos_im2  = pos-d_slice_2[0];
         pos_im1  = pos-d_slice_1[0];
-        pos_ip1  = pos+d_slice_1[0];
-        pos_jk1  = pos-d_yline_1[0]-1;
-        pos_ik1  = pos+d_slice_1[0]-1;
-        pos_ijk  = pos+d_slice_1[0]-d_yline_1[0];
-        pos_ijk1 = pos+d_slice_1[0]-d_yline_1[0]-1;
 
-        u1_ip2   = u1_ip1;
         u1_ip1   = f_u1;
         f_u1     = u1_im1;
         u1_im1   = u1[pos_im1];
-        v1_ip1   = f_v1;
         f_v1     = v1_im1;
         v1_im1   = v1_im2;
         v1_im2   = v1[pos_im2];
@@ -2244,10 +2207,9 @@ __global__ void update_yldfac_data_y(float* yldfac, float *buf, int rank, int fl
     register int i, j, k, pos, bpos;
     register int b_slice_1, b_yline_1;
     register int ys, ye, xs, zs;
-    register int nxt, nyt, nzt, slice_1, yline_1;
+    register int nyt, nzt, slice_1, yline_1;
 
     nyt = d_nyt[d_i];
-    nxt = d_nxt[d_i];
     nzt = d_nzt[d_i];
     slice_1 = d_slice_1[d_i];
     yline_1 = d_yline_1[d_i];
@@ -2860,10 +2822,9 @@ __device__ float bgcaccess(float *dsub, int varpos, float *buf_L, float *buf_R, 
 __global__ void swap(float * xxl, float* yyl, float* zzl, float* xyl,float* xzl,float* yzl,float* u1l, float* v1l, float* w1l,
                      float * xxh, float* yyh, float* zzh, float* xyh, float* xzh, float* yzh,float* u1h, float* v1h, float* w1h, 
                      float *buf_L, float *buf_R, float *buf_F, float *buf_B, int rank, int d_i) {
-    register int i,j,k,ih,jh,kh,posl,posh,ii,jj,poshij;
+    register int i,j,k,ih,jh,kh,posl,ii,jj;
     register float sum1, sum2, sum3;
     //register int b_slice_1, b_yline_1;
-    register long int b_offset, bpos, bposij;
     //register int zs=2, ze=7;
     register double ttlwght=0.;
 
@@ -3038,10 +2999,9 @@ __global__ void swap(float * xxl, float* yyl, float* zzl, float* xyl,float* xzl,
 __global__ void swap3(float * xxl, float* yyl, float* zzl, float* xyl,float* xzl,float* yzl,float* u1l, float* v1l, float* w1l,
                      float * xxh, float* yyh, float* zzh, float* xyh, float* xzh, float* yzh,float* u1h, float* v1h, float* w1h, 
                      float *buf_L, float *buf_R, float *buf_F, float *buf_B, int rank, int d_i) {
-    register int i,j,k,ih,jh,kh,posl,posh,ii,jj,kk,poshij;
+    register int i,j,k,ih,jh,kh,posl,ii,jj,kk;
     register float sum1, sum2, sum3;
     //register int b_slice_1, b_yline_1;
-    register long int b_offset, bpos, bposij;
     //register int zs=2, ze=7;
     register double ttlwght2=0., ttlwght3=0., ttlwght4=0.;
     register int wwl_kk2=1, wwl_kk3, wwl_kk4;
@@ -3774,8 +3734,6 @@ __global__ void addkinsrc_cu(int i, int dim,    int* psrc,  int npsrc, float* mu
         register float slip, ruptime, risetime, strike, dip, rake, area;
 
         register int READ_STEP = 2;
-        register double *stff[MAXFILT];
-        int n;
 
         j = blockIdx.x*blockDim.x+threadIdx.x;
         if(j >= npsrc) return;
