@@ -302,9 +302,11 @@ int main(int argc,char **argv)
      #endif
     #endif
 
-    MPI_Init(&argc,&argv);
-    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-    MPI_Comm_size(MPI_COMM_WORLD,&size_tot);
+    MPICHK(MPI_Init(&argc,&argv));
+     MPICHK(MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN));
+    MPICHK(MPI_Comm_rank(MPI_COMM_WORLD,&rank));
+    MPICHK(MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN));
+    MPICHK(MPI_Comm_size(MPI_COMM_WORLD,&size_tot));
 
     if (rank==0) fprintf(stdout, "AWP-ODC-DM: Number of grid resolutions = %d\n", ngrids);
     fflush(stdout);
@@ -312,7 +314,7 @@ int main(int argc,char **argv)
     #ifndef NOBGIO
     if ((size_tot % 3) != 0){
        if (rank==0) fprintf(stderr, "Error. Number of CPUs %d must be divisible by 3.\n", size_tot);
-       MPI_Finalize();
+       MPICHK(MPI_Finalize());
        return(0);
     }
     size = size_tot / 3;
@@ -320,35 +322,35 @@ int main(int argc,char **argv)
     if ((NX % PX) != 0) {
         if (rank==0) fprintf(stderr, "NX on grid %d (%d) is not divisible by PX (%d)\n", 
            ngrids-1, NX, PX);
-        MPI_Finalize();
+        MPICHK(MPI_Finalize());
         return(0);
     }
 
     if ((NY % PY) != 0) {
         if (rank==0) fprintf(stderr, "NY on grid %d (%d) is not divisible by PY (%d)\n", 
            ngrids-1, NY, PY);
-        MPI_Finalize();
+        MPICHK(MPI_Finalize());
     }
 
-    MPI_Comm_dup(MPI_COMM_WORLD, &MCT );
+    MPICHK(MPI_Comm_dup(MPI_COMM_WORLD, &MCT ));
     /* The communicator MCW includes all ranks involved in GPU computations */
     /* colors for MPI_Comm_split: 0=launches kernels; 1=source I/O for IFAULT=4; 2=time series output*/
     if (rank < size) ranktype=0;
     else if (rank < size*2) ranktype=1;
     else ranktype=2;
-    MPI_Comm_split(MCT, ranktype, 0, &MCW);
-    MPI_Comm_split(MCT, ranktype, 1, &MCS);
-    MPI_Comm_split(MCT, ranktype, 2, &MCI);
+    MPICHK(MPI_Comm_split(MCT, ranktype, 0, &MCW));
+    MPICHK(MPI_Comm_split(MCT, ranktype, 1, &MCS));
+    MPICHK(MPI_Comm_split(MCT, ranktype, 2, &MCI));
 
     for (p=0; p<ngrids; p++) count_y_yldfac[p] = count_x_yldfac[p] = 0;
 
-    MPI_Barrier(MCT);
+    MPICHK(MPI_Barrier(MCT));
 
     /* Business as usual for these ranks */
     if (ranktype==0) {
     #else
     size = size_tot ;
-    MPI_Comm_dup(MPI_COMM_WORLD, &MCW );
+    MPICHK(MPI_Comm_dup(MPI_COMM_WORLD, &MCW ));
     #endif
 
     grdfct[ngrids-1]=1;
@@ -369,7 +371,7 @@ int main(int argc,char **argv)
 	      fprintf(stderr, "NZT = %d, BLOCK_SIZE_Z=%d\n", nzt[p], BLOCK_SIZE_Z);
 	      fprintf(stderr, "Aborting.  Please change NZT or change BLOCK_SIZE_Z in pmcl3d_cons.h and recompile.\n");
 	  }
-	  MPI_Finalize();
+	  MPICHK(MPI_Finalize());
 	  return(0);
        }
     }
@@ -389,6 +391,8 @@ int main(int argc,char **argv)
     err       = MPI_Cart_create(MCW, 2, dim, period, reorder, &MC1);
     err       = MPI_Cart_shift(MC1, 0,  1,  &x_rank_L, &x_rank_R );
     err       = MPI_Cart_shift(MC1, 1,  1,  &y_rank_F, &y_rank_B ); 
+    err       = MPI_Cart_coords(MC1, rank, 2, coord);
+    err       = MPI_Barrier(MCW);
 
     // If any neighboring rank is out of bounds, then MPI_Cart_shift sets the
     // destination argument to a negative number. We use the convention that -1 
@@ -398,8 +402,6 @@ int main(int argc,char **argv)
     if (y_rank_F < 0) y_rank_F = -1;
     if (y_rank_B < 0) y_rank_B = -1;   
 
-    err       = MPI_Cart_coords(MC1, rank, 2, coord);
-    err       = MPI_Barrier(MCW);
     rank_gpu = init_gpu_rank(rank);
 
 printf("\n\nrank=%d) RS=%d, RSG=%d, NST=%d, IF=%d\n\n\n", 
@@ -444,14 +446,14 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     }
 
     #ifndef NOBGIO
-    MPI_Send(rec_nxt, ngrids, MPI_INT, rank+2*size, MPIRANKIO, MPI_COMM_WORLD);
-    MPI_Send(rec_nyt, ngrids, MPI_INT, rank+2*size, MPIRANKIO+1, MPI_COMM_WORLD);
-    MPI_Send(rec_nzt, ngrids, MPI_INT, rank+2*size, MPIRANKIO+2, MPI_COMM_WORLD);
-    MPI_Send(rec_NX, ngrids, MPI_INT, rank+2*size, MPIRANKIO+3, MPI_COMM_WORLD);
-    MPI_Send(rec_NY, ngrids, MPI_INT, rank+2*size, MPIRANKIO+4, MPI_COMM_WORLD);
-    MPI_Send(rec_NZ, ngrids, MPI_INT, rank+2*size, MPIRANKIO+5, MPI_COMM_WORLD);
-    MPI_Send(grid_output, ngrids, MPI_INT, rank+2*size, MPIRANKIO+6, MPI_COMM_WORLD);
-    MPI_Send(displacement, ngrids, MPI_OFFSET, rank+2*size, MPIRANKIO+7, MPI_COMM_WORLD);
+    MPICHK(MPI_Send(rec_nxt, ngrids, MPI_INT, rank+2*size, MPIRANKIO, MPI_COMM_WORLD));
+    MPICHK(MPI_Send(rec_nyt, ngrids, MPI_INT, rank+2*size, MPIRANKIO+1, MPI_COMM_WORLD));
+    MPICHK(MPI_Send(rec_nzt, ngrids, MPI_INT, rank+2*size, MPIRANKIO+2, MPI_COMM_WORLD));
+    MPICHK(MPI_Send(rec_NX, ngrids, MPI_INT, rank+2*size, MPIRANKIO+3, MPI_COMM_WORLD));
+    MPICHK(MPI_Send(rec_NY, ngrids, MPI_INT, rank+2*size, MPIRANKIO+4, MPI_COMM_WORLD));
+    MPICHK(MPI_Send(rec_NZ, ngrids, MPI_INT, rank+2*size, MPIRANKIO+5, MPI_COMM_WORLD));
+    MPICHK(MPI_Send(grid_output, ngrids, MPI_INT, rank+2*size, MPIRANKIO+6, MPI_COMM_WORLD));
+    MPICHK(MPI_Send(displacement, ngrids, MPI_OFFSET, rank+2*size, MPIRANKIO+7, MPI_COMM_WORLD));
     #else
     dispArray=(MPI_Aint**) calloc(ngrids, sizeof(MPI_Aint*));
     ones=(int**) calloc(ngrids, sizeof(int*));
@@ -483,7 +485,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        }
        err = MPI_Type_create_hindexed(WRITE_STEP, ones[p], dispArray[p], filetype[p], &filetype[p]);
        err = MPI_Type_commit(&filetype[p]);
-       MPI_Type_size(filetype[p], &tmpSize);
+       MPICHK(MPI_Type_size(filetype[p], &tmpSize));
        if(rank==0) printf("filetype size grid %d (supposedly=rec_nxt*nyt*nzt*WS*4=%ld) =%d\n", 
           p, rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*WRITE_STEP*sizeof(float),tmpSize);
 
@@ -517,8 +519,8 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 		     &ghostx,&ghosty,&ghostz,&PX,&PY,&PZ,seism_method,&err);
 	  if (err != 0) {
 	      fprintf(stderr, "|    SEISM ERROR! Init failed for grid %d!\n", p);
-	      MPI_Abort(MCW, 1);
-	      MPI_Finalize();
+	      MPICHK(MPI_Abort(MCW, 1));
+	      MPICHK(MPI_Finalize());
 	  }
 	  if (rank == 0) fprintf(stdout, "|    done initializing SEISM-IO for grid %d\n", p);
 
@@ -629,12 +631,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
           fprintf(stdout, "File sourcefilter.dat not found, no STF filtering applied.\n");
        }
     }
-    MPI_Bcast(&filtorder, 1, MPI_INT, 0, MCW);
+    MPICHK(MPI_Bcast(&filtorder, 1, MPI_INT, 0, MCW));
     fflush(stdout);
     
     if (filtorder > 0){
-       MPI_Bcast(srcfilt_b, filtorder+1, MPI_DOUBLE, 0, MCW);
-       MPI_Bcast(srcfilt_a, filtorder+1, MPI_DOUBLE, 0, MCW);
+       MPICHK(MPI_Bcast(srcfilt_b, filtorder+1, MPI_DOUBLE, 0, MCW));
+       MPICHK(MPI_Bcast(srcfilt_a, filtorder+1, MPI_DOUBLE, 0, MCW));
     }
 
     SetDeviceFilterParameters(filtorder, srcfilt_b, srcfilt_a);
@@ -657,7 +659,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        if (rank==0) fprintf(stdout, "Using IFAULT=5: kinematic source.\n");
        if ((NST != 2) || (READ_STEP != 2)) {
              if (rank==0) fprintf(stderr, "IFAULT=5 requires NST = READ_STEP =2.\nQuitting.");
-          MPI_Finalize();
+          MPICHK(MPI_Finalize());
           return(-1);
           } 
     }
@@ -715,11 +717,11 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        if (rank==0) fprintf(stdout, "Using plane wave input at grid position %d in grid %d\n", NZ[ngrids-1]-ND-1, ngrids-1);
        if (READ_STEP != NST) {
           if (rank==0) fprintf(stderr, "Error.  READ_STEP should be equal NST for IFAULT=6\n");
-          MPI_Finalize();
+          MPICHK(MPI_Finalize());
        }
        if (NST < 1) {
           if (rank==0) fprintf(stderr, "Error.  NST=%d, but should be > 0 for IFAULT=6.\n", NST);
-          MPI_Finalize();
+          MPICHK(MPI_Finalize());
        }
        for (p=0; p<ngrids-1; p++) srcproc[p] = -1;
        srcproc[ngrids-1]=rank;
@@ -916,7 +918,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     fflush(stdout);
 
     /*set a zone without plastic yielding around source nodes*/
-    MPI_Barrier(MCW);
+    MPICHK(MPI_Barrier(MCW));
     if ((NVE > 1) && (IFAULT < 4 || IFAULT == 5)){
     fprintf(stdout, "removing plasticity from source nodes\n");
     for (p=0; p<ngrids; p++){
@@ -941,10 +943,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     }
     fprintf(stdout, "done\n");
     }
-    MPI_Barrier(MCW);
+    MPICHK(MPI_Barrier(MCW));
 
     /*set a zone with high Q around source nodes for two-step method*/
-    MPI_Barrier(MCW);
+    MPICHK(MPI_Barrier(MCW));
 
 #if FORCE_HIGH_Q
     if (((NVE == 1) || (NVE == 3)) && (IFAULT < 4) && (NPC < 2)){
@@ -977,7 +979,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     fprintf(stdout, "done\n");
     }
 #endif
-    MPI_Barrier(MCW);
+    MPICHK(MPI_Barrier(MCW));
     fflush(stdout);
 
     vx1 = (Grid3D*) calloc(ngrids, sizeof(Grid3D));
@@ -1254,13 +1256,13 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	 CUCHK(cudaMemcpy(d_neta[p],&neta[p][0][0][0],num_bytes,cudaMemcpyHostToDevice));
 
 	 /*cudaMalloc((void**)&d_yldfac_L, msg_yldfac_size_x*sizeof(float));
-	 cudaMalloc((void**)&d_yldfac_R, msg_yldfac_size_x*sizeof(float));
-	 cudaMalloc((void**)&d_yldfac_F, msg_yldfac_size_y*sizeof(float));
-	 cudaMalloc((void**)&d_yldfac_B, msg_yldfac_size_y*sizeof(float));
-	 cudaMalloc((void**)&d_yldfac_FL, sizeof(float));
-	 cudaMalloc((void**)&d_yldfac_FR, sizeof(float));
-	 cudaMalloc((void**)&d_yldfac_BL, sizeof(float));
-	 cudaMalloc((void**)&d_yldfac_BR, sizeof(float));*/
+	 CUCHK(cudaMalloc((void**)&d_yldfac_R, msg_yldfac_size_x*sizeof(float)));
+	 CUCHK(cudaMalloc((void**)&d_yldfac_F, msg_yldfac_size_y*sizeof(float)));
+	 CUCHK(cudaMalloc((void**)&d_yldfac_B, msg_yldfac_size_y*sizeof(float)));
+	 CUCHK(cudaMalloc((void**)&d_yldfac_FL, sizeof(float)));
+	 CUCHK(cudaMalloc((void**)&d_yldfac_FR, sizeof(float)));
+	 CUCHK(cudaMalloc((void**)&d_yldfac_BL, sizeof(float)));
+	 CUCHK(cudaMalloc((void**)&d_yldfac_BR, sizeof(float)));*/
        }
        nel[p]=(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align);
     }
@@ -1611,16 +1613,18 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
      }
 
     size_t  cmemfreeMin;
-    cudaMemGetInfo(&cmemfree, &cmemtotal);
-    if(sizeof(size_t)==8) 
-      MPI_Reduce(&cmemfree, &cmemfreeMin, 1, MPI_UINT64_T, MPI_MIN, 0, MCW);
-    else 
-      MPI_Reduce(&cmemfree, &cmemfreeMin, 1, MPI_UINT32_T, MPI_MIN, 0, MCW);
+    CUCHK(cudaMemGetInfo(&cmemfree, &cmemtotal));
+    if(sizeof(size_t)==8)  {
+      MPICHK(MPI_Reduce(&cmemfree, &cmemfreeMin, 1, MPI_UINT64_T, MPI_MIN, 0, MCW));
+    }
+    else {
+      MPICHK(MPI_Reduce(&cmemfree, &cmemfreeMin, 1, MPI_UINT32_T, MPI_MIN, 0, MCW));
+    }
     if(rank==0) printf("CUDA MEMORY: free = %ld\ttotal = %ld\n",cmemfreeMin,cmemtotal);
 
 
     if(rank==0){
-      cudaMemGetInfo(&cmemfree, &cmemtotal);
+      CUCHK(cudaMemGetInfo(&cmemfree, &cmemtotal));
       printf("CUDA MEMORY: Total=%ld\tAvailable=%ld\n",cmemtotal,cmemfree);
     }
 
@@ -1639,9 +1643,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          CUCHK(cudaStreamSynchronize(stream_2));
 
          if(rank==0 && cur_step%100==0) printf("Time Step =                   %ld    OF  Total Timesteps = %ld\n", cur_step, nt); 
-         if(rank==0) printf("Time Step =                   %ld    OF  Total Timesteps = %ld\n", cur_step, nt); 
+         if(cur_step%100==0 && rank==0) printf("Time per timestep:\t%f seconds\n",(gethrtime()+time_un)/cur_step);
          fflush(stdout);
          fflush(stderr);
+         if(rank==0 && cur_step%100==0) printf("Time Step =                   %ld    OF  Total Timesteps = %ld\n", cur_step, nt); 
          if(cur_step%100==0 && rank==0) printf("Time per timestep:\t%f seconds\n",(gethrtime()+time_un)/cur_step);
          CUCHK(cudaGetLastError());
          //cerr=cudaGetLastError();
@@ -1659,7 +1664,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    PostRecvMsg_Y(RF_vel[p], RB_vel[p], MCW, request_y[p], &count_y[p], msg_v_size_y[p], y_rank_F, y_rank_B, p);
 	    //PostRecvMsg_X(RL_vel[p], RR_vel[p], MCW, request_x[p], &count_x[p], msg_v_size_x[p], x_rank_L, x_rank_R, p);
 	    //velocity computation in y boundary, two ghost cell regions
-            //
 	    dvelcy_H(d_u1[p], d_v1[p], d_w1[p], d_xx[p],   d_yy[p],   d_zz[p],   d_xy[p],       
                      d_xz[p], d_yz[p], d_dcrjx[p], d_dcrjy[p], d_dcrjz[p],
 		     d_d1[p], nxt[p],  nzt[p],  d_f_u1[p], d_f_v1[p], d_f_w1[p], 
@@ -1697,7 +1701,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	 for (p=0; p<ngrids; p++){
 	    PostSendMsg_Y(SF_vel[p], SB_vel[p], MCW, request_y[p], &count_y[p], 
                msg_v_size_y[p], y_rank_F, y_rank_B, rank, Back, p);
-	    MPI_Waitall(count_y[p], request_y[p], status_y[p]);
+	    MPICHK(MPI_Waitall(count_y[p], request_y[p], status_y[p]));
 	    Cpy2Device_VY(d_u1[p], d_v1[p], d_w1[p], d_f_u1[p], d_f_v1[p], d_f_w1[p], d_b_u1[p], d_b_v1[p], d_b_w1[p],  
                           RF_vel[p], RB_vel[p], nxt[p], nyt[p], 
 			  nzt[p], stream_1, stream_2, y_rank_F, y_rank_B, p);
@@ -1727,7 +1731,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
             PostRecvMsg_Y(RF_swap[p], RB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, p);
             PostSendMsg_Y(SF_swap[p], SB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, 
                      rank, Both, p);
-            MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]);
+            MPICHK(MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]));
             Cpy2Device_swaparea_Y(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      RF_swap[p], RB_swap[p], d_RF_swap[p], d_RB_swap[p], nxt[p], stream_i, stream_i, y_rank_F, y_rank_B, 
                      intlev[p], intlev[p], p);
@@ -1738,7 +1742,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
             PostRecvMsg_X(RL_swap[p], RR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, x_rank_R, p);
             PostSendMsg_X(SL_swap[p], SR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, x_rank_R, 
                      rank, Both, p);
-            MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]);
+            MPICHK(MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]));
             Cpy2Device_swaparea_X(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      RL_swap[p], RR_swap[p], d_RL_swap[p], d_RR_swap[p], nyt[p], stream_i, stream_i, x_rank_L, x_rank_R, 
                      intlev[p], intlev[p], p);
@@ -1763,7 +1767,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    PostRecvMsg_Y(RF_swap[p], RB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, p);
 	    PostSendMsg_Y(SF_swap[p], SB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, 
                      rank, Both, p);
-	    MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]);
+	    MPICHK(MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]));
 	    Cpy2Device_swaparea_Y(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
 		     RF_swap[p], RB_swap[p], d_RF_swap[p], d_RB_swap[p], nxt[p], stream_i, stream_i, y_rank_F, y_rank_B, 
                      swaplevmin, swaplevmax, p);
@@ -1776,7 +1780,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    PostRecvMsg_X(RL_swap[p], RR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, x_rank_R, p);
 	    PostSendMsg_X(SL_swap[p], SR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, 
                      x_rank_R, rank, Both, p);
-	    MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]);
+	    MPICHK(MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]));
 	    Cpy2Device_swaparea_X(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
 		     RL_swap[p], RR_swap[p], d_RL_swap[p], d_RR_swap[p], nyt[p], stream_i, stream_i, x_rank_L, x_rank_R, 
                      swaplevmin, swaplevmax, p);
@@ -1874,7 +1878,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
    	 for (p=0; p<ngrids; p++){
 	    PostSendMsg_X(SL_vel[p], SR_vel[p], MCW, request_x[p], &count_x[p], 
                msg_v_size_x[p], x_rank_L, x_rank_R, rank, Right, p);
-	    MPI_Waitall(count_x[p], request_x[p], status_x[p]);
+	    MPICHK(MPI_Waitall(count_x[p], request_x[p], status_x[p]));
 
 	    Cpy2Device_VX(d_u1[p], d_v1[p], d_w1[p], RL_vel[p], RR_vel[p], nxt[p], nyt[p], nzt[p], 
                stream_1, stream_2, x_rank_L, x_rank_R);
@@ -1937,22 +1941,22 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
             Cpy2Host_swaparea_Y(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      SF_swap[p], SB_swap[p], d_SF_swap[p], d_SB_swap[p], nxt[p], stream_i, stream_i, y_rank_F, y_rank_B, 
                      intlev[p], intlev[p], p);
-            cudaDeviceSynchronize();
+            CUCHK(cudaDeviceSynchronize());
             PostRecvMsg_Y(RF_swap[p], RB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, p);
             PostSendMsg_Y(SF_swap[p], SB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, 
                      rank, Both, p);
-            MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]);
+            MPICHK(MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]));
             Cpy2Device_swaparea_Y(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      RF_swap[p], RB_swap[p], d_RF_swap[p], d_RB_swap[p], nxt[p], stream_i, stream_i, y_rank_F, y_rank_B, 
                      intlev[p], intlev[p], p);
             Cpy2Host_swaparea_X(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      SL_swap[p], SR_swap[p], d_SL_swap[p], d_SR_swap[p], nyt[p], stream_i, stream_i, x_rank_L, x_rank_R, 
                      intlev[p], intlev[p], p);
-            cudaDeviceSynchronize();
+            CUCHK(cudaDeviceSynchronize());
             PostRecvMsg_X(RL_swap[p], RR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, x_rank_R, p);
             PostSendMsg_X(SL_swap[p], SR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, x_rank_R, 
                      rank, Both, p);
-            MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]);
+            MPICHK(MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]));
             Cpy2Device_swaparea_X(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      RL_swap[p], RR_swap[p], d_RL_swap[p], d_RR_swap[p], nyt[p], stream_i, stream_i, x_rank_L, x_rank_R, 
                      intlev[p], intlev[p], p);
@@ -2012,11 +2016,11 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    Cpy2Host_swaparea_Y(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
 		     SF_swap[p], SB_swap[p], d_SF_swap[p], d_SB_swap[p], nxt[p], stream_i, stream_i, y_rank_F, y_rank_B, 
                      swaplevmin, swaplevmax, p);
-	    cudaDeviceSynchronize();
+	    CUCHK(cudaDeviceSynchronize());
 	    PostRecvMsg_Y(RF_swap[p], RB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, p);
 	    PostSendMsg_Y(SF_swap[p], SB_swap[p], MCW, request_y_swp[p], count_y_swp+p, swp_msg_size_y[p], y_rank_F, y_rank_B, 
                      rank, Both, p);
-	    MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]);
+	    MPICHK(MPI_Waitall(count_y_swp[p], request_y_swp[p], status_y_swp[p]));
 	    Cpy2Device_swaparea_Y(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
 		     RF_swap[p], RB_swap[p], d_RF_swap[p], d_RB_swap[p], nxt[p], stream_i, stream_i, y_rank_F, y_rank_B, 
                      swaplevmin, swaplevmax, p);
@@ -2024,12 +2028,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    Cpy2Host_swaparea_X(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
 		     SL_swap[p], SR_swap[p], d_SL_swap[p], d_SR_swap[p], nyt[p], stream_i, stream_i, x_rank_L, x_rank_R, 
                      swaplevmin, swaplevmax, p);
-	    cudaDeviceSynchronize();
+	    CUCHK(cudaDeviceSynchronize());
 	    swaparea_update_corners(SL_swap[p], SR_swap[p], RF_swap[p], RB_swap[p], nswaplev, WWL, nxt[p], nyt[p]);
 	    PostRecvMsg_X(RL_swap[p], RR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, x_rank_R, p);
 	    PostSendMsg_X(SL_swap[p], SR_swap[p], MCW, request_x_swp[p], count_x_swp+p, swp_msg_size_x[p], x_rank_L, 
                      x_rank_R, rank, Both, p);
-	    MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]);
+	    MPICHK(MPI_Waitall(count_x_swp[p], request_x_swp[p], status_x_swp[p]));
 	    Cpy2Device_swaparea_X(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
 		     RL_swap[p], RR_swap[p], d_RL_swap[p], d_RR_swap[p], nyt[p], stream_i, stream_i, x_rank_L, x_rank_R, 
                      swaplevmin, swaplevmax, p);
@@ -2106,7 +2110,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
            for (p=0; p<ngrids; p++){
 	      PostSendMsg_Y(SF_yldfac[p], SB_yldfac[p], MCW, request_y_yldfac[p], &count_y_yldfac[p], 
 		 yldfac_msg_size_y[p], y_rank_F, y_rank_B, rank, Both, p);
-	      MPI_Waitall(count_y_yldfac[p], request_y_yldfac[p], status_y_yldfac[p]);
+	      MPICHK(MPI_Waitall(count_y_yldfac[p], request_y_yldfac[p], status_y_yldfac[p]));
 
 	      //cudaStreamSynchronize(stream_i);
 	      //left and right
@@ -2146,7 +2150,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
            for (p=0; p<ngrids; p++){
 	      PostSendMsg_X(SL_yldfac[p], SR_yldfac[p], MCW, request_x_yldfac[p], &count_x_yldfac[p], 
 		 yldfac_msg_size_x[p], x_rank_L, x_rank_R, rank, Both, p);
-	      MPI_Waitall(count_x_yldfac[p], request_x_yldfac[p], status_x_yldfac[p]);
+	      MPICHK(MPI_Waitall(count_x_yldfac[p], request_x_yldfac[p], status_x_yldfac[p]));
 	      Cpy2Device_yldfac_X(d_yldfac[p], RL_yldfac[p], RR_yldfac[p], d_RL_yldfac[p], d_RR_yldfac[p], 
 		 nyt[p], nzt[p], stream_1, stream_2, x_rank_L, x_rank_R, p);
            }
@@ -2210,7 +2214,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                     rec_nbgx[p], rec_nedx[p], NSKPX[p], rec_nbgy[p], rec_nedy[p], NSKPY[p], 
                     rec_nbgz[p], rec_nedz[p], NSKPZ[p], rec_nxt[p], rec_nyt[p], rec_nzt[p], 
                     stream_i, FOLLOWBATHY, d_bathy, p);
-		cudaStreamSynchronize(stream_i);
+		CUCHK(cudaStreamSynchronize(stream_i));
                 fprintf(stdout, "ending velbuffer_H\n");
 
 		/*num_bytes = sizeof(float)*(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align);
@@ -2280,14 +2284,14 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                   #ifndef NOBGIO
                   outsize=rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*WRITE_STEP;
                   time(&time1);
-                  MPI_Send(Bufx[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+30, MPI_COMM_WORLD);
+                  MPICHK(MPI_Send(Bufx[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+30, MPI_COMM_WORLD));
                   time(&time2);
                   if (rank==0 && p==0)
                      fprintf(stdout, "Wait time for sending output (): %5.f seconds.\n", difftime(time2, time1));
-                  MPI_Send(Bufy[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+31, MPI_COMM_WORLD);
-                  MPI_Send(Bufz[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+32, MPI_COMM_WORLD);
+                  MPICHK(MPI_Send(Bufy[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+31, MPI_COMM_WORLD));
+                  MPICHK(MPI_Send(Bufz[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+32, MPI_COMM_WORLD));
                   if (NVE ==3) 
-                    MPI_Send(Bufeta[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+33, MPI_COMM_WORLD);
+                    MPICHK(MPI_Send(Bufeta[p], outsize, MPI_FLOAT, rank+2*size, MPIRANKIO+33, MPI_COMM_WORLD));
                   #else
 		  sprintf(filename, "%s_%1d_%07ld", filenamebasex, p, cur_step);
 		  err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
@@ -2449,7 +2453,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	     }
        }
        fprintf(stdout, "rank %d: moment=%e\n", rank, tmom);
-       MPI_Allreduce(&tmom, &gmom, 1, MPI_FLOAT, MPI_SUM, MCW);
+       MPICHK(MPI_Allreduce(&tmom, &gmom, 1, MPI_FLOAT, MPI_SUM, MCW));
        mag= 2./3. * (log10f(gmom) - 9.1);
        if (rank==0) fprintf(stdout, "Total M0=%e, Mw=%4.1f\n", gmom, mag);
        //if (rank==0) fprintf(stdout, "moment of source node 19132: %e\n", mom[0][19132]);
@@ -2527,7 +2531,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        }
        err = MPI_Type_create_hindexed(rec_nzt[p], ones2, dispArray2, filetype2, &filetype2);
        err = MPI_Type_commit(&filetype2);
-       MPI_Type_size(filetype2, &tmpSize);
+       MPICHK(MPI_Type_size(filetype2, &tmpSize));
        printf("filetype size (supposedly=rec_nxt*rec_nyt*rec_nzt*4=%ld) =%d\n", 
                   rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*sizeof(float),tmpSize);
 
@@ -2538,14 +2542,14 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    fprintf(stderr, "MPI error in MPI_File_set_view():\n");
 	    char errstr[200];
 	    int strlen;
-	    MPI_Error_string(err, errstr, &strlen);
+	    MPICHK(MPI_Error_string(err, errstr, &strlen));
 	    fprintf(stderr, "MPI error in MPI_File_set_view(): %s\n", errstr);
 	 }
 	 err = MPI_File_write_all(fh, Bufeta2, rec_nxt[p]*rec_nyt[p]*rec_nzt[p], MPI_FLOAT, &filestatus);
 	 if (err != MPI_SUCCESS) {
 	    char errstr[200];
 	    int strlen;
-	    MPI_Error_string(err, errstr, &strlen);
+	    MPICHK(MPI_Error_string(err, errstr, &strlen));
 	    fprintf(stderr, "MPI error in MPI_File_write_all(): %s\n", errstr);
 	 }
 	 err = MPI_File_close(&fh);
@@ -2568,40 +2572,40 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
       #endif
 
     }
-    cudaStreamDestroy(stream_1);
+    CUCHK(cudaStreamDestroy(stream_1));
     //cudaStreamDestroy(stream_1b);
-    cudaStreamDestroy(stream_2);
+    CUCHK(cudaStreamDestroy(stream_2));
     //cudaStreamDestroy(stream_2b);
-    cudaStreamDestroy(stream_i);
-    cudaStreamDestroy(stream_i2);
-    cudaStreamDestroy(stream_o);
+    CUCHK(cudaStreamDestroy(stream_i));
+    CUCHK(cudaStreamDestroy(stream_i2));
+    CUCHK(cudaStreamDestroy(stream_o));
     for (p=0; p<ngrids; p++){
-       cudaFreeHost(SL_vel[p]);
-       cudaFreeHost(SR_vel[p]);
-       cudaFreeHost(RL_vel[p]);
-       cudaFreeHost(RR_vel[p]);
-       cudaFreeHost(SF_vel[p]);
-       cudaFreeHost(SB_vel[p]);
-       cudaFreeHost(RF_vel[p]);
-       cudaFreeHost(RB_vel[p]);
+       CUCHK(cudaFreeHost(SL_vel[p]));
+       CUCHK(cudaFreeHost(SR_vel[p]));
+       CUCHK(cudaFreeHost(RL_vel[p]));
+       CUCHK(cudaFreeHost(RR_vel[p]));
+       CUCHK(cudaFreeHost(SF_vel[p]));
+       CUCHK(cudaFreeHost(SB_vel[p]));
+       CUCHK(cudaFreeHost(RF_vel[p]));
+       CUCHK(cudaFreeHost(RB_vel[p]));
        if(NVE==3){
-	 cudaFreeHost(SL_yldfac[p]);
-	 cudaFreeHost(SR_yldfac[p]);
-	 cudaFreeHost(RL_yldfac[p]);
-	 cudaFreeHost(RR_yldfac[p]);
-	 cudaFreeHost(SF_yldfac[p]);
-	 cudaFreeHost(SB_yldfac[p]);
-	 cudaFreeHost(RF_yldfac[p]);
-	 cudaFreeHost(RB_yldfac[p]);
+	 CUCHK(cudaFreeHost(SL_yldfac[p]));
+	 CUCHK(cudaFreeHost(SR_yldfac[p]));
+	 CUCHK(cudaFreeHost(RL_yldfac[p]));
+	 CUCHK(cudaFreeHost(RR_yldfac[p]));
+	 CUCHK(cudaFreeHost(SF_yldfac[p]));
+	 CUCHK(cudaFreeHost(SB_yldfac[p]));
+	 CUCHK(cudaFreeHost(RF_yldfac[p]));
+	 CUCHK(cudaFreeHost(RB_yldfac[p]));
 
-	 cudaFree(d_SL_yldfac[p]);
-	 cudaFree(d_SR_yldfac[p]);
-	 cudaFree(d_RL_yldfac[p]);
-	 cudaFree(d_RR_yldfac[p]);
-	 cudaFree(d_SF_yldfac[p]);
-	 cudaFree(d_SB_yldfac[p]);
-	 cudaFree(d_RF_yldfac[p]);
-	 cudaFree(d_RB_yldfac[p]);
+	 CUCHK(cudaFree(d_SL_yldfac[p]));
+	 CUCHK(cudaFree(d_SR_yldfac[p]));
+	 CUCHK(cudaFree(d_RL_yldfac[p]));
+	 CUCHK(cudaFree(d_RR_yldfac[p]));
+	 CUCHK(cudaFree(d_SF_yldfac[p]));
+	 CUCHK(cudaFree(d_SB_yldfac[p]));
+	 CUCHK(cudaFree(d_RF_yldfac[p]));
+	 CUCHK(cudaFree(d_RB_yldfac[p]));
 
        }
     }
@@ -2611,7 +2615,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     GFLOPS  = GFLOPS/(1000*1000*1000);
     time_un = time_un/(cur_step-READ_STEP);
     GFLOPS  = GFLOPS/time_un;
-    MPI_Allreduce( &GFLOPS, &GFLOPS_SUM, 1, MPI_DOUBLE, MPI_SUM, MCW );
+    MPICHK(MPI_Allreduce( &GFLOPS, &GFLOPS_SUM, 1, MPI_DOUBLE, MPI_SUM, MCW ));
     if(rank==0)
     {
         printf("GPU benchmark size (fine grid) NX=%d, NY=%d, NZ=%d, ReadStep=%d\n", NX, NY, NZ[0], READ_STEP);
@@ -2635,23 +2639,23 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        Delloc3Dww(ww[p]);
        Delloc3D(wwo[p]); 
 
-       cudaFree(d_u1[p]);
-       cudaFree(d_v1[p]);
-       cudaFree(d_w1[p]);
-       cudaFree(d_f_u1[p]);
-       cudaFree(d_f_v1[p]);
-       cudaFree(d_f_w1[p]);
-       cudaFree(d_b_u1[p]);
-       cudaFree(d_b_v1[p]);
-       cudaFree(d_b_w1[p]);
-       cudaFree(d_xx[p]);
-       cudaFree(d_yy[p]);
-       cudaFree(d_zz[p]);
-       cudaFree(d_xy[p]);
-       cudaFree(d_yz[p]);
-       cudaFree(d_xz[p]);
-       cudaFree(d_vx1[p]);
-       cudaFree(d_vx2[p]);
+       CUCHK(cudaFree(d_u1[p]));
+       CUCHK(cudaFree(d_v1[p]));
+       CUCHK(cudaFree(d_w1[p]));
+       CUCHK(cudaFree(d_f_u1[p]));
+       CUCHK(cudaFree(d_f_v1[p]));
+       CUCHK(cudaFree(d_f_w1[p]));
+       CUCHK(cudaFree(d_b_u1[p]));
+       CUCHK(cudaFree(d_b_v1[p]));
+       CUCHK(cudaFree(d_b_w1[p]));
+       CUCHK(cudaFree(d_xx[p]));
+       CUCHK(cudaFree(d_yy[p]));
+       CUCHK(cudaFree(d_zz[p]));
+       CUCHK(cudaFree(d_xy[p]));
+       CUCHK(cudaFree(d_yz[p]));
+       CUCHK(cudaFree(d_xz[p]));
+       CUCHK(cudaFree(d_vx1[p]));
+       CUCHK(cudaFree(d_vx2[p]));
 
        if(NVE==1 || NVE==3)
        {
@@ -2661,17 +2665,17 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	  Delloc3D(r4[p]);
 	  Delloc3D(r5[p]);
 	  Delloc3D(r6[p]);
-	  cudaFree(d_r1[p]);
-	  cudaFree(d_r2[p]);
-	  cudaFree(d_r3[p]);
-	  cudaFree(d_r4[p]);
-	  cudaFree(d_r5[p]);
-	  cudaFree(d_r6[p]);
+	  CUCHK(cudaFree(d_r1[p]));
+	  CUCHK(cudaFree(d_r2[p]));
+	  CUCHK(cudaFree(d_r3[p]));
+	  CUCHK(cudaFree(d_r4[p]));
+	  CUCHK(cudaFree(d_r5[p]));
+	  CUCHK(cudaFree(d_r6[p]));
 
 	  Delloc3D(qp[p]);
 	  Delloc3D(qs[p]);
-	  cudaFree(d_qp[p]);
-	  cudaFree(d_qs[p]);
+	  CUCHK(cudaFree(d_qp[p]));
+	  CUCHK(cudaFree(d_qs[p]));
        }
        if(NVE==3){
 	 Delloc3D(sigma2[p]);
@@ -2686,24 +2690,24 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	   Delloc1D(dcrjx[p]);
 	   Delloc1D(dcrjy[p]);
 	   Delloc1D(dcrjz[p]);
-	   cudaFree(d_dcrjx[p]);
-	   cudaFree(d_dcrjy[p]);
-	   cudaFree(d_dcrjz[p]);
+	   CUCHK(cudaFree(d_dcrjx[p]));
+	   CUCHK(cudaFree(d_dcrjy[p]));
+	   CUCHK(cudaFree(d_dcrjz[p]));
        }
 
        Delloc3D(d1[p]);
        Delloc3D(mu[p]);
        Delloc3D(lam[p]);
        Delloc3D(lam_mu[p]);
-       cudaFree(d_d1[p]);
-       cudaFree(d_mu[p]);
-       cudaFree(d_lam[p]);
-       cudaFree(d_lam_mu[p]);
+       CUCHK(cudaFree(d_d1[p]));
+       CUCHK(cudaFree(d_mu[p]));
+       CUCHK(cudaFree(d_lam[p]));
+       CUCHK(cudaFree(d_lam_mu[p]));
     }
 
     if(NVE==1 || NVE==3) {
        Delloc1D(coeff);  
-       cudaFree(d_coeff);
+       CUCHK(cudaFree(d_coeff));
     }
 
     for (p=0; p<ngrids; p++){
@@ -2714,17 +2718,17 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	  Delloc1D(taxz[p]);
 	  Delloc1D(tayz[p]);
 	  Delloc1D(taxy[p]); 
-	  cudaFree(d_taxx[p]);
-	  cudaFree(d_tayy[p]);
-	  cudaFree(d_tazz[p]);
-	  cudaFree(d_taxz[p]);
-	  cudaFree(d_tayz[p]);
-	  cudaFree(d_taxy[p]);
+	  CUCHK(cudaFree(d_taxx[p]));
+	  CUCHK(cudaFree(d_tayy[p]));
+	  CUCHK(cudaFree(d_tazz[p]));
+	  CUCHK(cudaFree(d_taxz[p]));
+	  CUCHK(cudaFree(d_tayz[p]));
+	  CUCHK(cudaFree(d_taxy[p]));
 	  Delloc1P(tpsrc[p]);
-	  cudaFree(d_tpsrc[p]);
+	  CUCHK(cudaFree(d_tpsrc[p]));
        }
     }
-    MPI_Comm_free( &MC1 );
+    MPICHK(MPI_Comm_free( &MC1 ));
 
     #ifndef NOBGIO
     } /* end of if (rank < size) */
@@ -2739,8 +2743,8 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     }
     #endif
 
-    MPI_Barrier(MCT);
-    MPI_Finalize();
+    MPICHK(MPI_Barrier(MCT));
+    MPICHK(MPI_Finalize());
     return (0);
 }
 
