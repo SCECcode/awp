@@ -64,20 +64,19 @@ void source_finalize(source_t *src)
 }
 
 void source_find_grid_number(const input_t *input, const
-                             const grids_t *grids, int *grid_number, 
+                             grids_t *grids, int *grid_number, 
                              const int num_grids)
 {
 
         prec *z1 = malloc(sizeof z1 * grids[0].z.size.z);
 
-        for (int j = 0; j < input->length; ++j) {
+        for (size_t j = 0; j < input->length; ++j) {
                 grid_number[j] = -1;
         }
 
         grid1_t z_grid = grid_grid1_z(grids[0].z);
         grid_fill1(z1, z_grid);
 
-        _prec top = z1[z_grid.end];
         _prec lower = 0;
         _prec upper = 0;
         _prec overlap = 0;
@@ -89,7 +88,7 @@ void source_find_grid_number(const input_t *input, const
                 if (i + 1 != num_grids) overlap = z_grid.gridspacing * 4.5;
                 lower = lower + overlap;
                 printf("Grid %d: %g < z <= %g \n", i, lower, upper);
-                for (int j = 0; j < input->length; ++j) {
+                for (size_t j = 0; j < input->length; ++j) {
                         _prec z = input->z[j];
                         // Take into account that topography can yield positive
                         // z-values
@@ -105,7 +104,7 @@ void source_find_grid_number(const input_t *input, const
                         }
                         else if (lower - overlap <= z && z <= lower) {
                                 fprintf(stderr, 
-                                "Source/receiver id=%d is in overlap zone.\n",
+                                "Source/receiver id=%ld is in overlap zone.\n",
                                 j);
                         }
 
@@ -115,10 +114,10 @@ void source_find_grid_number(const input_t *input, const
 
         free(z1);
 
-        for (int j = 0; j < input->length; ++j) {
+        for (size_t j = 0; j < input->length; ++j) {
                 if (grid_number[j] == -1) {
                         fprintf(stderr, 
-                                "Failed to assign source/receiver id=%d "\
+                                "Failed to assign source/receiver id=%ld "\
                                 " to a grid.\n", j);
                         exit(1);
                 }
@@ -161,7 +160,7 @@ void source_init_common(source_t *src, const char *filename,
         int *grid_number = malloc(sizeof grid_number * src->length);
         source_find_grid_number(input, grids, grid_number, ngrids);
 
-        for (int i = 0; i < src->length; ++i) {
+        for (size_t i = 0; i < src->length; ++i) {
                 for (int j = 0; j < ngrids; ++j) {
                         if (grid_number[i] == j) src->lengths[j] += 1;
                 }
@@ -179,7 +178,7 @@ void source_init_common(source_t *src, const char *filename,
 
         for (int j = 0; j < ngrids; ++j) {
                 int local_idx = 0;
-                for (int i = 0; i < src->length; ++i) {
+                for (size_t i = 0; i < src->length; ++i) {
                         if (grid_number[i] != j) continue;
                         src->global_indices[j][local_idx] = i;
                         // Shift by 0.5 such that x = 0, y = 0 is
@@ -194,7 +193,6 @@ void source_init_common(source_t *src, const char *filename,
                 }
         }
 
-        int idx = -1;
         _prec overlap = 0.0;
         _prec lower = 0.0;
         _prec block_height = 0.0;

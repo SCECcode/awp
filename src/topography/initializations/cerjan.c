@@ -4,6 +4,7 @@
 
 #include <topography/topography.h>
 #include <topography/initializations/constant.h>
+#include <topography/initializations/cerjan.h>
 
 void topo_d_cerjan_disable(topo_t *T)
 {

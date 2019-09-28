@@ -61,7 +61,7 @@ int main(int argc, char **argv)
         }
         free(local_f);
         MPI_Finalize();
-        return 0;
+        return err;
 }
 
 void init_geometry(prec **f, const int *gsize, const int3_t coord,

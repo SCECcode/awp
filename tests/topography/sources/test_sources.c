@@ -21,7 +21,6 @@ void write_source(const char *filename, size_t num_sources, size_t num_steps);
 
 int main(int argc, char **argv)
 {
-        int err = 0;
         int rank, size;
         MPI_Init(&argc, &argv);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN); 
@@ -36,7 +35,7 @@ int main(int argc, char **argv)
                 printf("Testing test_sources.c\n");
         }
 
-        err = test_sources(inputfile, rank, size, px);
+        test_sources(inputfile, rank, size, px);
 
         if (rank == 0) {
                 printf("Testing completed.\n");

@@ -9,6 +9,8 @@ void topo_set_constants(topo_t *T);
 #endif
 #ifdef __cplusplus
 }
+#else
+void topo_set_constants(topo_t *T);
 #endif
 
 #endif

@@ -3,6 +3,8 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+void zeros(float *out, int nx, int ny, int nz);
+void check_values(const char *label, const float *in, int nx, int ny, int nz, int rank);
 void zeros(float *out, int nx, int ny, int nz)
 {
         for (int i = 0; i < nx; ++i) {

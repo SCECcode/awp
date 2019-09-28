@@ -14,13 +14,18 @@
 #define M_PI           3.14159265358979323846
 #endif
 
+float* matmul3(float *a, float *b);
+float* transpose(float *a);
+float* rotate_principal(float sigma1, float sigma2, float sigma3, float *strike, float *dip);
+void hoek_brown(float sigma_0, float sigma_ci, float GSI, float mi, float D, 
+    int tunnel, float *phi, float *cohes);
+
 void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D qs, float *taumax, float *taumin,
 	     Grid3D tau, Grid3D weights,Grid1D coeff, 
 	     int nvar, float FP,  float FAC, float Q0, float EX, int nxt, int nyt, int nzt, int PX, int PY, int NX, int NY, 
              int NZ, int *coords, MPI_Comm MCW, int IDYNA, int NVE, int SoCalQ, char *INVEL, 
              float *vse, float *vpe, float *dde)
 {
-  int merr;
   int i,j,k,err;
   float vp,vs,dd,pi; 
   int   rmtype[3], rptype[3], roffset[3];
@@ -128,7 +133,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
       if(MEDIASTART>=1 && MEDIASTART<=3)
       {
           char filename[40];
-          if(MEDIASTART<3) sprintf(filename,INVEL);
+          if(MEDIASTART<3) sprintf(filename,"%s",INVEL);
           else if(MEDIASTART==3){
             sprintf(filename,"input_rst/mediapart/media%07d.bin",rank);
             if(rank%100==0) printf("Rank=%d, reading file=%s\n",rank,filename);
@@ -231,7 +236,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
           }
       }
       
-      float w0=0.0f, ww1=0.0f, w2=0.0f, tmp1=0.0f, tmp2=0.0f;
+      float w0=0.0f;
       float qpinv=0.0f, qsinv=0.0f, vpvs=0.0f;
       if(NVE==1 || NVE==3)
       {
@@ -582,15 +587,15 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
         }
 
       float tmpvse[2],tmpvpe[2],tmpdde[2];
-      merr = MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MAX,MCW);
-      merr = MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MAX,MCW);
-      merr = MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MAX,MCW);
+      MPICHK(MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MAX,MCW));
+      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MAX,MCW));
+      MPICHK(MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MAX,MCW));
       vse[1] = tmpvse[1];
       vpe[1] = tmpvpe[1];
       dde[1] = tmpdde[1];
-      merr = MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MIN,MCW);
-      merr = MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MIN,MCW);
-      merr = MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MIN,MCW);
+      MPICHK(MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MIN,MCW));
+      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MIN,MCW));
+      MPICHK(MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MIN,MCW));
       vse[0] = tmpvse[0];
       vpe[0] = tmpvpe[0];
       dde[0] = tmpdde[0];

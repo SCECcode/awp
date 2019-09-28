@@ -61,6 +61,7 @@
 #include <math.h>
 #include <string.h>
 #include <awp/pmcl3d_cons.h>
+#include <awp/pmcl3d.h>
 #include <assert.h>
 
 // Default IN3D Values
@@ -128,6 +129,8 @@ const char def_INTOPO[IN_FILE_LEN] = "input/topography";
 
 const char def_SOURCEFILE[IN_FILE_LEN] = "";
 const char def_RECVFILE[IN_FILE_LEN] = "";
+
+void parsemultiple(char *optarg, int *val);
 
 void parsemultiple(char *optarg, int *val){
     int k;

@@ -142,17 +142,16 @@ int main(int argc,char **argv)
     double time_un = 0.0;
     // time_src and time_mesh measures the time spent
     // in source and mesh reading 
-    double time_src = 0.0, time_src_tmp = 0.0, time_mesh = 0.0; 
+    double time_src = 0.0, time_mesh = 0.0; 
     // time_fileio and time_gpuio measures the time spent
     // in file system IO and gpu memory copying for IO 
-    double time_fileio = 0.0, time_gpuio = 0.0;
-    double time_fileio_tmp = 0.0, time_gpuio_tmp = 0.0; 
+    double time_gpuio = 0.0;
+    double time_gpuio_tmp = 0.0; 
 //  MPI+CUDA variables
-    cudaError_t cerr;
     size_t cmemfree, cmemtotal;
     cudaStream_t stream_1, /*stream_1b,*/ stream_2, /*stream_2b,*/ stream_i, stream_i2;;
     cudaStream_t stream_o;
-    int   rank, size, err, srcproc[MAXGRIDS], rank_gpu;
+    int   rank, size, err, srcproc[MAXGRIDS];
     int   dim[2], period[2], coord[2], reorder;
     int   x_rank_L  = -1,  x_rank_R  = -1,  y_rank_F = -1,  y_rank_B = -1;
     MPI_Comm MCW, MC1;
@@ -278,7 +277,7 @@ int main(int argc,char **argv)
     time_t time1, time2;
 
     /* for FOLLOWBATHY option - save surface output on ocean floor */
-    int *bathy, ko;
+    int *bathy;
     int *d_bathy;
     float tmpvs;
 
@@ -402,7 +401,7 @@ int main(int argc,char **argv)
     if (y_rank_F < 0) y_rank_F = -1;
     if (y_rank_B < 0) y_rank_B = -1;   
 
-    rank_gpu = init_gpu_rank(rank);
+    init_gpu_rank(rank);
 
 printf("\n\nrank=%d) RS=%d, RSG=%d, NST=%d, IF=%d\n\n\n", 
 rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
@@ -1448,7 +1447,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        CUCHK(cudaMalloc((void**) &d_RL_swap[p], num_bytes2));
        CUCHK(cudaMalloc((void**) &d_RR_swap[p], num_bytes2));
 
-       for (k=0; k<num_bytes2/sizeof(float); k++) SL_swap[p][k] = SR_swap[p][k] = RL_swap[p][k] = RR_swap[p][k] = 0.f;
+       for (k=0; k<(int)(num_bytes2/sizeof(float)); k++) SL_swap[p][k] = SR_swap[p][k] = RL_swap[p][k] = RR_swap[p][k] = 0.f;
 
        //copy zero-allocated arrays to device if GPU arrays remain uninitialized otherwise
        /*if (x_rank_L < 0) CUCHK(cudaMemcpy(d_RL_swap[p], RL_swap[p], num_bytes2, cudaMemcpyHostToDevice));
@@ -1470,7 +1469,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        CUCHK(cudaMalloc((void**) &d_RF_swap[p], num_bytes2));
        CUCHK(cudaMalloc((void**) &d_RB_swap[p], num_bytes2));
 
-       for (k=0; k<num_bytes2/sizeof(float); k++) SF_swap[p][k] = SB_swap[p][k] = RF_swap[p][k] = RB_swap[p][k] = 0.f;
+       for (k=0; k<(int)(num_bytes2/sizeof(float)); k++) SF_swap[p][k] = SB_swap[p][k] = RF_swap[p][k] = RB_swap[p][k] = 0.f;
 
        //copy zero-allocated arrays to device if GPU arrays remain uninitialized otherwise
        /*if (y_rank_F < 0) cudaMemcpy(d_RF_swap[p], RF_swap[p], num_bytes2, cudaMemcpyHostToDevice);
@@ -1494,7 +1493,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                     // Disable topography in grids below the top grid
                     if (p > 0) istopo = 0;
                     grids[p] = grids_init(nxt[p], nyt[p], nzt[p], coord[0],
-                                          coord[1], 0, usetopo, DH[p]);
+                                          coord[1], 0, istopo, DH[p]);
             }
 
             topo_t T = topo_init(usetopo, INTOPO, 
@@ -1514,7 +1513,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                       d_f_u1[0], d_f_v1[0], d_f_w1[0], d_b_u1[0], d_b_v1[0],
                       d_b_w1[0], d_dcrjx[0], d_dcrjy[0], d_dcrjz[0]);
             topo_init_metrics(&T);
-            int topo_vtk_mode = 0;
             if (T.use) {
                 topo_init_grid(&T);
                 topo_init_geometry(&T);
@@ -1656,7 +1654,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          if(rank==0 && cur_step%100==0) printf("Time Step =                   %ld    OF  Total Timesteps = %ld\n", cur_step, nt); 
          if(cur_step%100==0 && rank==0) printf("Time per timestep:\t%f seconds\n",(gethrtime()+time_un)/cur_step);
          CUCHK(cudaGetLastError());
-         //cerr=cudaGetLastError();
          
          for (p=0; p<ngrids; p++){
 	    dump_nonzeros(d_u1[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "u1", p, cur_step, 6, rank, size);
@@ -1664,7 +1661,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    dump_nonzeros(d_w1[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "w1", p, cur_step, 6, rank, size);
          }
          
-         if(cerr!=cudaSuccess) printf("CUDA ERROR! rank=%d before timestep: %s\n",rank,cudaGetErrorString(cerr));
 	 //pre-post MPI Message
 
 	 for (p=0; p<ngrids; p++){

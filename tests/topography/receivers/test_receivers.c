@@ -25,7 +25,6 @@ int test_receivers(const char *inputfile, int rank, int size, const int px);
 
 int main(int argc, char **argv)
 {
-        int err = 0;
         int rank, size;
         MPI_Init(&argc, &argv);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN); 
@@ -40,7 +39,7 @@ int main(int argc, char **argv)
                 printf("Testing test_receivers.c\n");
         }
 
-        err = test_receivers(inputfile, rank, size, px);
+        test_receivers(inputfile, rank, size, px);
 
         if (rank == 0) {
                 printf("Testing completed.\n");

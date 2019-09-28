@@ -13,5 +13,8 @@ void set_seed(int seed);
 
 #ifdef __cplusplus
 }
+#else
+_prec randomf(void);
+void set_seed(int seed);
 #endif
 #endif

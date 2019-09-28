@@ -4,7 +4,7 @@
 
 #include <awp/definitions.h>
 #include <topography/topography.h>
-#include <topography/initializations/linear.h>
+#include <topography/initializations/quadratic.h>
 
 void topo_d_quadratic_i(topo_t *T, prec *d_field)
 {
