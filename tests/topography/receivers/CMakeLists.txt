@@ -14,7 +14,7 @@ target_include_directories(test_topography_receivers
 
 add_test(NAME test_topography_receivers COMMAND
         ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 --oversubscribe
-        test_topography_receivers)
+        test_topography_receivers ${AWP_MINI_SOURCE_DIR}/tests/fixtures/receiver.txt)
 
 
 

@@ -6,7 +6,6 @@ stride=10
 degree=3
 gpu_buffer_size=10
 cpu_buffer_size=10
-num_components=6
 
 coordinates
 0 0.0 0.0 0.0

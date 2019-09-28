@@ -31,12 +31,20 @@ int main(int argc, char **argv)
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-        char inputfile[] = "../tests/fixtures/receiver.txt";
+        char inputfile[STR_LEN];
         int px = 2;
 
         if (rank == 0) {
                 test_divider();
                 printf("Testing test_receivers.c\n");
+        }
+
+        if (argc == 2) {
+                assert(strlen(argv[1]) < STR_LEN);
+                sprintf(inputfile, "%s", argv[1]);
+        }
+        else {
+                sprintf(inputfile, "../tests/fixtures/receiver.txt");
         }
 
         test_receivers(inputfile, rank, size, px);
