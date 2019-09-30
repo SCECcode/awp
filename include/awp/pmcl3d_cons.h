@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H
 #define BLOCK_SIZE_X 2
 #define BLOCK_SIZE_Y 2
-#define BLOCK_SIZE_Z 64
+#define BLOCK_SIZE_Z 32
 #endif
 // Set floating-point precision. Make sure to configure both `_prec` and
 // `_mpi_prec`.
@@ -38,6 +38,7 @@
  * macro that disables assert() )
  */
 #ifndef TEST_H
+#ifndef CUCHK
 #ifndef NDEBUG
 #define CUCHK(call) {                                                         \
   cudaError_t err = call;                                                     \
@@ -50,6 +51,7 @@
 }                                                                             
 #else
 #define CUCHK(call) {}
+#endif
 #endif
 #endif
 

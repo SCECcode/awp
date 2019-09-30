@@ -61,6 +61,8 @@ typedef struct
         int boundary1;
         int boundary2;
         int padding;
+        // index to last grid point that physically exists in the grid
+        int end;
         _prec gridspacing;
 
 } grid1_t;

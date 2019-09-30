@@ -10,9 +10,9 @@
 #include <interpolation/interpolation.cuh>
 #include <test/test.h>
 
-int cuinterp_init(cu_interp_t *out, const prec *x, const prec *y,
-                    const prec *z, grid3_t grid, const prec *qx, const prec *qy,
-                    const prec *qz, const int num_query, const int degree)
+int cuinterp_init(cu_interp_t *out, const prec *x, const prec *y, const prec *z,
+                grid3_t grid, const prec *qx, const prec *qy, const prec *qz,
+                const int *indices, const int num_query, const int degree)
 {
         out->num_basis = degree + 1;
         out->num_query = num_query;
@@ -28,6 +28,10 @@ int cuinterp_init(cu_interp_t *out, const prec *x, const prec *y,
 
         if (err != SUCCESS) {
                 return err;
+        }
+
+        for (int i = 0; i < num_query; ++i) {
+                out->ridx[i] = indices[i];
         }
 
         cuinterp_lagrange_h(out, x, y, z, grid, qx, qy, qz);
@@ -79,6 +83,8 @@ int cuinterp_htod(cu_interp_t *T)
                                 cudaMemcpyHostToDevice));
         CUCHK(cudaMemcpy(T->d_iz, T->iz, num_bytes,
                                 cudaMemcpyHostToDevice));
+        CUCHK(cudaMemcpy(T->d_ridx, T->ridx, num_bytes,
+                                cudaMemcpyHostToDevice));
         return SUCCESS;
 }
 
@@ -99,6 +105,8 @@ int cuinterp_dtoh(cu_interp_t *T)
                               cudaMemcpyDeviceToHost));
         CUCHK(cudaMemcpy(T->iz, T->d_iz, num_bytes,
                                 cudaMemcpyDeviceToHost));
+        CUCHK(cudaMemcpy(T->ridx, T->d_ridx, num_bytes,
+                                cudaMemcpyDeviceToHost));
         return SUCCESS;
 }
 
@@ -114,8 +122,9 @@ int cuinterp_malloc(cu_interp_t *interp)
         interp->ix = (int*)calloc(sizeof(int), interp->size_i);
         interp->iy = (int*)calloc(sizeof(int), interp->size_i);
         interp->iz = (int*)calloc(sizeof(int), interp->size_i);
+        interp->ridx = (int*)calloc(sizeof(int), interp->size_i);
 
-        if (!interp->ix || !interp->iy || !interp->iz ) {
+        if (!interp->ix || !interp->iy || !interp->iz || !interp->ridx ) {
                 return ERR_INTERP_MALLOC;
         }
 
@@ -129,6 +138,7 @@ int cuinterp_malloc(cu_interp_t *interp)
         CUCHK(cudaMalloc(&interp->d_ix, num_bytes));
         CUCHK(cudaMalloc(&interp->d_iy, num_bytes));
         CUCHK(cudaMalloc(&interp->d_iz, num_bytes));
+        CUCHK(cudaMalloc(&interp->d_ridx, num_bytes));
 
         return SUCCESS;
 }
@@ -141,12 +151,14 @@ void cuinterp_finalize(cu_interp_t *interp)
         free(interp->ix);
         free(interp->iy);
         free(interp->iz);
+        free(interp->ridx);
         CUCHK(cudaFree(interp->d_lx));
         CUCHK(cudaFree(interp->d_ly));
         CUCHK(cudaFree(interp->d_lz));
         CUCHK(cudaFree(interp->d_ix));
         CUCHK(cudaFree(interp->d_iy));
         CUCHK(cudaFree(interp->d_iz));
+        CUCHK(cudaFree(interp->d_ridx));
 }
 
 void cuinterp_interp_H(const cu_interp_t *I, prec *out, const prec *in)
@@ -157,7 +169,8 @@ void cuinterp_interp_H(const cu_interp_t *I, prec *out, const prec *in)
 
         cuinterp_dinterp<<<grid, block>>>(out, in, I->d_lx, I->d_ly, I->d_lz,
                                           I->num_basis, I->d_ix, I->d_iy,
-                                          I->d_iz, I->num_query, I->grid);
+                                          I->d_iz, I->d_ridx, I->num_query, 
+                                          I->grid);
         CUCHK(cudaGetLastError());
 }
 
@@ -165,18 +178,19 @@ __global__ void cuinterp_dinterp(prec *out, const prec *in,
                                  const prec *lx, const prec *ly, const prec *lz,
                                  const int num_basis, const int *ix,
                                  const int *iy, const int *iz,
+                                 const int *ridx,
                                  const int num_query, const grid3_t grid)
 {
         int q = threadIdx.x + blockDim.x * blockIdx.x;
         if (q >= num_query) {
                 return;
         }
-        out[q] = 0.0;
+        out[ridx[q]] = 0.0;
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
-                out[q] += lx[q * num_basis + i] * ly[q * num_basis + j] *
+                out[ridx[q]] += lx[q * num_basis + i] * ly[q * num_basis + j] *
                           lz[q * num_basis + k] * in[pos];
         }
         }

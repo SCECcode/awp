@@ -25,14 +25,13 @@ int test_receivers(const char *inputfile, int rank, int size, const int px);
 
 int main(int argc, char **argv)
 {
-        int err = 0;
         int rank, size;
         MPI_Init(&argc, &argv);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN); 
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-        char inputfile[] = "fixtures/receiver.txt";
+        char inputfile[STR_LEN];
         int px = 2;
 
         if (rank == 0) {
@@ -40,7 +39,15 @@ int main(int argc, char **argv)
                 printf("Testing test_receivers.c\n");
         }
 
-        err = test_receivers(inputfile, rank, size, px);
+        if (argc == 2) {
+                assert(strlen(argv[1]) < STR_LEN);
+                sprintf(inputfile, "%s", argv[1]);
+        }
+        else {
+                sprintf(inputfile, "../tests/fixtures/receiver.txt");
+        }
+
+        test_receivers(inputfile, rank, size, px);
 
         if (rank == 0) {
                 printf("Testing completed.\n");
@@ -95,7 +102,7 @@ int test_receivers(const char *inputfile, int rank, int size, const int px)
 
         size_t *steps = malloc(sizeof steps * num_steps);
         for (size_t i = 0; i < num_steps; ++i) {
-                receivers_write(d_vx, d_vy, d_vz, i, num_steps);
+                receivers_write(d_vx, d_vy, d_vz, i, num_steps, 0);
                 steps[i] = receivers_last_step();
         }
         

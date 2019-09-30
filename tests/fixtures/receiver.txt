@@ -1,18 +1,15 @@
-1.0.0
+2.0.0
 file=recv
 length=4 
 steps=600
 stride=1
-system=0
 degree=3
 gpu_buffer_size=2
 cpu_buffer_size=3
 num_writes=1
-num_components=3
-dimension=3
 
 coordinates
-0.0 0.0 0.0
-0.5 0.0 0.0
-0.0 0.5 0.0
-0.5 0.5 0.0
+0 0.0 0.0 0.0
+0 0.5 0.0 0.0
+0 0.0 0.5 0.0
+0 0.5 0.5 0.0

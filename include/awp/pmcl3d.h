@@ -33,7 +33,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              _prec *FAC, _prec *Q0, _prec *EX, _prec *FP, int *IDYNA,
              int *SoCalQ, char *INSRC, char *INVEL, char *OUT, char *INSRC_I2,
              char *CHKFILE, int *NGRIDS, int *FOLLOWBATHY, char *INTOPO,
-             int *USETOPO, char *CHECKSUM, int *USECHECKSUM, char *SOURCEFILE,
+             int *USETOPO, char *SOURCEFILE,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE);
 
 int read_src_ifault_2(int rank, int READ_STEP, 

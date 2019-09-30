@@ -67,6 +67,7 @@ int test_interp(void)
         prec qx[4] = {0.0, 0.2, 0.4, 1.9};
         prec qy[4] = {0.0, 0.7, 0.4, 1.7};
         prec qz[4] = {0.0, 0.2, 0.3, 0.8};
+        int  idx[4] = {0, 1, 2, 3};
 
         cu_interp_t I;
 
@@ -76,7 +77,7 @@ int test_interp(void)
 
         grid_fill3_x(fcn3, x1, grid);
 
-        cuinterp_init(&I, x1, y1, z1, grid, qx, qy, qz, num_query, deg);
+        cuinterp_init(&I, x1, y1, z1, grid, qx, qy, qz, idx, num_query, deg);
 
         // Perform interpolation on both host and device and compare
         // Use tested host function (interp_lagrange3, see test_interpolation)

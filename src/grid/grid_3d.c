@@ -250,6 +250,7 @@ grid1_t grid_grid1_z(const grid3_t grid)
                          .boundary1 = grid.boundary1.z,
                          .boundary2 = grid.boundary2.z,
                          .padding = grid.padding.z,
+                         .end = grid.size.z - 1 - grid.boundary2.z,
                          .gridspacing = grid.gridspacing};
         return grid1;
 }

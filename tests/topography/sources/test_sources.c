@@ -9,6 +9,7 @@
 #define ADDLINENUM 1
 #define ADDRANK 1
 #define RANK rank
+#define STR_LEN 2048
 
 #include <awp/definitions.h>
 #include <test/test.h>
@@ -21,22 +22,29 @@ void write_source(const char *filename, size_t num_sources, size_t num_steps);
 
 int main(int argc, char **argv)
 {
-        int err = 0;
         int rank, size;
         MPI_Init(&argc, &argv);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN); 
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-        char inputfile[] = "fixtures/source.txt";
+        char inputfile[STR_LEN];
         int px = 2;
+
+        if (argc == 2) {
+                assert(strlen(argv[1]) < STR_LEN);
+                sprintf(inputfile, "%s", argv[1]);
+        }
+        else {
+                sprintf(inputfile, "../tests/fixtures/source.txt");
+        }
 
         if (rank == 0) {
                 test_divider();
                 printf("Testing test_sources.c\n");
         }
 
-        err = test_sources(inputfile, rank, size, px);
+        test_sources(inputfile, rank, size, px);
 
         if (rank == 0) {
                 printf("Testing completed.\n");
@@ -110,7 +118,7 @@ int test_sources(const char *inputfile, int rank, int size, const int px)
         for (size_t step = 0; step < input.steps; ++step) {
                 sources_read(step);
                 sources_add_cartesian(d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, step,
-                                      h, dt);
+                                      h, dt, 0);
         }
 
         err = test_finalize(&test, err);

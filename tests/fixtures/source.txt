@@ -1,19 +1,16 @@
-1.0.0
+2.0.0
 file=source
 length=4 
 steps=600
 stride=1
-system=0
 degree=1
 gpu_buffer_size=2
 cpu_buffer_size=3
 num_writes=2
-num_components=6
-dimension=3
 
 coordinates
-0.5 0.0 0.0
-0.5 0.0 0.0
-1.5 0.0 0.0
-0.0 1.5 0.0
-1.5 1.5 0.0
+0 0.5 0.0 0.0
+0 0.5 0.0 0.0
+0 1.5 0.0 0.0
+0 0.0 1.5 0.0
+0 1.5 1.5 0.0

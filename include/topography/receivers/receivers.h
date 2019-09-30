@@ -13,7 +13,8 @@ void receivers_init(const char *filename, const grids_t *grids, int ngrids,
                     const int size);
 void receivers_finalize(void);
 void receivers_write(const prec *d_vx, const prec *d_vy, const prec *d_vz,
-                     const size_t step, const size_t num_steps);
+                     const size_t step, const size_t num_steps,
+                     const int grid_num);
 size_t receivers_last_step(void);
 void receivers_step_format(char *out, size_t step, const char *base);
 

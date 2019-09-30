@@ -126,6 +126,7 @@ extern "C" {
         }\
 }
 
+#ifndef CUCHK
 #define CUCHK(call) {                                    \
   cudaError_t err = call;                                                    \
   if( cudaSuccess != err) {                                                \
@@ -134,6 +135,7 @@ extern "C" {
   fflush(stderr); \
   exit(EXIT_FAILURE);                                                  \
   } }
+#endif
 
 #define CCHK(err) {                                    \
   if( (err) != 0) {                                                \
