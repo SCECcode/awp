@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-cmake_policy(SET CMP0074 OLD)
+cmake_policy(SET CMP0074 NEW)
 project(AWP_MINI VERSION 1.0 LANGUAGES C CUDA)
 
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
@@ -14,7 +14,7 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=${ARCH} -Xptxas=-v -lineinfo")
 set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${GCC_COMPILE_FLAGS}")
 
 find_package(MPI REQUIRED)
-include_directories(${MPI_INCLUDE_PATH})
+
 
 include(CTest)
 enable_testing()
