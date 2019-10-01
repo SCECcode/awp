@@ -958,6 +958,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
     /*set a zone with high Q around source nodes for two-step method*/
     MPI_Barrier(MCW);
+#if FORCE_HIGH_Q
     if (((NVE == 1) || (NVE == 3)) && (IFAULT < 4) && (NPC < 2)){
     fprintf(stdout, "forcing high Q around source nodes\n");
     for (p=0; p<ngrids; p++){
@@ -987,6 +988,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     }
     fprintf(stdout, "done\n");
     }
+#endif
     MPI_Barrier(MCW);
     fflush(stdout);
 
@@ -1494,6 +1496,63 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        intlev[p] = nzt[p] + align - 3;
     }
 
+#if TOPO
+            // Initialize grids
+            grids_t grids[MAXGRIDS];
+            int istopo = usetopo;
+            for (p = 0; p < ngrids; p++) {
+                    // Disable topography in grids below the top grid
+                    if (p > 0) istopo = 0;
+                    grids[p] = grids_init(nxt[p], nyt[p], nzt[p], coord[0],
+                                          coord[1], 0, istopo, DH[p]);
+            }
+
+            topo_t T = topo_init(usetopo, INTOPO, 
+                                 rank, 
+                                 x_rank_L, x_rank_R,
+                                 y_rank_F, y_rank_B, coord,
+                                 dim[0], dim[1],
+                                 nxt[0], nyt[0], nzt[0], 
+                                 DT, *DH,
+                                 stream_1, stream_2, stream_i
+                                 );
+            topo_bind(&T, d_d1[0], d_lam[0], d_mu[0], 
+                      d_qp[0], d_coeff, d_qs[0], d_vx1[0], d_vx2[0], d_ww[0],
+                      d_wwo[0], d_xx[0], d_yy[0], d_zz[0],
+                      d_xy[0], d_xz[0], d_yz[0], d_r1[0], d_r2[0], d_r3[0],
+                      d_r4[0], d_r5[0], d_r6[0], d_u1[0], d_v1[0], d_w1[0],
+                      d_f_u1[0], d_f_v1[0], d_f_w1[0], d_b_u1[0], d_b_v1[0],
+                      d_b_w1[0], d_dcrjx[0], d_dcrjy[0], d_dcrjz[0]);
+            topo_init_metrics(&T);
+
+            int topo_vtk_mode = 0;
+            if (T.use) {
+                topo_init_grid(&T);
+                topo_init_geometry(&T);
+                topo_write_geometry_vtk(&T, topo_vtk_mode);
+                topo_build(&T);
+                topo_set_constants(&T);
+            }
+
+
+
+            if(rank == 0)printf("Initialize source and receivers\n");
+            fflush(stdout);
+
+
+            f_grid_t *metrics_f = NULL;
+            if (T.use) {
+                metrics_f = &T.metrics_f;
+            }
+
+            sources_init(SOURCEFILE, grids, ngrids, metrics_f, MCW, rank,
+                         size_tot);
+            receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
+                           size_tot);
+            if(rank == 0)printf("done.\n");
+            fflush(stdout);
+#endif
+
     size_t  cmemfreeMin;
     cudaMemGetInfo(&cmemfree, &cmemtotal);
     if(sizeof(size_t)==8) 
@@ -1508,8 +1567,15 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
       printf("CUDA MEMORY: Total=%ld\tAvailable=%ld\n",cmemtotal,cmemfree);
     }
 
+    for (p=0; p<ngrids; p++){
+        receivers_write(d_u1[p], d_v1[p], d_w1[p], 0, nt, p);
+    }
+    sources_read(0);
+
     if(rank==0)
       fchk = fopen(CHKFILE,"a+");
+
+    int num_pad = (int)log((double)nt);
 //  Main Loop Starts
     if( ((NPC==0) || (NPC==2)) && (NVE==1 || NVE==3))
     {
@@ -1521,10 +1587,17 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          CUCHK(cudaStreamSynchronize(stream_i));
          CUCHK(cudaStreamSynchronize(stream_1));
          CUCHK(cudaStreamSynchronize(stream_2));
-         if(rank==0) printf("Time Step =                   %ld    OF  Total Timesteps = %ld\n", cur_step, nt); 
-         fflush(stdout);
-         fflush(stderr);
-         if(cur_step==100 && rank==0) printf("Time per timestep:\t%f seconds\n",(gethrtime()+time_un)/100);
+         if (cur_step % 10 == 0 && rank == 0) {
+                double step_s = (gethrtime() + time_un) / cur_step;
+                double pcomplete = 100 * (double) cur_step / (double) (nt - 1);
+                printf(
+                    "Time step %ld out of %ld steps (t = %4.3f) "
+                    " \t %3.5f s/step \t %5.3f step/s \t %2.2f %%  \n",
+                    cur_step, nt, cur_step * DT, step_s, 1.0/step_s, pcomplete);
+
+                fflush(stdout);
+                fflush(stderr);
+         }
          CUCHK(cudaGetLastError());
          //cerr=cudaGetLastError();
          
@@ -1839,6 +1912,24 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                      intlev[p], intlev[p], p);
          }
 
+         sources_read(cur_step);
+         if (T.use) {
+                 sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0],
+                                         d_xz[0], d_yz[0], cur_step, DH[0], DT,
+                                         &T.metrics_f, &T.metrics_g, 0);
+                 for (p = 1; p < ngrids; p++) {
+                         sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
+                                               d_xy[p], d_xz[p], d_yz[p],
+                                               cur_step, DH[p], DT, p);
+                }
+         } else {
+                for (p=0; p<ngrids; p++){
+                        sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
+                                              d_xy[p], d_xz[p], d_yz[p],
+                                              cur_step, DH[p], DT, p);
+                }
+         }
+
          //update source input
          if ((IFAULT < 4) && (cur_step<NST)) {
             CUCHK(cudaDeviceSynchronize());
@@ -2077,6 +2168,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
          fstr_H(d_zz[0], d_xz[0], d_yz[0], stream_i, xls[0], xre[0], yls[0], yre[0]);
          CUCHK(cudaDeviceSynchronize());
+
+         for (p=0; p<ngrids; p++) {
+                receivers_write(d_u1[p], d_v1[p], d_w1[p], cur_step, nt, p);
+         }
 
          if(cur_step%NTISKP == 0){
           #ifndef SEISMIO
@@ -2449,6 +2544,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
       #endif
 
     }
+
+#if TOPO
+    topo_free(&T);
+    receivers_finalize();
+    sources_finalize();
+#endif
     cudaStreamDestroy(stream_1);
     //cudaStreamDestroy(stream_1b);
     cudaStreamDestroy(stream_2);
