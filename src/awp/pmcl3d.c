@@ -150,11 +150,10 @@ int main(int argc,char **argv)
     double time_un = 0.0;
     // time_src and time_mesh measures the time spent
     // in source and mesh reading 
-    double time_src = 0.0, time_src_tmp = 0.0, time_mesh = 0.0; 
-    // time_fileio and time_gpuio measures the time spent
-    // in file system IO and gpu memory copying for IO 
-    double time_fileio = 0.0, time_gpuio = 0.0;
-    double time_fileio_tmp = 0.0, time_gpuio_tmp = 0.0; 
+    double time_src = 0.0, time_src_tmp = 0.0, time_mesh = 0.0;
+    // time_gpuio measures the time spent in gpu memory copying for IO
+    double time_gpuio = 0.0;
+    double time_gpuio_tmp = 0.0; 
 //  MPI+CUDA variables
     cudaError_t cerr;
     size_t cmemfree, cmemtotal;
@@ -974,6 +973,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 		  dox=doy=doz=0;
 		  if ((xi>=0) && (xi < (nxt[0] + ngsl2 +1))) dox = 1;
 		  if ((yi>=0) && (yi < (nyt[0] + ngsl2 +1))) doy = 1;
+                  //FIXME: Bug here? shouldn't it be zi < (nzt[0] + ...)
 		  if ((zi>=0) && (yi < (nzt[0] + ngsl2 +1))) doz = 1;
 		  if ((dox && doy) && doz ) {
 		     qp[p][xi][yi][zi]=7.88313861E-04;  //Q of 10,000 before inimesh
@@ -1496,7 +1496,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        intlev[p] = nzt[p] + align - 3;
     }
 
-#if TOPO
             // Initialize grids
             grids_t grids[MAXGRIDS];
             int istopo = usetopo;
@@ -1506,6 +1505,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                     grids[p] = grids_init(nxt[p], nyt[p], nzt[p], coord[0],
                                           coord[1], 0, istopo, DH[p]);
             }
+
+            f_grid_t *metrics_f = NULL;
+
+#if TOPO
 
             topo_t T = topo_init(usetopo, INTOPO, 
                                  rank, 
@@ -1536,11 +1539,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
 
 
+#endif
+
             if(rank == 0)printf("Initialize source and receivers\n");
             fflush(stdout);
 
 
-            f_grid_t *metrics_f = NULL;
             if (T.use) {
                 metrics_f = &T.metrics_f;
             }
@@ -1551,7 +1555,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                            size_tot);
             if(rank == 0)printf("done.\n");
             fflush(stdout);
-#endif
 
     size_t  cmemfreeMin;
     cudaMemGetInfo(&cmemfree, &cmemtotal);
@@ -1614,14 +1617,27 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    PostRecvMsg_Y(RF_vel[p], RB_vel[p], MCW, request_y[p], &count_y[p], msg_v_size_y[p], y_rank_F, y_rank_B, p);
 	    //PostRecvMsg_X(RL_vel[p], RR_vel[p], MCW, request_x[p], &count_x[p], msg_v_size_x[p], x_rank_L, x_rank_R, p);
 	    //velocity computation in y boundary, two ghost cell regions
+            if (!usetopo || p > 0) {
 	    dvelcy_H(d_u1[p], d_v1[p], d_w1[p], d_xx[p],   d_yy[p],   d_zz[p],   d_xy[p],       
                      d_xz[p], d_yz[p], d_dcrjx[p], d_dcrjy[p], d_dcrjz[p],
 		     d_d1[p], nxt[p],  nzt[p],  d_f_u1[p], d_f_v1[p], d_f_w1[p], 
                      stream_1,   yfs[p],  yfe[p], y_rank_F, p);
+            } else {
+            #if TOPO
+                topo_velocity_front_H(&T);
+            #endif
+            }
 	    Cpy2Host_VY(d_f_u1[p], d_f_v1[p], d_f_w1[p],  SF_vel[p], nxt[p], nzt[p], stream_1, y_rank_F);
+
+            if (!usetopo || p > 0) {
 	    dvelcy_H(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      d_dcrjx[p], d_dcrjy[p], d_dcrjz[p], d_d1[p], nxt[p],  nzt[p],  
                      d_b_u1[p], d_b_v1[p], d_b_w1[p], stream_2, ybs[p], ybe[p], y_rank_B, p);
+            } else {
+            #if TOPO
+                topo_velocity_back_H(&T);
+            #endif
+            }
 
 	    Cpy2Host_VY(d_b_u1[p], d_b_v1[p], d_b_w1[p], SB_vel[p], nxt[p], nzt[p], stream_2, y_rank_B);
 
@@ -1629,8 +1645,14 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
             CUCHK(cudaStreamSynchronize(stream_2)); 
             //usleep(1);
 
+            if (!usetopo || p > 0) {
 	    dvelcx_H_opt(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 
                      d_dcrjx[p], d_dcrjy[p], d_dcrjz[p], d_d1[p], nyt[p], nzt[p], stream_i, xvs[p],  xve[p], p, ngrids);
+            } else {
+            #if TOPO
+                topo_velocity_interior_H(&T);
+            #endif
+                }
          }
 
          for (p=0; p<ngrids; p++){
@@ -1777,7 +1799,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          }
          if (NVE < 3){
    	    //stress computation in full inside region
-   	    for (p=0; p<ngrids; p++){
+   	    for (p=usetopo; p<ngrids; p++){
                CUCHK(cudaStreamSynchronize(stream_i));
 	       dstrqc_H(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p],
 			d_r1[p], d_r2[p], d_r3[p], d_r4[p], d_r5[p], d_r6[p],
@@ -1788,10 +1810,14 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 			NX*grdfct[p], NPC,  coord[0], coord[1],   xss2[p],  xse2[p],
 			yls[p],  yre[p], p);
             }
+
+#if TOPO
+            topo_stress_interior_H(&T);
+#endif
          }
          else {
    	    //stress computation in part of the inside region
-   	    for (p=0; p<ngrids; p++){
+   	    for (p=usetopo; p<ngrids; p++){
 	       dstrqc_H(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p],
 			d_r1[p], d_r2[p], d_r3[p], d_r4[p], d_r5[p], d_r6[p],
 			d_u1[p], d_v1[p], d_w1[p], d_lam[p],
@@ -1833,6 +1859,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	    Cpy2Device_VX(d_u1[p], d_v1[p], d_w1[p], RL_vel[p], RR_vel[p], nxt[p], nyt[p], nzt[p], 
                stream_1, stream_2, x_rank_L, x_rank_R);
 
+            if (!usetopo || p > 0) { 
 	    dstrqc_H(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p],
 		     d_r1[p], d_r2[p], d_r3[p], d_r4[p], d_r5[p], d_r6[p],
 		     d_u1[p], d_v1[p], d_w1[p], d_lam[p],
@@ -1849,6 +1876,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 		     d_vx1[p], d_vx2[p], d_ww[p], d_wwo[p],
 		     NX*grdfct[p], NPC,  coord[0], coord[1],   xss3[p],  xse3[p],
 		     yls[p],  yre[p], p);
+            } else {
+                    topo_stress_left_H(&T);
+                    topo_stress_right_H(&T);
+            }
          }
          CUCHK(cudaDeviceSynchronize());
          

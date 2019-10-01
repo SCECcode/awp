@@ -31,5 +31,7 @@ void topo_write_vtk(topo_t *T, const int step, int mode);
 
 #ifdef __cplusplus
 }
+#else
+void topo_write_geometry_vtk(topo_t *T, const int mode);
 #endif
 #endif
