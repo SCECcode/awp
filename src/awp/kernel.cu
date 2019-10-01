@@ -734,12 +734,12 @@ dstrqc_new(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restrict_
 
     tmp      = xl*(vs1+vs2+vs3);
     #ifdef ELA
-    if (k==41 && i==102 && j==102) cuPrintf("before update xx=%.20g\n", xx[pos]);
+    if (k==41 && i==102 && j==102) printf("before update xx=%.20g\n", xx[pos]);
     xx[pos]  = (xx[pos] + tmp - xm*(vs2+vs3))*f_dcrj;
     yy[pos]  = (yy[pos] + tmp - xm*(vs1+vs3))*f_dcrj;
     zz[pos]  = (zz[pos] + tmp - xm*(vs1+vs2))*f_dcrj;
     if (k==41 && i==102 && j==102)
-       cuPrintf("after update xx=%.30g, xm=%.30g, vs1=%.30g, vs2=%.30g, vs3=%.30g, f_drj=%.30g\n", 
+       printf("after update xx=%.30g, xm=%.30g, vs1=%.30g, vs2=%.30g, vs3=%.30g, f_drj=%.30g\n", 
 	     xx[pos], xm, vs1, vs2, vs3, f_dcrj);
     #else
     a1       = qpa*(vs1+vs2+vs3);
