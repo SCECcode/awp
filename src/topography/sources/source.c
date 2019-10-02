@@ -174,6 +174,7 @@ void source_init_common(source_t *src, const char *filename,
                 printf("g[%d] = %d \n", i, grid_number[i]);
         }
 
+
         // Init arrays that contains local coordinates
         for (int j = 0; j < ngrids; ++j) {
                 src->global_indices[j] =
@@ -308,8 +309,6 @@ void source_init_common(source_t *src, const char *filename,
                 }
 
                 overlap = grid.gridspacing * 4.5;
-                if (grid_type == XX)
-                        printf("overlap = %g \n", overlap);
 
                 if (src->lengths[j] == 0) continue;
 
@@ -408,7 +407,6 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
 
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
-        // FIXME: Add proper DM support
         cusource_add_curvilinear_H(&src->interpolation[grid_num], out, source_data, h, dt,
                                    f, ny, dg);
 }
