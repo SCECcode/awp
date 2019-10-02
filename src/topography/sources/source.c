@@ -142,7 +142,17 @@ void source_init_common(source_t *src, const char *filename,
         grid3_t grid = grids_select(grid_type, &grids[0]);
 
 
-        AWPCHK(dist_indices(&src->indices, &src->length, input->x,
+        // Shift by 0.5 such that x = 0, y = 0 is
+        // located at a material or topography grid
+        // point.
+
+        _prec *x = malloc(sizeof x * input->length);
+        for (int i = 0; i < input->length; ++i) {
+                x[i] = input->x[i] - 0.5 * grid.gridspacing;
+        }
+
+
+        AWPCHK(dist_indices(&src->indices, &src->length, x,
                             input->y, input->length, grid));
 
 
@@ -190,11 +200,7 @@ void source_init_common(source_t *src, const char *filename,
                 for (int i = 0; i < src->length; ++i) {
                         if (grid_number[i] != j) continue;
                         src->global_indices[j][local_idx] = i;
-                        // Shift by 0.5 such that x = 0, y = 0 is
-                        // located at a material or topography grid
-                        // point.
-                        src->x[j][local_idx] =
-                            input->x[src->indices[i]] - 0.5 * grid.gridspacing;
+                        src->x[j][local_idx] = x[src->indices[i]];
                         src->y[j][local_idx] = input->y[src->indices[i]];
                         src->z[j][local_idx] = input->z[src->indices[i]];
                         src->type[j][local_idx] = input->type[src->indices[i]];
@@ -335,6 +341,7 @@ void source_init_common(source_t *src, const char *filename,
 
 
         free(grid_number);
+        free(x);
         
 
         src->buffer = buffer_init(src->length,
