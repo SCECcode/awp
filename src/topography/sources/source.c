@@ -158,7 +158,7 @@ void source_init_common(source_t *src, const char *filename,
                 src->lengths[j] = 0;
         }
 
-        int *grid_number = malloc(sizeof grid_number * src->length);
+        int *grid_number = malloc(sizeof grid_number * input->length);
         source_find_grid_number(input, grids, grid_number, ngrids);
 
         for (int i = 0; i < src->length; ++i) {
