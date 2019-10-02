@@ -65,12 +65,14 @@ void source_finalize(source_t *src)
 
 void source_find_grid_number(const input_t *input, const
                              const grids_t *grids, int *grid_number, 
+                             const int *indices,
+                             const int length,
                              const int num_grids)
 {
 
         prec *z1 = malloc(sizeof z1 * grids[0].z.size.z);
 
-        for (int j = 0; j < input->length; ++j) {
+        for (int j = 0; j < length; ++j) {
                 grid_number[j] = -1;
         }
 
@@ -89,11 +91,11 @@ void source_find_grid_number(const input_t *input, const
                 if (i + 1 != num_grids) overlap = z_grid.gridspacing * 4.5;
                 lower = lower + overlap;
                 printf("Grid %d: %g < z <= %g \n", i, lower, upper);
-                for (int j = 0; j < input->length; ++j) {
-                        _prec z = input->z[j];
+                for (int j = 0; j < length; ++j) {
+                        _prec z = input->z[indices[j]];
                         // Take into account that topography can yield positive
                         // z-values
-                        if (input->type[j] == INPUT_SURFACE_COORD) {
+                        if (input->type[indices[j]] == INPUT_SURFACE_COORD) {
                                 grid_number[j] = 0;
                                 continue;
                         }
@@ -115,7 +117,7 @@ void source_find_grid_number(const input_t *input, const
 
         free(z1);
 
-        for (int j = 0; j < input->length; ++j) {
+        for (int j = 0; j < length; ++j) {
                 if (grid_number[j] == -1) {
                         fprintf(stderr, 
                                 "Failed to assign source/receiver id=%d "\
@@ -158,13 +160,18 @@ void source_init_common(source_t *src, const char *filename,
                 src->lengths[j] = 0;
         }
 
-        int *grid_number = malloc(sizeof grid_number * input->length);
-        source_find_grid_number(input, grids, grid_number, ngrids);
+        int *grid_number = malloc(sizeof grid_number * src->length);
+        source_find_grid_number(input, grids, grid_number, src->indices,
+                                src->length, ngrids);
 
         for (int i = 0; i < src->length; ++i) {
                 for (int j = 0; j < ngrids; ++j) {
                         if (grid_number[i] == j) src->lengths[j] += 1;
                 }
+        }
+
+        for (int i = 0; i < src->length; ++i) {
+                printf("g[%d] = %d \n", i, grid_number[i]);
         }
 
         // Init arrays that contains local coordinates
