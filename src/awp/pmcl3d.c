@@ -20,7 +20,6 @@
 #include <awp/utils.h>
 #include <awp/dump.h>
 #include <awp/seism.h>
-#include <awp/debug.h>
 #include <awp/calc.h>
 #include <awp/init.h>
 #include <topography/topography.h>
@@ -30,7 +29,6 @@
 #include <topography/receivers/receivers.h>
 #include <topography/geometry/geometry.h>
 #include <buffers/buffer.h>
-#include <checksum/checksum.h>
 
 #define FORCE_HIGH_Q 0
 
@@ -77,10 +75,6 @@ int main(int argc,char **argv)
     // topography variables
     int usetopo = 0;
     char INTOPO[IN_FILE_LEN];
-
-    checksum_t checksum;
-    int usechecksum = 0;
-    char CHECKSUM[IN_FILE_LEN];
 
     int usesourcefile = 0;
     char SOURCEFILE[IN_FILE_LEN];
@@ -151,12 +145,12 @@ int main(int argc,char **argv)
     double time_init = 0.0;
     // time_src and time_mesh measures the time spent
     // in source and mesh reading 
-    double time_src = 0.0, time_src_tmp = 0.0, time_mesh = 0.0;
+    double time_src = 0.0, time_mesh = 0.0;
     // time_gpuio measures the time spent in gpu memory copying for IO
     double time_gpuio = 0.0;
     double time_gpuio_tmp = 0.0; 
 //  MPI+CUDA variables
-    cudaError_t cerr;
+    cudaError_t cerr = 0;
     size_t cmemfree, cmemtotal;
     cudaStream_t stream_1, /*stream_1b,*/ stream_2, /*stream_2b,*/ stream_i, stream_i2;;
     cudaStream_t stream_o;
@@ -286,7 +280,7 @@ int main(int argc,char **argv)
     time_t time1, time2;
 
     /* for FOLLOWBATHY option - save surface output on ocean floor */
-    int *bathy, ko;
+    int *bathy;
     int *d_bathy;
     float tmpvs;
 
@@ -297,7 +291,7 @@ int main(int argc,char **argv)
             &NTISKP, &WRITE_STEP, &NX, &NY, NZ, &PX, &PY, NBGX, NEDX, NSKPX,
             NBGY, NEDY, NSKPY, NBGZ, NEDZ, NSKPZ, &FAC, &Q0, &EX, &FP, &IDYNA,
             &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
-            &FOLLOWBATHY, INTOPO, &usetopo, CHECKSUM, &usechecksum, SOURCEFILE,
+            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
             &usesourcefile, RECVFILE, &userecvfile);
 
     #ifndef SEISMIO
@@ -1506,7 +1500,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        CUCHK(cudaMalloc((void**) &d_RL_swap[p], num_bytes2));
        CUCHK(cudaMalloc((void**) &d_RR_swap[p], num_bytes2));
 
-       for (k=0; k<num_bytes2/sizeof(float); k++) SL_swap[p][k] = SR_swap[p][k] = RL_swap[p][k] = RR_swap[p][k] = 0.f;
+       for (k=0; k<(int)(num_bytes2/sizeof(float)); k++) SL_swap[p][k] = SR_swap[p][k] = RL_swap[p][k] = RR_swap[p][k] = 0.f;
 
        //copy zero-allocated arrays to device if GPU arrays remain uninitialized otherwise
        /*if (x_rank_L < 0) CUCHK(cudaMemcpy(d_RL_swap[p], RL_swap[p], num_bytes2, cudaMemcpyHostToDevice));
@@ -1528,7 +1522,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        CUCHK(cudaMalloc((void**) &d_RF_swap[p], num_bytes2));
        CUCHK(cudaMalloc((void**) &d_RB_swap[p], num_bytes2));
 
-       for (k=0; k<num_bytes2/sizeof(float); k++) SF_swap[p][k] = SB_swap[p][k] = RF_swap[p][k] = RB_swap[p][k] = 0.f;
+       for (k=0; k<(int)(num_bytes2/sizeof(float)); k++) SF_swap[p][k] = SB_swap[p][k] = RF_swap[p][k] = RB_swap[p][k] = 0.f;
 
        //copy zero-allocated arrays to device if GPU arrays remain uninitialized otherwise
        /*if (y_rank_F < 0) cudaMemcpy(d_RF_swap[p], RF_swap[p], num_bytes2, cudaMemcpyHostToDevice);
@@ -1576,11 +1570,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                       d_b_w1[0], d_dcrjx[0], d_dcrjy[0], d_dcrjz[0]);
             topo_init_metrics(&T);
 
-            int topo_vtk_mode = 0;
             if (T.use) {
                 topo_init_grid(&T);
                 topo_init_geometry(&T);
-                topo_write_geometry_vtk(&T, topo_vtk_mode);
                 topo_build(&T);
                 topo_set_constants(&T);
             }

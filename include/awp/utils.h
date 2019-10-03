@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-double gethrtime();
+double gethrtime(void);
 void error_check(int ierr, char *message);
 int copyfile(const char *output, const char *input);
 

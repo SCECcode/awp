@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
@@ -6,6 +7,10 @@
 
 #define MPIRANKSRC 300000
 #define FNAMELEN 400
+
+void errhandle(int ierr, char *where);
+void read_awp_subvolume(MPI_File fh, int *griddims, int *extent, int *timerange, 
+    MPI_Comm comm, int seismio, _prec *buf);
 
 int read_src_ifault_2(int rank, int READ_STEP, 
     char *INSRC, char *INSRC_I2, 

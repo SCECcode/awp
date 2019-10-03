@@ -52,7 +52,7 @@ source_t source_init(const char *file_end,
 void source_finalize(source_t *src);
 
 void source_find_grid_number(const input_t *input, const
-                             const grids_t *grids, int *grid_number, 
+                             grids_t *grids, int *grid_number, 
                              const int *indices,
                              const int length,
                              const int num_grids);

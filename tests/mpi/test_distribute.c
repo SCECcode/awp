@@ -20,7 +20,6 @@ int test_indices(int rank, int size, enum eshift shift);
 
 int main(int argc, char **argv)
 {
-        int err = 0;
         int rank, size;
         MPI_Init(&argc, &argv);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN); 
@@ -42,9 +41,9 @@ int main(int argc, char **argv)
                 printf("Testing test_distribute.c\n");
         }
 
-        err = test_indices(rank, size, GRID_U1);
-        err = test_indices(rank, size, GRID_U2);
-        err = test_indices(rank, size, GRID_U3);
+        test_indices(rank, size, GRID_U1);
+        test_indices(rank, size, GRID_U2);
+        test_indices(rank, size, GRID_U3);
         //TODO: Add tests for stress grids
         //err = test_indices(rank, size, GRID_XX);
         //err = test_indices(rank, size, GRID_YY);

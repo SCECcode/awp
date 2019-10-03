@@ -64,7 +64,7 @@ void source_finalize(source_t *src)
 }
 
 void source_find_grid_number(const input_t *input, const
-                             const grids_t *grids, int *grid_number, 
+                             grids_t *grids, int *grid_number, 
                              const int *indices,
                              const int length,
                              const int num_grids)
@@ -79,7 +79,6 @@ void source_find_grid_number(const input_t *input, const
         grid1_t z_grid = grid_grid1_z(grids[0].z);
         grid_fill1(z1, z_grid);
 
-        _prec top = z1[z_grid.end];
         _prec lower = 0;
         _prec upper = 0;
         _prec overlap = 0;
@@ -146,7 +145,7 @@ void source_init_common(source_t *src, const char *filename,
         // point.
 
         _prec *x = malloc(sizeof x * input->length);
-        for (int i = 0; i < input->length; ++i) {
+        for (size_t i = 0; i < input->length; ++i) {
                 x[i] = input->x[i] - 0.5 * grid.gridspacing;
         }
 
@@ -173,7 +172,7 @@ void source_init_common(source_t *src, const char *filename,
         source_find_grid_number(input, grids, grid_number, src->indices,
                                 src->length, ngrids);
 
-        for (int i = 0; i < src->length; ++i) {
+        for (size_t i = 0; i < src->length; ++i) {
                 for (int j = 0; j < ngrids; ++j) {
                         if (grid_number[i] == j) src->lengths[j] += 1;
                 }
@@ -191,7 +190,7 @@ void source_init_common(source_t *src, const char *filename,
 
         for (int j = 0; j < ngrids; ++j) {
                 int local_idx = 0;
-                for (int i = 0; i < src->length; ++i) {
+                for (size_t i = 0; i < src->length; ++i) {
                         if (grid_number[i] != j) continue;
                         src->global_indices[j][local_idx] = i;
                         src->x[j][local_idx] = x[src->indices[i]];
@@ -202,7 +201,6 @@ void source_init_common(source_t *src, const char *filename,
                 }
         }
 
-        int idx = -1;
         _prec overlap = 0.0;
         _prec lower = 0.0;
         _prec block_height = 0.0;

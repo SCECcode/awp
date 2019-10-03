@@ -25,6 +25,7 @@ int topo_read_serial(const char *filename, const int rank, const int px,
         int gmx = gnx + 2 * padding;
         int gmy = gny + 2 * padding;
 
+        assert(count > 0);
         assert(nx * px == gnx);
         assert(ny * py == gny);
         assert(padding >= ngsl);

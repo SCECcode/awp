@@ -6,10 +6,11 @@
 #include <mpi.h>
 
 #include <awp/pmcl3d_cons.h>
+#include <awp/utils.h>
 
 const double   micro = 1.0e-6;
 
-double gethrtime()
+double gethrtime(void)
 {
     struct timeval TV;
     int RC = gettimeofday(&TV,NULL);
@@ -28,7 +29,7 @@ void error_check(int ierr, char *message){
    if (ierr != MPI_SUCCESS) {
       fprintf(stderr, "%d: Error in %s\n", ierr, message);
       MPICHK(MPI_Error_string(ierr, errmsg, &errlen));
-      fprintf(stderr, errmsg);
+      fprintf(stderr, "%s", errmsg);
    }
 }
 

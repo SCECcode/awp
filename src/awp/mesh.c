@@ -5,6 +5,7 @@
  *    MEDIARESTART=3 is added for partitioned large mesh reading
  *
 ***************************************************************************/
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <math.h>
 #include <complex.h>
@@ -13,13 +14,18 @@
 #define M_PI           3.14159265358979323846
 #endif
 
+_prec*  matmul3(_prec *a, _prec *b);
+_prec*  transpose(_prec *a);
+_prec*  rotate_principal(_prec sigma1, _prec sigma2, _prec sigma3, _prec *strike, _prec *dip);
+void hoek_brown(_prec sigma_0, _prec sigma_ci, _prec GSI, _prec mi, _prec D, 
+    int tunnel, _prec *phi, _prec *cohes);
+
 void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D qs, _prec *taumax, _prec *taumin,
 	     Grid3D tau, Grid3D weights,Grid1D coeff, 
 	     int nvar, _prec FP,  _prec FAC, _prec Q0, _prec EX, int nxt, int nyt, int nzt, int PX, int PY, int NX, int NY, 
              int NZ, int *coords, MPI_Comm MCW, int IDYNA, int NVE, int SoCalQ, char *INVEL, 
              _prec *vse, _prec *vpe, _prec *dde)
 {
-  int merr;
   int i,j,k,err;
   _prec vp,vs,dd,pi; 
   int   rmtype[3], rptype[3], roffset[3];
@@ -129,7 +135,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
       if(MEDIASTART>=1 && MEDIASTART<=3)
       {
           char filename[40];
-          if(MEDIASTART<3) sprintf(filename,INVEL);
+          if(MEDIASTART<3) sprintf(filename,"%s",INVEL);
           else if(MEDIASTART==3){
             sprintf(filename,"input_rst/mediapart/media%07d.bin",rank);
             if(rank%100==0) printf("Rank=%d, reading file=%s\n",rank,filename);
@@ -152,7 +158,9 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
              //printf("%d) 0-0-0,1-10-3=%f, %f\n",rank,tmpta[0],tmpta[1+10*nxt+3*nxt*nyt]);
           }
           else{
+#if VERBOSE
 	    printf("%d) Media file will be read using MPI-IO\n", rank); 
+#endif
 		    rmtype[0]  = NZ;
     		    rmtype[1]  = NY;
     		    rmtype[2]  = NX*nvar;
@@ -232,7 +240,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
           }
       }
       
-      _prec w0=0.0f, ww1=0.0f, w2=0.0f, tmp1=0.0f, tmp2=0.0f;
+      _prec w0=0.0f;
       _prec qpinv=0.0f, qsinv=0.0f, vpvs=0.0f;
       if(NVE==1 || NVE==3)
       {
@@ -585,15 +593,15 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
         }
 
       _prec tmpvse[2],tmpvpe[2],tmpdde[2];
-      merr = MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MAX,MCW);
-      merr = MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MAX,MCW);
-      merr = MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MAX,MCW);
+      MPICHK(MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MAX,MCW));
+      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MAX,MCW));
+      MPICHK(MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MAX,MCW));
       vse[1] = tmpvse[1];
       vpe[1] = tmpvpe[1];
       dde[1] = tmpdde[1];
-      merr = MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MIN,MCW);
-      merr = MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MIN,MCW);
-      merr = MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MIN,MCW);
+      MPICHK(MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MIN,MCW));
+      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MIN,MCW));
+      MPICHK(MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MIN,MCW));
       vse[0] = tmpvse[0];
       vpe[0] = tmpvpe[0];
       dde[0] = tmpdde[0];
@@ -604,6 +612,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 
   return;
 }
+
 
 _prec*  matmul3(_prec *a, _prec *b){
    int i, j, k;
