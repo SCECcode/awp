@@ -6,6 +6,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#define STR_LEN 2048
 #define ADDLINENUM 1
 #define ADDRANK 1
 #define RANK rank
@@ -27,8 +28,16 @@ int main(int argc, char **argv)
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-        char inputfile[] = "fixtures/source.txt";
+        char inputfile[STR_LEN];
         int px = 2;
+
+        if (argc == 2) {
+                assert(strlen(argv[1]) < STR_LEN);
+                sprintf(inputfile, "%s", argv[1]);
+        }
+        else {
+                sprintf(inputfile, "../tests/fixtures/source.txt");
+        }
 
         if (rank == 0) {
                 test_divider();
