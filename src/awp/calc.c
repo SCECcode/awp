@@ -66,8 +66,7 @@ void calcRecordingPoints(int *rec_nbgx, int *rec_nedx,
   }
 
   // displacement assumes NPZ=1!
-  *displacement *= sizeof(_prec);
+  *displacement *= sizeof(float);
 
   return;
 }
-

@@ -48,9 +48,11 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 
 
   tausub(tau, *taumin, *taumax);
+#if VERBOSE
   if(!coords[0] && !coords[1]) printf("tau: %e,%e; %e,%e; %e,%e; %e,%e\n",
 				      tau[0][0][0],tau[1][0][0],tau[0][1][0],tau[1][1][0],
 				      tau[0][0][1],tau[1][0][1],tau[0][1][1],tau[1][1][1]);
+#endif
   MPICHK(MPI_Comm_rank(MCW,&rank));        
   if(MEDIASTART==0)
   {
@@ -241,7 +243,9 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 	 // *taumin=1./w2;
          //tmp1=2./pi*(log((*taumax)/(*taumin)));
          //tmp2=2./pi*log(w0*(*taumin));
+#if VERBOSE
          if(!rank) printf("w0 = %g\n",w0); 
+#endif
       }       
 
       vse[0] = 1.0e10;

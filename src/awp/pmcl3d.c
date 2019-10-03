@@ -148,6 +148,7 @@ int main(int argc,char **argv)
     int npsrc[MAXGRIDS];
     long int nt, cur_step, source_step;
     double time_un = 0.0;
+    double time_init = 0.0;
     // time_src and time_mesh measures the time spent
     // in source and mesh reading 
     double time_src = 0.0, time_src_tmp = 0.0, time_mesh = 0.0;
@@ -313,7 +314,12 @@ int main(int argc,char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&size_tot);
 
+    time_init = gethrtime();
+    if (rank == 0) fprintf(stdout, "Initializing...\n");
+
+#if VERBOSE
     if (rank==0) fprintf(stdout, "AWP-ODC-DM: Number of grid resolutions = %d\n", ngrids);
+#endif
     fflush(stdout);
 
     #ifndef NOBGIO
@@ -414,8 +420,10 @@ int main(int argc,char **argv)
     rank_gpu = 0;
     CUCHK(cudaSetDevice(rank_gpu));
 
+#if VERBOSE
 printf("\n\nrank=%d) RS=%d, RSG=%d, NST=%d, IF=%d\n\n\n", 
 rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
+#endif
 
     for (p=0; p<ngrids; p++){
        if (p==0){
@@ -431,9 +439,11 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        NEDY[p] = NEDY[p]-(NEDY[p]-NBGY[p])%NSKPY[p];
        NEDZ[p] = NEDZ[p]-(NEDZ[p]-NBGZ[p])%NSKPZ[p];
        if (NEDX[p] > -1 && NEDY[p] > -1 && NEDZ[p] > -1) grid_output[p] = 1;
+#if VERBOSE
        fprintf(stdout, "%d: X: %d:%d:%d.  Y: %d:%d:%d.  Z:%d:%d:%d\n",
           p, NBGX[p], NSKPX[p], NEDX[p],  NBGY[p], NSKPY[p], NEDY[p], NBGZ[p], NSKPZ[p], NEDZ[p]);
        fflush(stdout);
+#endif
     }
     #ifndef SEISMIO
     // number of recording points in total
@@ -447,11 +457,13 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	 &rec_nbgz[p], &rec_nedz[p], &rec_nxt[p], &rec_nyt[p], &rec_nzt[p], &displacement[p],
 	 (long int)nxt[p],(long int)nyt[p],(long int)nzt[p], rec_NX[p], rec_NY[p], rec_NZ[p], 
 	 NBGX[p],NEDX[p],NSKPX[p], NBGY[p],NEDY[p],NSKPY[p], NBGZ[p],NEDZ[p],NSKPZ[p], coord);
+#if VERBOSE
        printf("%d = (%d,%d)) NX,NY,NZ=%d,%d,%d\nnxt,nyt,nzt=%d,%d,%d\nrec_N=(%d,%d,%d)\nrec_nxt,=%d,%d,%d\nNBGX,SKP,END=(%d:%d:%d),(%d:%d:%d),(%d:%d:%d)\nrec_nbg,ed=(%d,%d),(%d,%d),(%d,%d)\ndisp=%ld\n",
 	   rank,coord[p],coord[1],NX,NY,NZ[p],nxt[p],nyt[p],nzt[p],
 	   rec_NX[p], rec_NY[p], rec_NZ[p], rec_nxt[p], rec_nyt[p], rec_nzt[p],
 	   NBGX[p],NSKPX[p],NEDX[p],NBGY[p],NSKPY[p],NEDY[p],NBGZ[p],NSKPZ[p],NEDZ[p],
 	   rec_nbgx[p],rec_nedx[p],rec_nbgy[p],rec_nedy[p],rec_nbgz[p],rec_nedz[p],(long int)displacement[p]);
+#endif
 
     }
 
@@ -496,8 +508,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        err = MPI_Type_create_hindexed(WRITE_STEP, ones[p], dispArray[p], filetype[p], &filetype[p]);
        err = MPI_Type_commit(&filetype[p]);
        MPI_Type_size(filetype[p], &tmpSize);
+#if VERBOSE
        if(rank==0) printf("filetype size grid %d (supposedly=rec_nxt*nyt*nzt*WS*4=%ld) =%d\n", 
           p, rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*WRITE_STEP*sizeof(float),tmpSize);
+#endif
 
     }
 
@@ -609,10 +623,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        yls2[p]=max(yls2[p], ylsp[p]+ngsl+2);
        yre2[p]=min(yre2[p], yrep[p]-ngsl-2);
 
+#if VERBOSE
        if (rank == 0)
          fprintf(stdout, "%d: yls[%d]=%d, yls2[%d]=%d, yre2[%d]=%d, yre[%d]=%d\n", rank, 
             p, yls[p], p, yls2[p], p, yre2[p], p, yre[p]);
           fflush(stdout);
+#endif
 
        yfs[p]  = 2+ngsl;
        yfe[p]  = 2+ngsl2-1;   
@@ -623,8 +639,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
     time_src -= gethrtime();
 
+#if VEROBSE
     if(rank==0) printf("Before inisource\n");
     fflush(stdout);
+#endif
 
     if (rank==0) {
        if (access("sourcefilter.dat", F_OK) != -1){
@@ -638,7 +656,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
           fclose(fltfid); 
        }
        else {
+#if VERBOSE
           fprintf(stdout, "File sourcefilter.dat not found, no STF filtering applied.\n");
+#endif
        }
     }
     MPI_Bcast(&filtorder, 1, MPI_INT, 0, MCW);
@@ -679,7 +699,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
            if (NSRC[p] > 0) {
 	      sprintf(insrcgrid, "%s_%d", INSRC, p);
 	      sprintf(insrc_i2_grid, "%s_%d", INSRC_I2, p);
+#if VERBOSE
 	      fprintf(stdout, "opening %s\n", insrcgrid);
+#endif
 	      err = inisource(rank,   IFAULT, NSRC[p],  READ_STEP, NST,   srcproc+p, NZ[p], MCW, nxt[p], nyt[p], nzt[p], 
 		 coord, maxdim, npsrc+p, tpsrc+p, taxx+p, tayy+p, tazz+p, taxz+p, tayz+p, taxy+p, insrcgrid, insrc_i2_grid);
            }
@@ -745,8 +767,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        return -1;
     }
     time_src += gethrtime(); 
+#if VERBOSE
     if(rank==0) printf("After inisource. Time elapsed (seconds): %lf\n", time_src); 
     fflush(stdout);
+#endif
 
     d_tpsrc = (int**) calloc(ngrids, sizeof(int*));
     d_taxx = (float**) calloc(ngrids, sizeof(float*));
@@ -758,7 +782,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
     for (p=0; p<ngrids; p++){
        if(rank==srcproc[p]) {
+#if VERBOSE
 	  printf("rank=%d, grid=%d, source rank, npsrc=%d, srcproc=%d\n", rank, p, npsrc[p], srcproc[p]);
+#endif 
 	  /* here, we allocate data for keeping prevoius timestep */
           if (IFAULT == 4) num_bytes = sizeof(float)*npsrc[p]*(READ_STEP_GPU+1);
           else if (IFAULT == 6) num_bytes = sizeof(float)*NST;
@@ -842,7 +868,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        }
     }
 
+#if VERBOSE
     if(rank==0) printf("Before inimesh\n");
+#endif
     fflush(stdout);
     vpe = (float**) calloc(ngrids, sizeof(float*));
     vse = (float**) calloc(ngrids, sizeof(float*));
@@ -899,7 +927,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     } 
 
     time_mesh += gethrtime();  
+#if VERBOSE
     if(rank==0) printf("After inimesh. Time elapsed (seconds): %lf\n", time_mesh);  
+#endif
     fflush(stdout);
     if(rank==0)
       writeCHK(CHKFILE, NTISKP, DT, DH, nxt, nyt, nzt,
@@ -1068,7 +1098,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
         Delloc3D(tau2);
     }
 
+#if VERBOSE
     if(rank==0) printf("Allocate device media pointers and copy.\n");
+#endif
     fflush(stdout);
     d_d1 = (float**) calloc(ngrids, sizeof(float*));
     d_lam = (float**) calloc(ngrids, sizeof(float*));
@@ -1099,7 +1131,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        CUCHK(cudaMalloc((void**)&d_vx2[p], num_bytes));
        CUCHK(cudaMemcpy(d_vx2[p],&vx2[p][0][0][0],num_bytes,cudaMemcpyHostToDevice));
        num_bytes = sizeof(int)*(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align); 
+#if VERBOSE
        if (rank==0) fprintf(stdout, "Allocating d_ww and d_wwo, num_bytes=%ld\n", num_bytes);
+#endif
        CUCHK(cudaMalloc((void**)&d_ww[p], num_bytes)); 
        CUCHK(cudaMemcpy(d_ww[p],&ww[p][0][0][0],num_bytes,cudaMemcpyHostToDevice));
        num_bytes = sizeof(float)*(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align); 
@@ -1129,7 +1163,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        }
     }
 
+#if VERBOSE
     if(rank==0) printf("Allocate host velocity and stress pointers.\n");
+#endif
     fflush(stdout);
     u1=(Grid3D*) calloc(ngrids, sizeof(Grid3D));
     v1=(Grid3D*) calloc(ngrids, sizeof(Grid3D));
@@ -1173,8 +1209,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     if (IFAULT < 4) {
        for (p=0; p<ngrids; p++){
 	  if(rank==srcproc[p]) {
+#if VERBOSE
 	     printf("%d) add initial src\n", rank);
              fflush(stdout);
+#endif
 		addsrc(source_step, DH[p], DT, NST, npsrc[p], READ_STEP, maxdim, tpsrc[p], taxx[p], tayy[p], tazz[p], taxz[p], \
 		   tayz[p], taxy[p], xx[p], yy[p], zz[p], xy[p], yz[p], xz[p]);
 	  }
@@ -1187,7 +1225,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        }
     }
 
+#if VERBOSE
     if(rank==0) printf("Allocate device velocity and stress pointers and copy.\n");
+#endif
     
     d_u1 = (float**) calloc(ngrids, sizeof(float*));
     d_v1 = (float**) calloc(ngrids, sizeof(float*));
@@ -1236,7 +1276,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        CUCHK(cudaMemcpy(d_yz[p],&yz[p][0][0][0],num_bytes,cudaMemcpyHostToDevice));
        if(NVE==1 || NVE==3)
        {
+#if VERBOSE
 	 if(rank==0) printf("Allocate additional device pointers (r) and copy.\n");
+#endif
 	   CUCHK(cudaMalloc((void**)&d_r1[p], num_bytes));
 	   CUCHK(cudaMemcpy(d_r1[p],&r1[p][0][0][0],num_bytes,cudaMemcpyHostToDevice));
 	   CUCHK(cudaMalloc((void**)&d_r2[p], num_bytes));
@@ -1251,7 +1293,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	   CUCHK(cudaMemcpy(d_r6[p],&r6[p][0][0][0],num_bytes,cudaMemcpyHostToDevice));
        }
        if(NVE==3){
+#if VERBOSE
 	 if(rank==0) printf("Allocate plasticity variables since NVE=3\n");
+#endif
          fflush(stdout);
 	 num_bytes = sizeof(float)*(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align);
 	 CUCHK(cudaMalloc((void**)&d_sigma2[p], num_bytes));
@@ -1294,7 +1338,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
     for (p=0; p<ngrids; p++){
        if (grid_output[p]){
+#if VERBOSE
 	  if(rank==0) printf("Allocate buffers of #elements: %d\n",rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*WRITE_STEP);
+#endif
 	  Bufx[p]  = Alloc1D(rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*WRITE_STEP);
 	  Bufy[p]  = Alloc1D(rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*WRITE_STEP);
 	  Bufz[p]  = Alloc1D(rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*WRITE_STEP);
@@ -1358,8 +1404,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
     SetDeviceConstValue(DH, DT, nxt, nyt, nzt, ngrids, fmajor, fminor, Rz, RzT);
     print_const_H(ngrids);
+#if VERBOSE
     fprintf(stdout, "fmajor in main = %f\n", fmajor);
     fflush(stdout);
+#endif
 
     CUCHK(cudaStreamCreate(&stream_1));
     CUCHK(cudaStreamCreate(&stream_2));
@@ -1541,8 +1589,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
 #endif
 
+#if VERBOSE
             if(rank == 0)printf("Initialize source and receivers\n");
             fflush(stdout);
+#endif
 
 
             if (T.use) {
@@ -1553,8 +1603,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                          size_tot);
             receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
                            size_tot);
+#if VERBOSE
             if(rank == 0)printf("done.\n");
             fflush(stdout);
+#endif
 
     size_t  cmemfreeMin;
     cudaMemGetInfo(&cmemfree, &cmemtotal);
@@ -1562,12 +1614,16 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
       MPI_Reduce(&cmemfree, &cmemfreeMin, 1, MPI_UINT64_T, MPI_MIN, 0, MCW);
     else 
       MPI_Reduce(&cmemfree, &cmemfreeMin, 1, MPI_UINT32_T, MPI_MIN, 0, MCW);
-    if(rank==0) printf("CUDA MEMORY: free = %ld\ttotal = %ld\n",cmemfreeMin,cmemtotal);
+    if (rank == 0)
+            printf("CUDA MEMORY: free = %f GB \ttotal = %f GB \n",
+                   cmemfreeMin / 1e9, cmemtotal / 1e9);
 
 
     if(rank==0){
       cudaMemGetInfo(&cmemfree, &cmemtotal);
+#if VERBOSE
       printf("CUDA MEMORY: Total=%ld\tAvailable=%ld\n",cmemtotal,cmemfree);
+#endif
     }
 
     for (p=0; p<ngrids; p++){
@@ -1578,8 +1634,15 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     if(rank==0)
       fchk = fopen(CHKFILE,"a+");
 
-    int num_pad = (int)log((double)nt);
-//  Main Loop Starts
+    time_init = gethrtime() - time_init;
+    if (rank == 0) printf("Initialization completed in %f s.\n", time_init);
+    //  Main Loop Starts
+    printf(
+        "Time step \t Time \t\t Elapsed time \t sec per time step \t Time "
+        "steps per sec \t Percentage completed\n");
+    printf(
+        "-----------------------------------------------------------------"
+        "----------------------------------------------------\n");
     if( ((NPC==0) || (NPC==2)) && (NVE==1 || NVE==3))
     {
        time_un  -= gethrtime();
@@ -1591,12 +1654,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          CUCHK(cudaStreamSynchronize(stream_1));
          CUCHK(cudaStreamSynchronize(stream_2));
          if (cur_step % 10 == 0 && rank == 0) {
-                double step_s = (gethrtime() + time_un) / cur_step;
+                 double elapsed = gethrtime() + time_un;
+                double step_s = elapsed / cur_step;
                 double pcomplete = 100 * (double) cur_step / (double) (nt - 1);
                 printf(
-                    "Time step %ld out of %ld steps (t = %4.3f) "
-                    " \t %3.5f s/step \t %5.3f step/s \t %2.2f %%  \n",
-                    cur_step, nt, cur_step * DT, step_s, 1.0/step_s, pcomplete);
+                    "%ld  \t\t %4.3f s \t %4.3f s \t %3.5f s/step \t %5.3f step/s \t %2.2f %%  \n",
+                    cur_step, cur_step * DT, elapsed, step_s, 1.0/step_s, pcomplete);
 
                 fflush(stdout);
                 fflush(stderr);
@@ -2210,15 +2273,19 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
           for (p=0; p<ngrids; p++){
              if (grid_output[p]){
 		if(!rank) time_gpuio_tmp = -gethrtime();
+#if VERBOSE
                 fprintf(stdout, "starting velbuffer_H, p=%d\n", p);
                 fflush(stdout);
+#endif
                 velbuffer_H(d_u1[p], d_v1[p], d_w1[p], d_neta[p], 
                     d_Bufx[p], d_Bufy[p], d_Bufz[p], d_Bufeta[p], NVE,
                     rec_nbgx[p], rec_nedx[p], NSKPX[p], rec_nbgy[p], rec_nedy[p], NSKPY[p], 
                     rec_nbgz[p], rec_nedz[p], NSKPZ[p], rec_nxt[p], rec_nyt[p], rec_nzt[p], 
                     stream_i, FOLLOWBATHY, d_bathy, p);
 		cudaStreamSynchronize(stream_i);
+#if VERBOSE
                 fprintf(stdout, "ending velbuffer_H\n");
+#endif
 
 		/*num_bytes = sizeof(float)*(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align);
 		CUCHK(cudaMemcpy(&u1[p][0][0][0],d_u1[p],num_bytes,cudaMemcpyDeviceToHost));
@@ -2231,7 +2298,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 		  //cudaStreamSynchronize(stream_i);
 		  time_gpuio_tmp += gethrtime();
 		  time_gpuio += time_gpuio_tmp;
+#if VERBOSE
 		  printf("Output data buffered on GPU in (sec): %lf\n",time_gpuio_tmp);
+#endif
 		  //printf("Output data copied to host in (sec): %lf\n",time_gpuio_tmp);
 		  time_gpuio_tmp = -gethrtime();
 		}
@@ -2278,7 +2347,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 		if(!rank){
 		   time_gpuio_tmp += gethrtime();
 		   time_gpuio += time_gpuio_tmp;
+#if VERBOSE
 		   printf("Output data copied to host in (sec): %lf\n",time_gpuio_tmp);
+#endif
 		   //printf("Output data buffered in (sec): %lf\n",time_gpuio_tmp);
 		}
 
@@ -2535,8 +2606,10 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
        err = MPI_Type_create_hindexed(rec_nzt[p], ones2, dispArray2, filetype2, &filetype2);
        err = MPI_Type_commit(&filetype2);
        MPI_Type_size(filetype2, &tmpSize);
+#if VERBOSE
        printf("filetype size (supposedly=rec_nxt*rec_nyt*rec_nzt*4=%ld) =%d\n", 
                   rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*sizeof(float),tmpSize);
+#endif
 
 	 sprintf(filename, "Finaleta_%d_%07ld", p, cur_step);
 	 err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
@@ -2625,11 +2698,13 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     time_un = time_un/(cur_step-READ_STEP);
     GFLOPS  = GFLOPS/time_un;
     MPI_Allreduce( &GFLOPS, &GFLOPS_SUM, 1, MPI_DOUBLE, MPI_SUM, MCW );
+#if VERBOSE
     if(rank==0)
     {
         printf("GPU benchmark size (fine grid) NX=%d, NY=%d, NZ=%d, ReadStep=%d\n", NX, NY, NZ[0], READ_STEP);
     	printf("GPU computing flops=%1.18f GFLOPS, time = %1.18f secs per timestep\n", GFLOPS_SUM, time_un);
     }	
+#endif
 //  Main Loop Ends
  
 //  program ends, free all memories
@@ -2755,72 +2830,4 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     MPI_Barrier(MCT);
     MPI_Finalize();
     return (0);
-}
-
-// Calculates recording points for each core
-// rec_nbgxyz rec_nedxyz...
-// WARNING: Assumes NPZ = 1! Only surface outputs are needed!
-void calcRecordingPoints(int *rec_nbgx, int *rec_nedx, 
-  int *rec_nbgy, int *rec_nedy, int *rec_nbgz, int *rec_nedz, 
-  int *rec_nxt, int *rec_nyt, int *rec_nzt, MPI_Offset *displacement,
-  long int nxt, long int nyt, long int nzt, int rec_NX, int rec_NY, int rec_NZ,
-  int NBGX, int NEDX, int NSKPX, int NBGY, int NEDY, int NSKPY, 
-  int NBGZ, int NEDZ, int NSKPZ, int *coord){
-
-  *displacement = 0;
-  *rec_nbgx = *rec_nedx = *rec_nbgy = *rec_nedy = *rec_nbgz = *rec_nedz = 0;
-
-  if(NBGX > nxt*(coord[0]+1))     *rec_nxt = 0;
-  else if(NEDX < nxt*coord[0]+1)  *rec_nxt = 0;
-  else{
-    if(nxt*coord[0] >= NBGX){
-      *rec_nbgx = (nxt*coord[0]+NBGX-1)%NSKPX;
-      *displacement += (nxt*coord[0]-NBGX)/NSKPX+1;
-    }
-    else
-      *rec_nbgx = NBGX-nxt*coord[0]-1;  // since rec_nbgx is 0-based
-    if(nxt*(coord[0]+1) <= NEDX)
-      *rec_nedx = (nxt*(coord[0]+1)+NBGX-1)%NSKPX-NSKPX+nxt;
-    else
-      *rec_nedx = NEDX-nxt*coord[0]-1;
-    *rec_nxt = (*rec_nedx-*rec_nbgx)/NSKPX+1;
-  }
-
-  if(NBGY > nyt*(coord[1]+1))     *rec_nyt = 0;
-  else if(NEDY < nyt*coord[1]+1)  *rec_nyt = 0;
-  else{
-    if(nyt*coord[1] >= NBGY){
-      *rec_nbgy = (nyt*coord[1]+NBGY-1)%NSKPY;
-      *displacement += ((nyt*coord[1]-NBGY)/NSKPY+1)*rec_NX;
-    }
-    else
-      *rec_nbgy = NBGY-nyt*coord[1]-1;  // since rec_nbgy is 0-based
-    if(nyt*(coord[1]+1) <= NEDY)
-      *rec_nedy = (nyt*(coord[1]+1)+NBGY-1)%NSKPY-NSKPY+nyt;
-    else
-      *rec_nedy = NEDY-nyt*coord[1]-1;
-    *rec_nyt = (*rec_nedy-*rec_nbgy)/NSKPY+1;
-  }
-
-  if(NBGZ > nzt) *rec_nzt = 0;
-  else{
-    *rec_nbgz = NBGZ-1;  // since rec_nbgz is 0-based
-    *rec_nedz = NEDZ-1;
-    *rec_nzt = (*rec_nedz-*rec_nbgz)/NSKPZ+1;
-  }
-
-  if(*rec_nxt == 0 || *rec_nyt == 0 || *rec_nzt == 0){
-    *rec_nxt = 0;
-    *rec_nyt = 0;
-    *rec_nzt = 0;
-
-    /*Added by Daniel, otherwise memory violation occurs later if some subdomains save no output*/
-    *rec_nedx = *rec_nbgx - 1;
-    *rec_nedy = *rec_nbgy - 1;
-  }
-
-  // displacement assumes NPZ=1!
-  *displacement *= sizeof(float);
-
-  return;
 }

@@ -63,7 +63,6 @@ void receiver_write(recv_t *recv, size_t step, const char *filename,
         }
 
         if (grid_num + 1 == recv->ngrids && buffer_is_host_full(&recv->buffer, step)) {
-                printf("Writing for grid: %d at step = %ld \n", grid_num, step);
                 prec *host_ptr = recv->buffer.h_buffer;
                 // Transpose data from (time, index) to (index, time)
                 // (last index is contiguous)
