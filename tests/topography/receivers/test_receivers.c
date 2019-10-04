@@ -6,6 +6,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#define STR_LEN 2048
 #define ADDLINENUM 1
 #define ADDRANK 1
 #define RANK rank
@@ -34,17 +35,17 @@ int main(int argc, char **argv)
         char inputfile[STR_LEN];
         int px = 2;
 
-        if (rank == 0) {
-                test_divider();
-                printf("Testing test_receivers.c\n");
-        }
-
         if (argc == 2) {
                 assert(strlen(argv[1]) < STR_LEN);
                 sprintf(inputfile, "%s", argv[1]);
         }
         else {
                 sprintf(inputfile, "../tests/fixtures/receiver.txt");
+        }
+
+        if (rank == 0) {
+                test_divider();
+                printf("Testing test_receivers.c\n");
         }
 
         test_receivers(inputfile, rank, size, px);

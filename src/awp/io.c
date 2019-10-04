@@ -89,15 +89,19 @@ void background_output_writer(int rank, int size, int nout, int wstep, int ntisk
    MPICHK(MPI_Recv(grid_output, ngrids, MPI_INT, rank-2*size, MPIRANKIO+6, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
    MPICHK(MPI_Recv(displacement, ngrids, MPI_OFFSET, rank-2*size, MPIRANKIO+7, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
 
+#if VERBOSE
    fprintf(stdout, "I/O: ngrids=%d\n", ngrids);
    fprintf(stdout, "I/O: rec_nxt,rec_nyt,rec_nzt=%d,%d,%d\n", rec_nxt[0], rec_nyt[0], rec_nzt[0]);
    fprintf(stdout, "I/O: rec_NX,rec_NY,rec_NZ=%d,%d,%d\n", rec_NX[0], rec_NY[0], rec_NZ[0]);
+#endif
 
    for (p=0; p<ngrids; p++){
        maxNX_NY_NZ_WS = (rec_NX[p]>rec_NY[p]?rec_NX[p]:rec_NY[p]);
        maxNX_NY_NZ_WS = (maxNX_NY_NZ_WS>rec_NZ[p]?maxNX_NY_NZ_WS:rec_NZ[p]);
        maxNX_NY_NZ_WS = (maxNX_NY_NZ_WS>wstep?maxNX_NY_NZ_WS:wstep);
+#if VERBOSE
        fprintf(stdout, "I/O: maxNX_NY_NZ_WS=%d\n", maxNX_NY_NZ_WS);
+#endif
        ones[p]=(int*) calloc(maxNX_NY_NZ_WS, sizeof(int));
        for(i=0;i<maxNX_NY_NZ_WS;++i) ones[p][i] = 1;
        dispArray[p] = (MPI_Aint*) calloc(maxNX_NY_NZ_WS, sizeof(MPI_Aint));
@@ -123,8 +127,10 @@ void background_output_writer(int rank, int size, int nout, int wstep, int ntisk
        err = MPI_Type_create_hindexed(wstep, ones[p], dispArray[p], filetype[p], &filetype[p]);
        err = MPI_Type_commit(&filetype[p]);
        MPICHK(MPI_Type_size(filetype[p], &tmpSize));
+#if VERBOSE
        if(rank==master) printf("filetype size grid %d (supposedly=rec_nxt*nyt*nzt*WS*4=%ld) =%d\n", 
           p, rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*wstep*sizeof(_prec),tmpSize);
+#endif
    }
 
    sprintf(filenamebasex,"%s/SX",OUT);
@@ -137,7 +143,9 @@ void background_output_writer(int rank, int size, int nout, int wstep, int ntisk
       if (grid_output[p]) outsize[p] = rec_nxt[p]*rec_nyt[p]*rec_nzt[p]*wstep;
       else outsize[p]=0;
    }
+#if VERBOSE
    for (p=0; p<ngrids; p++) fprintf(stdout, "I/O %d displacement[%d] = %lld\n", rank, p, displacement[p]);
+#endif
 
    Bufx = (Grid1D*) calloc(ngrids, sizeof(Grid1D));
    Bufy = (Grid1D*) calloc(ngrids, sizeof(Grid1D));

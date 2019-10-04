@@ -885,6 +885,344 @@ dstrqc_new(float* __restrict__ xx, float* __restrict__ yy, float* __restrict__ z
   return;
 }
 
+void dstrqc_H(float* xx,       float* yy,     float* zz,    float* xy,    float* xz, float* yz,
+              float* r1,       float* r2,     float* r3,    float* r4,    float* r5, float* r6,
+              float* u1,       float* v1,     float* w1,    float* lam,   float* mu, float* qp,float* coeff, 
+              float* qs,       float* dcrjx,  float* dcrjy, float* dcrjz, int nyt,   int nzt, 
+              cudaStream_t St, float* lam_mu, 
+              float *vx1, float *vx2, int *ww, float *wwo,
+              int NX,       int NPC, int rankx,    int ranky, int  s_i,  
+              int e_i,         int s_j,       int e_j, int d_i)
+{
+    dim3 block (BLOCK_SIZE_Z, BLOCK_SIZE_Y, 1);
+    dim3 grid ((nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z, (e_j-s_j+1+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,1);
+    cudaFuncSetCacheConfig(dstrqc, cudaFuncCachePreferL1);
+    dstrqc<<<grid, block, 0, St>>>(xx,    yy,    zz,  xy,  xz, yz, r1, r2,    r3,    r4,    r5,     r6, 
+                                   u1,    v1,    w1,  lam, mu, qp,coeff, qs, dcrjx, dcrjy, dcrjz, lam_mu, 
+                                   vx1, vx2, ww, wwo, 
+                                   NX, NPC, rankx, ranky, nzt, s_i, e_i, s_j, e_j, d_i);
+    return;
+}
+
+__global__ void dstrqc(float* xx, float* yy,    float* zz,    float* xy,    float* xz,     float* yz,
+                       float* r1, float* r2,    float* r3,    float* r4,    float* r5,     float* r6,
+                       float* u1, float* v1,    float* w1,    float* lam,   float* mu,     float* qp,float* coeff, 
+                       float* qs, float* dcrjx, float* dcrjy, float* dcrjz, float* lam_mu, 
+                       float *d_vx1, float *d_vx2, int *d_ww, float *d_wwo,
+                       int NX, int NPC, int rankx, int ranky, int nzt, int s_i, int e_i, int s_j, int e_j, int d_i)
+{
+    register int   i,  j,  k,  g_i;
+    register int   pos,     pos_ip1, pos_im2, pos_im1;
+    register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
+    register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
+    register int   pos_ik1, pos_jk1, pos_ijk, pos_ijk1,f_ww;
+    register float vs1, vs2, vs3, a1, tmp, vx1,f_wwo;
+    register float xl,  xm,  xmu1, xmu2, xmu3;
+    register float qpa, h,   h1,   h2,   h3;
+     register float qpaw,hw,h1w,h2w,h3w; 
+    register float f_vx1, f_vx2,  f_dcrj, f_r,  f_dcrjy, f_dcrjz;
+      register float f_rtmp;
+    register float f_u1, u1_ip1, u1_ip2, u1_im1;
+    register float f_v1, v1_im1, v1_ip1, v1_im2;
+    register float f_w1, w1_im1, w1_im2, w1_ip1;
+    int maxk, mink = align+3;
+    
+    k    = blockIdx.x*BLOCK_SIZE_Z+threadIdx.x+align;
+    j    = blockIdx.y*BLOCK_SIZE_Y+threadIdx.y+s_j;
+
+    if (d_i == 0) {
+       maxk = nzt + align -1;
+    }
+    else maxk = nzt + align -3;
+
+    if (k < mink || k > maxk || j > e_j) return;
+ 
+    i    = e_i;
+    pos  = i*d_slice_1[d_i]+j*d_yline_1[d_i]+k;
+
+    u1_ip1 = u1[pos+d_slice_2[d_i]];
+    f_u1   = u1[pos+d_slice_1[d_i]];
+    u1_im1 = u1[pos];    
+    f_v1   = v1[pos+d_slice_1[d_i]];
+    v1_im1 = v1[pos];
+    v1_im2 = v1[pos-d_slice_1[d_i]];
+    f_w1   = w1[pos+d_slice_1[d_i]];
+    w1_im1 = w1[pos];
+    w1_im2 = w1[pos-d_slice_1[d_i]];
+    f_dcrjz = dcrjz[k];
+    f_dcrjy = dcrjy[j];
+    for(i=e_i;i>=s_i;i--)
+    {
+        /*f_vx1    = tex1Dfetch(p_vx1, pos);
+        f_vx2    = tex1Dfetch(p_vx2, pos);
+        f_ww     = tex1Dfetch(p_ww, pos);
+        f_wwo     = tex1Dfetch(p_wwo, pos);*/
+        f_vx1 = d_vx1[pos];
+        f_vx2 = d_vx2[pos];
+        f_ww  = d_ww[pos];
+        f_wwo = d_wwo[pos];
+        /*
+        if(f_wwo!=f_wwo){
+          xx[pos] = yy[pos] = zz[pos] = xy[pos] = xz[pos] = yz[pos] = 1.0;
+          r1[pos] = r2[pos] = r3[pos] = r4[pos] = r5[pos] = r6[pos] = 1.0;
+          return;
+        }
+*/
+        f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
+
+        pos_km2  = pos-2;
+        pos_km1  = pos-1;
+        pos_kp1  = pos+1;
+        pos_kp2  = pos+2;
+        pos_jm2  = pos-d_yline_2[d_i];
+        pos_jm1  = pos-d_yline_1[d_i];
+        pos_jp1  = pos+d_yline_1[d_i];
+        pos_jp2  = pos+d_yline_2[d_i];
+        pos_im2  = pos-d_slice_2[d_i];
+        pos_im1  = pos-d_slice_1[d_i];
+        pos_ip1  = pos+d_slice_1[d_i];
+        pos_jk1  = pos-d_yline_1[d_i]-1;
+        pos_ik1  = pos+d_slice_1[d_i]-1;
+        pos_ijk  = pos+d_slice_1[d_i]-d_yline_1[d_i];
+        pos_ijk1 = pos+d_slice_1[d_i]-d_yline_1[d_i]-1;
+
+        xl       = 8.0/(  lam[pos]      + lam[pos_ip1] + lam[pos_jm1] + lam[pos_ijk]
+                        + lam[pos_km1]  + lam[pos_ik1] + lam[pos_jk1] + lam[pos_ijk1] );
+        xm       = 16.0/( mu[pos]       + mu[pos_ip1]  + mu[pos_jm1]  + mu[pos_ijk]
+                        + mu[pos_km1]   + mu[pos_ik1]  + mu[pos_jk1]  + mu[pos_ijk1] );
+        xmu1     = 2.0/(  mu[pos]       + mu[pos_km1] );
+        xmu2     = 2.0/(  mu[pos]       + mu[pos_jm1] );
+        xmu3     = 2.0/(  mu[pos]       + mu[pos_ip1] );
+        xl       = xl  +  xm;
+        qpa      = 0.0625*( qp[pos]     + qp[pos_ip1] + qp[pos_jm1] + qp[pos_ijk]
+                          + qp[pos_km1] + qp[pos_ik1] + qp[pos_jk1] + qp[pos_ijk1] );
+
+//                        www=f_ww;
+        if(1./(qpa*2.0)<=200.0)
+        {
+//      printf("coeff[f_ww*2-2] %g\n",coeff[f_ww*2-2]);
+                  qpaw=coeff[f_ww*2-2]*(2.*qpa)*(2.*qpa)+coeff[f_ww*2-1]*(2.*qpa);
+//              qpaw=coeff[www*2-2]*(2.*qpa)*(2.*qpa)+coeff[www*2-1]*(2.*qpa);
+//                qpaw=qpaw/2.;
+                  }
+               else {
+                  qpaw  = 2.0f*f_wwo*qpa;  //Fix for Q(f) suggested by Kyle
+		  	}
+//                 printf("qpaw %f\n",qpaw);
+//              printf("qpaw1 %g\n",qpaw);
+        qpaw=qpaw/f_wwo;
+//      printf("qpaw2 %g\n",qpaw);
+
+
+
+        h        = 0.0625*( qs[pos]     + qs[pos_ip1] + qs[pos_jm1] + qs[pos_ijk]
+                          + qs[pos_km1] + qs[pos_ik1] + qs[pos_jk1] + qs[pos_ijk1] );
+
+       if(1./(h*2.0)<=200.0)
+        {
+                  hw=coeff[f_ww*2-2]*(2.*h)*(2.*h)+coeff[f_ww*2-1]*(2.*h);
+                  //                  hw=hw/2.;
+                  }
+               else {
+                  hw  = 2.0f*f_wwo*h;  //Fix for Q(f) suggested by Kyle
+                }
+        hw=hw/f_wwo;
+
+
+        h1       = 0.250*(  qs[pos]     + qs[pos_km1] );
+
+        if(1./(h1*2.0)<=200.0)
+        {
+                  h1w=coeff[f_ww*2-2]*(2.*h1)*(2.*h1)+coeff[f_ww*2-1]*(2.*h1);
+                  //                  h1w=h1w/2.;
+                  }
+                         else {
+                  h1w  = 2.0f*f_wwo*h1; //Fix for Q(f) suggested by Kyle
+                }
+        h1w=h1w/f_wwo;
+
+
+
+        h2       = 0.250*(  qs[pos]     + qs[pos_jm1] );
+        if(1./(h2*2.0)<=200.0)
+        {
+                  h2w=coeff[f_ww*2-2]*(2.*h2)*(2.*h2)+coeff[f_ww*2-1]*(2.*h2);
+                  //                  h2w=h2w/2.;
+                  }
+                         else {
+                  h2w  = 2.0f*f_wwo*h2; //Fix for Q(f) suggested by Kyle
+                }
+        h2w=h2w/f_wwo;
+
+
+        h3       = 0.250*(  qs[pos]     + qs[pos_ip1] );
+        if(1./(h3*2.0)<=200.0)
+        {
+                  h3w=coeff[f_ww*2-2]*(2.*h3)*(2.*h3)+coeff[f_ww*2-1]*(2.*h3);
+                  //                  h3w=h3w/2.;
+                  }
+                         else {
+                  h3w  = 2.0f*f_wwo*h3; //Fix for Q(f) suggested by Kyle
+                }
+        h3w=h3w/f_wwo;
+
+	h        = -xm*hw*d_dh1[d_i];
+        h1       = -xmu1*h1w*d_dh1[d_i];
+        h2       = -xmu2*h2w*d_dh1[d_i];
+        h3       = -xmu3*h3w*d_dh1[d_i];
+
+
+        //        h1       = -xmu1*hw1*d_dh1[d_i];
+        //h2       = -xmu2*hw2*d_dh1[d_i];
+        //h3       = -xmu3*hw3*d_dh1[d_i];
+
+
+        qpa      = -qpaw*xl*d_dh1[d_i];
+        //        qpa      = -qpaw*xl*d_dh1[d_i];
+
+        xm       = xm*d_dth[d_i];
+        xmu1     = xmu1*d_dth[d_i];
+        xmu2     = xmu2*d_dth[d_i];
+        xmu3     = xmu3*d_dth[d_i];
+        xl       = xl*d_dth[d_i];
+      //  f_vx2    = f_vx2*f_vx1;
+        h        = h*f_vx1;
+        h1       = h1*f_vx1;
+        h2       = h2*f_vx1;
+        h3       = h3*f_vx1;
+        qpa      = qpa*f_vx1;
+
+        xm       = xm+d_DT*h;
+        xmu1     = xmu1+d_DT*h1;
+        xmu2     = xmu2+d_DT*h2;
+        xmu3     = xmu3+d_DT*h3;
+        vx1      = d_DT*(1+f_vx2*f_vx1);
+        
+        u1_ip2   = u1_ip1;
+        u1_ip1   = f_u1;
+        f_u1     = u1_im1;
+        u1_im1   = u1[pos_im1];
+        v1_ip1   = f_v1;
+        f_v1     = v1_im1;
+        v1_im1   = v1_im2;
+        v1_im2   = v1[pos_im2];
+        w1_ip1   = f_w1;
+        f_w1     = w1_im1;
+        w1_im1   = w1_im2;
+        w1_im2   = w1[pos_im2];
+
+        if (d_i == 0){ /*Apply FS condition on uppermost grid only*/
+	  if(k == d_nzt[d_i]+align-1) {
+	      u1[pos_kp1] = f_u1 - (f_w1 - w1_im1);
+	      v1[pos_kp1] = f_v1 - (w1[pos_jp1] - f_w1);
+
+	      g_i  = d_nxt[d_i]*rankx + i - ngsl - 1;
+
+	      if(g_i<NX)
+		      vs1 = u1_ip1 - (w1_ip1 - f_w1);
+	      else
+		      vs1 = 0.0;
+
+	      g_i  = d_nyt[d_i]*ranky + j - ngsl - 1;
+	      if(g_i>1 || NPC == 2) //periodic BCs
+		      vs2 = v1[pos_jm1] - (f_w1 - w1[pos_jm1]);
+	      else
+		      vs2 = 0.0;
+
+	      w1[pos_kp1] = w1[pos_km1] - lam_mu[i*(d_nyt[d_i]+4+ngsl2) + j]*((vs1 - u1[pos_kp1]) + (u1_ip1 - f_u1)
+                           + (v1[pos_kp1] - vs2) + (f_v1   - v1[pos_jm1]) );
+	  }
+	  else if(k == d_nzt[d_i]+align-2) {
+		  u1[pos_kp2] = u1[pos_kp1] - (w1[pos_kp1]   - w1[pos_im1+1]);
+		  v1[pos_kp2] = v1[pos_kp1] - (w1[pos_jp1+1] - w1[pos_kp1]);
+	  }
+        }
+ 
+    	vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
+        vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
+        vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
+ 
+        tmp      = xl*(vs1+vs2+vs3);
+        a1       = qpa*(vs1+vs2+vs3);
+        tmp      = tmp+d_DT*a1;
+
+        f_r      = r1[pos];
+	 f_rtmp   = -h*(vs2+vs3) + a1; 
+	 xx[pos]  = xx[pos]  + tmp - xm*(vs2+vs3) + vx1*f_r;  
+	 r1[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+	  xx[pos]  = (xx[pos] + d_DT*f_rtmp)*f_dcrj;
+
+        f_r      = r2[pos];
+	 f_rtmp   = -h*(vs1+vs3) + a1;  
+        yy[pos]  = (yy[pos]  + tmp - xm*(vs1+vs3) + vx1*f_r)*f_dcrj;
+
+	 r2[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+	  yy[pos]  = (yy[pos] + d_DT*f_rtmp)*f_dcrj;
+	
+        f_r      = r3[pos];
+	f_rtmp   = -h*(vs1+vs2) + a1;
+        zz[pos]  = (zz[pos]  + tmp - xm*(vs1+vs2) + vx1*f_r)*f_dcrj;
+	 r3[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1);  
+	 zz[pos]  = (zz[pos] + d_DT*f_rtmp)*f_dcrj;
+
+        vs1      = d_c1*(u1[pos_jp1] - f_u1)   + d_c2*(u1[pos_jp2] - u1[pos_jm1]);
+        vs2      = d_c1*(f_v1        - v1_im1) + d_c2*(v1_ip1      - v1_im2);
+        f_r      = r4[pos];
+ 	f_rtmp   = h1*(vs1+vs2); 
+	 xy[pos]  = xy[pos]  + xmu1*(vs1+vs2) + vx1*f_r;
+	 r4[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+	 f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1);
+	 xy[pos]  = (xy[pos] + d_DT*f_rtmp)*f_dcrj;
+ 
+        //moved to separate subroutine fstr, to be executed after plasticity (Daniel)
+        /*if(k == d_nzt+align-1)
+        {
+                zz[pos+1] = -zz[pos];
+        	xz[pos]   = 0.0;
+                yz[pos]   = 0.0;
+        }
+        else
+        {*/
+        	vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
+        	vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
+        	f_r     = r5[pos];
+		 f_rtmp  = h2*(vs1+vs2);
+		  xz[pos] = xz[pos]  + xmu2*(vs1+vs2) + vx1*f_r; 
+		   r5[pos] = f_vx2*f_r + f_wwo*f_rtmp; 
+		   f_rtmp  = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+		   xz[pos] = (xz[pos] + d_DT*f_rtmp)*f_dcrj;
+	 
+
+        	vs1     = d_c1*(v1[pos_kp1] - f_v1) + d_c2*(v1[pos_kp2] - v1[pos_km1]);
+        	vs2     = d_c1*(w1[pos_jp1] - f_w1) + d_c2*(w1[pos_jp2] - w1[pos_jm1]);
+        	f_r     = r6[pos];
+		f_rtmp  = h3*(vs1+vs2);
+		yz[pos] = yz[pos]  + xmu3*(vs1+vs2) + vx1*f_r;
+		 r6[pos] = f_vx2*f_r + f_wwo*f_rtmp;
+		  f_rtmp  = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
+		  yz[pos] = (yz[pos] + d_DT*f_rtmp)*f_dcrj; 
+
+                // also moved to fstr (Daniel)
+                /*if(k == d_nzt+align-2)
+                {
+                    zz[pos+3] = -zz[pos];
+                    xz[pos+2] = -xz[pos];
+                    yz[pos+2] = -yz[pos];                                               
+		}
+		else if(k == d_nzt+align-3)
+		{
+                    xz[pos+4] = -xz[pos];
+                    yz[pos+4] = -yz[pos];
+		}*/
+ 	/*}*/
+        pos     = pos_im1;
+    }
+    return;
+}
+
 
 
 extern "C"
@@ -3877,10 +4215,13 @@ void velbuffer_H(const float *u1, const float *v1, const float *w1, const float 
                (rec_nyt+BLOCK_SIZE_Y-1)/BLOCK_SIZE_Y,
                (rec_nzt+BLOCK_SIZE_Z-1)/BLOCK_SIZE_Z);
 
-    CUCHK(cudaFuncSetCacheConfig(velbuffer, cudaFuncCachePreferL1));
+    cudaFuncSetCacheConfig(velbuffer, cudaFuncCachePreferL1);
     CUCHK(cudaGetLastError());
+    /*CUCHK(cudaPrintfInit());*/
     velbuffer <<<grid, block, 0, St>>>(u1, v1, w1, neta, Bufx, Bufy, Bufz, Bufeta, NVE, 
          nbgx, nedx, nskpx, nbgy, nedy, nskpy, nbgz, nedz, nskpz, rec_nxt, rec_nyt, FOLLOWBATHY, bathy, d_i);
+    /*CUCHK(cudaPrintfDisplay(stdout, 1));
+    cudaPrintfEnd();*/
 
     CUCHK(cudaGetLastError());
 }
@@ -3915,7 +4256,7 @@ __global__ void velbuffer(const float *u1, const float *v1, const float *w1, con
 	       (i-2-ngsl-nbgx)/nskpx;
 
     /*if (i==48 && j==48 && k==1) 
-        printf("velbuffer: i=%d,j=%d,k=%d,pos=%d,tmpInd=%d,u1=%e\n", i,j,k,pos,tmpInd,u1[pos]);*/
+        cuPrintf("velbuffer: i=%d,j=%d,k=%d,pos=%d,tmpInd=%d,u1=%e\n", i,j,k,pos,tmpInd,u1[pos]);*/
 
     Bufx[tmpInd] = u1[pos];
     Bufy[tmpInd] = v1[pos];

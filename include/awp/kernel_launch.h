@@ -45,6 +45,13 @@ void dstrqc_H_new(_prec* xx, _prec* yy, _prec* zz, _prec* xy, _prec* xz,
                   int* ww, _prec* wwo, int NX, int NPC, int rankx, int ranky,
                   int s_i, int e_i, int s_j, int e_j, int d_i);
 
+void dstrqc_H(float* xx, float* yy, float* zz, float* xy, float* xz, float* yz,
+              float* r1, float* r2, float* r3, float* r4, float* r5, float* r6,
+              float* u1, float* v1, float* w1, float* lam, float* mu, float* qp,
+              float* coeff, float* qs, float* dcrjx, float* dcrjy, float* dcrjz,
+              int nyt, int nzt, cudaStream_t St, float* lam_mu, float* vx1,
+              float* vx2, int* ww, float* wwo, int NX, int NPC, int rankx,
+              int ranky, int s_i, int e_i, int s_j, int e_j, int d_i);
 void fstr_H(_prec* zz, _prec* xz, _prec* yz, cudaStream_t St, int s_i, int e_i,
             int s_j, int e_j);
 
@@ -86,14 +93,6 @@ void dvelc2_H(_prec* u1, _prec* v1, _prec* w1, _prec* xx, _prec* yy, _prec* zz,
               _prec* xy, _prec* xz, _prec* yz, _prec* dcrjx, _prec* dcrjy,
               _prec* dcrjz, _prec* d_1, int nxt, int nyt, cudaStream_t St,
               int d_i);
-
-void dstrqc_H(float* xx, float* yy, float* zz, float* xy, float* xz, float* yz,
-              float* r1, float* r2, float* r3, float* r4, float* r5, float* r6,
-              float* u1, float* v1, float* w1, float* lam, float* mu, float* qp,
-              float* coeff, float* qs, float* dcrjx, float* dcrjy, float* dcrjz,
-              int nyt, int nzt, cudaStream_t St, float* lam_mu, float* vx1,
-              float* vx2, int* ww, float* wwo, int NX, int NPC, int rankx,
-              int ranky, int s_i, int e_i, int s_j, int e_j, int d_i);
 
 void dstrqc2_H(_prec* xx, _prec* yy, _prec* zz, _prec* xy, _prec* xz, _prec* yz,
                _prec* r1, _prec* r2, _prec* r3, _prec* r4, _prec* r5, _prec* r6,
@@ -183,8 +182,9 @@ void velbuffer_H(const float* u1, const float* v1, const float* w1,
                  int nbgy, int nedy, int nskpy, int nbgz, int nedz, int nskpz,
                  int rec_nxt, int rec_nyt, int rec_nzt, cudaStream_t St,
                  int FOLLOWBATHY, const int* bathy, int d_i);
+
 #ifdef __cplusplus
 }
 #endif
-#endif// _KERNEL_HOST_H
+#endif  // _KERNEL_HOST_H
 

@@ -150,6 +150,9 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                           0.0026041666666667};
 #endif
 
+#undef _u1
+#undef _v1
+#undef _w1
 #define _u1(i, j, k)                                                           \
   u1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
@@ -962,12 +965,14 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xx, yy, zz
 
+#undef _u1
 #undef _v1
 #undef _w1
 #undef _g3_c
 #undef _g_c
 #undef _g
 #undef _g3
+
 #define _u1(i, j, k)                                                           \
   u1[(k) + align + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]

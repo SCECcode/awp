@@ -6,6 +6,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#define STR_LEN 2048
 #define ADDLINENUM 1
 #define ADDRANK 1
 #define RANK rank

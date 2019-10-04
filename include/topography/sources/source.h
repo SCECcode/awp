@@ -53,6 +53,8 @@ void source_finalize(source_t *src);
 
 void source_find_grid_number(const input_t *input, const
                              grids_t *grids, int *grid_number, 
+                             const int *indices,
+                             const int length,
                              const int num_grids);
 void source_init_common(source_t *src, const char *filename,
                         const enum grid_types grid_type, 

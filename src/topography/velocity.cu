@@ -8,9 +8,11 @@
 
 inline dim3 set_grid(const dim3 block, const int3_t size, const dim3 loop)
 {
-        return {((1 - loop.x) * size.z + block.x - 1 + loop.x) / block.x, 
-                ((1 - loop.y) * size.y + block.y - 1 + loop.y) / block.y,
-                ((1 - loop.z) * size.x + block.z - 1 + loop.z) / block.z};
+        dim3 out;
+        out.x = ((1 - loop.x) * size.z + block.x - 1 + loop.x) / block.x;
+        out.y = ((1 - loop.y) * size.y + block.y - 1 + loop.y) / block.y;
+        out.z = ((1 - loop.z) * size.x + block.z - 1 + loop.z) / block.z;
+        return out;
 }
 
 

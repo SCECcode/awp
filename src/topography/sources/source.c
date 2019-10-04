@@ -65,12 +65,14 @@ void source_finalize(source_t *src)
 
 void source_find_grid_number(const input_t *input, const
                              grids_t *grids, int *grid_number, 
+                             const int *indices,
+                             const int length,
                              const int num_grids)
 {
 
         prec *z1 = malloc(sizeof z1 * grids[0].z.size.z);
 
-        for (size_t j = 0; j < input->length; ++j) {
+        for (int j = 0; j < length; ++j) {
                 grid_number[j] = -1;
         }
 
@@ -87,12 +89,11 @@ void source_find_grid_number(const input_t *input, const
                 lower  = lower - z1[z_grid.end];
                 if (i + 1 != num_grids) overlap = z_grid.gridspacing * 4.5;
                 lower = lower + overlap;
-                printf("Grid %d: %g < z <= %g \n", i, lower, upper);
-                for (size_t j = 0; j < input->length; ++j) {
-                        _prec z = input->z[j];
+                for (int j = 0; j < length; ++j) {
+                        _prec z = input->z[indices[j]];
                         // Take into account that topography can yield positive
                         // z-values
-                        if (input->type[j] == INPUT_SURFACE_COORD) {
+                        if (input->type[indices[j]] == INPUT_SURFACE_COORD) {
                                 grid_number[j] = 0;
                                 continue;
                         }
@@ -114,7 +115,7 @@ void source_find_grid_number(const input_t *input, const
 
         free(z1);
 
-        for (size_t j = 0; j < input->length; ++j) {
+        for (int j = 0; j < length; ++j) {
                 if (grid_number[j] == -1) {
                         fprintf(stderr, 
                                 "Failed to assign source/receiver id=%ld "\
@@ -139,7 +140,17 @@ void source_init_common(source_t *src, const char *filename,
         grid3_t grid = grids_select(grid_type, &grids[0]);
 
 
-        AWPCHK(dist_indices(&src->indices, &src->length, input->x,
+        // Shift by 0.5 such that x = 0, y = 0 is
+        // located at a material or topography grid
+        // point.
+
+        _prec *x = malloc(sizeof x * input->length);
+        for (size_t i = 0; i < input->length; ++i) {
+                x[i] = input->x[i] - 0.5 * grid.gridspacing;
+        }
+
+
+        AWPCHK(dist_indices(&src->indices, &src->length, x,
                             input->y, input->length, grid));
 
 
@@ -158,7 +169,8 @@ void source_init_common(source_t *src, const char *filename,
         }
 
         int *grid_number = malloc(sizeof grid_number * src->length);
-        source_find_grid_number(input, grids, grid_number, ngrids);
+        source_find_grid_number(input, grids, grid_number, src->indices,
+                                src->length, ngrids);
 
         for (size_t i = 0; i < src->length; ++i) {
                 for (int j = 0; j < ngrids; ++j) {
@@ -181,11 +193,7 @@ void source_init_common(source_t *src, const char *filename,
                 for (size_t i = 0; i < src->length; ++i) {
                         if (grid_number[i] != j) continue;
                         src->global_indices[j][local_idx] = i;
-                        // Shift by 0.5 such that x = 0, y = 0 is
-                        // located at a material or topography grid
-                        // point.
-                        src->x[j][local_idx] =
-                            input->x[src->indices[i]] - 0.5 * grid.gridspacing;
+                        src->x[j][local_idx] = x[src->indices[i]];
                         src->y[j][local_idx] = input->y[src->indices[i]];
                         src->z[j][local_idx] = input->z[src->indices[i]];
                         src->type[j][local_idx] = input->type[src->indices[i]];
@@ -197,7 +205,6 @@ void source_init_common(source_t *src, const char *filename,
         _prec lower = 0.0;
         _prec block_height = 0.0;
         for (int j = 0; j < ngrids; ++j) {
-                if (grid_type == XX) printf("grid number = %d, sources = %ld \n", j, src->lengths[j]);
                 grid = grids_select(grid_type, &grids[j]);
         
                 grid3_t metric_grid = grid_init_metric_grid( grid.inner_size,
@@ -282,9 +289,6 @@ void source_init_common(source_t *src, const char *filename,
                               switch (src->type[j][k]) {
                                       case INPUT_VOLUME_COORD:
                                               src->z[j][k] = (src->z[j][k] - lower);
-                                              if(grid_type == XX) printf("j = %d, before = %g lower = %g z = %g overlap = %g \n",
-                                                              j, -(src->z[j][k] - lower), 
-                                                              lower, src->z[j][k], overlap);
                                               break;
                                       // Map to parameter space
                                       case INPUT_SURFACE_COORD:
@@ -299,8 +303,6 @@ void source_init_common(source_t *src, const char *filename,
                 }
 
                 overlap = grid.gridspacing * 4.5;
-                if (grid_type == XX)
-                        printf("overlap = %g \n", overlap);
 
                 if (src->lengths[j] == 0) continue;
 
@@ -316,17 +318,12 @@ void source_init_common(source_t *src, const char *filename,
                                         full_grid, src->x[j], src->y[j], src->z[j],
                                         src->global_indices[j],
                                         src->lengths[j], input->degree));
-                if (grid_type == XX)
-                printf("idx = %d %d %d \n", 
-                                src->interpolation[j].ix[0],
-                                src->interpolation[j].iy[0],
-                                src->interpolation[j].iz[0]);
                                         
                 grid_data_free(&xyz);
         } // end loop j
 
-
         free(grid_number);
+        free(x);
         
 
         src->buffer = buffer_init(src->length,
@@ -399,7 +396,6 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
 
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
-        // FIXME: Add proper DM support
         cusource_add_curvilinear_H(&src->interpolation[grid_num], out, source_data, h, dt,
                                    f, ny, dg);
 }

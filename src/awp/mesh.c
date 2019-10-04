@@ -14,13 +14,13 @@
 #define M_PI           3.14159265358979323846
 #endif
 
-float* matmul3(float *a, float *b);
-float* transpose(float *a);
-float* rotate_principal(float sigma1, float sigma2, float sigma3, float *strike, float *dip);
-void hoek_brown(float sigma_0, float sigma_ci, float GSI, float mi, float D, 
-    int tunnel, float *phi, float *cohes);
+_prec*  matmul3(_prec *a, _prec *b);
+_prec*  transpose(_prec *a);
+_prec*  rotate_principal(_prec sigma1, _prec sigma2, _prec sigma3, _prec *strike, _prec *dip);
+void hoek_brown(_prec sigma_0, _prec sigma_ci, _prec GSI, _prec mi, _prec D, 
+    int tunnel, _prec *phi, _prec *cohes);
 
-void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D qs, float *taumax, float *taumin,
+void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D qs, _prec *taumax, _prec *taumin,
 	     Grid3D tau, Grid3D weights,Grid1D coeff, 
 	     int nvar, float FP,  float FAC, float Q0, float EX, int nxt, int nyt, int nzt, int PX, int PY, int NX, int NY, 
              int NZ, int *coords, MPI_Comm MCW, int IDYNA, int NVE, int SoCalQ, char *INVEL, 
@@ -54,9 +54,11 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 
 
   tausub(tau, *taumin, *taumax);
+#if VERBOSE
   if(!coords[0] && !coords[1]) printf("tau: %e,%e; %e,%e; %e,%e; %e,%e\n",
 				      tau[0][0][0],tau[1][0][0],tau[0][1][0],tau[1][1][0],
 				      tau[0][0][1],tau[1][0][1],tau[0][1][1],tau[1][1][1]);
+#endif
   MPICHK(MPI_Comm_rank(MCW,&rank));        
   if(MEDIASTART==0)
   {
@@ -156,7 +158,9 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
              //printf("%d) 0-0-0,1-10-3=%f, %f\n",rank,tmpta[0],tmpta[1+10*nxt+3*nxt*nyt]);
           }
           else{
+#if VERBOSE
 	    printf("%d) Media file will be read using MPI-IO\n", rank); 
+#endif
 		    rmtype[0]  = NZ;
     		    rmtype[1]  = NY;
     		    rmtype[2]  = NX*nvar;
@@ -236,8 +240,8 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
           }
       }
       
-      float w0=0.0f;
-      float qpinv=0.0f, qsinv=0.0f, vpvs=0.0f;
+      _prec w0=0.0f;
+      _prec qpinv=0.0f, qsinv=0.0f, vpvs=0.0f;
       if(NVE==1 || NVE==3)
       {
          w0=2*pi*FP;
@@ -247,7 +251,9 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 	 // *taumin=1./w2;
          //tmp1=2./pi*(log((*taumax)/(*taumin)));
          //tmp2=2./pi*log(w0*(*taumin));
+#if VERBOSE
          if(!rank) printf("w0 = %g\n",w0); 
+#endif
       }       
 
       vse[0] = 1.0e10;
@@ -586,16 +592,16 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
            }
         }
 
-      float tmpvse[2],tmpvpe[2],tmpdde[2];
-      MPICHK(MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MAX,MCW));
-      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MAX,MCW));
-      MPICHK(MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MAX,MCW));
+      _prec tmpvse[2],tmpvpe[2],tmpdde[2];
+      MPICHK(MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MAX,MCW));
+      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MAX,MCW));
+      MPICHK(MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MAX,MCW));
       vse[1] = tmpvse[1];
       vpe[1] = tmpvpe[1];
       dde[1] = tmpdde[1];
-      MPICHK(MPI_Allreduce(vse,tmpvse,2,MPI_FLOAT,MPI_MIN,MCW));
-      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,MPI_FLOAT,MPI_MIN,MCW));
-      MPICHK(MPI_Allreduce(dde,tmpdde,2,MPI_FLOAT,MPI_MIN,MCW));
+      MPICHK(MPI_Allreduce(vse,tmpvse,2,_mpi_prec,MPI_MIN,MCW));
+      MPICHK(MPI_Allreduce(vpe,tmpvpe,2,_mpi_prec,MPI_MIN,MCW));
+      MPICHK(MPI_Allreduce(dde,tmpdde,2,_mpi_prec,MPI_MIN,MCW));
       vse[0] = tmpvse[0];
       vpe[0] = tmpvpe[0];
       dde[0] = tmpdde[0];
@@ -607,7 +613,8 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
   return;
 }
 
-float* matmul3(float *a, float *b){
+
+_prec*  matmul3(_prec *a, _prec *b){
    int i, j, k;
    float *c;
    

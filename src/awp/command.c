@@ -48,6 +48,7 @@
 *  CHKFILE      <STRING>      -c              Checkpoint statistics file to write to                           *
 *  FOLLOWBATHY  <STRING>                      surface output follows ocean bathymetry
 *  INTOPO       <STRING>                      topography input file
+*
 *  SOURCEFILE   <STRING>                      Source input file that uses
 *                                                coordinates instead of indices
 *                                                to specify the position
@@ -60,6 +61,7 @@
 #include <getopt.h>
 #include <math.h>
 #include <string.h>
+#include <awp/pmcl3d.h>
 #include <awp/pmcl3d_cons.h>
 #include <awp/pmcl3d.h>
 #include <assert.h>

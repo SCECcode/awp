@@ -275,7 +275,9 @@ void addsrc(int i,      _prec DH,   _prec DT,   int NST,    int npsrc,  int READ
   _prec vtst;
   int idx, idy, idz, j;
   vtst = (_prec)DT/(DH*DH*DH);
+#if VERBOSE
   fprintf(stdout, "vtst=%.15g\n", vtst);
+#endif
 
   i   = i - 1;
   for(j=0;j<npsrc;j++) 
@@ -283,7 +285,9 @@ void addsrc(int i,      _prec DH,   _prec DT,   int NST,    int npsrc,  int READ
      idx = psrc[j*dim]   + 1 + ngsl;
      idy = psrc[j*dim+1] + 1 + ngsl;
      idz = psrc[j*dim+2] + align - 1;
+#if VERBOSE
      fprintf(stdout, "adding source %e to %d,%d,%d\n", vtst*axx[j*READ_STEP+i], idx, idy, idz);
+#endif
      xx[idx][idy][idz] = xx[idx][idy][idz] - vtst*axx[j*READ_STEP+i];
      yy[idx][idy][idz] = yy[idx][idy][idz] - vtst*ayy[j*READ_STEP+i];
      zz[idx][idy][idz] = zz[idx][idy][idz] - vtst*azz[j*READ_STEP+i];

@@ -5,16 +5,11 @@
 
 #include <awp/definitions.h>
 #include <grid/grid_3d.h>
+#include <grid/shift.h>
 #include <topography/metrics/metrics.h>
 #include <topography/metrics/kernel.h>
 #include <test/test.h>
 #include "interpolation/interpolation.h"
-
-inline int3_t grid_node(void)
-{
-        int3_t out = {.x = 1, .y = 0, .z = 0};
-        return out;
-}
 
 f_grid_t metrics_init_f(const int *size, const _prec gridspacing)
 {
