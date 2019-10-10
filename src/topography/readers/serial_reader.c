@@ -22,7 +22,6 @@ int topo_read_serial(const char *filename, const int rank, const int px,
         count = fread(&gnx, sizeof gnx, 1, fh);
         count = fread(&gny, sizeof gny, 1, fh);
         count = fread(&padding, sizeof padding, 1, fh);
-        assert(count > 0);
         int gmx = gnx + 2 * padding;
         int gmy = gny + 2 * padding;
 

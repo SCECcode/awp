@@ -2,8 +2,6 @@
 #define _KERNEL_H
 
 #include "kernel_launch.h"
-__global__ void dvelcx(float* u1,    float* v1,    float* w1,    float* xx,  float* yy, float* zz, float* xy, float* xz, float* yz,
-                       float* dcrjx, float* dcrjy, float* dcrjz, float* d_1, int s_i,   int e_i, int d_i);
 
 __global__ void dvelcx(_prec* u1, _prec* v1, _prec* w1, _prec* xx, _prec* yy,
                        _prec* zz, _prec* xy, _prec* xz, _prec* yz, _prec* dcrjx,
@@ -139,8 +137,5 @@ __global__ void velbuffer(const float* u1, const float* v1, const float* w1,
                           int nbgz, int nedz, int nskpz, int rec_nxt,
                           int rec_nyt, int FOLLOWBATHY, const int* bathy,
                           int d_i);
-__global__ void velbuffer(const float *u1, const float *v1, const float *w1, const float *neta,
-       float *Bufx, float *Bufy, float *Bufz, float *Bufeta, int NVE, 
-       int nbgx, int nedx, int nskpx, int nbgy, int nedy, int nskpy, int nbgz, int nedz, int nskpz,
-       int rec_nxt, int rec_nyt, int FOLLOWBATHY, const int *bathy, int d_i);
 #endif
+

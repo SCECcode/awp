@@ -9,9 +9,9 @@
 #include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include<complex.h>
+#include <unistd.h>
+#include <complex.h>
 #include <math.h>
 #include <string.h>
 #include <awp/kernel_launch.h>
@@ -1591,8 +1591,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 metrics_f = &T.metrics_f;
             }
 
-            if(rank == 0)printf("Initialize source and receivers\n");
-            fflush(stdout);
             sources_init(SOURCEFILE, grids, ngrids, metrics_f, MCW, rank,
                          size_tot);
             receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
@@ -1659,6 +1657,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 fflush(stderr);
          }
          CUCHK(cudaGetLastError());
+         //cerr=cudaGetLastError();
          
          for (p=0; p<ngrids; p++){
 	    dump_nonzeros(d_u1[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "u1", p, cur_step, 6, rank, size);
@@ -1671,13 +1670,13 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
 	 for (p=0; p<ngrids; p++){
 	    PostRecvMsg_Y(RF_vel[p], RB_vel[p], MCW, request_y[p], &count_y[p], msg_v_size_y[p], y_rank_F, y_rank_B, p);
+	    //PostRecvMsg_X(RL_vel[p], RR_vel[p], MCW, request_x[p], &count_x[p], msg_v_size_x[p], x_rank_L, x_rank_R, p);
 	    //velocity computation in y boundary, two ghost cell regions
             if (!usetopo || p > 0) {
-                    dvelcy_H(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p],
-                             d_zz[p], d_xy[p], d_xz[p], d_yz[p], d_dcrjx[p],
-                             d_dcrjy[p], d_dcrjz[p], d_d1[p], nxt[p], nzt[p],
-                             d_f_u1[p], d_f_v1[p], d_f_w1[p], stream_1, yfs[p],
-                             yfe[p], y_rank_F, p);
+	    dvelcy_H(d_u1[p], d_v1[p], d_w1[p], d_xx[p],   d_yy[p],   d_zz[p],   d_xy[p],       
+                     d_xz[p], d_yz[p], d_dcrjx[p], d_dcrjy[p], d_dcrjz[p],
+		     d_d1[p], nxt[p],  nzt[p],  d_f_u1[p], d_f_v1[p], d_f_w1[p], 
+                     stream_1,   yfs[p],  yfe[p], y_rank_F, p);
             } else {
             #if TOPO
                 topo_velocity_front_H(&T);
@@ -1694,11 +1693,8 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 topo_velocity_back_H(&T);
             #endif
             }
-            Cpy2Host_VY(d_b_u1[p], d_b_v1[p], d_b_w1[p], SB_vel[p], nxt[p], nzt[p], stream_2, y_rank_B);
 
-            CUCHK(cudaStreamSynchronize(stream_1)); /*these fix sync issues, but not sure why*/
-            CUCHK(cudaStreamSynchronize(stream_2)); 
-            //usleep(1);
+	    Cpy2Host_VY(d_b_u1[p], d_b_v1[p], d_b_w1[p], SB_vel[p], nxt[p], nzt[p], stream_2, y_rank_B);
 
             CUCHK(cudaStreamSynchronize(stream_1)); /*these fix sync issues, but not sure why*/
             CUCHK(cudaStreamSynchronize(stream_2)); 
@@ -1823,129 +1819,35 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                    nxt[p+1],  nyt[p+1], d_RL_swap[p], d_RR_swap[p], d_RF_swap[p], d_RB_swap[p], rank, stream_i, p);
          }
 
-            CUCHK(cudaStreamSynchronize(stream_i));
-            /*swap transition zone data on coarse grid(s)*/
-            for (p = 1; p < ngrids; p++) {
-                    Cpy2Host_swaparea_Y(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], SF_swap[p], SB_swap[p],
-                        d_SF_swap[p], d_SB_swap[p], nxt[p], stream_i, stream_i,
-                        y_rank_F, y_rank_B, intlev[p], intlev[p], p);
-                    CUCHK(cudaStreamSynchronize(stream_i));
-                    PostRecvMsg_Y(RF_swap[p], RB_swap[p], MCW, request_y_swp[p],
-                                  count_y_swp + p, swp_msg_size_y[p], y_rank_F,
-                                  y_rank_B, p);
-                    PostSendMsg_Y(SF_swap[p], SB_swap[p], MCW, request_y_swp[p],
-                                  count_y_swp + p, swp_msg_size_y[p], y_rank_F,
-                                  y_rank_B, rank, Both, p);
-                    MPICHK(MPI_Waitall(count_y_swp[p], request_y_swp[p],
-                                       status_y_swp[p]));
-                    Cpy2Device_swaparea_Y(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], RF_swap[p], RB_swap[p],
-                        d_RF_swap[p], d_RB_swap[p], nxt[p], stream_i, stream_i,
-                        y_rank_F, y_rank_B, intlev[p], intlev[p], p);
-                    Cpy2Host_swaparea_X(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], SL_swap[p], SR_swap[p],
-                        d_SL_swap[p], d_SR_swap[p], nyt[p], stream_i, stream_i,
-                        x_rank_L, x_rank_R, intlev[p], intlev[p], p);
-                    CUCHK(cudaStreamSynchronize(stream_i));
-                    PostRecvMsg_X(RL_swap[p], RR_swap[p], MCW, request_x_swp[p],
-                                  count_x_swp + p, swp_msg_size_x[p], x_rank_L,
-                                  x_rank_R, p);
-                    PostSendMsg_X(SL_swap[p], SR_swap[p], MCW, request_x_swp[p],
-                                  count_x_swp + p, swp_msg_size_x[p], x_rank_L,
-                                  x_rank_R, rank, Both, p);
-                    MPICHK(MPI_Waitall(count_x_swp[p], request_x_swp[p],
-                                       status_x_swp[p]));
-                    Cpy2Device_swaparea_X(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], RL_swap[p], RR_swap[p],
-                        d_RL_swap[p], d_RR_swap[p], nyt[p], stream_i, stream_i,
-                        x_rank_L, x_rank_R, intlev[p], intlev[p], p);
-            }
+         for (p=0; p<ngrids; p++){
+	    dump_nonzeros(d_u1[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "u1", p, cur_step, 2, rank, size);
+	    dump_nonzeros(d_v1[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "v1", p, cur_step, 2, rank, size);
+	    dump_nonzeros(d_w1[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "w1", p, cur_step, 2, rank, size);
+         }
 
-            CUCHK(cudaStreamSynchronize(stream_i));
-            for (p = 1; p < ngrids; p++) {
-                    intp3d_H(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p],
-                             d_zz[p], d_xy[p], d_xz[p], d_yz[p], d_u1[p - 1],
-                             d_v1[p - 1], d_w1[p - 1], d_xx[p - 1], d_yy[p - 1],
-                             d_zz[p - 1], d_xy[p - 1], d_xz[p - 1], d_yz[p - 1],
-                             nxt[p], nyt[p], rank, stream_i, p);
-            }
-            CUCHK(cudaStreamSynchronize(stream_i));
+         CUCHK(cudaStreamSynchronize(stream_i));
 
-            for (p = 0; p < ngrids; p++)
-                    dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "w1", p, cur_step, 1, rank, size);
+	 for (p=0; p<ngrids; p++){
+            dump_all_data(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xz[p], d_yz[p], d_xy[p], 
+                     nel[p], cur_step, 0, p, rank, size);
+         }
 
-            for (p = 0; p < ngrids - 1; p++) {
-                    Cpy2Host_swaparea_Y(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], SF_swap[p], SB_swap[p],
-                        d_SF_swap[p], d_SB_swap[p], nxt[p], stream_i, stream_i,
-                        y_rank_F, y_rank_B, swaplevmin, swaplevmax, p);
-                    CUCHK(cudaStreamSynchronize(stream_i));
-                    PostRecvMsg_Y(RF_swap[p], RB_swap[p], MCW, request_y_swp[p],
-                                  count_y_swp + p, swp_msg_size_y[p], y_rank_F,
-                                  y_rank_B, p);
-                    PostSendMsg_Y(SF_swap[p], SB_swap[p], MCW, request_y_swp[p],
-                                  count_y_swp + p, swp_msg_size_y[p], y_rank_F,
-                                  y_rank_B, rank, Both, p);
-                    MPICHK(MPI_Waitall(count_y_swp[p], request_y_swp[p],
-                                       status_y_swp[p]));
-                    Cpy2Device_swaparea_Y(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], RF_swap[p], RB_swap[p],
-                        d_RF_swap[p], d_RB_swap[p], nxt[p], stream_i, stream_i,
-                        y_rank_F, y_rank_B, swaplevmin, swaplevmax, p);
-
-                    Cpy2Host_swaparea_X(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], SL_swap[p], SR_swap[p],
-                        d_SL_swap[p], d_SR_swap[p], nyt[p], stream_i, stream_i,
-                        x_rank_L, x_rank_R, swaplevmin, swaplevmax, p);
-                    CUCHK(cudaStreamSynchronize(stream_i));
-                    swaparea_update_corners(SL_swap[p], SR_swap[p], RF_swap[p],
-                                            RB_swap[p], nswaplev, WWL, nxt[p],
-                                            nyt[p]);
-                    PostRecvMsg_X(RL_swap[p], RR_swap[p], MCW, request_x_swp[p],
-                                  count_x_swp + p, swp_msg_size_x[p], x_rank_L,
-                                  x_rank_R, p);
-                    PostSendMsg_X(SL_swap[p], SR_swap[p], MCW, request_x_swp[p],
-                                  count_x_swp + p, swp_msg_size_x[p], x_rank_L,
-                                  x_rank_R, rank, Both, p);
-                    MPICHK(MPI_Waitall(count_x_swp[p], request_x_swp[p],
-                                       status_x_swp[p]));
-                    Cpy2Device_swaparea_X(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], RL_swap[p], RR_swap[p],
-                        d_RL_swap[p], d_RR_swap[p], nyt[p], stream_i, stream_i,
-                        x_rank_L, x_rank_R, swaplevmin, swaplevmax, p);
-            }
-
-            for (p = 0; p < ngrids - 1; p++) {
-                    swap_H(d_xx[p + 1], d_yy[p + 1], d_zz[p + 1], d_xy[p + 1],
-                           d_xz[p + 1], d_yz[p + 1], d_u1[p + 1], d_v1[p + 1],
-                           d_w1[p + 1], d_xx[p], d_yy[p], d_zz[p], d_xy[p],
-                           d_xz[p], d_yz[p], d_u1[p], d_v1[p], d_w1[p],
-                           nxt[p + 1], nyt[p + 1], d_RL_swap[p], d_RR_swap[p],
-                           d_RF_swap[p], d_RB_swap[p], rank, stream_i, p);
-            }
-
-            for (p = 0; p < ngrids; p++) {
-                    dump_nonzeros(d_u1[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "u1", p, cur_step, 2, rank, size);
-                    dump_nonzeros(d_v1[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "v1", p, cur_step, 2, rank, size);
-                    dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "w1", p, cur_step, 2, rank, size);
-            }
+         if((rank==srcproc[0]) && (IFAULT == 4))
+         {
+            fprintf(stdout, "calling frcvel_H\n");
+            ++source_step;
+            frcvel_H(source_step, READ_STEP_GPU, maxdim, d_tpsrc[0], npsrc[0], fbc_tskp, stream_i, d_taxx[0], d_tayy[0], 
+                 d_tazz[0], d_taxz[0], d_tayz[0], d_taxy[0], d_u1[0], d_v1[0], d_w1[0], -1, -1, 0);
+         }
+         CUCHK(cudaStreamSynchronize(stream_i));
+         for (p=0; p<ngrids; p++){
+	    dump_nonzeros(d_xx[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xx", p, cur_step, 2, rank, size);
+	    dump_nonzeros(d_yy[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "yy", p, cur_step, 2, rank, size);
+	    dump_nonzeros(d_zz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "zz", p, cur_step, 2, rank, size);
+	    dump_nonzeros(d_xy[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xy", p, cur_step, 2, rank, size);
+	    dump_nonzeros(d_xz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xz", p, cur_step, 2, rank, size);
+	    dump_nonzeros(d_yz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "yz", p, cur_step, 2, rank, size);
+         }
 
          for (p=0; p<ngrids; p++){ 
    	    PostRecvMsg_X(RL_vel[p], RR_vel[p], MCW, request_x[p], &count_x[p], msg_v_size_x[p], x_rank_L, x_rank_R, p);
@@ -2033,6 +1935,17 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                     topo_stress_left_H(&T);
                     topo_stress_right_H(&T);
             }
+         }
+         CUCHK(cudaDeviceSynchronize());
+         
+         for (p=0; p<ngrids; p++){
+	    dump_nonzeros(d_xx[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xx", p, cur_step, 8, rank, size);
+	    dump_nonzeros(d_yy[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "yy", p, cur_step, 8, rank, size);
+	    dump_nonzeros(d_zz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "zz", p, cur_step, 8, rank, size);
+	    dump_nonzeros(d_xy[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xy", p, cur_step, 8, rank, size);
+	    dump_nonzeros(d_xz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xz", p, cur_step, 8, rank, size);
+	    dump_nonzeros(d_yz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "yz", p, cur_step, 8, rank, size);
+         }
 
          for (p=0; p<ngrids-1; p++){
             dstrqc2_H(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p],    
@@ -2180,153 +2093,30 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                      swaplevmin, swaplevmax, p);
          }
 
-            for (p = 0; p < ngrids; p++) {
-                    dump_nonzeros(d_xx[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "xx", p, cur_step, 3, rank, size);
-                    dump_nonzeros(d_yy[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "yy", p, cur_step, 3, rank, size);
-                    dump_nonzeros(d_zz[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "zz", p, cur_step, 3, rank, size);
-                    dump_nonzeros(d_xy[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "xy", p, cur_step, 3, rank, size);
-                    dump_nonzeros(d_xz[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "xz", p, cur_step, 3, rank, size);
-                    dump_nonzeros(d_yz[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "yz", p, cur_step, 3, rank, size);
-            }
+         /*dump_local_variable(SF_swap[0], swp_msg_size_y[0], "SF_swap", 'h', cur_step, 4, rank, size);
+         dump_local_variable(RB_swap[0], swp_msg_size_y[0], "RB_swap", 'h', cur_step, 4, rank, size);*/
 
-            CUCHK(cudaDeviceSynchronize());
+	 for (p=0; p<ngrids-1; p++){
+            swap_H(d_xx[p+1], d_yy[p+1], d_zz[p+1], d_xy[p+1], d_xz[p+1], d_yz[p+1], d_u1[p+1], d_v1[p+1], d_w1[p+1],
+                   d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], d_u1[p], d_v1[p], d_w1[p],
+                   nxt[p+1],  nyt[p+1], d_RL_swap[p], d_RR_swap[p], d_RF_swap[p], d_RB_swap[p], rank, stream_i, p);
+         }
 
-            /*swap transition zone data on coarse grid(s)*/
-            for (p = 1; p < ngrids; p++) {
-                    Cpy2Host_swaparea_Y(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], SF_swap[p], SB_swap[p],
-                        d_SF_swap[p], d_SB_swap[p], nxt[p], stream_i, stream_i,
-                        y_rank_F, y_rank_B, intlev[p], intlev[p], p);
-                    CUCHK(cudaDeviceSynchronize());
-                    PostRecvMsg_Y(RF_swap[p], RB_swap[p], MCW, request_y_swp[p],
-                                  count_y_swp + p, swp_msg_size_y[p], y_rank_F,
-                                  y_rank_B, p);
-                    PostSendMsg_Y(SF_swap[p], SB_swap[p], MCW, request_y_swp[p],
-                                  count_y_swp + p, swp_msg_size_y[p], y_rank_F,
-                                  y_rank_B, rank, Both, p);
-                    MPICHK(MPI_Waitall(count_y_swp[p], request_y_swp[p],
-                                       status_y_swp[p]));
-                    Cpy2Device_swaparea_Y(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], RF_swap[p], RB_swap[p],
-                        d_RF_swap[p], d_RB_swap[p], nxt[p], stream_i, stream_i,
-                        y_rank_F, y_rank_B, intlev[p], intlev[p], p);
-                    Cpy2Host_swaparea_X(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], SL_swap[p], SR_swap[p],
-                        d_SL_swap[p], d_SR_swap[p], nyt[p], stream_i, stream_i,
-                        x_rank_L, x_rank_R, intlev[p], intlev[p], p);
-                    CUCHK(cudaDeviceSynchronize());
-                    PostRecvMsg_X(RL_swap[p], RR_swap[p], MCW, request_x_swp[p],
-                                  count_x_swp + p, swp_msg_size_x[p], x_rank_L,
-                                  x_rank_R, p);
-                    PostSendMsg_X(SL_swap[p], SR_swap[p], MCW, request_x_swp[p],
-                                  count_x_swp + p, swp_msg_size_x[p], x_rank_L,
-                                  x_rank_R, rank, Both, p);
-                    MPICHK(MPI_Waitall(count_x_swp[p], request_x_swp[p],
-                                       status_x_swp[p]));
-                    Cpy2Device_swaparea_X(
-                        d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p],
-                        d_xy[p], d_xz[p], d_yz[p], RL_swap[p], RR_swap[p],
-                        d_RL_swap[p], d_RR_swap[p], nyt[p], stream_i, stream_i,
-                        x_rank_L, x_rank_R, intlev[p], intlev[p], p);
-            }
+         for (p=0; p<ngrids; p++){
+	    dump_nonzeros(d_xx[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xx", p, cur_step, 5, rank, size);
+	    dump_nonzeros(d_yy[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "yy", p, cur_step, 5, rank, size);
+	    dump_nonzeros(d_zz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "zz", p, cur_step, 5, rank, size);
+	    dump_nonzeros(d_xy[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xy", p, cur_step, 5, rank, size);
+	    dump_nonzeros(d_xz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "xz", p, cur_step, 5, rank, size);
+	    dump_nonzeros(d_yz[p], nxt[p]+4+8*loop, nyt[p]+4+8*loop, nzt[p]+2*align, "yz", p, cur_step, 5, rank, size);
+         }
 
-#if TOPO
-            sources_read(cur_step);
-            if (T.use) {
-                    sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0],
-                                            d_xz[0], d_yz[0], cur_step, DH[0],
-                                            DT, &T.metrics_f, &T.metrics_g, 0);
-                    for (p = 1; p < ngrids; p++) {
-                            sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
-                                                  d_xy[p], d_xz[p], d_yz[p],
-                                                  cur_step, DH[p], DT, p);
-                    }
-            } else {
-                    for (p = 0; p < ngrids; p++) {
-                            sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
-                                                  d_xy[p], d_xz[p], d_yz[p],
-                                                  cur_step, DH[p], DT, p);
-                    }
-            }
-#endif
+         CUCHK(cudaStreamSynchronize(stream_i));
 
-            // update source input
-            if ((IFAULT < 4) && (cur_step < NST)) {
-                    CUCHK(cudaDeviceSynchronize());
-                    ++source_step;
-                    for (p = 0; p < ngrids; p++) {
-                            if (rank == srcproc[p])
-                                    addsrc_H(source_step, READ_STEP_GPU, maxdim,
-                                             d_tpsrc[p], npsrc[p], stream_i,
-                                             d_taxx[p], d_tayy[p], d_tazz[p],
-                                             d_taxz[p], d_tayz[p], d_taxy[p],
-                                             d_xx[p], d_yy[p], d_zz[p], d_xy[p],
-                                             d_yz[p], d_xz[p], p);
-                    }
-                    for (p = 0; p < ngrids; p++) {
-                            dump_nonzeros(d_xx[p], nxt[p] + 4 + 8 * loop,
-                                          nyt[p] + 4 + 8 * loop,
-                                          nzt[p] + 2 * align, "xx", p, cur_step,
-                                          1, rank, size);
-                            dump_nonzeros(d_yy[p], nxt[p] + 4 + 8 * loop,
-                                          nyt[p] + 4 + 8 * loop,
-                                          nzt[p] + 2 * align, "yy", p, cur_step,
-                                          1, rank, size);
-                            dump_nonzeros(d_zz[p], nxt[p] + 4 + 8 * loop,
-                                          nyt[p] + 4 + 8 * loop,
-                                          nzt[p] + 2 * align, "zz", p, cur_step,
-                                          1, rank, size);
-                            dump_nonzeros(d_xy[p], nxt[p] + 4 + 8 * loop,
-                                          nyt[p] + 4 + 8 * loop,
-                                          nzt[p] + 2 * align, "xy", p, cur_step,
-                                          1, rank, size);
-                            dump_nonzeros(d_xz[p], nxt[p] + 4 + 8 * loop,
-                                          nyt[p] + 4 + 8 * loop,
-                                          nzt[p] + 2 * align, "xz", p, cur_step,
-                                          1, rank, size);
-                            dump_nonzeros(d_yz[p], nxt[p] + 4 + 8 * loop,
-                                          nyt[p] + 4 + 8 * loop,
-                                          nzt[p] + 2 * align, "yz", p, cur_step,
-                                          1, rank, size);
-                    }
-            } else if (IFAULT == 5) {
-                    CUCHK(cudaDeviceSynchronize());
-                    for (p = 0; p < ngrids; p++) {
-                            if (rank == srcproc[p])
-                                    addkinsrc_H(cur_step, maxdim, d_tpsrc[p],
-                                                npsrc[p], stream_i, d_mu[p],
-                                                d_taxx[p], d_tayy[p], d_tazz[p],
-                                                d_taxz[p], d_tayz[p], d_taxy[p],
-                                                d_xx[p], d_yy[p], d_zz[p],
-                                                d_xy[p], d_yz[p], d_xz[p],
-                                                d_mom[p], d_srcfilt_d[p], p);
-                    }
-            } else if ((IFAULT == 6) && (cur_step < NST)) {
-                    CUCHK(cudaDeviceSynchronize());
-                    p = ngrids - 1;
-                    addplanesrc_H(cur_step, maxdim, NST, stream_i, d_mu[p],
-                                  d_lam[p], ND * grdfct[p], nxt[p], nyt[p],
-                                  d_taxx[p], d_tayy[p], d_tazz[p], d_xx[p],
-                                  d_yy[p], d_zz[p], d_xy[p], d_yz[p], d_xz[p],
-                                  p);
-            }
-
-            CUCHK(cudaDeviceSynchronize());
+	 for (p=0; p<ngrids-1; p++){
+            dump_all_data(d_u1[p], d_v1[p], d_w1[p], d_xx[p], d_yy[p], d_zz[p], d_xz[p], d_yz[p], d_xy[p], 
+                     nel[p], cur_step, 1, p, rank, size);
+         }
 
          // plasticity related calls:
          if(NVE==3){
@@ -2403,39 +2193,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 		 nzt[p], xlsp[p]+ngsl, xrep[p]-ngsl, ylsp[p]+ngsl, yrep[p]-ngsl, stream_i, p); /*xrep-ngsl*/
            }
 
-            /*dump_local_variable(SF_swap[0], swp_msg_size_y[0], "SF_swap", 'h',
-            cur_step, 4, rank, size); dump_local_variable(RB_swap[0],
-            swp_msg_size_y[0], "RB_swap", 'h', cur_step, 4, rank, size);*/
+           //dump_variable(d_yldfac, nel, "yldfac", 'u', cur_step, 0, rank, size);
 
-            for (p = 0; p < ngrids - 1; p++) {
-                    swap_H(d_xx[p + 1], d_yy[p + 1], d_zz[p + 1], d_xy[p + 1],
-                           d_xz[p + 1], d_yz[p + 1], d_u1[p + 1], d_v1[p + 1],
-                           d_w1[p + 1], d_xx[p], d_yy[p], d_zz[p], d_xy[p],
-                           d_xz[p], d_yz[p], d_u1[p], d_v1[p], d_w1[p],
-                           nxt[p + 1], nyt[p + 1], d_RL_swap[p], d_RR_swap[p],
-                           d_RF_swap[p], d_RB_swap[p], rank, stream_i, p);
-            }
-
-            for (p = 0; p < ngrids; p++) {
-                    dump_nonzeros(d_xx[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "xx", p, cur_step, 5, rank, size);
-                    dump_nonzeros(d_yy[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "yy", p, cur_step, 5, rank, size);
-                    dump_nonzeros(d_zz[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "zz", p, cur_step, 5, rank, size);
-                    dump_nonzeros(d_xy[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "xy", p, cur_step, 5, rank, size);
-                    dump_nonzeros(d_xz[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "xz", p, cur_step, 5, rank, size);
-                    dump_nonzeros(d_yz[p], nxt[p] + 4 + 8 * loop,
-                                  nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align,
-                                  "yz", p, cur_step, 5, rank, size);
-            }
+           //dump_variable(d_yldfac, nel, "yldfac", 'u', cur_step, 1, rank, size);
 
            CUCHK(cudaStreamSynchronize(stream_1));
            CUCHK(cudaStreamSynchronize(stream_2));
@@ -2495,11 +2255,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          fstr_H(d_zz[0], d_xz[0], d_yz[0], stream_i, xls[0], xre[0], yls[0], yre[0]);
          CUCHK(cudaDeviceSynchronize());
 
-         if (!usetopo) {
-            fstr_H(d_zz[0], d_xz[0], d_yz[0], stream_i, xls[0], xre[0], yls[0],
-                   yre[0]);
+         for (p=0; p<ngrids; p++) {
+                receivers_write(d_u1[p], d_v1[p], d_w1[p], cur_step, nt, p);
          }
-            CUCHK(cudaDeviceSynchronize());
 
          if(cur_step%NTISKP == 0){
           #ifndef SEISMIO
@@ -2803,550 +2561,20 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 	   rec_nbgx[p],rec_nedx[p],rec_nbgy[p],rec_nedy[p],rec_nbgz[p],rec_nedz[p],(long int)displacement[p]);
 
 
-            if (cur_step % NTISKP == 0) {
-#ifndef SEISMIO
+	 /*this should save the final plastic strain down to NEDZ_EP grip points*/
+	 Bufeta2[p] = Alloc1D(rec_nxt[p]*rec_nyt[p]*rec_nzt[p]);
 
-                    for (p = 0; p < ngrids; p++) {
-                            if (grid_output[p]) {
-                                    if (!rank) time_gpuio_tmp = -gethrtime();
-                                    fprintf(stdout,
-                                            "starting velbuffer_H, p=%d\n", p);
-                                    fflush(stdout);
-                                    velbuffer_H(
-                                        d_u1[p], d_v1[p], d_w1[p], d_neta[p],
-                                        d_Bufx[p], d_Bufy[p], d_Bufz[p],
-                                        d_Bufeta[p], NVE, rec_nbgx[p],
-                                        rec_nedx[p], NSKPX[p], rec_nbgy[p],
-                                        rec_nedy[p], NSKPY[p], rec_nbgz[p],
-                                        rec_nedz[p], NSKPZ[p], rec_nxt[p],
-                                        rec_nyt[p], rec_nzt[p], stream_i,
-                                        FOLLOWBATHY, d_bathy, p);
-                                    CUCHK(cudaStreamSynchronize(stream_i));
-                                    fprintf(stdout, "ending velbuffer_H\n");
+	 for(k=nzt[p]+align-1 - rec_nbgz[p]; k>=nzt[p]+align-1 - rec_nedz[p]; k=k-NSKPZ[p])
+	   for(j=2+ngsl + rec_nbgy[p]; j<=2+ngsl + rec_nedy[p]; j=j+NSKPY[p])
+	     for(i=2+ngsl + rec_nbgx[p]; i<=2+ngsl + rec_nedx[p]; i=i+NSKPX[p]) {
+	       if (tmpInd >= (rec_nxt[p]*rec_nyt[p]*rec_nzt[p])) 
+		  fprintf(stdout, "tmpind=%ld (allocated %d)\n", tmpInd, (rec_nxt[p]*rec_nyt[p]*rec_nzt[p]));
+	       Bufeta2[p][tmpInd] = neta[p][i][j][k];
+	       tmpInd++;
+	     }
 
-                                    /*num_bytes =
-                                    sizeof(float)*(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align);
-                                    CUCHK(cudaMemcpy(&u1[p][0][0][0],d_u1[p],num_bytes,cudaMemcpyDeviceToHost));
-                                    CUCHK(cudaMemcpy(&v1[p][0][0][0],d_v1[p],num_bytes,cudaMemcpyDeviceToHost));
-                                    CUCHK(cudaMemcpy(&w1[p][0][0][0],d_w1[p],num_bytes,cudaMemcpyDeviceToHost));
-                                    //added for plasticity
-                                    if (NVE == 3)
-                                       CUCHK(cudaMemcpy(&neta[p][0][0][0],d_neta[p],num_bytes,cudaMemcpyDeviceToHost));*/
-                                    if (!rank) {
-                                            // cudaStreamSynchronize(stream_i);
-                                            time_gpuio_tmp += gethrtime();
-                                            time_gpuio += time_gpuio_tmp;
-                                            printf(
-                                                "Output data buffered on GPU "
-                                                "in (sec): %lf\n",
-                                                time_gpuio_tmp);
-                                            // printf("Output data copied to
-                                            // host in (sec):
-                                            // %lf\n",time_gpuio_tmp);
-                                            time_gpuio_tmp = -gethrtime();
-                                    }
-                                    idtmp =
-                                        ((cur_step / NTISKP + WRITE_STEP - 1) %
-                                         WRITE_STEP);
-                                    idtmp = idtmp * rec_nxt[p] * rec_nyt[p] *
-                                            rec_nzt[p];
-                                    num_bytes = sizeof(float) * rec_nxt[p] *
-                                                rec_nyt[p] * rec_nzt[p];
-                                    CUCHK(cudaStreamSynchronize(stream_o));
-                                    CUCHK(cudaMemcpyAsync(
-                                        Bufx[p] + idtmp, d_Bufx[p], num_bytes,
-                                        cudaMemcpyDeviceToHost, stream_o));
-                                    CUCHK(cudaMemcpyAsync(
-                                        Bufy[p] + idtmp, d_Bufy[p], num_bytes,
-                                        cudaMemcpyDeviceToHost, stream_o));
-                                    CUCHK(cudaMemcpyAsync(
-                                        Bufz[p] + idtmp, d_Bufz[p], num_bytes,
-                                        cudaMemcpyDeviceToHost, stream_o));
-                                    if (NVE == 3)
-                                            CUCHK(cudaMemcpyAsync(
-                                                Bufeta[p] + idtmp, d_Bufeta[p],
-                                                num_bytes,
-                                                cudaMemcpyDeviceToHost,
-                                                stream_o))
-                                    /*tmpInd = idtmp;
-                                    for(i=2+ngsl + rec_nbgx[p]; i<=2+ngsl +
-                                    rec_nedx[p]; i+=NSKPX[p]) for(j=2+ngsl +
-                                    rec_nbgy[p]; j<=2+ngsl + rec_nedy[p];
-                                    j+=NSKPY[p]) for(k=rec_nbgz[p];
-                                    k<=rec_nedz[p]; k=k+NSKPZ[p])
-                                        {
-                                          if (FOLLOWBATHY==1 && p == 0) {
-                                              int pos=j*(nxt[0]+4+ngsl2)+i;
-                                              ko=bathy[pos] - k;
-                                              //ko=bathy[i][j] - k;
-                                          }
-                                          else ko=nzt[p]+align-1-k;
+	 MPI_Datatype filetype2;
 
-                                          //if (rank==20 && i==200 && j==200)
-                                          //   fprintf(stdout, "ko=%d\n", ko);
-                                          int tmpInd2;
-
-                                          tmpInd2 =  (k -
-                                    rec_nbgz[p])/NSKPZ[p]*rec_nxt[p]*rec_nyt[p]
-                                    + (j-2-ngsl-rec_nbgy[p])/NSKPY[p]*rec_nxt[p]
-                                    + (i-2-ngsl-rec_nbgx[p])/NSKPX[p] + idtmp;
-                                          //if (tmpInd2 != tmpInd)
-                                    fprintf(stderr, "tmpInd: %d != %d
-                                    (%d,%d,%d)\n", tmpInd, tmpInd2, i, j, k);
-
-
-                                          Bufx[p][tmpInd2] = u1[p][i][j][ko];
-                                          Bufy[p][tmpInd2] = v1[p][i][j][ko];
-                                          Bufz[p][tmpInd2] = w1[p][i][j][ko];
-                                          if (NVE == 3) {
-                                             Bufeta[p][tmpInd2] =
-                                    neta[p][i][j][ko];
-                                          }
-
-                                          tmpInd++;
-                                        }*/
-                                    if (!rank) {
-                                            time_gpuio_tmp += gethrtime();
-                                            time_gpuio += time_gpuio_tmp;
-                                            printf(
-                                                "Output data copied to host in "
-                                                "(sec): %lf\n",
-                                                time_gpuio_tmp);
-                                            // printf("Output data buffered in
-                                            // (sec): %lf\n",time_gpuio_tmp);
-                                    }
-
-                                    if ((cur_step / NTISKP) % WRITE_STEP == 0) {
-                                            CUCHK(cudaDeviceSynchronize());
-#ifndef NOBGIO
-                                            outsize = rec_nxt[p] * rec_nyt[p] *
-                                                      rec_nzt[p] * WRITE_STEP;
-                                            time(&time1);
-                                            MPICHK(MPI_Send(
-                                                Bufx[p], outsize, MPI_FLOAT,
-                                                rank + 2 * size, MPIRANKIO + 30,
-                                                MPI_COMM_WORLD));
-                                            time(&time2);
-                                            if (rank == 0 && p == 0)
-                                                    fprintf(
-                                                        stdout,
-                                                        "Wait time for sending "
-                                                        "output (): %5.f "
-                                                        "seconds.\n",
-                                                        difftime(time2, time1));
-                                            MPICHK(MPI_Send(
-                                                Bufy[p], outsize, MPI_FLOAT,
-                                                rank + 2 * size, MPIRANKIO + 31,
-                                                MPI_COMM_WORLD));
-                                            MPICHK(MPI_Send(
-                                                Bufz[p], outsize, MPI_FLOAT,
-                                                rank + 2 * size, MPIRANKIO + 32,
-                                                MPI_COMM_WORLD));
-                                            if (NVE == 3)
-                                                    MPICHK(MPI_Send(
-                                                        Bufeta[p], outsize,
-                                                        MPI_FLOAT,
-                                                        rank + 2 * size,
-                                                        MPIRANKIO + 33,
-                                                        MPI_COMM_WORLD));
-#else
-                                            sprintf(filename, "%s_%1d_%07ld",
-                                                    filenamebasex, p, cur_step);
-                                            err = MPI_File_open(
-                                                MCW, filename,
-                                                MPI_MODE_CREATE |
-                                                    MPI_MODE_WRONLY,
-                                                MPI_INFO_NULL, &fh);
-                                            // error_check(err, "MPI_File_open
-                                            // X");
-                                            err = MPI_File_set_view(
-                                                fh, displacement[p], MPI_FLOAT,
-                                                filetype[p], "native",
-                                                MPI_INFO_NULL);
-                                            // error_check(err,
-                                            // "MPI_File_set_view X");
-                                            err = MPI_File_write_all(
-                                                fh, Bufx[p],
-                                                rec_nxt[p] * rec_nyt[p] *
-                                                    rec_nzt[p] * WRITE_STEP,
-                                                MPI_FLOAT, &filestatus);
-                                            // error_check(err, "MPI_File_write
-                                            // X");
-
-                                            err = MPI_File_close(&fh);
-                                            // error_check(err, "MPI_File_close
-                                            // X");
-
-                                            sprintf(filename, "%s_%1d_%07ld",
-                                                    filenamebasey, p, cur_step);
-                                            err = MPI_File_open(
-                                                MCW, filename,
-                                                MPI_MODE_CREATE |
-                                                    MPI_MODE_WRONLY,
-                                                MPI_INFO_NULL, &fh);
-                                            err = MPI_File_set_view(
-                                                fh, displacement[p], MPI_FLOAT,
-                                                filetype[p], "native",
-                                                MPI_INFO_NULL);
-                                            err = MPI_File_write_all(
-                                                fh, Bufy[p],
-                                                rec_nxt[p] * rec_nyt[p] *
-                                                    rec_nzt[p] * WRITE_STEP,
-                                                MPI_FLOAT, &filestatus);
-                                            err = MPI_File_close(&fh);
-                                            sprintf(filename, "%s_%1d_%07ld",
-                                                    filenamebasez, p, cur_step);
-                                            err = MPI_File_open(
-                                                MCW, filename,
-                                                MPI_MODE_CREATE |
-                                                    MPI_MODE_WRONLY,
-                                                MPI_INFO_NULL, &fh);
-                                            err = MPI_File_set_view(
-                                                fh, displacement[p], MPI_FLOAT,
-                                                filetype[p], "native",
-                                                MPI_INFO_NULL);
-                                            err = MPI_File_write_all(
-                                                fh, Bufz[p],
-                                                rec_nxt[p] * rec_nyt[p] *
-                                                    rec_nzt[p] * WRITE_STEP,
-                                                MPI_FLOAT, &filestatus);
-                                            err = MPI_File_close(&fh);
-                                            // saves the plastic shear work
-                                            if (NVE == 3) {
-                                                    sprintf(filename,
-                                                            "%s_%1d_%07ld",
-                                                            filenamebaseeta, p,
-                                                            cur_step);
-                                                    err = MPI_File_open(
-                                                        MCW, filename,
-                                                        MPI_MODE_CREATE |
-                                                            MPI_MODE_WRONLY,
-                                                        MPI_INFO_NULL, &fh);
-                                                    err = MPI_File_set_view(
-                                                        fh, displacement[p],
-                                                        MPI_FLOAT, filetype[p],
-                                                        "native",
-                                                        MPI_INFO_NULL);
-                                                    err = MPI_File_write_all(
-                                                        fh, Bufeta[p],
-                                                        rec_nxt[p] *
-                                                            rec_nyt[p] *
-                                                            rec_nzt[p] *
-                                                            WRITE_STEP,
-                                                        MPI_FLOAT, &filestatus);
-                                                    err = MPI_File_close(&fh);
-                                            }
-#endif
-                                    }
-                            }
-// else
-// cudaDeviceSynchronize();
-#else
-                    for (p = 0; p < ngrids; p++) {
-                            num_bytes = sizeof(float) * (nxt[p] + 4 + ngsl2) *
-                                        (nyt[p] + 4 + ngsl2) *
-                                        (nzt[p] + 2 * align);
-                            if (!rank && p == 0) time_gpuio_tmp = -gethrtime();
-                            CUCHK(cudaMemcpy(&u1[p][0][0][0], d_u1[p],
-                                             num_bytes,
-                                             cudaMemcpyDeviceToHost));
-                            CUCHK(cudaMemcpy(&v1[p][0][0][0], d_v1[p],
-                                             num_bytes,
-                                             cudaMemcpyDeviceToHost));
-                            CUCHK(cudaMemcpy(&w1[p][0][0][0], d_w1[p],
-                                             num_bytes,
-                                             cudaMemcpyDeviceToHost));
-                            // added for plasticity
-                            if (NVE == 3)
-                                    CUCHK(cudaMemcpy(&neta[p][0][0][0],
-                                                     d_neta[p], num_bytes,
-                                                     cudaMemcpyDeviceToHost));
-
-                            num_bytes =
-                                sizeof(float) * (nxt[p]) * (nyt[p]) * (nzt[p]);
-                            Bufx[0] = (float*)malloc(num_bytes);
-                            Bufy[0] = (float*)malloc(num_bytes);
-                            Bufz[0] = (float*)malloc(num_bytes);
-                            Bufeta[0] = (float*)malloc(num_bytes);
-
-                            tmpInd = 0;
-                            for (k = nzt[p] + align - 1; k >= align; k--) {
-                                    for (j = 2 + ngsl; j < 2 + ngsl + nyt[p];
-                                         j++) {
-                                            for (i = 2 + ngsl;
-                                                 i < 2 + ngsl + nxt[p]; i++) {
-                                                    Bufx[0][tmpInd] =
-                                                        u1[p][i][j][k];
-                                                    Bufy[0][tmpInd] =
-                                                        v1[p][i][j][k];
-                                                    Bufz[0][tmpInd] =
-                                                        w1[p][i][j][k];
-                                                    if (NVE == 3)
-                                                            Bufeta[0][tmpInd] =
-                                                                neta[p][i][j]
-                                                                    [k];
-                                                    tmpInd++;
-                                            }
-                                    }
-                            }
-
-                            /*seism_write(&seism_filex[p], &u1[p][0][0][0],
-                            &err); seism_write(&seism_filey[p], &v1[p][0][0][0],
-                            &err); seism_write(&seism_filez[p], &w1[p][0][0][0],
-                            &err);
-                            if (NVE == 3) seism_write(&seism_fileeta[p],
-                            &neta[p][0][0][0], &err);*/
-
-                            seism_write(&seism_filex[p], Bufx[0], &err);
-                            seism_write(&seism_filey[p], Bufy[0], &err);
-                            seism_write(&seism_filez[p], Bufz[0], &err);
-                            if (NVE == 3)
-                                    seism_write(&seism_fileeta[p],
-                                                &neta[p][0][0][0], &err);
-
-                            free(Bufx[0]);
-                            free(Bufy[0]);
-                            free(Bufz[0]);
-                            if (NVE == 3) free(Bufeta[0]);
-                    }
-#endif
-
-                                                        // write-statistics to
-                                                        // chk file:
-                                                        if (rank == 0) {
-                                                                if (NPC <
-                                                                    2) { /* for
-                                                                            periodic
-                                                                            BCs,
-                                                                            ND
-                                                                            may
-                                                                            be
-                                                                            larger
-                                                                            than
-                                                                            nxt
-                                                                            -
-                                                                            Daniel
-                                                                          */
-                                                                        i = ND +
-                                                                            2 +
-                                                                            ngsl;
-                                                                        j = i;
-                                                                } else
-                                                                        i = j =
-                                                                            2 +
-                                                                            ngsl;
-
-                                                                k = nzt[0] +
-                                                                    align - 1 -
-                                                                    ND;
-                                                                fprintf(
-                                                                    fchk,
-                                                                    "%ld "
-                                                                    ":\t%e\t%"
-                                                                    "e\t%e\n",
-                                                                    cur_step,
-                                                                    u1[0][i][j]
-                                                                      [k],
-                                                                    v1[0][i][j]
-                                                                      [k],
-                                                                    w1[0][i][j]
-                                                                      [k]);
-                                                                fflush(fchk);
-                                                        }
-                                                }
-                                        }
-                                        // else
-                                        // cudaDeviceSynchronize();
-
-                                        if ((cur_step < (NST * fbc_tskp) - 1) &&
-                                            (IFAULT >= 2) &&
-                                            ((cur_step + 1) %
-                                                 (READ_STEP_GPU * fbc_tskp) ==
-                                             0)) {
-                                                printf(
-                                                    "%d) Read new source from "
-                                                    "CPU.\n",
-                                                    rank);
-                                                if ((cur_step + 1) %
-                                                        (READ_STEP *
-                                                         fbc_tskp) ==
-                                                    0) {
-                                                        printf(
-                                                            "%d) Read new "
-                                                            "source from "
-                                                            "file.\n",
-                                                            rank);
-                                                        if (IFAULT == 2)
-                                                                for (p = 0;
-                                                                     p < ngrids;
-                                                                     p++) {
-                                                                        if (rank ==
-                                                                            srcproc
-                                                                                [p]) {
-                                                                                sprintf(
-                                                                                    insrcgrid,
-                                                                                    "%s_%d",
-                                                                                    INSRC,
-                                                                                    p);
-                                                                                sprintf(
-                                                                                    insrc_i2_grid,
-                                                                                    "%s_%d",
-                                                                                    INSRC_I2,
-                                                                                    p);
-                                                                                read_src_ifault_2(
-                                                                                    rank,
-                                                                                    READ_STEP,
-                                                                                    insrcgrid,
-                                                                                    insrc_i2_grid,
-                                                                                    maxdim,
-                                                                                    coord,
-                                                                                    NZ[p],
-                                                                                    nxt[p],
-                                                                                    nyt[p],
-                                                                                    nzt[p],
-                                                                                    npsrc +
-                                                                                        p,
-                                                                                    srcproc +
-                                                                                        p,
-                                                                                    tpsrc +
-                                                                                        p,
-                                                                                    taxx +
-                                                                                        p,
-                                                                                    tayy +
-                                                                                        p,
-                                                                                    tazz +
-                                                                                        p,
-                                                                                    taxz +
-                                                                                        p,
-                                                                                    tayz +
-                                                                                        p,
-                                                                                    taxy +
-                                                                                        p,
-                                                                                    (cur_step +
-                                                                                     1) / READ_STEP +
-                                                                                        1);
-                                                                        }
-                                                                }
-                                                        else if ((IFAULT ==
-                                                                  4) &&
-                                                                 (rank ==
-                                                                  srcproc[0])) {
-                                                                read_src_ifault_4(
-                                                                    rank,
-                                                                    READ_STEP,
-                                                                    INSRC,
-                                                                    maxdim,
-                                                                    coord,
-                                                                    NZ[0],
-                                                                    nxt[0],
-                                                                    nyt[0],
-                                                                    nzt[0],
-                                                                    npsrc,
-                                                                    srcproc,
-                                                                    tpsrc, taxx,
-                                                                    tayy, tazz,
-                                                                    cur_step +
-                                                                        2,
-                                                                    fbc_ext,
-                                                                    fbc_off,
-                                                                    fbc_pmask,
-                                                                    fbc_extl,
-                                                                    fbc_dim,
-                                                                    &fbc_seismio,
-                                                                    &fbc_tskp,
-                                                                    NST, size);
-                                                        }
-                                                }
-                                                if (rank == srcproc[0])
-                                                        printf(
-                                                            "%d) SOURCE: "
-                                                            "taxx,yy,zz:%e,%e,%"
-                                                            "e\n",
-                                                            rank,
-                                                            taxx[0][cur_step %
-                                                                    READ_STEP],
-                                                            tayy[0][cur_step %
-                                                                    READ_STEP],
-                                                            tazz[0][cur_step %
-                                                                    READ_STEP]);
-                                                // Synchronous copy!
-
-                                                for (p = 0; p < ngrids; p++) {
-                                                        if (rank == srcproc[p])
-                                                                Cpy2Device_source(
-                                                                    npsrc[p],
-                                                                    READ_STEP_GPU,
-                                                                    (cur_step +
-                                                                     1) %
-                                                                        (READ_STEP *
-                                                                         fbc_tskp) /
-                                                                        fbc_tskp,
-                                                                    taxx[p],
-                                                                    tayy[p],
-                                                                    tazz[p],
-                                                                    taxz[p],
-                                                                    tayz[p],
-                                                                    taxy[p],
-                                                                    d_taxx[p],
-                                                                    d_tayy[p],
-                                                                    d_tazz[p],
-                                                                    d_taxz[p],
-                                                                    d_tayz[p],
-                                                                    d_taxy[p],
-                                                                    IFAULT);
-                                                }
-                                                source_step = 0;
-                                        }
-                                }
-                                time_un += gethrtime();
-                                CUCHK(cudaDeviceSynchronize());
-                        }
-
-                        if (IFAULT == 5) {
-                                for (p = 0; p < ngrids; p++) {
-                                        if (rank == srcproc[p]) {
-                                                num_bytes =
-                                                    npsrc[p] * sizeof(float);
-                                                fprintf(stdout,
-                                                        "num_bytes=%ld\n",
-                                                        num_bytes);
-                                                CUCHK(cudaMemcpy(
-                                                    mom[p], d_mom[p], num_bytes,
-                                                    cudaMemcpyDeviceToHost));
-                                                for (n = 0; n < npsrc[p]; n++) {
-                                                        /*fprintf(stdout,
-                                                         * "mom[%d]=%e\n", n,
-                                                         * mom[p][n]);*/
-                                                        tmom += mom[p][n];
-                                                }
-                                        }
-                                }
-                                fprintf(stdout, "rank %d: moment=%e\n", rank,
-                                        tmom);
-                                MPICHK(MPI_Allreduce(&tmom, &gmom, 1, MPI_FLOAT,
-                                                     MPI_SUM, MCW));
-                                mag = 2. / 3. * (log10f(gmom) - 9.1);
-                                if (rank == 0)
-                                        fprintf(stdout,
-                                                "Total M0=%e, Mw=%4.1f\n", gmom,
-                                                mag);
-                                // if (rank==0) fprintf(stdout, "moment of
-                                // source node 19132: %e\n", mom[0][19132]);
-                        }
-
-                        if (rank == 0) {
-                                fprintf(fchk, "END\n");
-                                fclose(fchk);
-                        }
-
-#ifdef SEISMIO
-                        for (p = 0; p < ngrids; p++) {
-                                seism_file_close(seism_filex + p, &err);
-                                seism_file_close(seism_filey + p, &err);
-                                seism_file_close(seism_filez + p, &err);
-                                seism_file_close(seism_fileeta + p, &err);
-                        }
-#endif
 
        maxNX_NY_NZ_WS = (maxNX_NY_NZ_WS>rec_NZ[p]?maxNX_NY_NZ_WS:rec_NZ[p]);
        int ones2[maxNX_NY_NZ_WS];
@@ -3409,8 +2637,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          seism_write(&seism_fileep[p], &neta[p][0][0][0], &err);
          seism_file_close(seism_fileep+p, &err);
       }
-#endif
-                        }
+      #endif
+
+    }
 
 #if TOPO
     topo_free(&T);

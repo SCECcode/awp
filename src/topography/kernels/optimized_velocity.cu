@@ -626,6 +626,11 @@ __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK,
                           0.0026041666666667};
   const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
+  const int i = threadIdx.x + blockIdx.x * blockDim.x + bi;
+  if (i >= nx)
+    return;
+  if (i >= ei)
+          return;
   const int j = threadIdx.y + blockIdx.y * blockDim.y + bj;
   if (j >= ny)
     return;
@@ -707,7 +712,6 @@ __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK,
 #define _u3(i, j, k)                                                           \
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
-  for (int i = bi; i < ei; ++i) {
     float rho1 =
         phz4[0] *
             (phy4[2] * _rho(i, j, k + 4) + phy4[0] * _rho(i, j - 2, k + 4) +
@@ -1013,7 +1017,6 @@ __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK,
                                     phy4[1] * _s23(i, j - 1, k + 9) +
                                     phy4[3] * _s23(i, j + 1, k + 9))))) *
         f_dcrj;
-  }
 #undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
