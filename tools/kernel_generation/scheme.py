@@ -39,7 +39,7 @@ else:
 helper.set_precision(prec_str)
 use_sponge = helper.get_use_sponge_layer(debug)
 use_free_surface_bc = helper.get_use_free_surface_bc(debug)
-launch_bounds = ['yes','yes']
+launch_bounds = ['yes','no']
 grid_order = ['z', 'y', 'x']
 print("Precision:", prec_str, "\n",
       "Debug:", debug, "\n",

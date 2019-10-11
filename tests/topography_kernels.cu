@@ -41,7 +41,7 @@ static int ny = 0;
 static int nz = 0;
 static int nt = 0;
 static prec h = 1.0;
-static prec dt = 0.25;
+static prec dt = 0.0025;
 static int coord[2] = {0, 0};
 static int dim[2] = {0, 0};
 static int rank, size;
@@ -154,7 +154,7 @@ void init(topo_t *T)
 
         // Gaussian hill geometry
         _prec3_t hill_width = {.x = (_prec)nx / 2, .y = (_prec)ny / 2, .z = 0};
-        _prec hill_height = 10.0;
+        _prec hill_height = 0.0;
         _prec3_t hill_center = {.x = 0, .y = 0, .z = 0};
         // No canyon
         _prec3_t canyon_width = {.x = 100, .y = 100, .z = 0};
@@ -166,9 +166,9 @@ void init(topo_t *T)
 
         // Set random initial conditions using fixed seed
         
-        topo_d_random(T, 0, T->u1);
-        topo_d_random(T, 0, T->v1);
-        topo_d_random(T, 0, T->w1);
+        topo_d_random(T, 1, T->u1);
+        topo_d_random(T, 2, T->v1);
+        topo_d_random(T, 3, T->w1);
 
         topo_d_random(T, 0, T->xx);
         topo_d_random(T, 0, T->yy);
@@ -197,9 +197,10 @@ void init(topo_t *T)
         topo_d_constant(T, 0.4, T->vx2);
         topo_d_constant(T, 0.4, T->coeff);
 
+        topo_d_linear_k(T, T->rho);
         topo_d_constant(T, 1, T->mui);
         topo_d_constant(T, 1, T->lami);
-        topo_d_constant(T, 5, T->lam_mu);
+        topo_d_constant(T, 1, T->lam_mu);
 
         topo_build(T);
 
@@ -332,7 +333,6 @@ int compare(topo_t *host, const char *inputdir)
         }
         printf("\n");
 
-
         int3_t grid_size = {nx, ny, nz};
         int3_t shift = {0, 0, 0};
         int3_t coordinate = {0,0,0};
@@ -358,10 +358,10 @@ int compare(topo_t *host, const char *inputdir)
         grid_fill3_y(y, y1, grid);
         grid_fill3_z(z, z1, grid);
         vtk_write_grid("awp.vtk", x, y, z, grid);
-        vtk_append_scalar("awp.vtk", "xx", host->xx, grid);
+        vtk_append_scalar("awp.vtk", "vx", host->u1, grid);
         
         vtk_write_grid("reference.vtk", x, y, z, grid);
-        vtk_append_scalar("reference.vtk", "xx", reference.xx, grid);
+        vtk_append_scalar("reference.vtk", "vx", reference.u1, grid);
 
         topo_h_free(&reference);
         return total_error > 1e-6;
