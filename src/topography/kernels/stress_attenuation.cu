@@ -5,7 +5,7 @@
 #include <test/test.h>
 #include <topography/kernels/stress_attenuation.cuh>
 #include <stdio.h>
-//#define CURVILINEAR
+#define CURVILINEAR
 #define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_1(i, j) f_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_2(i, j) f_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
@@ -117,9 +117,8 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   register _prec f_v1, v1_im1, v1_ip1, v1_im2;
   register _prec f_w1, w1_im1, w1_im2, w1_ip1;
   _prec f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
-
-#if CURVILINEAR
   int maxk, mink;
+
   const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
   const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
@@ -148,7 +147,6 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-#endif
 
 #undef _u1
 #undef _v1
@@ -700,8 +698,9 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        int nzt, int s_i, int e_i, int s_j, int e_j) 
 { 
   register int   i,  j,  k;
-  register int   pos, pos_jm1, pos_ip1, pos_im1;
-  register int   pos_km1;
+  register int   pos,     pos_ip1, pos_im2, pos_im1;
+  register int   pos_km2, pos_km1, pos_kp1, pos_kp2;
+  register int   pos_jm2, pos_jm1, pos_jp1, pos_jp2;
   register int   pos_ik1, pos_jk1, pos_ijk, pos_ijk1,f_ww;
   register _prec vs1, vs2, vs3, a1, tmp, vx1,f_wwo;
   register _prec xl,  xm,  xmu1, xmu2, xmu3;
@@ -709,10 +708,12 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   register _prec qpaw,hw,h1w,h2w,h3w; 
   register _prec f_vx1, f_vx2,  f_dcrj, f_r,  f_dcrjy, f_dcrjz;
   register _prec f_rtmp;
+  register _prec f_u1, u1_ip1, u1_ip2, u1_im1;
+  register _prec f_v1, v1_im1, v1_ip1, v1_im2;
+  register _prec f_w1, w1_im1, w1_im2, w1_ip1;
   _prec f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
-
-#if CURVILINEAR
   int maxk, mink;
+
   const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
   const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
@@ -817,17 +818,14 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       {0.0000000000000000, 0.0064191319587820, -0.0164033832904366,
        -0.0752421418813823, 0.6740179057989464, -0.0002498459192428,
        -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
-#endif
 
     
   int k0   = blockIdx.x*blockDim.x + threadIdx.x;
   k    = k0 + align + nz - 6;
-#if CURVILINEAR
   // This index is used to access the array coefficients directly
   int kb = 5 - k0;
   // This index maps to the macros 
   int kc   = -1 - k0;
-#endif
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
 
   if (j >= e_j)
@@ -839,6 +837,15 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   i    = e_i - 1;
   pos  = i*d_slice_1+j*d_yline_1+k;
 
+  u1_ip1 = u1[pos+d_slice_2];
+  f_u1   = u1[pos+d_slice_1];
+  u1_im1 = u1[pos];    
+  f_v1   = v1[pos+d_slice_1];
+  v1_im1 = v1[pos];
+  v1_im2 = v1[pos-d_slice_1];
+  f_w1   = w1[pos+d_slice_1];
+  w1_im1 = w1[pos];
+  w1_im2 = w1[pos-d_slice_1];
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
 
@@ -852,8 +859,15 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
 
 
+    pos_km2  = pos-2;
     pos_km1  = pos-1;
+    pos_kp1  = pos+1;
+    pos_kp2  = pos+2;
+    pos_jm2  = pos-d_yline_2;
     pos_jm1  = pos-d_yline_1;
+    pos_jp1  = pos+d_yline_1;
+    pos_jp2  = pos+d_yline_2;
+    pos_im2  = pos-d_slice_2;
     pos_im1  = pos-d_slice_1;
     pos_ip1  = pos+d_slice_1;
     pos_jk1  = pos-d_yline_1-1;
@@ -962,6 +976,18 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     xmu3     = xmu3+d_DT*h3;
     vx1      = d_DT*(1+f_vx2*f_vx1);
         
+    u1_ip2   = u1_ip1;
+    u1_ip1   = f_u1;
+    f_u1     = u1_im1;
+    u1_im1   = u1[pos_im1];
+    v1_ip1   = f_v1;
+    f_v1     = v1_im1;
+    v1_im1   = v1_im2;
+    v1_im2   = v1[pos_im2];
+    w1_ip1   = f_w1;
+    f_w1     = w1_im1;
+    w1_im1   = w1_im2;
+    w1_im2   = w1[pos_im2];
 
     // xx, yy, zz
 

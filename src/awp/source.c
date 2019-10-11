@@ -830,5 +830,5 @@ int ini_plane_wave(int rank, MPI_Comm MCW, char *INSRC, int NST, Grid1D* taxx, G
    //fprintf(stdout, "%d: inside ini_plane_wave.  taxx[%d]=%e\n", rank, NST-1, taxx[NST-1]);
 
    return(err);
-
 }
+

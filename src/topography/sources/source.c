@@ -105,7 +105,7 @@ void source_find_grid_number(const input_t *input, const
                         }
                         else if (lower - overlap <= z && z <= lower) {
                                 fprintf(stderr, 
-                                "Source/receiver id=%ld is in overlap zone.\n",
+                                "Source/receiver id=%d is in overlap zone.\n",
                                 j);
                         }
 
@@ -118,7 +118,7 @@ void source_find_grid_number(const input_t *input, const
         for (int j = 0; j < length; ++j) {
                 if (grid_number[j] == -1) {
                         fprintf(stderr, 
-                                "Failed to assign source/receiver id=%ld "\
+                                "Failed to assign source/receiver id=%d "\
                                 " to a grid.\n", j);
                         exit(1);
                 }

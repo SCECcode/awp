@@ -63,7 +63,6 @@
 #include <string.h>
 #include <awp/pmcl3d.h>
 #include <awp/pmcl3d_cons.h>
-#include <awp/pmcl3d.h>
 #include <assert.h>
 
 // Default IN3D Values
