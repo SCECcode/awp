@@ -51,7 +51,7 @@ static int use_optimized_kernels = USE_OPTIMIZED_KERNELS;
 static const char *outputdir;
 static const char *inputdir;
 static int run_velocity = 1;
-static int run_stress = 0;
+static int run_stress = 1;
 
 void init(topo_t *T);
 void run(topo_t *T);
@@ -215,8 +215,8 @@ void run(topo_t *T)
         for(int iter = 0; iter < nt; ++iter) {
                 if (run_velocity) {
                         topo_velocity_interior_H(T);
-                        //topo_velocity_front_H(T);
-                        //topo_velocity_back_H(T);
+                        topo_velocity_front_H(T);
+                        topo_velocity_back_H(T);
                 }
 
                 CUCHK(cudaStreamSynchronize(T->stream_1));
