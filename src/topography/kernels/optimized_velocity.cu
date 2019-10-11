@@ -624,9 +624,6 @@ __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK)
         const float* RSTRCT s23, const float* RSTRCT s33,
         const float a, const float nu, const int nx, const int ny, const int nz,
         const int bi, const int bj, const int ei, const int ej) {
-        const float phz2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phy2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phx2[2] = {0.5000000000000000, 0.5000000000000000};
         const float dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
                                 -0.6796875000000000, 0.0000000000000000,
                                 0.6796875000000000,  -0.0937500000000000,
@@ -740,18 +737,12 @@ __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK)
         u3[(k) + align +                                               \
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
-        float rho1 = phz2[0] * (phy2[1] * _rho(i, j, k + 5) +
-                                phy2[0] * _rho(i, j - 1, k + 5)) +
-                     phz2[1] * (phy2[1] * _rho(i, j, k + 6) +
-                                phy2[0] * _rho(i, j - 1, k + 6));
-        float rho2 = phz2[0] * (phx2[1] * _rho(i, j, k + 5) +
-                                phx2[0] * _rho(i - 1, j, k + 5)) +
-                     phz2[1] * (phx2[1] * _rho(i, j, k + 6) +
-                                phx2[0] * _rho(i - 1, j, k + 6));
-        float rho3 = phy2[1] * (phx2[1] * _rho(i, j, k + 6) +
-                                phx2[0] * _rho(i - 1, j, k + 6)) +
-                     phy2[0] * (phx2[1] * _rho(i, j - 1, k + 6) +
-                                phx2[0] * _rho(i - 1, j - 1, k + 6));
+        float rho1 = 0.25 * (_rho(i, j, k + 5) + _rho(i, j - 1, k + 5)) +
+                     0.25 * (_rho(i, j, k + 6) + _rho(i, j - 1, k + 6));
+        float rho2 = 0.25 * (_rho(i, j, k + 5) + _rho(i - 1, j, k + 5)) +
+                     0.25 * (_rho(i, j, k + 6) + _rho(i - 1, j, k + 6));
+        float rho3 = 0.25 * (_rho(i, j, k + 6) + _rho(i - 1, j, k + 6)) +
+                     0.25 * (_rho(i, j - 1, k + 6) + _rho(i - 1, j - 1, k + 6));
         float Ai1 = _f_1(i, j) * _g3_c(k + 6) * rho1;
         Ai1 = nu * 1.0 / Ai1;
         float Ai2 = _f_2(i, j) * _g3_c(k + 6) * rho2;
