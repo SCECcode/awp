@@ -4,10 +4,6 @@
 // Turning __restrict__ on or off...
 //#define RSTRCT __restrict__
 #define RSTRCT
-#include <topography/kernels/optimized_launch_config.cuh>
-#include <topography/kernels/optimized_velocity.cuh>
-#include <topography/kernels/optimized_launch_config.cuh>
-#include <topography/kernels/optimized_velocity.cuh>
 
 __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
 
