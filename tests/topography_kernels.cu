@@ -197,7 +197,7 @@ void init(topo_t *T)
         topo_d_constant(T, 0.4, T->vx2);
         topo_d_constant(T, 0.4, T->coeff);
 
-        topo_d_constant(T, 1, T->rho);
+        topo_d_linear_k(T, T->rho);
         topo_d_constant(T, 1, T->mui);
         topo_d_constant(T, 1, T->lami);
         topo_d_constant(T, 1, T->lam_mu);
