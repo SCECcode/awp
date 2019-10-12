@@ -16,6 +16,8 @@
 #include <topography/sources/source.cuh>
 #include <topography/grids.h>
 
+#define OVERLAP 7.0
+
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
 source_t source_init(const char *file_end, 
@@ -87,7 +89,7 @@ void source_find_grid_number(const input_t *input, const
                 grid_fill1(z1, z_grid);
                 upper  = upper + lower;
                 lower  = lower - z1[z_grid.end];
-                if (i + 1 != num_grids) overlap = z_grid.gridspacing * 4.5;
+                if (i + 1 != num_grids) overlap = z_grid.gridspacing * OVERLAP;
                 lower = lower + overlap;
                 for (int j = 0; j < length; ++j) {
                         _prec z = input->z[indices[j]];
@@ -302,7 +304,7 @@ void source_init_common(source_t *src, const char *filename,
                       }
                 }
 
-                overlap = grid.gridspacing * 4.5;
+                overlap = grid.gridspacing * OVERLAP;
 
                 if (src->lengths[j] == 0) continue;
 
@@ -394,9 +396,8 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
              src->lengths[grid_num] == 0) 
                 return;
 
-
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
-        cusource_add_curvilinear_H(&src->interpolation[grid_num], out, source_data, h, dt,
-                                   f, ny, dg);
+        cusource_add_curvilinear_H(&src->interpolation[grid_num], out,
+                                   source_data, h, dt, f, ny, dg);
 }
 
