@@ -8,6 +8,9 @@
 
 __device__ int err;
 #define PRINTERR 0
+
+// Turning __restrict__ on or off...
+#define RSTRCT __restrict__
  
 #define CURAND_CALL(x) do { if((x) != CURAND_STATUS_SUCCESS) { \
       printf("Error at %s:%d\n",__FILE__,__LINE__);            \
@@ -1050,8 +1053,6 @@ __global__ void dtopo_vel_111(
 // *****************************************************************************
 // *****************************************************************************
 
-// Turning __restrict__ on or off...
-#define RSTRCT __restrict__
 
 __launch_bounds__ (1024)
 __global__ void dtopo_vel_111_blocks(
@@ -1064,8 +1065,6 @@ __global__ void dtopo_vel_111_blocks(
     const float *RSTRCT s23, const float *RSTRCT s33, const float a, const float nu,
     const int nx, const int ny, const int nz, const int bi, const int bj,
     const int ei, const int ej) {
-        const float phz[4] = {-0.0625000000000000, 0.5625000000000000,
-                              0.5625000000000000, -0.0625000000000000};
         const float phy[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
         const float phx[4] = {-0.0625000000000000, 0.5625000000000000,
@@ -1503,8 +1502,6 @@ __global__ void dtopo_vel_111_blocks(
 // s33[i,       j,              k-1:k+2]        [1, 1, 4]
 
 
-#undef RSTRCT
-#define RSTRCT __restrict__
 template <int np, int nq, int nr>
 __launch_bounds__ (256)
 __global__ void dtopo_vel_111_unroll(
@@ -1517,8 +1514,6 @@ __global__ void dtopo_vel_111_unroll(
     const float *RSTRCT s23, const float *RSTRCT s33, const float a, const float nu,
     const int nx, const int ny, const int nz, const int bi, const int bj,
     const int ei, const int ej) {
-        const float phz[4] = {-0.0625000000000000, 0.5625000000000000,
-                              0.5625000000000000, -0.0625000000000000};
         const float phy[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
         const float phx[4] = {-0.0625000000000000, 0.5625000000000000,
@@ -1927,6 +1922,7 @@ __global__ void dtopo_vel_111_unroll(
         for (int r = 0; r < nr; ++r) {
                 if (k + r  >= nz - 12) continue;
                 if (j + q >= ej) return;
+                if (i >= ei) return;
                 _u1(i + p, j + q, k + r + 6) = v1[p][q][r];
                 _u2(i + p, j + q, k + r + 6) = v2[p][q][r];
                 _u3(i + p, j + q, k + r + 6) = v3[p][q][r];
@@ -2239,6 +2235,33 @@ int main (int argc, char **argv) {
                 printf("Consistency check failed\n");
                 return -1;
         }
+#undef np
+#undef nq
+#undef nr
+    }
+
+    {
+      dim3 threads (64, 2, 2);
+#define np 1
+#define nq 1
+#define nr 4
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/(np*threads.z)+1);
+
+      dtopo_vel_111_unroll<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
+                                                dcrjx, dcrjy, dcrjz,
+                                                f, f1_1, f1_2, f1_c,
+                                                f2_1, f2_2, f2_c,
+                                                f_1, f_2, f_c,
+                                                g, g3, g3_c, g_c,
+                                                rho, s11, s12, s13, s22, s23, s33,
+                                                1.0f, 1.0f, nx, ny, nz,
+                                                0, 0, nx-1, ny-1);
+
+#undef np
+#undef nq
+#undef nr
     }
 
   }
