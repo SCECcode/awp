@@ -2221,19 +2221,22 @@ int main (int argc, char **argv) {
                                                 1.0f, 1.0f, nx, ny, nz,
                                                 0, 0, nx-1, ny-1);
 
-        if (cudaDeviceSynchronize() != cudaSuccess) {
-          printf ("Kernels failed\n");
-        }
-        if (iter == 0)
+        if (iter == 0) { 
+
+                if (cudaDeviceSynchronize() != cudaSuccess) {
+                  printf ("Kernels failed\n");
+                }
+
                 compare<<<blocks, threads>>>(u1, u2, u3, v1, v2, v3, nx, ny,
                                              nz);
 
-        int _err = 0;
-        cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
-                             cudaMemcpyDeviceToHost);
-        if (_err) {
-                printf("Consistency check failed\n");
-                return -1;
+                int _err = 0;
+                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
+                                     cudaMemcpyDeviceToHost);
+                if (_err) {
+                        printf("Consistency check failed\n");
+                        return -1;
+                }
         }
 #undef np
 #undef nq
