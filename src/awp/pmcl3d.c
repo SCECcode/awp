@@ -26,6 +26,7 @@
 #include <topography/velocity.cuh>
 #include <topography/stress_attenuation.cuh>
 #include <topography/sources/sources.h>
+#include <topography/sources/forces.h>
 #include <topography/receivers/receivers.h>
 #include <topography/geometry/geometry.h>
 #include <buffers/buffer.h>
@@ -81,6 +82,9 @@ int main(int argc,char **argv)
 
     int userecvfile = 0;
     char RECVFILE[IN_FILE_LEN];
+
+    int useforcefile = 0;
+    char FORCEFILE[IN_FILE_LEN];
 
 //  GPU variables
     long int num_bytes;
@@ -292,7 +296,7 @@ int main(int argc,char **argv)
             NBGY, NEDY, NSKPY, NBGZ, NEDZ, NSKPZ, &FAC, &Q0, &EX, &FP, &IDYNA,
             &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
             &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
-            &usesourcefile, RECVFILE, &userecvfile);
+            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile);
 
     #ifndef SEISMIO
      #ifdef NOBGIO
@@ -1595,6 +1599,8 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                          size_tot);
             receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
                            size_tot);
+            forces_init(FORCEFILE, grids, ngrids, metrics_f, MCW, rank,
+                         size_tot);
 #if VERBOSE
             if(rank == 0)printf("done.\n");
             fflush(stdout);
@@ -1622,6 +1628,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
         receivers_write(d_u1[p], d_v1[p], d_w1[p], 0, nt, p);
     }
     sources_read(0);
+    forces_read(0);
 
     if(rank==0)
       fchk = fopen(CHKFILE,"a+");
@@ -2000,9 +2007,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
          sources_read(cur_step);
          if (T.use) {
+                 forces_read(cur_step);
                  sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0],
                                          d_xz[0], d_yz[0], cur_step, DH[0], DT,
                                          &T.metrics_f, &T.metrics_g, 0);
+                 forces_add(d_u1[0], d_v1[0], d_w1[0], d_d1[0], cur_step, DH[0], DT,
+                            &T.metrics_f, &T.metrics_g, 0);
                  for (p = 1; p < ngrids; p++) {
                          sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
                                                d_xy[p], d_xz[p], d_yz[p],

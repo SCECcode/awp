@@ -74,5 +74,12 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
                             const prec h, const prec dt, const prec *f,
                             const int ny, const prec *dg, const int grid_num);
 
+void source_add_force(prec *out, const prec *d1, source_t *src,
+                      const size_t step, const prec h, const prec dt,
+                      const prec quad_weight,
+                      const prec *f, const int nx, const int ny, const int nz, 
+                      const prec *dg,
+                      const int grid_num);
+
 #endif
 

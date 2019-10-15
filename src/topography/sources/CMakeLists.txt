@@ -1,5 +1,5 @@
 add_library(topography_sources
-        source.c sources.c source.cu
+        source.c sources.c source.cu forces.c
         )
 
 target_include_directories(topography_sources

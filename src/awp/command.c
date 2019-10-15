@@ -53,6 +53,7 @@
 *                                                coordinates instead of indices
 *                                                to specify the position
 *  RECVFILE     <STRING>                      Receiver output file
+*  FORCEFILE    <STRING>                      Boundary point force input file
 ****************************************************************************************************************
 */
 
@@ -130,6 +131,7 @@ const char def_INTOPO[IN_FILE_LEN] = "input/topography";
 
 const char def_SOURCEFILE[IN_FILE_LEN] = "";
 const char def_RECVFILE[IN_FILE_LEN] = "";
+const char def_FORCEFILE[IN_FILE_LEN] = "";
 
 void parsemultiple(char *optarg, int *val);
 
@@ -155,7 +157,8 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              int *SoCalQ, char *INSRC, char *INVEL, char *OUT, char *INSRC_I2,
              char *CHKFILE, int *NGRIDS, int *FOLLOWBATHY, char *INTOPO,
              int *USETOPO, char *SOURCEFILE,
-             int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE)
+             int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE,
+             char *FORCEFILE, int *USEFORCEFILE)
 {
         int p;
 
@@ -221,7 +224,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
         extern char *optarg;
         static const char *optstring =
             "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:G:z:i:l:h:30:p:s:r:W:1:2:"
-            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:o:c:";
+            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:9:o:c:";
         static struct option long_options[] = {
             {"TMAX", required_argument, NULL, 'T'},
             {"DH", required_argument, NULL, 'H'},
@@ -270,6 +273,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
             {"INTOPO", required_argument, NULL, 103},
             {"SOURCEFILE", required_argument, NULL, 107},
             {"RECVFILE", required_argument, NULL, 109},
+            {"FORCEFILE", required_argument, NULL, 9},
         };
 
 
@@ -286,7 +290,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                 switch (c) {
                         case 'T':
                                 *TMAX = atof(optarg);
-                                break;
+                                break; 
                         case 'H':
                                 *DH = atof(optarg);
                                 break;
@@ -430,6 +434,10 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                 strcpy(RECVFILE, optarg);
                                 *USERECVFILE = 1;
                                 break;
+                        case 9:
+                                strcpy(FORCEFILE, optarg);
+                                *USEFORCEFILE = 1;
+                                break;
                         default:
                                 printf(
                                     "Usage: %s \nOptions:\n\t[(-T | --TMAX) "
@@ -497,6 +505,9 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                     "file>]\n\n");
                                 printf(
                                     "\n\t[(-109 | --RECVFILE) <receiver "
+                                    "file>]\n\n");
+                                printf(
+                                    "\n\t[(-9 | --FORCEFILE) <receiver "
                                     "file>]\n\n");
                                 exit(-1);
                 }

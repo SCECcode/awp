@@ -401,3 +401,19 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
                                    source_data, h, dt, f, ny, dg);
 }
 
+void source_add_force(prec *out, const prec *d1, source_t *src,
+                      const size_t step, const prec h, const prec dt,
+                      const prec quad_weight,
+                      const prec *f, const int nx, const int ny, const int nz, 
+                      const prec *dg,
+                      const int grid_num) 
+{
+        if (!src->use || !buffer_is_device_ready(&src->buffer, step) ||
+             src->lengths[grid_num] == 0) 
+                return;
+
+        prec *source_data = buffer_get_device_ptr(&src->buffer, step);
+        cusource_add_force_H(&src->interpolation[grid_num], out,
+                                   source_data, d1, h, dt, quad_weight, f, nx, ny, nz, dg);
+}
+
