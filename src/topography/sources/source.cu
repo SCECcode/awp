@@ -146,12 +146,11 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
                 prec Ji =
-                    quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) *
+                    - quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) *
                                    _rho(i + ix[q], j + iy[q], iz[q] + k));
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
-                out[pos] += - dth * lx[q * num_basis + i] *
-                            ly[q * num_basis + j] * lz[q * num_basis + k] *
-                            in[lidx[q]] * Ji;
+                out[pos] += -dth * lx[q * num_basis + i] *
+                            ly[q * num_basis + j] * lz[q * num_basis + k] * in[lidx[q]] * Ji;
         }
         }
         }

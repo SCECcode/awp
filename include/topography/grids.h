@@ -23,9 +23,11 @@ typedef struct
         grid3_t xy;
         grid3_t xz;
         grid3_t yz;
+        
+        grid3_t node;
 } grids_t;
 
-enum grid_types {X, Y, Z, XX, YY, ZZ, XY, XZ, YZ};
+enum grid_types {X, Y, Z, XX, YY, ZZ, XY, XZ, YZ, NODE};
 
 grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
                    const int coord_y, const int coord_z,

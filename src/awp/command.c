@@ -54,6 +54,7 @@
 *                                                to specify the position
 *  RECVFILE     <STRING>                      Receiver output file
 *  FORCEFILE    <STRING>                      Boundary point force input file
+*  SGTFILE      <STRING>                      Strain Green's tensor output file
 ****************************************************************************************************************
 */
 
@@ -132,6 +133,7 @@ const char def_INTOPO[IN_FILE_LEN] = "input/topography";
 const char def_SOURCEFILE[IN_FILE_LEN] = "";
 const char def_RECVFILE[IN_FILE_LEN] = "";
 const char def_FORCEFILE[IN_FILE_LEN] = "";
+const char def_SGTFILE[IN_FILE_LEN] = "";
 
 void parsemultiple(char *optarg, int *val);
 
@@ -158,7 +160,8 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              char *CHKFILE, int *NGRIDS, int *FOLLOWBATHY, char *INTOPO,
              int *USETOPO, char *SOURCEFILE,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE,
-             char *FORCEFILE, int *USEFORCEFILE)
+             char *FORCEFILE, int *USEFORCEFILE,
+             char *SGTFILE, int *USESGTFILE)
 {
         int p;
 
@@ -274,6 +277,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
             {"SOURCEFILE", required_argument, NULL, 107},
             {"RECVFILE", required_argument, NULL, 109},
             {"FORCEFILE", required_argument, NULL, 9},
+            {"SGTFILE", required_argument, NULL, 10},
         };
 
 
@@ -438,6 +442,10 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                 strcpy(FORCEFILE, optarg);
                                 *USEFORCEFILE = 1;
                                 break;
+                        case 10:
+                                strcpy(SGTFILE, optarg);
+                                *USESGTFILE = 1;
+                                break;
                         default:
                                 printf(
                                     "Usage: %s \nOptions:\n\t[(-T | --TMAX) "
@@ -507,7 +515,10 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                     "\n\t[(-109 | --RECVFILE) <receiver "
                                     "file>]\n\n");
                                 printf(
-                                    "\n\t[(-9 | --FORCEFILE) <receiver "
+                                    "\n\t[(-9 | --FORCEFILE) <force "
+                                    "file>]\n\n");
+                                printf(
+                                    "\n\t[(-10 | --SGTFILE) <SGT "
                                     "file>]\n\n");
                                 exit(-1);
                 }

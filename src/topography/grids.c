@@ -36,6 +36,9 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
         grids.xz = grid_init(size, grid_xz(), coord, bnd1, bnd2, ngsl / 2, h);
         grids.yz = grid_init(size, grid_yz(), coord, bnd1, bnd2, ngsl / 2, h);
 
+        // Material and topography grid
+        grids.node = grid_init(size, grid_node(), coord, bnd1, bnd2, 0, h);
+
         return grids;
 }
 
@@ -92,6 +95,9 @@ grid3_t grids_select(const enum grid_types grid_type, const grids_t *grids)
                         break;
                 case YZ:
                         return grids->yz;
+                        break;
+                case NODE:
+                        return grids->node;
                         break;
                 default:
                         fprintf(stderr, "Unknown grid type\n");

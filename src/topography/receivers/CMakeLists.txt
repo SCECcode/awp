@@ -1,5 +1,5 @@
 add_library(topography_receivers
-        receiver.c receivers.c
+        receiver.c receivers.c sgt.c
         )
 
 target_include_directories(topography_receivers

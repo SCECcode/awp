@@ -31,7 +31,8 @@ enum error_codes {SUCCESS,
                   ERR_NON_POSITIVE = 800,
                   ERR_INTERP_MALLOC = 900,
                   ERR_INTERP_WRITE_END_OF_FILE = 901,
-                  ERR_INCONSISTENT_SIZE = 902
+                  ERR_INCONSISTENT_SIZE = 902,
+                  ERR_INCOMPATIBLE_SOURCE_TYPE = 1001
 };
 // Display the error message associated with an error code.
 const char* error_message(const int err);

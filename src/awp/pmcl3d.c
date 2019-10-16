@@ -28,6 +28,7 @@
 #include <topography/sources/sources.h>
 #include <topography/sources/forces.h>
 #include <topography/receivers/receivers.h>
+#include <topography/receivers/sgt.h>
 #include <topography/geometry/geometry.h>
 #include <buffers/buffer.h>
 
@@ -85,6 +86,9 @@ int main(int argc,char **argv)
 
     int useforcefile = 0;
     char FORCEFILE[IN_FILE_LEN];
+
+    int usesgtfile = 0;
+    char SGTFILE[IN_FILE_LEN];
 
 //  GPU variables
     long int num_bytes;
@@ -296,7 +300,8 @@ int main(int argc,char **argv)
             NBGY, NEDY, NSKPY, NBGZ, NEDZ, NSKPZ, &FAC, &Q0, &EX, &FP, &IDYNA,
             &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
             &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
-            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile);
+            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
+            SGTFILE, &usesgtfile);
 
     #ifndef SEISMIO
      #ifdef NOBGIO
@@ -1595,12 +1600,23 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 metrics_f = &T.metrics_f;
             }
 
-            sources_init(SOURCEFILE, grids, ngrids, metrics_f, MCW, rank,
-                         size_tot);
-            receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
-                           size_tot);
-            forces_init(FORCEFILE, grids, ngrids, metrics_f, MCW, rank,
-                         size_tot);
+            if (usesourcefile)
+                sources_init(SOURCEFILE, grids, ngrids, metrics_f, MCW, rank,
+                             size_tot);
+            if (userecvfile)
+                receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
+                               size_tot);
+            if (useforcefile)
+                forces_init(FORCEFILE, grids, ngrids, metrics_f, MCW, rank,
+                             size_tot);
+            if (usesgtfile) {
+                sgt_init(SGTFILE, grids, ngrids, metrics_f, MCW, rank,
+                             size_tot);
+                for (p = 0; p < ngrids; p++) {
+                        sgt_write_material_properties(d_d1[p], d_lam[p],
+                                                      d_mu[p], p);
+                }
+            }
 #if VERBOSE
             if(rank == 0)printf("done.\n");
             fflush(stdout);
@@ -1626,6 +1642,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
     for (p=0; p<ngrids; p++){
         receivers_write(d_u1[p], d_v1[p], d_w1[p], 0, nt, p);
+        sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[0], d_xz[p], d_yz[p], 0, nt, p);
     }
     sources_read(0);
     forces_read(0);
@@ -2267,6 +2284,8 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
          for (p=0; p<ngrids; p++) {
                 receivers_write(d_u1[p], d_v1[p], d_w1[p], cur_step, nt, p);
+                sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[0], d_xz[p], d_yz[p],
+                          cur_step, nt, p);
          }
 
          if(cur_step%NTISKP == 0){
