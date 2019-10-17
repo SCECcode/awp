@@ -62,3 +62,4 @@ target_include_directories(test_attenuation
         PUBLIC
         ${AWP_MINI_SOURCE_DIR}/include/
         )
+
