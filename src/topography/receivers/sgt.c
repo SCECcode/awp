@@ -44,7 +44,7 @@ void sgt_init(const char *filename, const grids_t *grids, int ngrids,
         Gyy = receiver_init("Gyy", YY, &input, grids, ngrids, f, rank, comm);
         Gzz = receiver_init("Gzz", ZZ, &input, grids, ngrids, f, rank, comm);
         Gxy = receiver_init("Gxy", XY, &input, grids, ngrids, f, rank, comm);
-        Gxz = receiver_init("Gxz", XY, &input, grids, ngrids, f, rank, comm);
+        Gxz = receiver_init("Gxz", XZ, &input, grids, ngrids, f, rank, comm);
         Gyz = receiver_init("Gyz", YZ, &input, grids, ngrids, f, rank, comm);
         
         // Configure material input file so that it outputs without buffering
