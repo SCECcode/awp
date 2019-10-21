@@ -12,5 +12,13 @@ c:
 
 p:
 	nvprof --log-file $(log) ./test111.x $(nx) $(ny) $(nz) $(nt); 
-	sed -i -e 's/(.*)//g' $(log); head -n 7 $(log)
+	sed -i -e 's/(.*)//g' $(log); head -n 12 $(log)
+
+dram:
+	nvprof --log-file $(log) --metrics dram_read_throughput,dram_write_throughput ./test111.x $(nx) $(ny) $(nz) $(nt); 
+	sed -i -e 's/(.*)//g' $(log); cat $(log)
+
+l2:
+	nvprof --log-file $(log) --metrics l2_read_throughput,l2_write_throughput ./test111.x $(nx) $(ny) $(nz) $(nt); 
+	sed -i -e 's/(.*)//g' $(log); cat $(log)
 
