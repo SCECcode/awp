@@ -46,4 +46,4 @@ The first entry is the x-coordinate at the front left corner (0,0,0) on the top
 boundary of the grid. The next value is the y-coordinate at the same position.
 The fastest direction is the x-direction, followed by the y-direction, and
 z-direction. The final three data entries contain the coordinate at the back
-left corner (nx-1, ny-1, nz-1) on the bottom boundary of the grid.
+right corner (nx-1, ny-1, nz-1) on the bottom boundary of the grid.
