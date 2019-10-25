@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <curand.h>
+#include <cuda_profiler_api.h>
+
 
 #define align 32
 #define ngsl 4
@@ -1684,6 +1686,8 @@ int main (int argc, char **argv) {
     printf ("Kernels failed\n");
     return -1;
   }
+ 
+  cudaProfilerStart();
 
   for (int iter=0; iter<nt; iter++) {
     // Optimized code
@@ -1715,75 +1719,19 @@ int main (int argc, char **argv) {
                                                 0, 0, nx-1, ny-1);
     }
 
-//    {
-//      dim3 threads (64, 2, 2);
-//#define np 1
-//#define nq 2
-//#define nr 2
-//      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
-//                   (ny-1)/(nq*threads.y)+1,
-//                   (nx-1)/(np*threads.z)+1);
-//
-//      dtopo_vel_111_split1<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
-//                                                dcrjx, dcrjy, dcrjz,
-//                                                f, f1_1, f1_2, f1_c,
-//                                                f2_1, f2_2, f2_c,
-//                                                f_1, f_2, f_c,
-//                                                g, g3, g3_c, g_c,
-//                                                rho, s11, s12, s13, s22, s23, s33,
-//                                                1.0f, 1.0f, nx, ny, nz,
-//                                                0, 0, nx-1, ny-1);
-//    }
-//    {
-//      dim3 threads (64, 2, 2);
-//      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
-//                   (ny-1)/(nq*threads.y)+1,
-//                   (nx-1)/(np*threads.z)+1);
-//
-//      dtopo_vel_111_split2<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
-//                                                dcrjx, dcrjy, dcrjz,
-//                                                f, f1_1, f1_2, f1_c,
-//                                                f2_1, f2_2, f2_c,
-//                                                f_1, f_2, f_c,
-//                                                g, g3, g3_c, g_c,
-//                                                rho, s11, s12, s13, s22, s23, s33,
-//                                                1.0f, 1.0f, nx, ny, nz,
-//                                                0, 0, nx-1, ny-1);
-//
-//        if (iter == 0) { 
-//
-//                if (cudaDeviceSynchronize() != cudaSuccess) {
-//                  printf ("Kernels failed\n");
-//                }
-//
-//                compare<<<blocks, threads>>>(u1, u2, u3, v1, v2, v3, nx, ny,
-//                                             nz);
-//
-//                int _err = 0;
-//                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
-//                                     cudaMemcpyDeviceToHost);
-//                if (_err) {
-//                        printf("Consistency check failed\n");
-//                        //return -1;
-//                }
-//        }
-//#undef np
-//#undef nq
-//#undef nr
-//    }
-
-
-
-
     {
-#define np 1
+
+#if sm_61
+      dim3 threads (64, 2, 2);
+#define np 2
 #define nq 2
 #define nr 2
-      dim3 threads (64, 2, 2);
       dim3 blocks ((nz-7)/(nr*threads.x)+1, 
                    (ny-1)/(nq*threads.y)+1,
                    (nx-1)/(np*threads.z)+1);
-      dtopo_vel_111_unroll<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
+#endif
+
+      dtopo_vel_111_split1<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
                                                 dcrjx, dcrjy, dcrjz,
                                                 f, f1_1, f1_2, f1_c,
                                                 f2_1, f2_2, f2_c,
@@ -1792,6 +1740,32 @@ int main (int argc, char **argv) {
                                                 rho, s11, s12, s13, s22, s23, s33,
                                                 1.0f, 1.0f, nx, ny, nz,
                                                 0, 0, nx-1, ny-1);
+#undef np
+#undef nq
+#undef nr
+    }
+
+    {
+#if sm_61
+#define np 2
+#define nq 2
+#define nr 4
+      dim3 threads (64, 2, 2);
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/(np*threads.z)+1);
+
+#endif
+      dtopo_vel_111_split2<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
+                                                dcrjx, dcrjy, dcrjz,
+                                                f, f1_1, f1_2, f1_c,
+                                                f2_1, f2_2, f2_c,
+                                                f_1, f_2, f_c,
+                                                g, g3, g3_c, g_c,
+                                                rho, s11, s12, s13, s22, s23, s33,
+                                                1.0f, 1.0f, nx, ny, nz,
+                                                0, 0, nx-1, ny-1);
+
         if (iter == 0) { 
 
                 if (cudaDeviceSynchronize() != cudaSuccess) {
@@ -1809,6 +1783,31 @@ int main (int argc, char **argv) {
                         //return -1;
                 }
         }
+#undef np
+#undef nq
+#undef nr
+    }
+
+
+
+
+    {
+#define np 1
+#define nq 2
+#define nr 2
+      dim3 threads (64, 2, 2);
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/(np*threads.z)+1);
+      dtopo_vel_111_unroll<np, nq, nr><<<blocks,threads>>> (u1, u2, u3,
+                                                dcrjx, dcrjy, dcrjz,
+                                                f, f1_1, f1_2, f1_c,
+                                                f2_1, f2_2, f2_c,
+                                                f_1, f_2, f_c,
+                                                g, g3, g3_c, g_c,
+                                                rho, s11, s12, s13, s22, s23, s33,
+                                                1.0f, 1.0f, nx, ny, nz,
+                                                0, 0, nx-1, ny-1);
 #undef np
 #undef nq
 #undef nr
@@ -1859,6 +1858,8 @@ int main (int argc, char **argv) {
     printf ("Kernels failed\n");
     return -1;
   }
+
+  cudaProfilerStop();
   return 0;
 }
 
