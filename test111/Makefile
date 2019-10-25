@@ -21,6 +21,7 @@ dram-all:
 	nvprof --profile-from-start off --log-file $(log) \
 	--metrics dram_read_throughput\
 	,dram_write_throughput\
+	,dram_read_transactions\
 	,dram_write_transactions\
 	,dram_read_throughput\
 	,dram_write_throughput\
