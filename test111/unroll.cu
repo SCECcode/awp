@@ -23,7 +23,11 @@
 
 
 template <int np, int nq, int nr>
+#if sm_61
 __launch_bounds__ (256)
+#else
+__launch_bounds__ (128)
+#endif
 __global__ void dtopo_vel_111_unroll(
     float *RSTRCT u1, float *RSTRCT u2, float *RSTRCT u3, const float *RSTRCT dcrjx, const float *RSTRCT dcrjy,
     const float *RSTRCT dcrjz, const float *RSTRCT f, const float *RSTRCT f1_1, const float *RSTRCT f1_2,

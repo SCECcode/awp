@@ -1729,6 +1729,15 @@ int main (int argc, char **argv) {
       dim3 blocks ((nz-7)/(nr*threads.x)+1, 
                    (ny-1)/(nq*threads.y)+1,
                    (nx-1)/(np*threads.z)+1);
+#else
+      dim3 threads (32, 2, 2);
+#define np 1
+#define nq 2
+#define nr 4
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/(np*threads.z)+1);
+
 #endif
 
       dtopo_vel_111_split1<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
@@ -1754,7 +1763,14 @@ int main (int argc, char **argv) {
       dim3 blocks ((nz-7)/(nr*threads.x)+1, 
                    (ny-1)/(nq*threads.y)+1,
                    (nx-1)/(np*threads.z)+1);
-
+#else
+#define np 2
+#define nq 2
+#define nr 4
+      dim3 threads (32, 2, 2);
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/(np*threads.z)+1);
 #endif
       dtopo_vel_111_split2<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
                                                 dcrjx, dcrjy, dcrjz,
@@ -1792,10 +1808,17 @@ int main (int argc, char **argv) {
 
 
     {
+#if sm_61
 #define np 1
 #define nq 2
 #define nr 2
       dim3 threads (64, 2, 2);
+#else
+#define np 1
+#define nq 2
+#define nr 2
+      dim3 threads (32, 2, 2);
+#endif
       dim3 blocks ((nz-7)/(nr*threads.x)+1, 
                    (ny-1)/(nq*threads.y)+1,
                    (nx-1)/(np*threads.z)+1);
