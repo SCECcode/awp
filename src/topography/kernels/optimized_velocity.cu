@@ -4,6 +4,8 @@
 // Turning __restrict__ on or off...
 //#define RSTRCT __restrict__
 #define RSTRCT
+#include <stdio.h>
+#include <test/test.h>
 
 __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
 
@@ -743,6 +745,7 @@ __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK)
                      0.25 * (_rho(i, j, k + 6) + _rho(i - 1, j, k + 6));
         float rho3 = 0.25 * (_rho(i, j, k + 6) + _rho(i - 1, j, k + 6)) +
                      0.25 * (_rho(i, j - 1, k + 6) + _rho(i - 1, j - 1, k + 6));
+
         float Ai1 = _f_1(i, j) * _g3_c(k + 6) * rho1;
         Ai1 = nu * 1.0 / Ai1;
         float Ai2 = _f_2(i, j) * _g3_c(k + 6) * rho2;
@@ -1060,27 +1063,6 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
         const float* RSTRCT s23, const float* RSTRCT s33,
         const float a, const float nu, const int nx, const int ny, const int nz,
         const int bi, const int bj, const int ei, const int ej) {
-        const float phz2r[6][8] = {
-            {0.0000000000000000, 1.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
-             0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.5000000000000000,
-             0.5000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.5000000000000000, 0.5000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000, 0.5000000000000000,
-             0.5000000000000000, 0.0000000000000000}};
-        const float phy2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phx2[2] = {0.5000000000000000, 0.5000000000000000};
         const float dhpz4r[6][9] = {
             {-1.5373923010673118, -1.1059180740634813, -0.2134752473866528,
              -0.0352027995732726, -0.0075022330101095, -0.0027918394266035,
@@ -1258,42 +1240,14 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
         u3[(k) + align +                                               \
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
-        float rho1 = phz2r[k][7] * (phy2[1] * _rho(i, j, nz - 8) +
-                                    phy2[0] * _rho(i, j - 1, nz - 8)) +
-                     phz2r[k][6] * (phy2[1] * _rho(i, j, nz - 7) +
-                                    phy2[0] * _rho(i, j - 1, nz - 7)) +
-                     phz2r[k][5] * (phy2[1] * _rho(i, j, nz - 6) +
-                                    phy2[0] * _rho(i, j - 1, nz - 6)) +
-                     phz2r[k][4] * (phy2[1] * _rho(i, j, nz - 5) +
-                                    phy2[0] * _rho(i, j - 1, nz - 5)) +
-                     phz2r[k][3] * (phy2[1] * _rho(i, j, nz - 4) +
-                                    phy2[0] * _rho(i, j - 1, nz - 4)) +
-                     phz2r[k][2] * (phy2[1] * _rho(i, j, nz - 3) +
-                                    phy2[0] * _rho(i, j - 1, nz - 3)) +
-                     phz2r[k][1] * (phy2[1] * _rho(i, j, nz - 2) +
-                                    phy2[0] * _rho(i, j - 1, nz - 2)) +
-                     phz2r[k][0] * (phy2[1] * _rho(i, j, nz - 1) +
-                                    phy2[0] * _rho(i, j - 1, nz - 1));
-        float rho2 = phz2r[k][7] * (phx2[1] * _rho(i, j, nz - 8) +
-                                    phx2[0] * _rho(i - 1, j, nz - 8)) +
-                     phz2r[k][6] * (phx2[1] * _rho(i, j, nz - 7) +
-                                    phx2[0] * _rho(i - 1, j, nz - 7)) +
-                     phz2r[k][5] * (phx2[1] * _rho(i, j, nz - 6) +
-                                    phx2[0] * _rho(i - 1, j, nz - 6)) +
-                     phz2r[k][4] * (phx2[1] * _rho(i, j, nz - 5) +
-                                    phx2[0] * _rho(i - 1, j, nz - 5)) +
-                     phz2r[k][3] * (phx2[1] * _rho(i, j, nz - 4) +
-                                    phx2[0] * _rho(i - 1, j, nz - 4)) +
-                     phz2r[k][2] * (phx2[1] * _rho(i, j, nz - 3) +
-                                    phx2[0] * _rho(i - 1, j, nz - 3)) +
-                     phz2r[k][1] * (phx2[1] * _rho(i, j, nz - 2) +
-                                    phx2[0] * _rho(i - 1, j, nz - 2)) +
-                     phz2r[k][0] * (phx2[1] * _rho(i, j, nz - 1) +
-                                    phx2[0] * _rho(i - 1, j, nz - 1));
-        float rho3 = phy2[1] * (phx2[1] * _rho(i, j, nz - 1 - k) +
-                                phx2[0] * _rho(i - 1, j, nz - 1 - k)) +
-                     phy2[0] * (phx2[1] * _rho(i, j - 1, nz - 1 - k) +
-                                phx2[0] * _rho(i - 1, j - 1, nz - 1 - k));
+
+        int kb = nz - k - 2;
+        float rho1 = 0.25 * (_rho(i, j, kb + 0) + _rho(i, j - 1, kb + 0)) +
+                     0.25 * (_rho(i, j, kb + 1) + _rho(i, j - 1, kb + 1));
+        float rho2 = 0.25 * (_rho(i, j, kb + 0) + _rho(i - 1, j, kb + 0)) +
+                     0.25 * (_rho(i, j, kb + 1) + _rho(i - 1, j, kb + 1));
+        float rho3 = 0.25 * (_rho(i, j, kb + 1) + _rho(i - 1, j, kb + 1)) +
+                     0.25 * (_rho(i, j - 1, kb + 1) + _rho(i - 1, j - 1, kb + 1));
         float Ai1 = _f_1(i, j) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
         float Ai2 = _f_2(i, j) * _g3_c(nz - 1 - k) * rho2;
