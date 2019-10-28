@@ -61,6 +61,52 @@ Device "TITAN X "
          10                      dram_read_throughput             Device Memory Read Throughput  216.03GB/s  224.93GB/s  223.66GB/s
          10                     dram_write_throughput            Device Memory Write Throughput  35.358GB/s  36.792GB/s  36.593GB/s
 ```
+## Dram (all metrics)
+
+```
+ Invocations                               Metric Name                          Metric Description         Min         Max         Avg
+Device "TITAN X "
+    Kernel: compare
+          1                      dram_read_throughput               Device Memory Read Throughput  298.33GB/s  298.33GB/s  298.33GB/s
+          1                     dram_write_throughput              Device Memory Write Throughput  844.46MB/s  844.46MB/s  844.46MB/s
+          1                    dram_read_transactions             Device Memory Read Transactions     6709218     6709218     6709218
+          1                   dram_write_transactions            Device Memory Write Transactions       18546       18546       18546
+          1                          dram_utilization                   Device Memory Utilization    High 
+          1                           dram_read_bytes      Total bytes read from DRAM to L2 cache   214694976   214694976   214694976
+          1                          dram_write_bytes   Total bytes written from L2 cache to DRAM      593472      593472      593472
+    Kernel: void dtopo_vel_111_unroll<int=1, int=2, int=2>
+         10                      dram_read_throughput               Device Memory Read Throughput  178.63GB/s  186.47GB/s  185.27GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  34.949GB/s  36.531GB/s  36.295GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   251920093   252270487   252051133
+         10                   dram_write_transactions            Device Memory Write Transactions    49338611    49567790    49378098
+         10                          dram_utilization                   Device Memory Utilization     Mid 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  8061442976  8072655584  8065636272
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM  1578835552  1586169280  1580099164
+    Kernel: dtopo_vel_111_blocks
+         10                      dram_read_throughput               Device Memory Read Throughput  81.933GB/s  82.750GB/s  82.577GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  158.25GB/s  159.68GB/s  159.22GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   486735411   487928576   487460679
+         10                   dram_write_transactions            Device Memory Write Transactions   939181455   941539859   939879492
+         10                          dram_utilization                   Device Memory Utilization     Mid 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  1.5576e+10  1.5614e+10  1.5599e+10
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM  3.0054e+10  3.0129e+10  3.0076e+10
+    Kernel: void dtopo_vel_111_split1<int=2, int=2, int=2>
+         10                      dram_read_throughput               Device Memory Read Throughput  198.11GB/s  204.68GB/s  203.76GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  39.784GB/s  41.121GB/s  40.961GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   163938144   164214594   164036514
+         10                   dram_write_transactions            Device Memory Write Transactions    32954100    33170328    32976379
+         10                          dram_utilization                   Device Memory Utilization     Mid 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  5246020608  5254867008  5249168448
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM  1054531200  1061450496  1055244156
+    Kernel: void dtopo_vel_111_split2<int=2, int=2, int=4>
+         10                      dram_read_throughput               Device Memory Read Throughput  206.67GB/s  225.75GB/s  223.42GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  33.816GB/s  36.944GB/s  36.574GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   100591269   100689457   100646845
+         10                   dram_write_transactions            Device Memory Write Transactions    16468769    16491696    16475825
+         10                          dram_utilization                   Device Memory Utilization     Mid 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  3218920608  3222062624  3220699056
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM   527000608   527734272   527226406
+```
 
 # Volta
 ```
@@ -128,3 +174,53 @@ Device "Tesla V100-SXM2-16GB "
          10                     dram_write_throughput            Device Memory Write Throughput  92.129GB/s  92.838GB/s  92.693GB/s
 ```
 
+## Dram (all metrics)
+
+```
+ Invocations                               Metric Name                          Metric Description         Min         Max         Avg
+Device "Tesla V100-SXM2-16GB "
+    Kernel: compare
+          1                      dram_read_throughput               Device Memory Read Throughput  797.86GB/s  797.86GB/s  797.86GB/s
+          1                     dram_write_throughput              Device Memory Write Throughput  5.3311GB/s  5.3311GB/s  5.3311GB/s
+          1                    dram_read_transactions             Device Memory Read Transactions     7077968     7077968     7077968
+          1                   dram_write_transactions            Device Memory Write Transactions       47293       47293       47293
+          1                          dram_utilization                   Device Memory Utilization    Max 
+          1                           dram_read_bytes      Total bytes read from DRAM to L2 cache   226494976   226494976   226494976
+          1                          dram_write_bytes   Total bytes written from L2 cache to DRAM     1513376     1513376     1513376
+    Kernel: void dtopo_vel_111_unroll<int=1, int=2, int=2>
+         10                      dram_read_throughput               Device Memory Read Throughput  492.49GB/s  497.21GB/s  495.96GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  93.990GB/s  94.958GB/s  94.710GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   258487581   258489507   258488517
+         10                   dram_write_transactions            Device Memory Write Transactions    49319274    49366672    49361373
+         10                          dram_utilization                   Device Memory Utilization    High 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  8271602592  8271664224  8271632569
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM  1578216768  1579733504  1579563961
+    Kernel: dtopo_vel_111_blocks
+         10                      dram_read_throughput               Device Memory Read Throughput  303.65GB/s  314.56GB/s  311.06GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  152.45GB/s  157.28GB/s  155.71GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   216391014   216404813   216399830
+         10                   dram_write_transactions            Device Memory Write Transactions   108186898   108646164   108324084
+         10                          dram_utilization                   Device Memory Utilization     Mid 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  6924512448  6924954016  6924794585
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM  3461980736  3476677248  3466370688
+    Kernel: void dtopo_vel_111_split1<int=1, int=2, int=4>
+         10                      dram_read_throughput               Device Memory Read Throughput  563.00GB/s  569.16GB/s  567.54GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  93.376GB/s  94.388GB/s  94.122GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   198598334   198624861   198616967
+         10                   dram_write_transactions            Device Memory Write Transactions    32938349    32939244    32938879
+         10                          dram_utilization                   Device Memory Utilization    High 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  6355146688  6355995552  6355742944
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM  1054027168  1054055808  1054044140
+    Kernel: void dtopo_vel_111_split2<int=2, int=2, int=4>
+         10                      dram_read_throughput               Device Memory Read Throughput  575.41GB/s  581.31GB/s  579.85GB/s
+         10                     dram_write_throughput              Device Memory Write Throughput  91.910GB/s  92.851GB/s  92.621GB/s
+         10                    dram_read_transactions             Device Memory Read Transactions   103017599   103023409   103021363
+         10                   dram_write_transactions            Device Memory Write Transactions    16454765    16456863    16455829
+         10                          dram_utilization                   Device Memory Utilization    High 
+         10                           dram_read_bytes      Total bytes read from DRAM to L2 cache  3296563168  3296749088  3296683632
+         10                          dram_write_bytes   Total bytes written from L2 cache to DRAM   526552480   526619616   526586537
+```
+
+
+Read transactions (unroll) : 0.25 * 10^9
+Read transactions (split1 + split2) : 301615933

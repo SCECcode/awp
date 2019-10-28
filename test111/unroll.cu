@@ -24,7 +24,7 @@
 
 template <int np, int nq, int nr>
 #if sm_61
-__launch_bounds__ (256)
+__launch_bounds__ (256,2)
 #else
 __launch_bounds__ (128)
 #endif
@@ -162,6 +162,7 @@ __global__ void dtopo_vel_111_unroll(
         for (int q = 0; q < nq; ++q) {
 #pragma unroll
         for (int r = 0; r < nr; ++r) {
+
         float c = 0.25f;
         float rho1 = c * (_rho(i + p, j + q, k + r + 5) + _rho(i + p, j + q - 1, k + r + 5)) +
                      c * (_rho(i + p, j + q, k + r + 6) + _rho(i + p, j + q - 1, k + r + 6));
@@ -445,9 +446,9 @@ __global__ void dtopo_vel_111_unroll(
         for (int q = 0; q < nq; ++q) {
 #pragma unroll
         for (int r = 0; r < nr; ++r) {
-                if (k + r  >= nz - 12) continue;
-                if (j + q >= ej) return;
-                if (i >= ei) return;
+                //if (k + r  >= nz - 12) continue;
+                //if (j + q >= ej) return;
+                //if (i + p >= ei) return;
                 _u1(i + p, j + q, k + r + 6) = v1[p][q][r];
                 _u2(i + p, j + q, k + r + 6) = v2[p][q][r];
                 _u3(i + p, j + q, k + r + 6) = v3[p][q][r];

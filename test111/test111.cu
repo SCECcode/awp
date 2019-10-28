@@ -1523,6 +1523,7 @@ __global__ void compare(const float *RSTRCT u1,
 
 #include "split.cu"
 #include "unroll.cu"
+#include "unroll2.cu"
 
 #undef RSTRCT
 // *****************************************************************************
@@ -1811,6 +1812,35 @@ int main (int argc, char **argv) {
 #if sm_61
 #define np 1
 #define nq 2
+#define nr 2
+      dim3 threads (64, 2, 2);
+#else
+#define np 1
+#define nq 2
+#define nr 2
+      dim3 threads (32, 2, 2);
+#endif
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/(np*threads.z)+1);
+      dtopo_vel_111_unroll2<np, nq, nr><<<blocks,threads>>> (u1, u2, u3,
+                                                dcrjx, dcrjy, dcrjz,
+                                                f, f1_1, f1_2, f1_c,
+                                                f2_1, f2_2, f2_c,
+                                                f_1, f_2, f_c,
+                                                g, g3, g3_c, g_c,
+                                                rho, s11, s12, s13, s22, s23, s33,
+                                                1.0f, 1.0f, nx, ny, nz,
+                                                0, 0, nx-1, ny-1);
+#undef np
+#undef nq
+#undef nr
+    }
+
+    {
+#if sm_61
+#define np 1
+#define nq 1
 #define nr 2
       dim3 threads (64, 2, 2);
 #else

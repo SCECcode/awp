@@ -8,7 +8,7 @@ all: c p
 
 
 c:
-	nvcc test111.cu -lcurand -arch=$(arch) -use_fast_math --ptxas-options=-v -o test111.x -D$(arch)
+	nvcc test111.cu -lcurand -arch=$(arch) -use_fast_math --ptxas-options=-v,-dlcm=ca -o test111.x -D$(arch)
 
 p:
 	nvprof --log-file $(log) ./test111.x $(nx) $(ny) $(nz) $(nt); 
