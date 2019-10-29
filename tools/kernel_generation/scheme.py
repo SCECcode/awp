@@ -228,12 +228,12 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
                               exclude_left=helper.get_exclude_left(debug))
     rj0 = sp.symbols('rj0')
     if buf:
-        lhs_indices = lambda idx : (idx[0], idx[1], idx[2])
-        rhs_indices = lambda idx : (idx[0], idx[1] + rj0, idx[2])
+        lhs_indices = lambda idx : (idx[0], idx[1], idx[2] - 6)
+        rhs_indices = lambda idx : (idx[0], idx[1] + rj0, idx[2] - 6)
         index_bounds = (0,1,0)
     else:
-        lhs_indices = None
-        rhs_indices = None
+        lhs_indices = lambda idx : (idx[0], idx[1], idx[2] - 6)
+        rhs_indices = lambda idx : (idx[0], idx[1], idx[2] - 6)
         index_bounds = (1,1,0)
 
     kernels = kg.make_kernel(label, 
@@ -462,8 +462,8 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
         lhs_indices = lambda x : (x[0], x[1], x[2] - 6)
         rhs_indices = lambda x : (x[0], x[1], x[2] - 6)
     else:
-        lhs_indices = None
-        rhs_indices = None
+        lhs_indices = lambda idx : (idx[0], idx[1], idx[2] - 6)
+        rhs_indices = lambda idx : (idx[0], idx[1], idx[2] - 6)
 
     lhs, rhs = fd.equations(eqs)
     

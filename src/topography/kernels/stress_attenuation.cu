@@ -161,7 +161,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   w1[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
     
-  int dm_offset = 6;
+  int dm_offset = 3;
   k    = blockIdx.x*blockDim.x+threadIdx.x+align;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
 

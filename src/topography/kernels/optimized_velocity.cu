@@ -1089,7 +1089,7 @@ __global__ void dtopo_vel_111(
                           0.0026041666666667};
   const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  int dm_offset = 6;
+  int dm_offset = 3;
   const int i = threadIdx.z + blockIdx.z * blockDim.z + bi;
   if (i >= nx)
     return;
