@@ -3412,42 +3412,56 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
         u3[(k) + align +                                               \
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
-        float rho1 = phz2r[k][7] * (phy2[1] * _rho(i, j + rj0, nz - 8) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 8)) +
-                     phz2r[k][6] * (phy2[1] * _rho(i, j + rj0, nz - 7) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 7)) +
-                     phz2r[k][5] * (phy2[1] * _rho(i, j + rj0, nz - 6) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 6)) +
-                     phz2r[k][4] * (phy2[1] * _rho(i, j + rj0, nz - 5) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 5)) +
-                     phz2r[k][3] * (phy2[1] * _rho(i, j + rj0, nz - 4) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 4)) +
-                     phz2r[k][2] * (phy2[1] * _rho(i, j + rj0, nz - 3) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 3)) +
-                     phz2r[k][1] * (phy2[1] * _rho(i, j + rj0, nz - 2) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 2)) +
-                     phz2r[k][0] * (phy2[1] * _rho(i, j + rj0, nz - 1) +
-                                    phy2[0] * _rho(i, j + rj0 - 1, nz - 1));
-        float rho2 = phz2r[k][7] * (phx2[1] * _rho(i, j + rj0, nz - 8) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 8)) +
-                     phz2r[k][6] * (phx2[1] * _rho(i, j + rj0, nz - 7) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 7)) +
-                     phz2r[k][5] * (phx2[1] * _rho(i, j + rj0, nz - 6) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 6)) +
-                     phz2r[k][4] * (phx2[1] * _rho(i, j + rj0, nz - 5) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 5)) +
-                     phz2r[k][3] * (phx2[1] * _rho(i, j + rj0, nz - 4) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 4)) +
-                     phz2r[k][2] * (phx2[1] * _rho(i, j + rj0, nz - 3) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 3)) +
-                     phz2r[k][1] * (phx2[1] * _rho(i, j + rj0, nz - 2) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 2)) +
-                     phz2r[k][0] * (phx2[1] * _rho(i, j + rj0, nz - 1) +
-                                    phx2[0] * _rho(i - 1, j + rj0, nz - 1));
-        float rho3 = phy2[1] * (phx2[1] * _rho(i, j + rj0, nz - 1 - k) +
-                                phx2[0] * _rho(i - 1, j + rj0, nz - 1 - k)) +
-                     phy2[0] * (phx2[1] * _rho(i, j + rj0 - 1, nz - 1 - k) +
-                                phx2[0] * _rho(i - 1, j + rj0 - 1, nz - 1 - k));
+        //float rho1 = phz2r[k][7] * (phy2[1] * _rho(i, j + rj0, nz - 8) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 8)) +
+        //             phz2r[k][6] * (phy2[1] * _rho(i, j + rj0, nz - 7) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 7)) +
+        //             phz2r[k][5] * (phy2[1] * _rho(i, j + rj0, nz - 6) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 6)) +
+        //             phz2r[k][4] * (phy2[1] * _rho(i, j + rj0, nz - 5) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 5)) +
+        //             phz2r[k][3] * (phy2[1] * _rho(i, j + rj0, nz - 4) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 4)) +
+        //             phz2r[k][2] * (phy2[1] * _rho(i, j + rj0, nz - 3) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 3)) +
+        //             phz2r[k][1] * (phy2[1] * _rho(i, j + rj0, nz - 2) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 2)) +
+        //             phz2r[k][0] * (phy2[1] * _rho(i, j + rj0, nz - 1) +
+        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 1));
+        //float rho2 = phz2r[k][7] * (phx2[1] * _rho(i, j + rj0, nz - 8) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 8)) +
+        //             phz2r[k][6] * (phx2[1] * _rho(i, j + rj0, nz - 7) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 7)) +
+        //             phz2r[k][5] * (phx2[1] * _rho(i, j + rj0, nz - 6) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 6)) +
+        //             phz2r[k][4] * (phx2[1] * _rho(i, j + rj0, nz - 5) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 5)) +
+        //             phz2r[k][3] * (phx2[1] * _rho(i, j + rj0, nz - 4) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 4)) +
+        //             phz2r[k][2] * (phx2[1] * _rho(i, j + rj0, nz - 3) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 3)) +
+        //             phz2r[k][1] * (phx2[1] * _rho(i, j + rj0, nz - 2) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 2)) +
+        //             phz2r[k][0] * (phx2[1] * _rho(i, j + rj0, nz - 1) +
+        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 1));
+        //float rho3 = phy2[1] * (phx2[1] * _rho(i, j + rj0, nz - 1 - k) +
+        //                        phx2[0] * _rho(i - 1, j + rj0, nz - 1 - k)) +
+        //             phy2[0] * (phx2[1] * _rho(i, j + rj0 - 1, nz - 1 - k) +
+        //                        phx2[0] * _rho(i - 1, j + rj0 - 1, nz - 1 - k));
+
+        int kb = nz - k - 2;
+        if (i == 1 && j == 1 && k == 0) {
+                printf("rho = [%g %g %g] \n", 
+                                _rho(i, j + rj0, kb + k + 0), 
+                                _rho(i, j + rj0, kb + k + 1), 
+                                _rho(i, j + rj0, kb + k + 2));
+        }
+        float rho1 = 0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i, j + rj0 - 1, kb + 0)) +
+                     0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i, j + rj0 - 1, kb + 1));
+        float rho2 = 0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i - 1, j + rj0, kb + 0)) +
+                     0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1));
+        float rho3 = 0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1)) +
+                     0.25 * (_rho(i, j + rj0 - 1, kb + 1) + _rho(i - 1, j + rj0 - 1, kb + 1));
         float Ai1 = _f_1(i, j + rj0) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
         float Ai2 = _f_2(i, j + rj0) * _g3_c(nz - 1 - k) * rho2;

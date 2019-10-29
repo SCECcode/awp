@@ -320,6 +320,49 @@ void source_init_common(source_t *src, const char *filename,
                                         full_grid, src->x[j], src->y[j], src->z[j],
                                         src->global_indices[j],
                                         src->lengths[j], input->degree));
+ 
+
+
+       // FIXME: remove this stuff
+       /*
+        grid3_t vel_grid = grid_init_velocity_grid(
+                           grid.inner_size, grid.shift, grid.coordinate,
+                           grid.boundary1, grid.boundary2, grid.gridspacing);
+        grid1_t x_grid = grid_grid1_x(vel_grid);
+        grid1_t y_grid = grid_grid1_y(vel_grid);
+        grid1_t z_grid = grid_grid1_z(vel_grid);
+
+        prec *x1 = malloc(sizeof x1 * x_grid.size);
+        prec *y1 = malloc(sizeof y1 * y_grid.size);
+        prec *z1 = malloc(sizeof z1 * z_grid.size);
+
+        grid_fill1(x1, x_grid);
+        grid_fill1(y1, y_grid);
+        grid_fill1(z1, z_grid);
+        prec h = grid.gridspacing;
+        int ix = src->interpolation[j].ix[0];
+        int iy = src->interpolation[j].iy[0];
+        int iz = src->interpolation[j].iz[0];
+        int offx = 8;
+        int offy = 8;
+
+        inspect_far(x1, 0, 10);
+        inspect_far(y1, 0, 10);
+        printf("rank = %d, grid = %d %d %d id = %d index = %d %d %d"\
+             " front, bottom, left = %g %g %g, original? %g %g %g pos = %g %g %g \n",
+                                rank, grid.shift.x, grid.shift.y, grid.shift.z,
+                                j,
+                                ix,
+                                iy,
+                                iz,
+                                x1[0], y1[0], z1[0],
+                                x1[0] + 0.5 * h , y1[0] + 0.5 *h , z1[0] + 0.5 *h,
+                                x1[ix-offx], y1[iy-offy], z1[iz]
+                                );
+       free(x1);
+       free(y1);
+       free(z1);
+       */
                                         
                 grid_data_free(&xyz);
         } // end loop j
