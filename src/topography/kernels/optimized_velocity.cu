@@ -610,441 +610,6 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
 
 __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK)
 
-//    __global__ void dtopo_vel_111(
-//        float* RSTRCT u1, float* RSTRCT u2, float* RSTRCT u3,
-//        const float* RSTRCT dcrjx, const float* RSTRCT dcrjy,
-//        const float* RSTRCT dcrjz, const float* RSTRCT f,
-//        const float* RSTRCT f1_1, const float* RSTRCT f1_2,
-//        const float* RSTRCT f1_c, const float* RSTRCT f2_1,
-//        const float* RSTRCT f2_2, const float* RSTRCT f2_c,
-//        const float* RSTRCT f_1, const float* RSTRCT f_2,
-//        const float* RSTRCT f_c, const float* RSTRCT g,
-//        const float* RSTRCT g3, const float* RSTRCT g3_c,
-//        const float* RSTRCT g_c, const float* RSTRCT rho,
-//        const float* RSTRCT s11, const float* RSTRCT s12,
-//        const float* RSTRCT s13, const float* RSTRCT s22,
-//        const float* RSTRCT s23, const float* RSTRCT s33,
-//        const float a, const float nu, const int nx, const int ny, const int nz,
-//        const int bi, const int bj, const int ei, const int ej) {
-//        const float dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
-//                                -0.6796875000000000, 0.0000000000000000,
-//                                0.6796875000000000,  -0.0937500000000000,
-//                                0.0026041666666667};
-//        const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
-//                               0.5625000000000000, -0.0625000000000000};
-//        const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
-//                               0.5625000000000000, -0.0625000000000000};
-//        const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
-//                               1.1250000000000000, -0.0416666666666667};
-//        const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
-//                               1.1250000000000000, -0.0416666666666667};
-//        const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
-//                               1.1250000000000000, -0.0416666666666667};
-//        const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
-//                              0.5625000000000000, -0.0625000000000000};
-//        const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
-//                              0.5625000000000000, -0.0625000000000000};
-//        const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
-//                              1.1250000000000000, -0.0416666666666667};
-//        const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
-//                              1.1250000000000000, -0.0416666666666667};
-//        const float dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
-//                                -0.6796875000000000, 0.0000000000000000,
-//                                0.6796875000000000,  -0.0937500000000000,
-//                                0.0026041666666667};
-//        const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
-//                              1.1250000000000000, -0.0416666666666667};
-//        const int i = threadIdx.z + blockIdx.z * blockDim.z + bi;
-//        if (i >= nx) return;
-//        if (i >= ei) return;
-//        const int j = threadIdx.y + blockIdx.y * blockDim.y + bj;
-//        if (j >= ny) return;
-//        if (j >= ej) return;
-//        const int k = threadIdx.x + blockIdx.x * blockDim.x;
-//        if (k >= nz - 12) return;
-//#define _dcrjx(i) dcrjx[(i) + ngsl + 2]
-//#define _dcrjy(j) dcrjy[(j) + ngsl + 2]
-//#define _dcrjz(k) dcrjz[(k) + align]
-//#define _f(i, j)               \
-//        f[(j) + align + ngsl + \
-//          ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f1_1(i, j)               \
-//        f1_1[(j) + align + ngsl + \
-//             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f1_2(i, j)               \
-//        f1_2[(j) + align + ngsl + \
-//             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f1_c(i, j)               \
-//        f1_c[(j) + align + ngsl + \
-//             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f2_1(i, j)               \
-//        f2_1[(j) + align + ngsl + \
-//             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f2_2(i, j)               \
-//        f2_2[(j) + align + ngsl + \
-//             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f2_c(i, j)               \
-//        f2_c[(j) + align + ngsl + \
-//             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f_1(i, j)               \
-//        f_1[(j) + align + ngsl + \
-//            ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f_2(i, j)               \
-//        f_2[(j) + align + ngsl + \
-//            ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _f_c(i, j)               \
-//        f_c[(j) + align + ngsl + \
-//            ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-//#define _g(k) g[(k) + align]
-//#define _g3(k) g3[(k) + align]
-//#define _g3_c(k) g3_c[(k) + align]
-//#define _g_c(k) g_c[(k) + align]
-//#define _rho(i, j, k)                                                   \
-//        rho[(k) + align +                                               \
-//            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//            (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _s11(i, j, k)                                                   \
-//        s11[(k) + align +                                               \
-//            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//            (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _s12(i, j, k)                                                   \
-//        s12[(k) + align +                                               \
-//            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//            (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _s13(i, j, k)                                                   \
-//        s13[(k) + align +                                               \
-//            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//            (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _s22(i, j, k)                                                   \
-//        s22[(k) + align +                                               \
-//            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//            (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _s23(i, j, k)                                                   \
-//        s23[(k) + align +                                               \
-//            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//            (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _s33(i, j, k)                                                   \
-//        s33[(k) + align +                                               \
-//            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//            (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _u1(i, j, k)                                                   \
-//        u1[(k) + align +                                               \
-//           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//           (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _u2(i, j, k)                                                   \
-//        u2[(k) + align +                                               \
-//           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//           (2 * align + nz) * ((j) + ngsl + 2)]
-//#define _u3(i, j, k)                                                   \
-//        u3[(k) + align +                                               \
-//           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-//           (2 * align + nz) * ((j) + ngsl + 2)]
-//        float rho1 = 0.25 * (_rho(i, j, k + 5) + _rho(i, j - 1, k + 5)) +
-//                     0.25 * (_rho(i, j, k + 6) + _rho(i, j - 1, k + 6));
-//        float rho2 = 0.25 * (_rho(i, j, k + 5) + _rho(i - 1, j, k + 5)) +
-//                     0.25 * (_rho(i, j, k + 6) + _rho(i - 1, j, k + 6));
-//        float rho3 = 0.25 * (_rho(i, j, k + 6) + _rho(i - 1, j, k + 6)) +
-//                     0.25 * (_rho(i, j - 1, k + 6) + _rho(i - 1, j - 1, k + 6));
-//
-//        float Ai1 = _f_1(i, j) * _g3_c(k + 6) * rho1;
-//        Ai1 = nu * 1.0 / Ai1;
-//        float Ai2 = _f_2(i, j) * _g3_c(k + 6) * rho2;
-//        Ai2 = nu * 1.0 / Ai2;
-//        float Ai3 = _f_c(i, j) * _g3(k + 6) * rho3;
-//        Ai3 = nu * 1.0 / Ai3;
-//        float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k + 6);
-//        _u1(i, j, k + 6) =
-//            (a * _u1(i, j, k + 6) +
-//             Ai1 * (dhx4[2] * _f_c(i, j) * _g3_c(k + 6) * _s11(i, j, k + 6) +
-//                    dhx4[0] * _f_c(i - 2, j) * _g3_c(k + 6) *
-//                        _s11(i - 2, j, k + 6) +
-//                    dhx4[1] * _f_c(i - 1, j) * _g3_c(k + 6) *
-//                        _s11(i - 1, j, k + 6) +
-//                    dhx4[3] * _f_c(i + 1, j) * _g3_c(k + 6) *
-//                        _s11(i + 1, j, k + 6) +
-//                    dhy4[2] * _f(i, j) * _g3_c(k + 6) * _s12(i, j, k + 6) +
-//                    dhy4[0] * _f(i, j - 2) * _g3_c(k + 6) *
-//                        _s12(i, j - 2, k + 6) +
-//                    dhy4[1] * _f(i, j - 1) * _g3_c(k + 6) *
-//                        _s12(i, j - 1, k + 6) +
-//                    dhy4[3] * _f(i, j + 1) * _g3_c(k + 6) *
-//                        _s12(i, j + 1, k + 6) +
-//                    dhz4[0] * _s13(i, j, k + 4) + dhz4[1] * _s13(i, j, k + 5) +
-//                    dhz4[2] * _s13(i, j, k + 6) + dhz4[3] * _s13(i, j, k + 7) -
-//                    _f1_1(i, j) * (dhpz4[0] * _g_c(k + 3) *
-//                                       (phx4[2] * _s11(i, j, k + 3) +
-//                                        phx4[0] * _s11(i - 2, j, k + 3) +
-//                                        phx4[1] * _s11(i - 1, j, k + 3) +
-//                                        phx4[3] * _s11(i + 1, j, k + 3)) +
-//                                   dhpz4[1] * _g_c(k + 4) *
-//                                       (phx4[2] * _s11(i, j, k + 4) +
-//                                        phx4[0] * _s11(i - 2, j, k + 4) +
-//                                        phx4[1] * _s11(i - 1, j, k + 4) +
-//                                        phx4[3] * _s11(i + 1, j, k + 4)) +
-//                                   dhpz4[2] * _g_c(k + 5) *
-//                                       (phx4[2] * _s11(i, j, k + 5) +
-//                                        phx4[0] * _s11(i - 2, j, k + 5) +
-//                                        phx4[1] * _s11(i - 1, j, k + 5) +
-//                                        phx4[3] * _s11(i + 1, j, k + 5)) +
-//                                   dhpz4[3] * _g_c(k + 6) *
-//                                       (phx4[2] * _s11(i, j, k + 6) +
-//                                        phx4[0] * _s11(i - 2, j, k + 6) +
-//                                        phx4[1] * _s11(i - 1, j, k + 6) +
-//                                        phx4[3] * _s11(i + 1, j, k + 6)) +
-//                                   dhpz4[4] * _g_c(k + 7) *
-//                                       (phx4[2] * _s11(i, j, k + 7) +
-//                                        phx4[0] * _s11(i - 2, j, k + 7) +
-//                                        phx4[1] * _s11(i - 1, j, k + 7) +
-//                                        phx4[3] * _s11(i + 1, j, k + 7)) +
-//                                   dhpz4[5] * _g_c(k + 8) *
-//                                       (phx4[2] * _s11(i, j, k + 8) +
-//                                        phx4[0] * _s11(i - 2, j, k + 8) +
-//                                        phx4[1] * _s11(i - 1, j, k + 8) +
-//                                        phx4[3] * _s11(i + 1, j, k + 8)) +
-//                                   dhpz4[6] * _g_c(k + 9) *
-//                                       (phx4[2] * _s11(i, j, k + 9) +
-//                                        phx4[0] * _s11(i - 2, j, k + 9) +
-//                                        phx4[1] * _s11(i - 1, j, k + 9) +
-//                                        phx4[3] * _s11(i + 1, j, k + 9))) -
-//                    _f2_1(i, j) * (dhpz4[0] * _g_c(k + 3) *
-//                                       (phy4[2] * _s12(i, j, k + 3) +
-//                                        phy4[0] * _s12(i, j - 2, k + 3) +
-//                                        phy4[1] * _s12(i, j - 1, k + 3) +
-//                                        phy4[3] * _s12(i, j + 1, k + 3)) +
-//                                   dhpz4[1] * _g_c(k + 4) *
-//                                       (phy4[2] * _s12(i, j, k + 4) +
-//                                        phy4[0] * _s12(i, j - 2, k + 4) +
-//                                        phy4[1] * _s12(i, j - 1, k + 4) +
-//                                        phy4[3] * _s12(i, j + 1, k + 4)) +
-//                                   dhpz4[2] * _g_c(k + 5) *
-//                                       (phy4[2] * _s12(i, j, k + 5) +
-//                                        phy4[0] * _s12(i, j - 2, k + 5) +
-//                                        phy4[1] * _s12(i, j - 1, k + 5) +
-//                                        phy4[3] * _s12(i, j + 1, k + 5)) +
-//                                   dhpz4[3] * _g_c(k + 6) *
-//                                       (phy4[2] * _s12(i, j, k + 6) +
-//                                        phy4[0] * _s12(i, j - 2, k + 6) +
-//                                        phy4[1] * _s12(i, j - 1, k + 6) +
-//                                        phy4[3] * _s12(i, j + 1, k + 6)) +
-//                                   dhpz4[4] * _g_c(k + 7) *
-//                                       (phy4[2] * _s12(i, j, k + 7) +
-//                                        phy4[0] * _s12(i, j - 2, k + 7) +
-//                                        phy4[1] * _s12(i, j - 1, k + 7) +
-//                                        phy4[3] * _s12(i, j + 1, k + 7)) +
-//                                   dhpz4[5] * _g_c(k + 8) *
-//                                       (phy4[2] * _s12(i, j, k + 8) +
-//                                        phy4[0] * _s12(i, j - 2, k + 8) +
-//                                        phy4[1] * _s12(i, j - 1, k + 8) +
-//                                        phy4[3] * _s12(i, j + 1, k + 8)) +
-//                                   dhpz4[6] * _g_c(k + 9) *
-//                                       (phy4[2] * _s12(i, j, k + 9) +
-//                                        phy4[0] * _s12(i, j - 2, k + 9) +
-//                                        phy4[1] * _s12(i, j - 1, k + 9) +
-//                                        phy4[3] * _s12(i, j + 1, k + 9))))) *
-//            f_dcrj;
-//        _u2(i, j, k + 6) =
-//            (a * _u2(i, j, k + 6) +
-//             Ai2 *
-//                 (dhz4[0] * _s23(i, j, k + 4) + dhz4[1] * _s23(i, j, k + 5) +
-//                  dhz4[2] * _s23(i, j, k + 6) + dhz4[3] * _s23(i, j, k + 7) +
-//                  dx4[1] * _f(i, j) * _g3_c(k + 6) * _s12(i, j, k + 6) +
-//                  dx4[0] * _f(i - 1, j) * _g3_c(k + 6) * _s12(i - 1, j, k + 6) +
-//                  dx4[2] * _f(i + 1, j) * _g3_c(k + 6) * _s12(i + 1, j, k + 6) +
-//                  dx4[3] * _f(i + 2, j) * _g3_c(k + 6) * _s12(i + 2, j, k + 6) +
-//                  dy4[1] * _f_c(i, j) * _g3_c(k + 6) * _s22(i, j, k + 6) +
-//                  dy4[0] * _f_c(i, j - 1) * _g3_c(k + 6) *
-//                      _s22(i, j - 1, k + 6) +
-//                  dy4[2] * _f_c(i, j + 1) * _g3_c(k + 6) *
-//                      _s22(i, j + 1, k + 6) +
-//                  dy4[3] * _f_c(i, j + 2) * _g3_c(k + 6) *
-//                      _s22(i, j + 2, k + 6) -
-//                  _f1_2(i, j) * (dhpz4[0] * _g_c(k + 3) *
-//                                     (px4[1] * _s12(i, j, k + 3) +
-//                                      px4[0] * _s12(i - 1, j, k + 3) +
-//                                      px4[2] * _s12(i + 1, j, k + 3) +
-//                                      px4[3] * _s12(i + 2, j, k + 3)) +
-//                                 dhpz4[1] * _g_c(k + 4) *
-//                                     (px4[1] * _s12(i, j, k + 4) +
-//                                      px4[0] * _s12(i - 1, j, k + 4) +
-//                                      px4[2] * _s12(i + 1, j, k + 4) +
-//                                      px4[3] * _s12(i + 2, j, k + 4)) +
-//                                 dhpz4[2] * _g_c(k + 5) *
-//                                     (px4[1] * _s12(i, j, k + 5) +
-//                                      px4[0] * _s12(i - 1, j, k + 5) +
-//                                      px4[2] * _s12(i + 1, j, k + 5) +
-//                                      px4[3] * _s12(i + 2, j, k + 5)) +
-//                                 dhpz4[3] * _g_c(k + 6) *
-//                                     (px4[1] * _s12(i, j, k + 6) +
-//                                      px4[0] * _s12(i - 1, j, k + 6) +
-//                                      px4[2] * _s12(i + 1, j, k + 6) +
-//                                      px4[3] * _s12(i + 2, j, k + 6)) +
-//                                 dhpz4[4] * _g_c(k + 7) *
-//                                     (px4[1] * _s12(i, j, k + 7) +
-//                                      px4[0] * _s12(i - 1, j, k + 7) +
-//                                      px4[2] * _s12(i + 1, j, k + 7) +
-//                                      px4[3] * _s12(i + 2, j, k + 7)) +
-//                                 dhpz4[5] * _g_c(k + 8) *
-//                                     (px4[1] * _s12(i, j, k + 8) +
-//                                      px4[0] * _s12(i - 1, j, k + 8) +
-//                                      px4[2] * _s12(i + 1, j, k + 8) +
-//                                      px4[3] * _s12(i + 2, j, k + 8)) +
-//                                 dhpz4[6] * _g_c(k + 9) *
-//                                     (px4[1] * _s12(i, j, k + 9) +
-//                                      px4[0] * _s12(i - 1, j, k + 9) +
-//                                      px4[2] * _s12(i + 1, j, k + 9) +
-//                                      px4[3] * _s12(i + 2, j, k + 9))) -
-//                  _f2_2(i, j) * (dhpz4[0] * _g_c(k + 3) *
-//                                     (py4[1] * _s22(i, j, k + 3) +
-//                                      py4[0] * _s22(i, j - 1, k + 3) +
-//                                      py4[2] * _s22(i, j + 1, k + 3) +
-//                                      py4[3] * _s22(i, j + 2, k + 3)) +
-//                                 dhpz4[1] * _g_c(k + 4) *
-//                                     (py4[1] * _s22(i, j, k + 4) +
-//                                      py4[0] * _s22(i, j - 1, k + 4) +
-//                                      py4[2] * _s22(i, j + 1, k + 4) +
-//                                      py4[3] * _s22(i, j + 2, k + 4)) +
-//                                 dhpz4[2] * _g_c(k + 5) *
-//                                     (py4[1] * _s22(i, j, k + 5) +
-//                                      py4[0] * _s22(i, j - 1, k + 5) +
-//                                      py4[2] * _s22(i, j + 1, k + 5) +
-//                                      py4[3] * _s22(i, j + 2, k + 5)) +
-//                                 dhpz4[3] * _g_c(k + 6) *
-//                                     (py4[1] * _s22(i, j, k + 6) +
-//                                      py4[0] * _s22(i, j - 1, k + 6) +
-//                                      py4[2] * _s22(i, j + 1, k + 6) +
-//                                      py4[3] * _s22(i, j + 2, k + 6)) +
-//                                 dhpz4[4] * _g_c(k + 7) *
-//                                     (py4[1] * _s22(i, j, k + 7) +
-//                                      py4[0] * _s22(i, j - 1, k + 7) +
-//                                      py4[2] * _s22(i, j + 1, k + 7) +
-//                                      py4[3] * _s22(i, j + 2, k + 7)) +
-//                                 dhpz4[5] * _g_c(k + 8) *
-//                                     (py4[1] * _s22(i, j, k + 8) +
-//                                      py4[0] * _s22(i, j - 1, k + 8) +
-//                                      py4[2] * _s22(i, j + 1, k + 8) +
-//                                      py4[3] * _s22(i, j + 2, k + 8)) +
-//                                 dhpz4[6] * _g_c(k + 9) *
-//                                     (py4[1] * _s22(i, j, k + 9) +
-//                                      py4[0] * _s22(i, j - 1, k + 9) +
-//                                      py4[2] * _s22(i, j + 1, k + 9) +
-//                                      py4[3] * _s22(i, j + 2, k + 9))))) *
-//            f_dcrj;
-//        _u3(i, j, k + 6) =
-//            (a * _u3(i, j, k + 6) +
-//             Ai3 *
-//                 (dhy4[2] * _f_2(i, j) * _g3(k + 6) * _s23(i, j, k + 6) +
-//                  dhy4[0] * _f_2(i, j - 2) * _g3(k + 6) *
-//                      _s23(i, j - 2, k + 6) +
-//                  dhy4[1] * _f_2(i, j - 1) * _g3(k + 6) *
-//                      _s23(i, j - 1, k + 6) +
-//                  dhy4[3] * _f_2(i, j + 1) * _g3(k + 6) *
-//                      _s23(i, j + 1, k + 6) +
-//                  dx4[1] * _f_1(i, j) * _g3(k + 6) * _s13(i, j, k + 6) +
-//                  dx4[0] * _f_1(i - 1, j) * _g3(k + 6) * _s13(i - 1, j, k + 6) +
-//                  dx4[2] * _f_1(i + 1, j) * _g3(k + 6) * _s13(i + 1, j, k + 6) +
-//                  dx4[3] * _f_1(i + 2, j) * _g3(k + 6) * _s13(i + 2, j, k + 6) +
-//                  dz4[0] * _s33(i, j, k + 5) + dz4[1] * _s33(i, j, k + 6) +
-//                  dz4[2] * _s33(i, j, k + 7) + dz4[3] * _s33(i, j, k + 8) -
-//                  _f1_c(i, j) * (dphz4[0] * _g(k + 3) *
-//                                     (px4[1] * _s13(i, j, k + 3) +
-//                                      px4[0] * _s13(i - 1, j, k + 3) +
-//                                      px4[2] * _s13(i + 1, j, k + 3) +
-//                                      px4[3] * _s13(i + 2, j, k + 3)) +
-//                                 dphz4[1] * _g(k + 4) *
-//                                     (px4[1] * _s13(i, j, k + 4) +
-//                                      px4[0] * _s13(i - 1, j, k + 4) +
-//                                      px4[2] * _s13(i + 1, j, k + 4) +
-//                                      px4[3] * _s13(i + 2, j, k + 4)) +
-//                                 dphz4[2] * _g(k + 5) *
-//                                     (px4[1] * _s13(i, j, k + 5) +
-//                                      px4[0] * _s13(i - 1, j, k + 5) +
-//                                      px4[2] * _s13(i + 1, j, k + 5) +
-//                                      px4[3] * _s13(i + 2, j, k + 5)) +
-//                                 dphz4[3] * _g(k + 6) *
-//                                     (px4[1] * _s13(i, j, k + 6) +
-//                                      px4[0] * _s13(i - 1, j, k + 6) +
-//                                      px4[2] * _s13(i + 1, j, k + 6) +
-//                                      px4[3] * _s13(i + 2, j, k + 6)) +
-//                                 dphz4[4] * _g(k + 7) *
-//                                     (px4[1] * _s13(i, j, k + 7) +
-//                                      px4[0] * _s13(i - 1, j, k + 7) +
-//                                      px4[2] * _s13(i + 1, j, k + 7) +
-//                                      px4[3] * _s13(i + 2, j, k + 7)) +
-//                                 dphz4[5] * _g(k + 8) *
-//                                     (px4[1] * _s13(i, j, k + 8) +
-//                                      px4[0] * _s13(i - 1, j, k + 8) +
-//                                      px4[2] * _s13(i + 1, j, k + 8) +
-//                                      px4[3] * _s13(i + 2, j, k + 8)) +
-//                                 dphz4[6] * _g(k + 9) *
-//                                     (px4[1] * _s13(i, j, k + 9) +
-//                                      px4[0] * _s13(i - 1, j, k + 9) +
-//                                      px4[2] * _s13(i + 1, j, k + 9) +
-//                                      px4[3] * _s13(i + 2, j, k + 9))) -
-//                  _f2_c(i, j) * (dphz4[0] * _g(k + 3) *
-//                                     (phy4[2] * _s23(i, j, k + 3) +
-//                                      phy4[0] * _s23(i, j - 2, k + 3) +
-//                                      phy4[1] * _s23(i, j - 1, k + 3) +
-//                                      phy4[3] * _s23(i, j + 1, k + 3)) +
-//                                 dphz4[1] * _g(k + 4) *
-//                                     (phy4[2] * _s23(i, j, k + 4) +
-//                                      phy4[0] * _s23(i, j - 2, k + 4) +
-//                                      phy4[1] * _s23(i, j - 1, k + 4) +
-//                                      phy4[3] * _s23(i, j + 1, k + 4)) +
-//                                 dphz4[2] * _g(k + 5) *
-//                                     (phy4[2] * _s23(i, j, k + 5) +
-//                                      phy4[0] * _s23(i, j - 2, k + 5) +
-//                                      phy4[1] * _s23(i, j - 1, k + 5) +
-//                                      phy4[3] * _s23(i, j + 1, k + 5)) +
-//                                 dphz4[3] * _g(k + 6) *
-//                                     (phy4[2] * _s23(i, j, k + 6) +
-//                                      phy4[0] * _s23(i, j - 2, k + 6) +
-//                                      phy4[1] * _s23(i, j - 1, k + 6) +
-//                                      phy4[3] * _s23(i, j + 1, k + 6)) +
-//                                 dphz4[4] * _g(k + 7) *
-//                                     (phy4[2] * _s23(i, j, k + 7) +
-//                                      phy4[0] * _s23(i, j - 2, k + 7) +
-//                                      phy4[1] * _s23(i, j - 1, k + 7) +
-//                                      phy4[3] * _s23(i, j + 1, k + 7)) +
-//                                 dphz4[5] * _g(k + 8) *
-//                                     (phy4[2] * _s23(i, j, k + 8) +
-//                                      phy4[0] * _s23(i, j - 2, k + 8) +
-//                                      phy4[1] * _s23(i, j - 1, k + 8) +
-//                                      phy4[3] * _s23(i, j + 1, k + 8)) +
-//                                 dphz4[6] * _g(k + 9) *
-//                                     (phy4[2] * _s23(i, j, k + 9) +
-//                                      phy4[0] * _s23(i, j - 2, k + 9) +
-//                                      phy4[1] * _s23(i, j - 1, k + 9) +
-//                                      phy4[3] * _s23(i, j + 1, k + 9))))) *
-//            f_dcrj;
-//#undef _dcrjx
-//#undef _dcrjy
-//#undef _dcrjz
-//#undef _f
-//#undef _f1_1
-//#undef _f1_2
-//#undef _f1_c
-//#undef _f2_1
-//#undef _f2_2
-//#undef _f2_c
-//#undef _f_1
-//#undef _f_2
-//#undef _f_c
-//#undef _g
-//#undef _g3
-//#undef _g3_c
-//#undef _g_c
-//#undef _rho
-//#undef _s11
-//#undef _s12
-//#undef _s13
-//#undef _s22
-//#undef _s23
-//#undef _s33
-//#undef _u1
-//#undef _u2
-//#undef _u3
-//}
-
 __global__ void dtopo_vel_111(
         float *RSTRCT u1, float *RSTRCT u2, float *RSTRCT u3,
         const float *RSTRCT dcrjx, const float *RSTRCT dcrjy,
@@ -1673,6 +1238,7 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
                      0.25 * (_rho(i, j, kb + 1) + _rho(i - 1, j, kb + 1));
         float rho3 = 0.25 * (_rho(i, j, kb + 1) + _rho(i - 1, j, kb + 1)) +
                      0.25 * (_rho(i, j - 1, kb + 1) + _rho(i - 1, j - 1, kb + 1));
+
         float Ai1 = _f_1(i, j) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
         float Ai2 = _f_2(i, j) * _g3_c(nz - 1 - k) * rho2;
@@ -2709,451 +2275,421 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
 __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
 
     __global__ void dtopo_buf_vel_111(
-        float* RSTRCT buf_u1, float* RSTRCT buf_u2,
-        float* RSTRCT buf_u3, const float* RSTRCT dcrjx,
-        const float* RSTRCT dcrjy, const float* RSTRCT dcrjz,
-        const float* RSTRCT f, const float* RSTRCT f1_1,
-        const float* RSTRCT f1_2, const float* RSTRCT f1_c,
-        const float* RSTRCT f2_1, const float* RSTRCT f2_2,
-        const float* RSTRCT f2_c, const float* RSTRCT f_1,
-        const float* RSTRCT f_2, const float* RSTRCT f_c,
-        const float* RSTRCT g, const float* RSTRCT g3,
-        const float* RSTRCT g3_c, const float* RSTRCT g_c,
-        const float* RSTRCT rho, const float* RSTRCT s11,
-        const float* RSTRCT s12, const float* RSTRCT s13,
-        const float* RSTRCT s22, const float* RSTRCT s23,
-        const float* RSTRCT s33, const float* RSTRCT u1,
-        const float* RSTRCT u2, const float* RSTRCT u3,
+        float *RSTRCT buf_u1, float *RSTRCT buf_u2,
+        float *RSTRCT buf_u3, const float *RSTRCT dcrjx,
+        const float *RSTRCT dcrjy, const float *RSTRCT dcrjz,
+        const float *RSTRCT f, const float *RSTRCT f1_1,
+        const float *RSTRCT f1_2, const float *RSTRCT f1_c,
+        const float *RSTRCT f2_1, const float *RSTRCT f2_2,
+        const float *RSTRCT f2_c, const float *RSTRCT f_1,
+        const float *RSTRCT f_2, const float *RSTRCT f_c,
+        const float *RSTRCT g, const float *RSTRCT g3,
+        const float *RSTRCT g3_c, const float *RSTRCT g_c,
+        const float *RSTRCT rho, const float *RSTRCT s11,
+        const float *RSTRCT s12, const float *RSTRCT s13,
+        const float *RSTRCT s22, const float *RSTRCT s23,
+        const float *RSTRCT s33, const float *RSTRCT u1,
+        const float *RSTRCT u2, const float *RSTRCT u3,
         const float a, const float nu, const int nx, const int ny, const int nz,
         const int bj, const int ej, const int rj0) {
-        const float phz2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phy2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phx2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
-                                -0.6796875000000000, 0.0000000000000000,
-                                0.6796875000000000,  -0.0937500000000000,
-                                0.0026041666666667};
-        const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
-                               0.5625000000000000, -0.0625000000000000};
-        const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
-                               0.5625000000000000, -0.0625000000000000};
-        const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
-                               1.1250000000000000, -0.0416666666666667};
-        const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
-                               1.1250000000000000, -0.0416666666666667};
-        const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
-                               1.1250000000000000, -0.0416666666666667};
-        const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
-                              0.5625000000000000, -0.0625000000000000};
-        const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
-                              0.5625000000000000, -0.0625000000000000};
-        const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
-                              1.1250000000000000, -0.0416666666666667};
-        const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
-                              1.1250000000000000, -0.0416666666666667};
-        const float dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
-                                -0.6796875000000000, 0.0000000000000000,
-                                0.6796875000000000,  -0.0937500000000000,
-                                0.0026041666666667};
-        const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
-                              1.1250000000000000, -0.0416666666666667};
-        const int i = threadIdx.z + blockIdx.z * blockDim.z;
-        if (i >= nx) return;
-        const int j = threadIdx.y + blockIdx.y * blockDim.y + bj;
-        if (j >= ny) return;
-        if (j >= ej) return;
-        const int k = threadIdx.x + blockIdx.x * blockDim.x;
-        if (k >= nz - 12) return;
-#define _buf_u1(i, j, k)                              \
-        buf_u1[(j) * (2 * align + nz) + (k) + align + \
-               ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
-#define _buf_u2(i, j, k)                              \
-        buf_u2[(j) * (2 * align + nz) + (k) + align + \
-               ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
-#define _buf_u3(i, j, k)                              \
-        buf_u3[(j) * (2 * align + nz) + (k) + align + \
-               ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
+  const float dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
+                          -0.6796875000000000, 0.0000000000000000,
+                          0.6796875000000000,  -0.0937500000000000,
+                          0.0026041666666667};
+  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+                         0.5625000000000000, -0.0625000000000000};
+  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+                         0.5625000000000000, -0.0625000000000000};
+  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+                        0.5625000000000000, -0.0625000000000000};
+  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+                        0.5625000000000000, -0.0625000000000000};
+  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+  const float dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
+                          -0.6796875000000000, 0.0000000000000000,
+                          0.6796875000000000,  -0.0937500000000000,
+                          0.0026041666666667};
+  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+
+  int dm_offset = 3;
+  const int i = threadIdx.z + blockIdx.z * blockDim.z;
+  if (i >= nx)
+    return;
+  const int j = threadIdx.y + blockIdx.y * blockDim.y + bj;
+  if (j >= ny)
+    return;
+  if (j >= ej)
+    return;
+  const int k = threadIdx.x + blockIdx.x * blockDim.x;
+  if (k < dm_offset) 
+        return;
+  if (k >= nz - 6)
+        return;
+#define _buf_u1(i, j, k)                                                       \
+  buf_u1[(j) * (2 * align + nz) + (k) + align +                                \
+         ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
+#define _buf_u2(i, j, k)                                                       \
+  buf_u2[(j) * (2 * align + nz) + (k) + align +                                \
+         ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
+#define _buf_u3(i, j, k)                                                       \
+  buf_u3[(j) * (2 * align + nz) + (k) + align +                                \
+         ngsl * (2 * align + nz) * ((i) + ngsl + 2)]
 #define _dcrjx(i) dcrjx[(i) + ngsl + 2]
 #define _dcrjy(j) dcrjy[(j) + ngsl + 2]
 #define _dcrjz(k) dcrjz[(k) + align]
-#define _f(i, j)               \
-        f[(j) + align + ngsl + \
-          ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f1_1(i, j)               \
-        f1_1[(j) + align + ngsl + \
-             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f1_2(i, j)               \
-        f1_2[(j) + align + ngsl + \
-             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f1_c(i, j)               \
-        f1_c[(j) + align + ngsl + \
-             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f2_1(i, j)               \
-        f2_1[(j) + align + ngsl + \
-             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f2_2(i, j)               \
-        f2_2[(j) + align + ngsl + \
-             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f2_c(i, j)               \
-        f2_c[(j) + align + ngsl + \
-             ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f_1(i, j)               \
-        f_1[(j) + align + ngsl + \
-            ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f_2(i, j)               \
-        f_2[(j) + align + ngsl + \
-            ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
-#define _f_c(i, j)               \
-        f_c[(j) + align + ngsl + \
-            ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f(i, j)                                                               \
+  f[(j) + align + ngsl + ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_1(i, j)                                                            \
+  f1_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_2(i, j)                                                            \
+  f1_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f1_c(i, j)                                                            \
+  f1_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_1(i, j)                                                            \
+  f2_1[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_2(i, j)                                                            \
+  f2_2[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f2_c(i, j)                                                            \
+  f2_c[(j) + align + ngsl +                                                    \
+       ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_1(i, j)                                                             \
+  f_1[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_2(i, j)                                                             \
+  f_2[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f_c(i, j)                                                             \
+  f_c[(j) + align + ngsl +                                                     \
+      ((i) + ngsl + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
 #define _g(k) g[(k) + align]
 #define _g3(k) g3[(k) + align]
 #define _g3_c(k) g3_c[(k) + align]
 #define _g_c(k) g_c[(k) + align]
-#define _rho(i, j, k)                                                   \
-        rho[(k) + align +                                               \
-            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-            (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s11(i, j, k)                                                   \
-        s11[(k) + align +                                               \
-            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-            (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s12(i, j, k)                                                   \
-        s12[(k) + align +                                               \
-            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-            (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s13(i, j, k)                                                   \
-        s13[(k) + align +                                               \
-            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-            (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s22(i, j, k)                                                   \
-        s22[(k) + align +                                               \
-            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-            (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s23(i, j, k)                                                   \
-        s23[(k) + align +                                               \
-            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-            (2 * align + nz) * ((j) + ngsl + 2)]
-#define _s33(i, j, k)                                                   \
-        s33[(k) + align +                                               \
-            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-            (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u1(i, j, k)                                                   \
-        u1[(k) + align +                                               \
-           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-           (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u2(i, j, k)                                                   \
-        u2[(k) + align +                                               \
-           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-           (2 * align + nz) * ((j) + ngsl + 2)]
-#define _u3(i, j, k)                                                   \
-        u3[(k) + align +                                               \
-           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-           (2 * align + nz) * ((j) + ngsl + 2)]
-        float rho1 = phz2[0] * (phy2[1] * _rho(i, j + rj0, k + 5) +
-                                phy2[0] * _rho(i, j + rj0 - 1, k + 5)) +
-                     phz2[1] * (phy2[1] * _rho(i, j + rj0, k + 6) +
-                                phy2[0] * _rho(i, j + rj0 - 1, k + 6));
-        float rho2 = phz2[0] * (phx2[1] * _rho(i, j + rj0, k + 5) +
-                                phx2[0] * _rho(i - 1, j + rj0, k + 5)) +
-                     phz2[1] * (phx2[1] * _rho(i, j + rj0, k + 6) +
-                                phx2[0] * _rho(i - 1, j + rj0, k + 6));
-        float rho3 = phy2[1] * (phx2[1] * _rho(i, j + rj0, k + 6) +
-                                phx2[0] * _rho(i - 1, j + rj0, k + 6)) +
-                     phy2[0] * (phx2[1] * _rho(i, j + rj0 - 1, k + 6) +
-                                phx2[0] * _rho(i - 1, j + rj0 - 1, k + 6));
-        float Ai1 = _f_1(i, j + rj0) * _g3_c(k + 6) * rho1;
-        Ai1 = nu * 1.0 / Ai1;
-        float Ai2 = _f_2(i, j + rj0) * _g3_c(k + 6) * rho2;
-        Ai2 = nu * 1.0 / Ai2;
-        float Ai3 = _f_c(i, j + rj0) * _g3(k + 6) * rho3;
-        Ai3 = nu * 1.0 / Ai3;
-        float f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(k + 6);
-        _buf_u1(i, j, k + 6) =
-            (a * _u1(i, j + rj0, k + 6) +
-             Ai1 * (dhx4[2] * _f_c(i, j + rj0) * _g3_c(k + 6) *
-                        _s11(i, j + rj0, k + 6) +
-                    dhx4[0] * _f_c(i - 2, j + rj0) * _g3_c(k + 6) *
-                        _s11(i - 2, j + rj0, k + 6) +
-                    dhx4[1] * _f_c(i - 1, j + rj0) * _g3_c(k + 6) *
-                        _s11(i - 1, j + rj0, k + 6) +
-                    dhx4[3] * _f_c(i + 1, j + rj0) * _g3_c(k + 6) *
-                        _s11(i + 1, j + rj0, k + 6) +
-                    dhy4[2] * _f(i, j + rj0) * _g3_c(k + 6) *
-                        _s12(i, j + rj0, k + 6) +
-                    dhy4[0] * _f(i, j + rj0 - 2) * _g3_c(k + 6) *
-                        _s12(i, j + rj0 - 2, k + 6) +
-                    dhy4[1] * _f(i, j + rj0 - 1) * _g3_c(k + 6) *
-                        _s12(i, j + rj0 - 1, k + 6) +
-                    dhy4[3] * _f(i, j + rj0 + 1) * _g3_c(k + 6) *
-                        _s12(i, j + rj0 + 1, k + 6) +
-                    dhz4[0] * _s13(i, j + rj0, k + 4) +
-                    dhz4[1] * _s13(i, j + rj0, k + 5) +
-                    dhz4[2] * _s13(i, j + rj0, k + 6) +
-                    dhz4[3] * _s13(i, j + rj0, k + 7) -
-                    _f1_1(i, j + rj0) *
-                        (dhpz4[0] * _g_c(k + 3) *
-                             (phx4[2] * _s11(i, j + rj0, k + 3) +
-                              phx4[0] * _s11(i - 2, j + rj0, k + 3) +
-                              phx4[1] * _s11(i - 1, j + rj0, k + 3) +
-                              phx4[3] * _s11(i + 1, j + rj0, k + 3)) +
-                         dhpz4[1] * _g_c(k + 4) *
-                             (phx4[2] * _s11(i, j + rj0, k + 4) +
-                              phx4[0] * _s11(i - 2, j + rj0, k + 4) +
-                              phx4[1] * _s11(i - 1, j + rj0, k + 4) +
-                              phx4[3] * _s11(i + 1, j + rj0, k + 4)) +
-                         dhpz4[2] * _g_c(k + 5) *
-                             (phx4[2] * _s11(i, j + rj0, k + 5) +
-                              phx4[0] * _s11(i - 2, j + rj0, k + 5) +
-                              phx4[1] * _s11(i - 1, j + rj0, k + 5) +
-                              phx4[3] * _s11(i + 1, j + rj0, k + 5)) +
-                         dhpz4[3] * _g_c(k + 6) *
-                             (phx4[2] * _s11(i, j + rj0, k + 6) +
-                              phx4[0] * _s11(i - 2, j + rj0, k + 6) +
-                              phx4[1] * _s11(i - 1, j + rj0, k + 6) +
-                              phx4[3] * _s11(i + 1, j + rj0, k + 6)) +
-                         dhpz4[4] * _g_c(k + 7) *
-                             (phx4[2] * _s11(i, j + rj0, k + 7) +
-                              phx4[0] * _s11(i - 2, j + rj0, k + 7) +
-                              phx4[1] * _s11(i - 1, j + rj0, k + 7) +
-                              phx4[3] * _s11(i + 1, j + rj0, k + 7)) +
-                         dhpz4[5] * _g_c(k + 8) *
-                             (phx4[2] * _s11(i, j + rj0, k + 8) +
-                              phx4[0] * _s11(i - 2, j + rj0, k + 8) +
-                              phx4[1] * _s11(i - 1, j + rj0, k + 8) +
-                              phx4[3] * _s11(i + 1, j + rj0, k + 8)) +
-                         dhpz4[6] * _g_c(k + 9) *
-                             (phx4[2] * _s11(i, j + rj0, k + 9) +
-                              phx4[0] * _s11(i - 2, j + rj0, k + 9) +
-                              phx4[1] * _s11(i - 1, j + rj0, k + 9) +
-                              phx4[3] * _s11(i + 1, j + rj0, k + 9))) -
-                    _f2_1(i, j + rj0) *
-                        (dhpz4[0] * _g_c(k + 3) *
-                             (phy4[2] * _s12(i, j + rj0, k + 3) +
-                              phy4[0] * _s12(i, j + rj0 - 2, k + 3) +
-                              phy4[1] * _s12(i, j + rj0 - 1, k + 3) +
-                              phy4[3] * _s12(i, j + rj0 + 1, k + 3)) +
-                         dhpz4[1] * _g_c(k + 4) *
-                             (phy4[2] * _s12(i, j + rj0, k + 4) +
-                              phy4[0] * _s12(i, j + rj0 - 2, k + 4) +
-                              phy4[1] * _s12(i, j + rj0 - 1, k + 4) +
-                              phy4[3] * _s12(i, j + rj0 + 1, k + 4)) +
-                         dhpz4[2] * _g_c(k + 5) *
-                             (phy4[2] * _s12(i, j + rj0, k + 5) +
-                              phy4[0] * _s12(i, j + rj0 - 2, k + 5) +
-                              phy4[1] * _s12(i, j + rj0 - 1, k + 5) +
-                              phy4[3] * _s12(i, j + rj0 + 1, k + 5)) +
-                         dhpz4[3] * _g_c(k + 6) *
-                             (phy4[2] * _s12(i, j + rj0, k + 6) +
-                              phy4[0] * _s12(i, j + rj0 - 2, k + 6) +
-                              phy4[1] * _s12(i, j + rj0 - 1, k + 6) +
-                              phy4[3] * _s12(i, j + rj0 + 1, k + 6)) +
-                         dhpz4[4] * _g_c(k + 7) *
-                             (phy4[2] * _s12(i, j + rj0, k + 7) +
-                              phy4[0] * _s12(i, j + rj0 - 2, k + 7) +
-                              phy4[1] * _s12(i, j + rj0 - 1, k + 7) +
-                              phy4[3] * _s12(i, j + rj0 + 1, k + 7)) +
-                         dhpz4[5] * _g_c(k + 8) *
-                             (phy4[2] * _s12(i, j + rj0, k + 8) +
-                              phy4[0] * _s12(i, j + rj0 - 2, k + 8) +
-                              phy4[1] * _s12(i, j + rj0 - 1, k + 8) +
-                              phy4[3] * _s12(i, j + rj0 + 1, k + 8)) +
-                         dhpz4[6] * _g_c(k + 9) *
-                             (phy4[2] * _s12(i, j + rj0, k + 9) +
-                              phy4[0] * _s12(i, j + rj0 - 2, k + 9) +
-                              phy4[1] * _s12(i, j + rj0 - 1, k + 9) +
-                              phy4[3] * _s12(i, j + rj0 + 1, k + 9))))) *
-            f_dcrj;
-        _buf_u2(i, j, k + 6) =
-            (a * _u2(i, j + rj0, k + 6) +
-             Ai2 * (dhz4[0] * _s23(i, j + rj0, k + 4) +
-                    dhz4[1] * _s23(i, j + rj0, k + 5) +
-                    dhz4[2] * _s23(i, j + rj0, k + 6) +
-                    dhz4[3] * _s23(i, j + rj0, k + 7) +
-                    dx4[1] * _f(i, j + rj0) * _g3_c(k + 6) *
-                        _s12(i, j + rj0, k + 6) +
-                    dx4[0] * _f(i - 1, j + rj0) * _g3_c(k + 6) *
-                        _s12(i - 1, j + rj0, k + 6) +
-                    dx4[2] * _f(i + 1, j + rj0) * _g3_c(k + 6) *
-                        _s12(i + 1, j + rj0, k + 6) +
-                    dx4[3] * _f(i + 2, j + rj0) * _g3_c(k + 6) *
-                        _s12(i + 2, j + rj0, k + 6) +
-                    dy4[1] * _f_c(i, j + rj0) * _g3_c(k + 6) *
-                        _s22(i, j + rj0, k + 6) +
-                    dy4[0] * _f_c(i, j + rj0 - 1) * _g3_c(k + 6) *
-                        _s22(i, j + rj0 - 1, k + 6) +
-                    dy4[2] * _f_c(i, j + rj0 + 1) * _g3_c(k + 6) *
-                        _s22(i, j + rj0 + 1, k + 6) +
-                    dy4[3] * _f_c(i, j + rj0 + 2) * _g3_c(k + 6) *
-                        _s22(i, j + rj0 + 2, k + 6) -
-                    _f1_2(i, j + rj0) *
-                        (dhpz4[0] * _g_c(k + 3) *
-                             (px4[1] * _s12(i, j + rj0, k + 3) +
-                              px4[0] * _s12(i - 1, j + rj0, k + 3) +
-                              px4[2] * _s12(i + 1, j + rj0, k + 3) +
-                              px4[3] * _s12(i + 2, j + rj0, k + 3)) +
-                         dhpz4[1] * _g_c(k + 4) *
-                             (px4[1] * _s12(i, j + rj0, k + 4) +
-                              px4[0] * _s12(i - 1, j + rj0, k + 4) +
-                              px4[2] * _s12(i + 1, j + rj0, k + 4) +
-                              px4[3] * _s12(i + 2, j + rj0, k + 4)) +
-                         dhpz4[2] * _g_c(k + 5) *
-                             (px4[1] * _s12(i, j + rj0, k + 5) +
-                              px4[0] * _s12(i - 1, j + rj0, k + 5) +
-                              px4[2] * _s12(i + 1, j + rj0, k + 5) +
-                              px4[3] * _s12(i + 2, j + rj0, k + 5)) +
-                         dhpz4[3] * _g_c(k + 6) *
-                             (px4[1] * _s12(i, j + rj0, k + 6) +
-                              px4[0] * _s12(i - 1, j + rj0, k + 6) +
-                              px4[2] * _s12(i + 1, j + rj0, k + 6) +
-                              px4[3] * _s12(i + 2, j + rj0, k + 6)) +
-                         dhpz4[4] * _g_c(k + 7) *
-                             (px4[1] * _s12(i, j + rj0, k + 7) +
-                              px4[0] * _s12(i - 1, j + rj0, k + 7) +
-                              px4[2] * _s12(i + 1, j + rj0, k + 7) +
-                              px4[3] * _s12(i + 2, j + rj0, k + 7)) +
-                         dhpz4[5] * _g_c(k + 8) *
-                             (px4[1] * _s12(i, j + rj0, k + 8) +
-                              px4[0] * _s12(i - 1, j + rj0, k + 8) +
-                              px4[2] * _s12(i + 1, j + rj0, k + 8) +
-                              px4[3] * _s12(i + 2, j + rj0, k + 8)) +
-                         dhpz4[6] * _g_c(k + 9) *
-                             (px4[1] * _s12(i, j + rj0, k + 9) +
-                              px4[0] * _s12(i - 1, j + rj0, k + 9) +
-                              px4[2] * _s12(i + 1, j + rj0, k + 9) +
-                              px4[3] * _s12(i + 2, j + rj0, k + 9))) -
-                    _f2_2(i, j + rj0) *
-                        (dhpz4[0] * _g_c(k + 3) *
-                             (py4[1] * _s22(i, j + rj0, k + 3) +
-                              py4[0] * _s22(i, j + rj0 - 1, k + 3) +
-                              py4[2] * _s22(i, j + rj0 + 1, k + 3) +
-                              py4[3] * _s22(i, j + rj0 + 2, k + 3)) +
-                         dhpz4[1] * _g_c(k + 4) *
-                             (py4[1] * _s22(i, j + rj0, k + 4) +
-                              py4[0] * _s22(i, j + rj0 - 1, k + 4) +
-                              py4[2] * _s22(i, j + rj0 + 1, k + 4) +
-                              py4[3] * _s22(i, j + rj0 + 2, k + 4)) +
-                         dhpz4[2] * _g_c(k + 5) *
-                             (py4[1] * _s22(i, j + rj0, k + 5) +
-                              py4[0] * _s22(i, j + rj0 - 1, k + 5) +
-                              py4[2] * _s22(i, j + rj0 + 1, k + 5) +
-                              py4[3] * _s22(i, j + rj0 + 2, k + 5)) +
-                         dhpz4[3] * _g_c(k + 6) *
-                             (py4[1] * _s22(i, j + rj0, k + 6) +
-                              py4[0] * _s22(i, j + rj0 - 1, k + 6) +
-                              py4[2] * _s22(i, j + rj0 + 1, k + 6) +
-                              py4[3] * _s22(i, j + rj0 + 2, k + 6)) +
-                         dhpz4[4] * _g_c(k + 7) *
-                             (py4[1] * _s22(i, j + rj0, k + 7) +
-                              py4[0] * _s22(i, j + rj0 - 1, k + 7) +
-                              py4[2] * _s22(i, j + rj0 + 1, k + 7) +
-                              py4[3] * _s22(i, j + rj0 + 2, k + 7)) +
-                         dhpz4[5] * _g_c(k + 8) *
-                             (py4[1] * _s22(i, j + rj0, k + 8) +
-                              py4[0] * _s22(i, j + rj0 - 1, k + 8) +
-                              py4[2] * _s22(i, j + rj0 + 1, k + 8) +
-                              py4[3] * _s22(i, j + rj0 + 2, k + 8)) +
-                         dhpz4[6] * _g_c(k + 9) *
-                             (py4[1] * _s22(i, j + rj0, k + 9) +
-                              py4[0] * _s22(i, j + rj0 - 1, k + 9) +
-                              py4[2] * _s22(i, j + rj0 + 1, k + 9) +
-                              py4[3] * _s22(i, j + rj0 + 2, k + 9))))) *
-            f_dcrj;
-        _buf_u3(i, j, k + 6) =
-            (a * _u3(i, j + rj0, k + 6) +
-             Ai3 * (dhy4[2] * _f_2(i, j + rj0) * _g3(k + 6) *
-                        _s23(i, j + rj0, k + 6) +
-                    dhy4[0] * _f_2(i, j + rj0 - 2) * _g3(k + 6) *
-                        _s23(i, j + rj0 - 2, k + 6) +
-                    dhy4[1] * _f_2(i, j + rj0 - 1) * _g3(k + 6) *
-                        _s23(i, j + rj0 - 1, k + 6) +
-                    dhy4[3] * _f_2(i, j + rj0 + 1) * _g3(k + 6) *
-                        _s23(i, j + rj0 + 1, k + 6) +
-                    dx4[1] * _f_1(i, j + rj0) * _g3(k + 6) *
-                        _s13(i, j + rj0, k + 6) +
-                    dx4[0] * _f_1(i - 1, j + rj0) * _g3(k + 6) *
-                        _s13(i - 1, j + rj0, k + 6) +
-                    dx4[2] * _f_1(i + 1, j + rj0) * _g3(k + 6) *
-                        _s13(i + 1, j + rj0, k + 6) +
-                    dx4[3] * _f_1(i + 2, j + rj0) * _g3(k + 6) *
-                        _s13(i + 2, j + rj0, k + 6) +
-                    dz4[0] * _s33(i, j + rj0, k + 5) +
-                    dz4[1] * _s33(i, j + rj0, k + 6) +
-                    dz4[2] * _s33(i, j + rj0, k + 7) +
-                    dz4[3] * _s33(i, j + rj0, k + 8) -
-                    _f1_c(i, j + rj0) *
-                        (dphz4[0] * _g(k + 3) *
-                             (px4[1] * _s13(i, j + rj0, k + 3) +
-                              px4[0] * _s13(i - 1, j + rj0, k + 3) +
-                              px4[2] * _s13(i + 1, j + rj0, k + 3) +
-                              px4[3] * _s13(i + 2, j + rj0, k + 3)) +
-                         dphz4[1] * _g(k + 4) *
-                             (px4[1] * _s13(i, j + rj0, k + 4) +
-                              px4[0] * _s13(i - 1, j + rj0, k + 4) +
-                              px4[2] * _s13(i + 1, j + rj0, k + 4) +
-                              px4[3] * _s13(i + 2, j + rj0, k + 4)) +
-                         dphz4[2] * _g(k + 5) *
-                             (px4[1] * _s13(i, j + rj0, k + 5) +
-                              px4[0] * _s13(i - 1, j + rj0, k + 5) +
-                              px4[2] * _s13(i + 1, j + rj0, k + 5) +
-                              px4[3] * _s13(i + 2, j + rj0, k + 5)) +
-                         dphz4[3] * _g(k + 6) *
-                             (px4[1] * _s13(i, j + rj0, k + 6) +
-                              px4[0] * _s13(i - 1, j + rj0, k + 6) +
-                              px4[2] * _s13(i + 1, j + rj0, k + 6) +
-                              px4[3] * _s13(i + 2, j + rj0, k + 6)) +
-                         dphz4[4] * _g(k + 7) *
-                             (px4[1] * _s13(i, j + rj0, k + 7) +
-                              px4[0] * _s13(i - 1, j + rj0, k + 7) +
-                              px4[2] * _s13(i + 1, j + rj0, k + 7) +
-                              px4[3] * _s13(i + 2, j + rj0, k + 7)) +
-                         dphz4[5] * _g(k + 8) *
-                             (px4[1] * _s13(i, j + rj0, k + 8) +
-                              px4[0] * _s13(i - 1, j + rj0, k + 8) +
-                              px4[2] * _s13(i + 1, j + rj0, k + 8) +
-                              px4[3] * _s13(i + 2, j + rj0, k + 8)) +
-                         dphz4[6] * _g(k + 9) *
-                             (px4[1] * _s13(i, j + rj0, k + 9) +
-                              px4[0] * _s13(i - 1, j + rj0, k + 9) +
-                              px4[2] * _s13(i + 1, j + rj0, k + 9) +
-                              px4[3] * _s13(i + 2, j + rj0, k + 9))) -
-                    _f2_c(i, j + rj0) *
-                        (dphz4[0] * _g(k + 3) *
-                             (phy4[2] * _s23(i, j + rj0, k + 3) +
-                              phy4[0] * _s23(i, j + rj0 - 2, k + 3) +
-                              phy4[1] * _s23(i, j + rj0 - 1, k + 3) +
-                              phy4[3] * _s23(i, j + rj0 + 1, k + 3)) +
-                         dphz4[1] * _g(k + 4) *
-                             (phy4[2] * _s23(i, j + rj0, k + 4) +
-                              phy4[0] * _s23(i, j + rj0 - 2, k + 4) +
-                              phy4[1] * _s23(i, j + rj0 - 1, k + 4) +
-                              phy4[3] * _s23(i, j + rj0 + 1, k + 4)) +
-                         dphz4[2] * _g(k + 5) *
-                             (phy4[2] * _s23(i, j + rj0, k + 5) +
-                              phy4[0] * _s23(i, j + rj0 - 2, k + 5) +
-                              phy4[1] * _s23(i, j + rj0 - 1, k + 5) +
-                              phy4[3] * _s23(i, j + rj0 + 1, k + 5)) +
-                         dphz4[3] * _g(k + 6) *
-                             (phy4[2] * _s23(i, j + rj0, k + 6) +
-                              phy4[0] * _s23(i, j + rj0 - 2, k + 6) +
-                              phy4[1] * _s23(i, j + rj0 - 1, k + 6) +
-                              phy4[3] * _s23(i, j + rj0 + 1, k + 6)) +
-                         dphz4[4] * _g(k + 7) *
-                             (phy4[2] * _s23(i, j + rj0, k + 7) +
-                              phy4[0] * _s23(i, j + rj0 - 2, k + 7) +
-                              phy4[1] * _s23(i, j + rj0 - 1, k + 7) +
-                              phy4[3] * _s23(i, j + rj0 + 1, k + 7)) +
-                         dphz4[5] * _g(k + 8) *
-                             (phy4[2] * _s23(i, j + rj0, k + 8) +
-                              phy4[0] * _s23(i, j + rj0 - 2, k + 8) +
-                              phy4[1] * _s23(i, j + rj0 - 1, k + 8) +
-                              phy4[3] * _s23(i, j + rj0 + 1, k + 8)) +
-                         dphz4[6] * _g(k + 9) *
-                             (phy4[2] * _s23(i, j + rj0, k + 9) +
-                              phy4[0] * _s23(i, j + rj0 - 2, k + 9) +
-                              phy4[1] * _s23(i, j + rj0 - 1, k + 9) +
-                              phy4[3] * _s23(i, j + rj0 + 1, k + 9))))) *
-            f_dcrj;
+#define _rho(i, j, k)                                                          \
+  rho[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s11(i, j, k)                                                          \
+  s11[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s12(i, j, k)                                                          \
+  s12[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s13(i, j, k)                                                          \
+  s13[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s22(i, j, k)                                                          \
+  s22[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s23(i, j, k)                                                          \
+  s23[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _s33(i, j, k)                                                          \
+  s33[(k) + align +                                                            \
+      (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) +              \
+      (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u1(i, j, k)                                                           \
+  u1[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u2(i, j, k)                                                           \
+  u2[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+#define _u3(i, j, k)                                                           \
+  u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * ((j) + ngsl + 2)]
+  float rho1 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i, j + rj0 - 1, k - 1)) +
+               0.25 * (_rho(i, j + rj0, k) + _rho(i, j + rj0 - 1, k));
+  float rho2 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i - 1, j + rj0, k - 1)) +
+               0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k));
+  float rho3 = 0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k)) +
+               0.25 * (_rho(i, j + rj0 - 1, k) + _rho(i - 1, j + rj0 - 1, k));
+  float Ai1 = _f_1(i, j + rj0) * _g3_c(k) * rho1;
+  Ai1 = nu * 1.0 / Ai1;
+  float Ai2 = _f_2(i, j + rj0) * _g3_c(k) * rho2;
+  Ai2 = nu * 1.0 / Ai2;
+  float Ai3 = _f_c(i, j + rj0) * _g3(k) * rho3;
+  Ai3 = nu * 1.0 / Ai3;
+  float f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(k);
+  _buf_u1(i, j, k) =
+      (a * _u1(i, j + rj0, k) +
+       Ai1 *
+           (dhx4[2] * _f_c(i, j + rj0) * _g3_c(k) * _s11(i, j + rj0, k) +
+            dhx4[0] * _f_c(i - 2, j + rj0) * _g3_c(k) *
+                _s11(i - 2, j + rj0, k) +
+            dhx4[1] * _f_c(i - 1, j + rj0) * _g3_c(k) *
+                _s11(i - 1, j + rj0, k) +
+            dhx4[3] * _f_c(i + 1, j + rj0) * _g3_c(k) *
+                _s11(i + 1, j + rj0, k) +
+            dhy4[2] * _f(i, j + rj0) * _g3_c(k) * _s12(i, j + rj0, k) +
+            dhy4[0] * _f(i, j + rj0 - 2) * _g3_c(k) * _s12(i, j + rj0 - 2, k) +
+            dhy4[1] * _f(i, j + rj0 - 1) * _g3_c(k) * _s12(i, j + rj0 - 1, k) +
+            dhy4[3] * _f(i, j + rj0 + 1) * _g3_c(k) * _s12(i, j + rj0 + 1, k) +
+            dhz4[2] * _s13(i, j + rj0, k) + dhz4[0] * _s13(i, j + rj0, k - 2) +
+            dhz4[1] * _s13(i, j + rj0, k - 1) +
+            dhz4[3] * _s13(i, j + rj0, k + 1) -
+            _f1_1(i, j + rj0) * (dhpz4[3] * _g_c(k) *
+                                     (phx4[2] * _s11(i, j + rj0, k) +
+                                      phx4[0] * _s11(i - 2, j + rj0, k) +
+                                      phx4[1] * _s11(i - 1, j + rj0, k) +
+                                      phx4[3] * _s11(i + 1, j + rj0, k)) +
+                                 dhpz4[0] * _g_c(k - 3) *
+                                     (phx4[2] * _s11(i, j + rj0, k - 3) +
+                                      phx4[0] * _s11(i - 2, j + rj0, k - 3) +
+                                      phx4[1] * _s11(i - 1, j + rj0, k - 3) +
+                                      phx4[3] * _s11(i + 1, j + rj0, k - 3)) +
+                                 dhpz4[1] * _g_c(k - 2) *
+                                     (phx4[2] * _s11(i, j + rj0, k - 2) +
+                                      phx4[0] * _s11(i - 2, j + rj0, k - 2) +
+                                      phx4[1] * _s11(i - 1, j + rj0, k - 2) +
+                                      phx4[3] * _s11(i + 1, j + rj0, k - 2)) +
+                                 dhpz4[2] * _g_c(k - 1) *
+                                     (phx4[2] * _s11(i, j + rj0, k - 1) +
+                                      phx4[0] * _s11(i - 2, j + rj0, k - 1) +
+                                      phx4[1] * _s11(i - 1, j + rj0, k - 1) +
+                                      phx4[3] * _s11(i + 1, j + rj0, k - 1)) +
+                                 dhpz4[4] * _g_c(k + 1) *
+                                     (phx4[2] * _s11(i, j + rj0, k + 1) +
+                                      phx4[0] * _s11(i - 2, j + rj0, k + 1) +
+                                      phx4[1] * _s11(i - 1, j + rj0, k + 1) +
+                                      phx4[3] * _s11(i + 1, j + rj0, k + 1)) +
+                                 dhpz4[5] * _g_c(k + 2) *
+                                     (phx4[2] * _s11(i, j + rj0, k + 2) +
+                                      phx4[0] * _s11(i - 2, j + rj0, k + 2) +
+                                      phx4[1] * _s11(i - 1, j + rj0, k + 2) +
+                                      phx4[3] * _s11(i + 1, j + rj0, k + 2)) +
+                                 dhpz4[6] * _g_c(k + 3) *
+                                     (phx4[2] * _s11(i, j + rj0, k + 3) +
+                                      phx4[0] * _s11(i - 2, j + rj0, k + 3) +
+                                      phx4[1] * _s11(i - 1, j + rj0, k + 3) +
+                                      phx4[3] * _s11(i + 1, j + rj0, k + 3))) -
+            _f2_1(i, j + rj0) *
+                (dhpz4[3] * _g_c(k) *
+                     (phy4[2] * _s12(i, j + rj0, k) +
+                      phy4[0] * _s12(i, j + rj0 - 2, k) +
+                      phy4[1] * _s12(i, j + rj0 - 1, k) +
+                      phy4[3] * _s12(i, j + rj0 + 1, k)) +
+                 dhpz4[0] * _g_c(k - 3) *
+                     (phy4[2] * _s12(i, j + rj0, k - 3) +
+                      phy4[0] * _s12(i, j + rj0 - 2, k - 3) +
+                      phy4[1] * _s12(i, j + rj0 - 1, k - 3) +
+                      phy4[3] * _s12(i, j + rj0 + 1, k - 3)) +
+                 dhpz4[1] * _g_c(k - 2) *
+                     (phy4[2] * _s12(i, j + rj0, k - 2) +
+                      phy4[0] * _s12(i, j + rj0 - 2, k - 2) +
+                      phy4[1] * _s12(i, j + rj0 - 1, k - 2) +
+                      phy4[3] * _s12(i, j + rj0 + 1, k - 2)) +
+                 dhpz4[2] * _g_c(k - 1) *
+                     (phy4[2] * _s12(i, j + rj0, k - 1) +
+                      phy4[0] * _s12(i, j + rj0 - 2, k - 1) +
+                      phy4[1] * _s12(i, j + rj0 - 1, k - 1) +
+                      phy4[3] * _s12(i, j + rj0 + 1, k - 1)) +
+                 dhpz4[4] * _g_c(k + 1) *
+                     (phy4[2] * _s12(i, j + rj0, k + 1) +
+                      phy4[0] * _s12(i, j + rj0 - 2, k + 1) +
+                      phy4[1] * _s12(i, j + rj0 - 1, k + 1) +
+                      phy4[3] * _s12(i, j + rj0 + 1, k + 1)) +
+                 dhpz4[5] * _g_c(k + 2) *
+                     (phy4[2] * _s12(i, j + rj0, k + 2) +
+                      phy4[0] * _s12(i, j + rj0 - 2, k + 2) +
+                      phy4[1] * _s12(i, j + rj0 - 1, k + 2) +
+                      phy4[3] * _s12(i, j + rj0 + 1, k + 2)) +
+                 dhpz4[6] * _g_c(k + 3) *
+                     (phy4[2] * _s12(i, j + rj0, k + 3) +
+                      phy4[0] * _s12(i, j + rj0 - 2, k + 3) +
+                      phy4[1] * _s12(i, j + rj0 - 1, k + 3) +
+                      phy4[3] * _s12(i, j + rj0 + 1, k + 3))))) *
+      f_dcrj;
+  _buf_u2(i, j, k) =
+      (a * _u2(i, j + rj0, k) +
+       Ai2 *
+           (dhz4[2] * _s23(i, j + rj0, k) + dhz4[0] * _s23(i, j + rj0, k - 2) +
+            dhz4[1] * _s23(i, j + rj0, k - 1) +
+            dhz4[3] * _s23(i, j + rj0, k + 1) +
+            dx4[1] * _f(i, j + rj0) * _g3_c(k) * _s12(i, j + rj0, k) +
+            dx4[0] * _f(i - 1, j + rj0) * _g3_c(k) * _s12(i - 1, j + rj0, k) +
+            dx4[2] * _f(i + 1, j + rj0) * _g3_c(k) * _s12(i + 1, j + rj0, k) +
+            dx4[3] * _f(i + 2, j + rj0) * _g3_c(k) * _s12(i + 2, j + rj0, k) +
+            dy4[1] * _f_c(i, j + rj0) * _g3_c(k) * _s22(i, j + rj0, k) +
+            dy4[0] * _f_c(i, j + rj0 - 1) * _g3_c(k) * _s22(i, j + rj0 - 1, k) +
+            dy4[2] * _f_c(i, j + rj0 + 1) * _g3_c(k) * _s22(i, j + rj0 + 1, k) +
+            dy4[3] * _f_c(i, j + rj0 + 2) * _g3_c(k) * _s22(i, j + rj0 + 2, k) -
+            _f1_2(i, j + rj0) * (dhpz4[3] * _g_c(k) *
+                                     (px4[1] * _s12(i, j + rj0, k) +
+                                      px4[0] * _s12(i - 1, j + rj0, k) +
+                                      px4[2] * _s12(i + 1, j + rj0, k) +
+                                      px4[3] * _s12(i + 2, j + rj0, k)) +
+                                 dhpz4[0] * _g_c(k - 3) *
+                                     (px4[1] * _s12(i, j + rj0, k - 3) +
+                                      px4[0] * _s12(i - 1, j + rj0, k - 3) +
+                                      px4[2] * _s12(i + 1, j + rj0, k - 3) +
+                                      px4[3] * _s12(i + 2, j + rj0, k - 3)) +
+                                 dhpz4[1] * _g_c(k - 2) *
+                                     (px4[1] * _s12(i, j + rj0, k - 2) +
+                                      px4[0] * _s12(i - 1, j + rj0, k - 2) +
+                                      px4[2] * _s12(i + 1, j + rj0, k - 2) +
+                                      px4[3] * _s12(i + 2, j + rj0, k - 2)) +
+                                 dhpz4[2] * _g_c(k - 1) *
+                                     (px4[1] * _s12(i, j + rj0, k - 1) +
+                                      px4[0] * _s12(i - 1, j + rj0, k - 1) +
+                                      px4[2] * _s12(i + 1, j + rj0, k - 1) +
+                                      px4[3] * _s12(i + 2, j + rj0, k - 1)) +
+                                 dhpz4[4] * _g_c(k + 1) *
+                                     (px4[1] * _s12(i, j + rj0, k + 1) +
+                                      px4[0] * _s12(i - 1, j + rj0, k + 1) +
+                                      px4[2] * _s12(i + 1, j + rj0, k + 1) +
+                                      px4[3] * _s12(i + 2, j + rj0, k + 1)) +
+                                 dhpz4[5] * _g_c(k + 2) *
+                                     (px4[1] * _s12(i, j + rj0, k + 2) +
+                                      px4[0] * _s12(i - 1, j + rj0, k + 2) +
+                                      px4[2] * _s12(i + 1, j + rj0, k + 2) +
+                                      px4[3] * _s12(i + 2, j + rj0, k + 2)) +
+                                 dhpz4[6] * _g_c(k + 3) *
+                                     (px4[1] * _s12(i, j + rj0, k + 3) +
+                                      px4[0] * _s12(i - 1, j + rj0, k + 3) +
+                                      px4[2] * _s12(i + 1, j + rj0, k + 3) +
+                                      px4[3] * _s12(i + 2, j + rj0, k + 3))) -
+            _f2_2(i, j + rj0) * (dhpz4[3] * _g_c(k) *
+                                     (py4[1] * _s22(i, j + rj0, k) +
+                                      py4[0] * _s22(i, j + rj0 - 1, k) +
+                                      py4[2] * _s22(i, j + rj0 + 1, k) +
+                                      py4[3] * _s22(i, j + rj0 + 2, k)) +
+                                 dhpz4[0] * _g_c(k - 3) *
+                                     (py4[1] * _s22(i, j + rj0, k - 3) +
+                                      py4[0] * _s22(i, j + rj0 - 1, k - 3) +
+                                      py4[2] * _s22(i, j + rj0 + 1, k - 3) +
+                                      py4[3] * _s22(i, j + rj0 + 2, k - 3)) +
+                                 dhpz4[1] * _g_c(k - 2) *
+                                     (py4[1] * _s22(i, j + rj0, k - 2) +
+                                      py4[0] * _s22(i, j + rj0 - 1, k - 2) +
+                                      py4[2] * _s22(i, j + rj0 + 1, k - 2) +
+                                      py4[3] * _s22(i, j + rj0 + 2, k - 2)) +
+                                 dhpz4[2] * _g_c(k - 1) *
+                                     (py4[1] * _s22(i, j + rj0, k - 1) +
+                                      py4[0] * _s22(i, j + rj0 - 1, k - 1) +
+                                      py4[2] * _s22(i, j + rj0 + 1, k - 1) +
+                                      py4[3] * _s22(i, j + rj0 + 2, k - 1)) +
+                                 dhpz4[4] * _g_c(k + 1) *
+                                     (py4[1] * _s22(i, j + rj0, k + 1) +
+                                      py4[0] * _s22(i, j + rj0 - 1, k + 1) +
+                                      py4[2] * _s22(i, j + rj0 + 1, k + 1) +
+                                      py4[3] * _s22(i, j + rj0 + 2, k + 1)) +
+                                 dhpz4[5] * _g_c(k + 2) *
+                                     (py4[1] * _s22(i, j + rj0, k + 2) +
+                                      py4[0] * _s22(i, j + rj0 - 1, k + 2) +
+                                      py4[2] * _s22(i, j + rj0 + 1, k + 2) +
+                                      py4[3] * _s22(i, j + rj0 + 2, k + 2)) +
+                                 dhpz4[6] * _g_c(k + 3) *
+                                     (py4[1] * _s22(i, j + rj0, k + 3) +
+                                      py4[0] * _s22(i, j + rj0 - 1, k + 3) +
+                                      py4[2] * _s22(i, j + rj0 + 1, k + 3) +
+                                      py4[3] * _s22(i, j + rj0 + 2, k + 3))))) *
+      f_dcrj;
+  _buf_u3(i, j, k) =
+      (a * _u3(i, j + rj0, k) +
+       Ai3 *
+           (dhy4[2] * _f_2(i, j + rj0) * _g3(k) * _s23(i, j + rj0, k) +
+            dhy4[0] * _f_2(i, j + rj0 - 2) * _g3(k) * _s23(i, j + rj0 - 2, k) +
+            dhy4[1] * _f_2(i, j + rj0 - 1) * _g3(k) * _s23(i, j + rj0 - 1, k) +
+            dhy4[3] * _f_2(i, j + rj0 + 1) * _g3(k) * _s23(i, j + rj0 + 1, k) +
+            dx4[1] * _f_1(i, j + rj0) * _g3(k) * _s13(i, j + rj0, k) +
+            dx4[0] * _f_1(i - 1, j + rj0) * _g3(k) * _s13(i - 1, j + rj0, k) +
+            dx4[2] * _f_1(i + 1, j + rj0) * _g3(k) * _s13(i + 1, j + rj0, k) +
+            dx4[3] * _f_1(i + 2, j + rj0) * _g3(k) * _s13(i + 2, j + rj0, k) +
+            dz4[1] * _s33(i, j + rj0, k) + dz4[0] * _s33(i, j + rj0, k - 1) +
+            dz4[2] * _s33(i, j + rj0, k + 1) +
+            dz4[3] * _s33(i, j + rj0, k + 2) -
+            _f1_c(i, j + rj0) * (dphz4[3] * _g(k) *
+                                     (px4[1] * _s13(i, j + rj0, k) +
+                                      px4[0] * _s13(i - 1, j + rj0, k) +
+                                      px4[2] * _s13(i + 1, j + rj0, k) +
+                                      px4[3] * _s13(i + 2, j + rj0, k)) +
+                                 dphz4[0] * _g(k - 3) *
+                                     (px4[1] * _s13(i, j + rj0, k - 3) +
+                                      px4[0] * _s13(i - 1, j + rj0, k - 3) +
+                                      px4[2] * _s13(i + 1, j + rj0, k - 3) +
+                                      px4[3] * _s13(i + 2, j + rj0, k - 3)) +
+                                 dphz4[1] * _g(k - 2) *
+                                     (px4[1] * _s13(i, j + rj0, k - 2) +
+                                      px4[0] * _s13(i - 1, j + rj0, k - 2) +
+                                      px4[2] * _s13(i + 1, j + rj0, k - 2) +
+                                      px4[3] * _s13(i + 2, j + rj0, k - 2)) +
+                                 dphz4[2] * _g(k - 1) *
+                                     (px4[1] * _s13(i, j + rj0, k - 1) +
+                                      px4[0] * _s13(i - 1, j + rj0, k - 1) +
+                                      px4[2] * _s13(i + 1, j + rj0, k - 1) +
+                                      px4[3] * _s13(i + 2, j + rj0, k - 1)) +
+                                 dphz4[4] * _g(k + 1) *
+                                     (px4[1] * _s13(i, j + rj0, k + 1) +
+                                      px4[0] * _s13(i - 1, j + rj0, k + 1) +
+                                      px4[2] * _s13(i + 1, j + rj0, k + 1) +
+                                      px4[3] * _s13(i + 2, j + rj0, k + 1)) +
+                                 dphz4[5] * _g(k + 2) *
+                                     (px4[1] * _s13(i, j + rj0, k + 2) +
+                                      px4[0] * _s13(i - 1, j + rj0, k + 2) +
+                                      px4[2] * _s13(i + 1, j + rj0, k + 2) +
+                                      px4[3] * _s13(i + 2, j + rj0, k + 2)) +
+                                 dphz4[6] * _g(k + 3) *
+                                     (px4[1] * _s13(i, j + rj0, k + 3) +
+                                      px4[0] * _s13(i - 1, j + rj0, k + 3) +
+                                      px4[2] * _s13(i + 1, j + rj0, k + 3) +
+                                      px4[3] * _s13(i + 2, j + rj0, k + 3))) -
+            _f2_c(i, j + rj0) *
+                (dphz4[3] * _g(k) *
+                     (phy4[2] * _s23(i, j + rj0, k) +
+                      phy4[0] * _s23(i, j + rj0 - 2, k) +
+                      phy4[1] * _s23(i, j + rj0 - 1, k) +
+                      phy4[3] * _s23(i, j + rj0 + 1, k)) +
+                 dphz4[0] * _g(k - 3) *
+                     (phy4[2] * _s23(i, j + rj0, k - 3) +
+                      phy4[0] * _s23(i, j + rj0 - 2, k - 3) +
+                      phy4[1] * _s23(i, j + rj0 - 1, k - 3) +
+                      phy4[3] * _s23(i, j + rj0 + 1, k - 3)) +
+                 dphz4[1] * _g(k - 2) *
+                     (phy4[2] * _s23(i, j + rj0, k - 2) +
+                      phy4[0] * _s23(i, j + rj0 - 2, k - 2) +
+                      phy4[1] * _s23(i, j + rj0 - 1, k - 2) +
+                      phy4[3] * _s23(i, j + rj0 + 1, k - 2)) +
+                 dphz4[2] * _g(k - 1) *
+                     (phy4[2] * _s23(i, j + rj0, k - 1) +
+                      phy4[0] * _s23(i, j + rj0 - 2, k - 1) +
+                      phy4[1] * _s23(i, j + rj0 - 1, k - 1) +
+                      phy4[3] * _s23(i, j + rj0 + 1, k - 1)) +
+                 dphz4[4] * _g(k + 1) *
+                     (phy4[2] * _s23(i, j + rj0, k + 1) +
+                      phy4[0] * _s23(i, j + rj0 - 2, k + 1) +
+                      phy4[1] * _s23(i, j + rj0 - 1, k + 1) +
+                      phy4[3] * _s23(i, j + rj0 + 1, k + 1)) +
+                 dphz4[5] * _g(k + 2) *
+                     (phy4[2] * _s23(i, j + rj0, k + 2) +
+                      phy4[0] * _s23(i, j + rj0 - 2, k + 2) +
+                      phy4[1] * _s23(i, j + rj0 - 1, k + 2) +
+                      phy4[3] * _s23(i, j + rj0 + 1, k + 2)) +
+                 dphz4[6] * _g(k + 3) *
+                     (phy4[2] * _s23(i, j + rj0, k + 3) +
+                      phy4[0] * _s23(i, j + rj0 - 2, k + 3) +
+                      phy4[1] * _s23(i, j + rj0 - 1, k + 3) +
+                      phy4[3] * _s23(i, j + rj0 + 1, k + 3))))) *
+      f_dcrj;
 #undef _buf_u1
 #undef _buf_u2
 #undef _buf_u3
@@ -3206,27 +2742,6 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
         const float* RSTRCT u2, const float* RSTRCT u3,
         const float a, const float nu, const int nx, const int ny, const int nz,
         const int bj, const int ej, const int rj0) {
-        const float phz2r[6][8] = {
-            {0.0000000000000000, 1.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
-             0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.5000000000000000,
-             0.5000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.5000000000000000, 0.5000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
-             0.0000000000000000, 0.0000000000000000},
-            {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
-             0.0000000000000000, 0.0000000000000000, 0.5000000000000000,
-             0.5000000000000000, 0.0000000000000000}};
-        const float phy2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phx2[2] = {0.5000000000000000, 0.5000000000000000};
         const float dhpz4r[6][9] = {
             {-1.5373923010673118, -1.1059180740634813, -0.2134752473866528,
              -0.0352027995732726, -0.0075022330101095, -0.0027918394266035,
@@ -3412,56 +2927,17 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
         u3[(k) + align +                                               \
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
-        //float rho1 = phz2r[k][7] * (phy2[1] * _rho(i, j + rj0, nz - 8) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 8)) +
-        //             phz2r[k][6] * (phy2[1] * _rho(i, j + rj0, nz - 7) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 7)) +
-        //             phz2r[k][5] * (phy2[1] * _rho(i, j + rj0, nz - 6) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 6)) +
-        //             phz2r[k][4] * (phy2[1] * _rho(i, j + rj0, nz - 5) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 5)) +
-        //             phz2r[k][3] * (phy2[1] * _rho(i, j + rj0, nz - 4) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 4)) +
-        //             phz2r[k][2] * (phy2[1] * _rho(i, j + rj0, nz - 3) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 3)) +
-        //             phz2r[k][1] * (phy2[1] * _rho(i, j + rj0, nz - 2) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 2)) +
-        //             phz2r[k][0] * (phy2[1] * _rho(i, j + rj0, nz - 1) +
-        //                            phy2[0] * _rho(i, j + rj0 - 1, nz - 1));
-        //float rho2 = phz2r[k][7] * (phx2[1] * _rho(i, j + rj0, nz - 8) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 8)) +
-        //             phz2r[k][6] * (phx2[1] * _rho(i, j + rj0, nz - 7) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 7)) +
-        //             phz2r[k][5] * (phx2[1] * _rho(i, j + rj0, nz - 6) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 6)) +
-        //             phz2r[k][4] * (phx2[1] * _rho(i, j + rj0, nz - 5) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 5)) +
-        //             phz2r[k][3] * (phx2[1] * _rho(i, j + rj0, nz - 4) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 4)) +
-        //             phz2r[k][2] * (phx2[1] * _rho(i, j + rj0, nz - 3) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 3)) +
-        //             phz2r[k][1] * (phx2[1] * _rho(i, j + rj0, nz - 2) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 2)) +
-        //             phz2r[k][0] * (phx2[1] * _rho(i, j + rj0, nz - 1) +
-        //                            phx2[0] * _rho(i - 1, j + rj0, nz - 1));
-        //float rho3 = phy2[1] * (phx2[1] * _rho(i, j + rj0, nz - 1 - k) +
-        //                        phx2[0] * _rho(i - 1, j + rj0, nz - 1 - k)) +
-        //             phy2[0] * (phx2[1] * _rho(i, j + rj0 - 1, nz - 1 - k) +
-        //                        phx2[0] * _rho(i - 1, j + rj0 - 1, nz - 1 - k));
-
         int kb = nz - k - 2;
-        if (i == 1 && j == 1 && k == 0) {
-                printf("rho = [%g %g %g] \n", 
-                                _rho(i, j + rj0, kb + k + 0), 
-                                _rho(i, j + rj0, kb + k + 1), 
-                                _rho(i, j + rj0, kb + k + 2));
-        }
-        float rho1 = 0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i, j + rj0 - 1, kb + 0)) +
-                     0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i, j + rj0 - 1, kb + 1));
-        float rho2 = 0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i - 1, j + rj0, kb + 0)) +
-                     0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1));
-        float rho3 = 0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1)) +
-                     0.25 * (_rho(i, j + rj0 - 1, kb + 1) + _rho(i - 1, j + rj0 - 1, kb + 1));
+        float rho1 =
+            0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i, j + rj0 - 1, kb + 0)) +
+            0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i, j + rj0 - 1, kb + 1));
+        float rho2 =
+            0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i - 1, j + rj0, kb + 0)) +
+            0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1));
+        float rho3 =
+            0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1)) +
+            0.25 * (_rho(i, j + rj0 - 1, kb + 1) +
+                    _rho(i - 1, j + rj0 - 1, kb + 1));
         float Ai1 = _f_1(i, j + rj0) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
         float Ai2 = _f_2(i, j + rj0) * _g3_c(nz - 1 - k) * rho2;
