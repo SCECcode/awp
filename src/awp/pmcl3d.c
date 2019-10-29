@@ -1653,12 +1653,14 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     time_init = gethrtime() - time_init;
     if (rank == 0) printf("Initialization completed in %f s.\n", time_init);
     //  Main Loop Starts
+    if (rank == 0) {
     printf(
         "Time step \t Time \t\t Elapsed time \t sec per time step \t Time "
         "steps per sec \t Percentage completed\n");
     printf(
         "-----------------------------------------------------------------"
         "----------------------------------------------------\n");
+    }
     if( ((NPC==0) || (NPC==2)) && (NVE==1 || NVE==3))
     {
        time_un  -= gethrtime();
