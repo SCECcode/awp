@@ -5,6 +5,7 @@
 #include <topography/kernels/optimized_velocity.cuh>
 #include <topography/kernels/optimized_launch_config.cuh>
 #include <topography/velocity.cuh>
+#include "kernels/velocity_unroll.cu"
 
 inline dim3 set_grid(const dim3 block, const int3_t size, const dim3 loop)
 {
@@ -28,14 +29,28 @@ void topo_velocity_interior_H(topo_t *T)
         // Compute velocities in the front send buffer region. 
         {
         nvtxRangePushA("velocity_interior_front");
-        dim3 block (DTOPO_VEL_111_X, DTOPO_VEL_111_Y, DTOPO_VEL_111_Z);
         int3_t size = {
             .x = T->velocity_bounds_right[1] - T->velocity_bounds_left[0],
             .y = T->velocity_bounds_front[1] - T->velocity_bounds_front[0],
             .z = (int)T->velocity_grid_interior.z};
-        dim3 loop (0, 0, DTOPO_VEL_111_LOOP_Z);
-        dim3 grid = set_grid(block, size, loop);
-        dtopo_vel_111<<<grid, block, 0, T->stream_1>>>(
+
+
+#if sm_61
+#define nq 2
+#define nr 2
+      dim3 threads (64, 2, 2);
+      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
+                   (size.y-1)/(nq*threads.y)+1,
+                   (size.x-1)/threads.z+1);
+#else
+#define nq 2
+#define nr 4
+      dim3 threads (32, 2, 2);
+      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
+                   (size.y-1)/(nq*threads.y)+1,
+                   (size.x-1)/threads.z+1);
+#endif
+        dtopo_vel_111_unroll<nq, nr><<<blocks, threads, 0, T->stream_1>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
                                                    T->metrics_f.d_f,
@@ -68,15 +83,27 @@ void topo_velocity_interior_H(topo_t *T)
 
         // Compute interior part excluding send buffer regions
         {
-                dim3 block (DTOPO_VEL_111_X, DTOPO_VEL_111_Y, DTOPO_VEL_111_Z);
                 int3_t size = {
                     T->velocity_bounds_right[1] - T->velocity_bounds_left[0],
                     T->velocity_bounds_back[0] - T->velocity_bounds_front[1],
                     (int)T->velocity_grid_interior.z};
-                dim3 loop (0, 0, DTOPO_VEL_111_LOOP_Z);
+#if sm_61
+#define nq 2
+#define nr 2
+      dim3 threads (64, 2, 2);
+      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
+                   (size.y-1)/(nq*threads.y)+1,
+                   (size.x-1)/threads.z+1);
+#else
+#define nq 2
+#define nr 4
+      dim3 threads (32, 2, 2);
+      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
+                   (size.y-1)/(nq*threads.y)+1,
+                   (size.x-1)/threads.z+1);
+#endif
                 nvtxRangePushA("velocity_interior_interior");
-                dim3 grid = set_grid(block, size, loop);
-                dtopo_vel_111<<<grid, block, 0, T->stream_i>>>(
+                dtopo_vel_111_unroll<nq, nr><<<blocks, threads, 0, T->stream_i>>>(
                     T->u1, T->v1, T->w1, T->dcrjx, T->dcrjy, T->dcrjz,
                     T->metrics_f.d_f, T->metrics_f.d_f1_1, T->metrics_f.d_f1_2,
                     T->metrics_f.d_f1_c, T->metrics_f.d_f2_1,
@@ -248,45 +275,6 @@ void topo_velocity_interior_H(topo_t *T)
         cudaDeviceSynchronize();
         nvtxRangePop();
         CUCHK(cudaGetLastError());
-        }
-
-        // This kernel only runs in debug mode because it applies one-sided
-        // stencils at depth
-        if (TOPO_DBG) {
-                dim3 block (DTOPO_VEL_110_X, DTOPO_VEL_110_Y, DTOPO_VEL_110_Z);
-                int3_t size = {
-                    T->velocity_bounds_right[1] - T->velocity_bounds_left[0],
-                    T->velocity_bounds_back[1] - T->velocity_bounds_front[0],
-                    (int)T->velocity_grid_interior.z};
-                dim3 loop (0, 0, DTOPO_VEL_110_LOOP_Z);
-                dim3 grid = set_grid(block, size, loop);
-                dtopo_vel_110<<<grid, block, 0, T->stream_i>>>(
-                                                   T->u1, T->v1, T->w1,
-                                                   T->dcrjx, T->dcrjy, T->dcrjz,
-                                                   T->metrics_f.d_f,
-                                                   T->metrics_f.d_f1_1,
-                                                   T->metrics_f.d_f1_2,
-                                                   T->metrics_f.d_f1_c,
-                                                   T->metrics_f.d_f2_1,
-                                                   T->metrics_f.d_f2_2,
-                                                   T->metrics_f.d_f2_c,
-                                                   T->metrics_f.d_f_1,
-                                                   T->metrics_f.d_f_2,
-                                                   T->metrics_f.d_f_c,
-                                                   T->metrics_g.d_g,
-                                                   T->metrics_g.d_g3,
-                                                   T->metrics_g.d_g3_c,
-                                                   T->metrics_g.d_g_c,
-                                                   T->rho,
-                                                   T->xx, T->xy, T->xz, 
-                                                   T->yy, T->yz, T->zz,
-                                                   T->timestep, T->dth,
-                                                   T->nx, T->ny, T->nz,
-                                                   T->velocity_bounds_left[0],
-                                                   T->velocity_bounds_front[0], 
-                                                   T->velocity_bounds_right[1],
-                                                   T->velocity_bounds_back[1]);
-                CUCHK(cudaGetLastError());
         }
 }
 

@@ -24,7 +24,7 @@
 
 template <int np, int nq, int nr>
 #if sm_61
-__launch_bounds__ (256,2)
+__launch_bounds__ (256)
 #else
 __launch_bounds__ (128)
 #endif

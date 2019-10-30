@@ -1946,7 +1946,7 @@ int main (int argc, char **argv) {
     {
 #if sm_61
 #define np 1
-#define nq 1
+#define nq 2
 #define nr 2
       dim3 threads (64, 2, 2);
 #else
