@@ -5,10 +5,11 @@ nt=10
 arch=sm_70
 log=prof.txt
 all: c p
+sm61="-dlcm=ca"
 
 
 c:
-	nvcc test111.cu -lcurand -arch=$(arch) -use_fast_math --ptxas-options=-v,-dlcm=ca -o test111.x -D$(arch)
+	nvcc test111.cu -lcurand -arch=$(arch) -use_fast_math --ptxas-options=-v -o test111.x -D$(arch)
 
 p:
 	nvprof --log-file $(log) ./test111.x $(nx) $(ny) $(nz) $(nt); 

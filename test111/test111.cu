@@ -2,7 +2,10 @@
 #include <curand.h>
 #include <cuda_profiler_api.h>
 
-
+// Kernel optimizations to choose from
+#define USE_SPLIT 0
+#define USE_ORIGINAL 0
+#define USE_UNROLL 1
 #define align 32
 #define ngsl 4
 
@@ -1523,6 +1526,8 @@ __global__ void compare(const float *RSTRCT u1,
 
 #include "split.cu"
 #include "unroll.cu"
+#include "dm.cu"
+#include "dm_unroll.cu"
 #include "unroll2.cu"
 
 #undef RSTRCT
@@ -1691,6 +1696,43 @@ int main (int argc, char **argv) {
   cudaProfilerStart();
 
   for (int iter=0; iter<nt; iter++) {
+
+//-----------------------------------------------------------------------------
+#if USE_ORIGINAL
+    // Original
+    //{
+    //  dim3 threads (1, 1, 64);
+    //  dim3 blocks (nx, ny, (nz-7)/64+1);
+    //  dtopo_vel_111<<<blocks,threads>>> (u1, u2, u3,
+    //                                     dcrjx, dcrjy, dcrjz,
+    //                                     f, f1_1, f1_2, f1_c,
+    //                                     f2_1, f2_2, f2_c,
+    //                                     f_1, f_2, f_c,
+    //                                     g, g3, g3_c, g_c,
+    //                                     rho, s11, s12, s13, s22, s23, s33,
+    //                                     1.0f, 1.0f, nx, ny, nz,
+    //                                     0, 0, nx-1, ny-1);
+    //}
+
+    // Original with 3D block
+    //{
+    //  dim3 threads (64, 4, 4);
+    //  dim3 blocks ((nz-7)/threads.x+1, (ny-1)/threads.y+1, (nx-1)/threads.z+1);
+    //  dtopo_vel_111_blocks<<<blocks,threads>>> (u1, u2, u3,
+    //                                            dcrjx, dcrjy, dcrjz,
+    //                                            f, f1_1, f1_2, f1_c,
+    //                                            f2_1, f2_2, f2_c,
+    //                                            f_1, f_2, f_c,
+    //                                            g, g3, g3_c, g_c,
+    //                                            rho, s11, s12, s13, s22, s23, s33,
+    //                                            1.0f, 1.0f, nx, ny, nz,
+    //                                            0, 0, nx-1, ny-1);
+    //}
+
+#endif
+
+//-----------------------------------------------------------------------------
+
     // Optimized code
     //{
     //  dim3 threads (VEL_111_TILE_Z, VEL_111_TILE_Y, 1);
@@ -1705,11 +1747,42 @@ int main (int argc, char **argv) {
     //                                         1.0f, 1.0f, nx, ny, nz,
     //                                         0, 0, nx-1, ny-1);
     //}
-    // Original with 3D block
+
+
+//-----------------------------------------------------------------------------
+// Original compatible with DM and with 3D block    
     {
-      dim3 threads (64, 4, 4);
+      dim3 threads (64, 2, 2);
       dim3 blocks ((nz-7)/threads.x+1, (ny-1)/threads.y+1, (nx-1)/threads.z+1);
-      dtopo_vel_111_blocks<<<blocks,threads>>> (u1, u2, u3,
+      dtopo_vel_111_dm<<<blocks,threads>>> (u1, u2, u3,
+                                            dcrjx, dcrjy, dcrjz,
+                                            f, f1_1, f1_2, f1_c,
+                                            f2_1, f2_2, f2_c,
+                                            f_1, f_2, f_c,
+                                            g, g3, g3_c, g_c,
+                                            rho, s11, s12, s13, s22, s23, s33,
+                                            1.0f, 1.0f, nx, ny, nz,
+                                            0, 0, nx-1, ny-1);
+    }
+
+// Unrolled DM version
+    {
+#if sm_61
+#define nq 2
+#define nr 2
+      dim3 threads (64, 2, 2);
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/threads.z+1);
+#else
+#define nq 2
+#define nr 4
+      dim3 threads (32, 2, 2);
+      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+                   (ny-1)/(nq*threads.y)+1,
+                   (nx-1)/threads.z+1);
+#endif
+      dtopo_vel_111_dm_unroll<nq, nr><<<blocks,threads>>> (v1, v2, v3,
                                                 dcrjx, dcrjy, dcrjz,
                                                 f, f1_1, f1_2, f1_c,
                                                 f2_1, f2_2, f2_c,
@@ -1718,7 +1791,34 @@ int main (int argc, char **argv) {
                                                 rho, s11, s12, s13, s22, s23, s33,
                                                 1.0f, 1.0f, nx, ny, nz,
                                                 0, 0, nx-1, ny-1);
+
+        if (iter == 0) { 
+
+                if (cudaDeviceSynchronize() != cudaSuccess) {
+                  printf ("Kernels failed\n");
+                }
+
+                compare<<<blocks, threads>>>(u1, u2, u3, v1, v2, v3, nx, ny,
+                                             nz);
+
+                int _err = 0;
+                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
+                                     cudaMemcpyDeviceToHost);
+                if (_err) {
+                        printf("Consistency check failed\n");
+                        //return -1;
+                }
+        }
+#undef np
+#undef nq
+#undef nr
     }
+
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Split versions
+#if USE_SPLIT
 
     {
 
@@ -1740,6 +1840,7 @@ int main (int argc, char **argv) {
                    (nx-1)/(np*threads.z)+1);
 
 #endif
+
 
       dtopo_vel_111_split1<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
                                                 dcrjx, dcrjy, dcrjz,
@@ -1805,37 +1906,42 @@ int main (int argc, char **argv) {
 #undef nr
     }
 
-
-
-
-    {
-#if sm_61
-#define np 1
-#define nq 2
-#define nr 2
-      dim3 threads (64, 2, 2);
-#else
-#define np 1
-#define nq 2
-#define nr 2
-      dim3 threads (32, 2, 2);
 #endif
-      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
-                   (ny-1)/(nq*threads.y)+1,
-                   (nx-1)/(np*threads.z)+1);
-      dtopo_vel_111_unroll2<np, nq, nr><<<blocks,threads>>> (u1, u2, u3,
-                                                dcrjx, dcrjy, dcrjz,
-                                                f, f1_1, f1_2, f1_c,
-                                                f2_1, f2_2, f2_c,
-                                                f_1, f_2, f_c,
-                                                g, g3, g3_c, g_c,
-                                                rho, s11, s12, s13, s22, s23, s33,
-                                                1.0f, 1.0f, nx, ny, nz,
-                                                0, 0, nx-1, ny-1);
-#undef np
-#undef nq
-#undef nr
-    }
+//-----------------------------------------------------------------------------
+
+
+
+//-----------------------------------------------------------------------------
+// Unroll versions
+#if USE_UNROLL
+//    {
+//#if sm_61
+//#define np 1
+//#define nq 2
+//#define nr 2
+//      dim3 threads (64, 2, 2);
+//#else
+//#define np 1
+//#define nq 2
+//#define nr 2
+//      dim3 threads (32, 2, 2);
+//#endif
+//      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
+//                   (ny-1)/(nq*threads.y)+1,
+//                   (nx-1)/(np*threads.z)+1);
+//      dtopo_vel_111_unroll2<np, nq, nr><<<blocks,threads>>> (u1, u2, u3,
+//                                                dcrjx, dcrjy, dcrjz,
+//                                                f, f1_1, f1_2, f1_c,
+//                                                f2_1, f2_2, f2_c,
+//                                                f_1, f_2, f_c,
+//                                                g, g3, g3_c, g_c,
+//                                                rho, s11, s12, s13, s22, s23, s33,
+//                                                1.0f, 1.0f, nx, ny, nz,
+//                                                0, 0, nx-1, ny-1);
+//#undef np
+//#undef nq
+//#undef nr
+//    }
 
     {
 #if sm_61
@@ -1889,21 +1995,7 @@ int main (int argc, char **argv) {
 //#undef nq
 //#undef nr
 //    }
-
-    // Original
-    //{
-    //  dim3 threads (1, 1, 64);
-    //  dim3 blocks (nx, ny, (nz-7)/64+1);
-    //  dtopo_vel_111<<<blocks,threads>>> (u1, u2, u3,
-    //                                     dcrjx, dcrjy, dcrjz,
-    //                                     f, f1_1, f1_2, f1_c,
-    //                                     f2_1, f2_2, f2_c,
-    //                                     f_1, f_2, f_c,
-    //                                     g, g3, g3_c, g_c,
-    //                                     rho, s11, s12, s13, s22, s23, s33,
-    //                                     1.0f, 1.0f, nx, ny, nz,
-    //                                     0, 0, nx-1, ny-1);
-    //}
+#endif
 
   }
 
