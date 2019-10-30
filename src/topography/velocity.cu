@@ -16,6 +16,14 @@ inline dim3 set_grid(const dim3 block, const int3_t size, const dim3 loop)
         return out;
 }
 
+inline dim3 set_blocks(const dim3 threads, const int3_t size, const dim3 loop)
+{
+      dim3 blocks( (size.z-1)/(loop.x*threads.x)+1,
+                   (size.y-1)/(loop.y*threads.y)+1,
+                   (size.x-1)/(loop.z*threads.z)+1);
+      return blocks;
+}
+
 
 void topo_velocity_interior_H(topo_t *T)
 {
@@ -25,6 +33,16 @@ void topo_velocity_interior_H(topo_t *T)
                 printf("launching %s(%d)\n", __func__, T->rank);
         }
 
+#if sm_61
+#define nq 2
+#define nr 2
+        dim3 threads(64, 2, 2);
+#else
+#define nq 2
+#define nr 4
+        dim3 threads(32, 2, 2);
+#endif
+        dim3 loop(nr, nq, 1);
 
         // Compute velocities in the front send buffer region. 
         {
@@ -33,23 +51,7 @@ void topo_velocity_interior_H(topo_t *T)
             .x = T->velocity_bounds_right[1] - T->velocity_bounds_left[0],
             .y = T->velocity_bounds_front[1] - T->velocity_bounds_front[0],
             .z = (int)T->velocity_grid_interior.z};
-
-
-#if sm_61
-#define nq 2
-#define nr 2
-      dim3 threads (64, 2, 2);
-      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
-                   (size.y-1)/(nq*threads.y)+1,
-                   (size.x-1)/threads.z+1);
-#else
-#define nq 2
-#define nr 4
-      dim3 threads (32, 2, 2);
-      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
-                   (size.y-1)/(nq*threads.y)+1,
-                   (size.x-1)/threads.z+1);
-#endif
+        dim3 blocks = set_blocks(threads, size, loop);
         dtopo_vel_111_unroll<nq, nr><<<blocks, threads, 0, T->stream_1>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
@@ -87,21 +89,7 @@ void topo_velocity_interior_H(topo_t *T)
                     T->velocity_bounds_right[1] - T->velocity_bounds_left[0],
                     T->velocity_bounds_back[0] - T->velocity_bounds_front[1],
                     (int)T->velocity_grid_interior.z};
-#if sm_61
-#define nq 2
-#define nr 2
-      dim3 threads (64, 2, 2);
-      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
-                   (size.y-1)/(nq*threads.y)+1,
-                   (size.x-1)/threads.z+1);
-#else
-#define nq 2
-#define nr 4
-      dim3 threads (32, 2, 2);
-      dim3 blocks ((size.z-1)/(nr*threads.x)+1, 
-                   (size.y-1)/(nq*threads.y)+1,
-                   (size.x-1)/threads.z+1);
-#endif
+                dim3 blocks = set_blocks(threads, size, loop);
                 nvtxRangePushA("velocity_interior_interior");
                 dtopo_vel_111_unroll<nq, nr><<<blocks, threads, 0, T->stream_i>>>(
                     T->u1, T->v1, T->w1, T->dcrjx, T->dcrjy, T->dcrjz,
@@ -126,9 +114,9 @@ void topo_velocity_interior_H(topo_t *T)
         int3_t size = {T->velocity_bounds_right[1] - T->velocity_bounds_left[0],
                        T->velocity_bounds_back[1] - T->velocity_bounds_back[0],
                        (int)T->velocity_grid_interior.z};
-        dim3 loop (0, 0, DTOPO_VEL_111_LOOP_Z);
         dim3 grid = set_grid(block, size, loop);
-        dtopo_vel_111<<<grid, block, 0, T->stream_2>>>(
+        dim3 blocks = set_blocks(threads, size, loop);
+        dtopo_vel_111_unroll<nq, nr><<<blocks, threads, 0, T->stream_2>>>(
                                                    T->u1, T->v1, T->w1,
                                                    T->dcrjx, T->dcrjy, T->dcrjz,
                                                    T->metrics_f.d_f,
