@@ -2,12 +2,32 @@
 #include <curand.h>
 #include <cuda_profiler_api.h>
 
-// Kernel optimizations to choose from
-#define USE_SPLIT 0
-#define USE_ORIGINAL 0
-#define USE_UNROLL 1
+// Velocity kernel optimizations to choose from
+#ifndef USE_ORIGINAL_VEL
+#define USE_ORIGINAL_VEL 0
+#endif
+#ifndef USE_SHARED_VEL
+#define USE_SHARED_VEL 0
+#endif
+#ifndef USE_DM_VEL
+#define USE_DM_VEL 0
+#endif
+#ifndef USE_SPLIT_VEL
+#define USE_SPLIT_VEL 0
+#endif
+#ifndef USE_UNROLL_VEL
+#define USE_UNROLL_VEL 0
+#endif
+
+// Stress kernel optimizations to choose from
+#ifndef USE_STRESS_ORIGINAL
+#define USE_STRESS_ORIGINAL 1
+#endif
+
+
 #define align 32
 #define ngsl 4
+#define ngsl2 8
 
 #define RADIUSZ 3
 
@@ -21,7 +41,23 @@ __device__ int err;
 #define CURAND_CALL(x) do { if((x) != CURAND_STATUS_SUCCESS) { \
       printf("Error at %s:%d\n",__FILE__,__LINE__);            \
       return EXIT_FAILURE;}} while(0)
-//#define CURAND_CALL(x) 
+#define CURAND_CALL(x) 
+
+#ifndef CUCHK
+#ifndef NDEBUG
+#define CUCHK(call) {                                                         \
+  cudaError_t err = call;                                                     \
+  if( cudaSuccess != err) {                                                   \
+  fprintf(stderr, "CUDA error in %s:%i %s(): %s.\n",                          \
+          __FILE__, __LINE__, __func__, cudaGetErrorString(err) );            \
+  fflush(stderr);                                                             \
+  exit(EXIT_FAILURE);                                                         \
+  }                                                                           \
+}                                                                             
+#else
+#define CUCHK(call) {}
+#endif
+#endif
 
 // *****************************************************************************
 // *****************************************************************************
@@ -1528,7 +1564,7 @@ __global__ void compare(const float *RSTRCT u1,
 #include "unroll.cu"
 #include "dm.cu"
 #include "dm_unroll.cu"
-#include "unroll2.cu"
+#include "stress.cu"
 
 #undef RSTRCT
 // *****************************************************************************
@@ -1548,10 +1584,7 @@ void gpuPaddedAlloc(T* &arr, int ldimx, int ldimy, int ldimz, int pad) {
   int leadpad = getLeadPad (pad);
   size_t size = (ldimx * ldimy * ldimz + leadpad) * sizeof (T);
   T *ptr;
-  if (cudaMalloc ((void**)&ptr, size) != cudaSuccess) {
-    printf ("cudaMalloc failed\n");
-    exit (-1);
-  }
+  CUCHK(cudaMalloc ((void**)&ptr, size));
   arr = ptr + leadpad;
 }
 
@@ -1561,10 +1594,7 @@ template<typename T>
 void gpuPaddedFree(T* &arr, int pad) {
   int leadpad = getLeadPad (pad);
   arr -= leadpad;
-  if (cudaFree (arr) != cudaSuccess) {
-    printf ("cudaFree failed\n");
-    exit (-1);
-  }
+  CUCHK(cudaFree(arr));
   arr = NULL;
 }
 
@@ -1605,9 +1635,17 @@ int main (int argc, char **argv) {
   printf ("Running (NX, NY, NZ) = (%d, %d, %d) -> (%d, %d, %d) x %d iterations\n",
           nx, ny, nz, ldimx, ldimy, ldimz, nt);
 
+  int rankx = 0;
+  int ranky = 0;
+
+  set_constants(1.0, 1.0, nx, ny, nz);
+
   // 3D arrays, with padding
   int pad = 6;
   float *rho, *u1, *u2, *u3, *v1, *v2, *v3, *s11, *s12, *s13, *s22, *s23, *s33;
+  float *r1, *r2, *r3, *r4, *r5, *r6, *lam, *mu, *qp, *coeff, *qs, *d_vx1,
+      *d_vx2, *d_wwo;
+  int *d_ww;
   gpuPaddedAlloc (rho, ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (u1,  ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (u2,  ldimx, ldimy, ldimz, pad);
@@ -1621,6 +1659,21 @@ int main (int argc, char **argv) {
   gpuPaddedAlloc (s22, ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (s23, ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (s33, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (r1, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (r2, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (r3, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (r4, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (r5, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (r6, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (lam, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (mu, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (qp, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (coeff, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (qs, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (d_vx1, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (d_vx2, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (d_wwo, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (d_ww, ldimx, ldimy, ldimz, pad);
 
   /* Generate n floats on device */
   int n = ldimx * ldimy * ldimz; 
@@ -1687,50 +1740,48 @@ int main (int argc, char **argv) {
   CURAND_CALL(curandGenerateUniform(gen1, dcrjy, ldimz));
   CURAND_CALL(curandGenerateUniform(gen1, dcrjz, ldimz));
   
-  
-  if (cudaDeviceSynchronize() != cudaSuccess) {
-    printf ("Kernels failed\n");
-    return -1;
-  }
+  CUCHK(cudaDeviceSynchronize());
  
   cudaProfilerStart();
 
   for (int iter=0; iter<nt; iter++) {
 
 //-----------------------------------------------------------------------------
-#if USE_ORIGINAL
+#if USE_ORIGINAL_VEL
     // Original
-    //{
-    //  dim3 threads (1, 1, 64);
-    //  dim3 blocks (nx, ny, (nz-7)/64+1);
-    //  dtopo_vel_111<<<blocks,threads>>> (u1, u2, u3,
-    //                                     dcrjx, dcrjy, dcrjz,
-    //                                     f, f1_1, f1_2, f1_c,
-    //                                     f2_1, f2_2, f2_c,
-    //                                     f_1, f_2, f_c,
-    //                                     g, g3, g3_c, g_c,
-    //                                     rho, s11, s12, s13, s22, s23, s33,
-    //                                     1.0f, 1.0f, nx, ny, nz,
-    //                                     0, 0, nx-1, ny-1);
-    //}
+    {
+      dim3 threads (1, 1, 64);
+      dim3 blocks (nx, ny, (nz-7)/64+1);
+      dtopo_vel_111<<<blocks,threads>>> (u1, u2, u3,
+                                         dcrjx, dcrjy, dcrjz,
+                                         f, f1_1, f1_2, f1_c,
+                                         f2_1, f2_2, f2_c,
+                                         f_1, f_2, f_c,
+                                         g, g3, g3_c, g_c,
+                                         rho, s11, s12, s13, s22, s23, s33,
+                                         1.0f, 1.0f, nx, ny, nz,
+                                         0, 0, nx-1, ny-1);
+    }
 
-    // Original with 3D block
-    //{
-    //  dim3 threads (64, 4, 4);
-    //  dim3 blocks ((nz-7)/threads.x+1, (ny-1)/threads.y+1, (nx-1)/threads.z+1);
-    //  dtopo_vel_111_blocks<<<blocks,threads>>> (u1, u2, u3,
-    //                                            dcrjx, dcrjy, dcrjz,
-    //                                            f, f1_1, f1_2, f1_c,
-    //                                            f2_1, f2_2, f2_c,
-    //                                            f_1, f_2, f_c,
-    //                                            g, g3, g3_c, g_c,
-    //                                            rho, s11, s12, s13, s22, s23, s33,
-    //                                            1.0f, 1.0f, nx, ny, nz,
-    //                                            0, 0, nx-1, ny-1);
-    //}
+     Original with 3D block
+    {
+      dim3 threads (64, 4, 4);
+      dim3 blocks ((nz-7)/threads.x+1, (ny-1)/threads.y+1, (nx-1)/threads.z+1);
+      dtopo_vel_111_blocks<<<blocks,threads>>> (u1, u2, u3,
+                                                dcrjx, dcrjy, dcrjz,
+                                                f, f1_1, f1_2, f1_c,
+                                                f2_1, f2_2, f2_c,
+                                                f_1, f_2, f_c,
+                                                g, g3, g3_c, g_c,
+                                                rho, s11, s12, s13, s22, s23, s33,
+                                                1.0f, 1.0f, nx, ny, nz,
+                                                0, 0, nx-1, ny-1);
+    }
 
 #endif
+//-----------------------------------------------------------------------------
 
+#if USE_SHARED_VEL
 //-----------------------------------------------------------------------------
 
     // Optimized code
@@ -1747,8 +1798,10 @@ int main (int argc, char **argv) {
     //                                         1.0f, 1.0f, nx, ny, nz,
     //                                         0, 0, nx-1, ny-1);
     //}
+#endif
 
 
+#if USE_DM_VEL
 //-----------------------------------------------------------------------------
 // Original compatible with DM and with 3D block    
     {
@@ -1813,12 +1866,12 @@ int main (int argc, char **argv) {
 #undef nq
 #undef nr
     }
-
 //-----------------------------------------------------------------------------
+#endif
 
 //-----------------------------------------------------------------------------
 // Split versions
-#if USE_SPLIT
+#if USE_SPLIT_VEL
 
     {
 
@@ -1909,11 +1962,9 @@ int main (int argc, char **argv) {
 #endif
 //-----------------------------------------------------------------------------
 
-
-
 //-----------------------------------------------------------------------------
-// Unroll versions
-#if USE_UNROLL
+// Unrolled versions
+#if USE_UNROLL_VEL
 //    {
 //#if sm_61
 //#define np 1
@@ -1958,51 +2009,36 @@ int main (int argc, char **argv) {
       dim3 blocks ((nz-7)/(nr*threads.x)+1, 
                    (ny-1)/(nq*threads.y)+1,
                    (nx-1)/(np*threads.z)+1);
-      dtopo_vel_111_unroll<np, nq, nr><<<blocks,threads>>> (u1, u2, u3,
-                                                dcrjx, dcrjy, dcrjz,
-                                                f, f1_1, f1_2, f1_c,
-                                                f2_1, f2_2, f2_c,
-                                                f_1, f_2, f_c,
-                                                g, g3, g3_c, g_c,
-                                                rho, s11, s12, s13, s22, s23, s33,
-                                                1.0f, 1.0f, nx, ny, nz,
-                                                0, 0, nx-1, ny-1);
+      dtopo_vel_111_unroll<np, nq, nr><<<blocks, threads>>>(
+          u1, u2, u3, dcrjx, dcrjy, dcrjz, f, f1_1, f1_2, f1_c, f2_1, f2_2,
+          f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c, rho, s11, s12, s13, s22, s23,
+          s33, 1.0f, 1.0f, nx, ny, nz, 0, 0, nx - 1, ny - 1);
 #undef np
 #undef nq
 #undef nr
     }
-//
-//    {
-//      dim3 threads (64, 2, 2);
-//#define np 1
-//#define nq 1
-//#define nr 4
-//      dim3 blocks ((nz-7)/(nr*threads.x)+1, 
-//                   (ny-1)/(nq*threads.y)+1,
-//                   (nx-1)/(np*threads.z)+1);
-//
-//      dtopo_vel_111_unroll<np, nq, nr><<<blocks,threads>>> (v1, v2, v3,
-//                                                dcrjx, dcrjy, dcrjz,
-//                                                f, f1_1, f1_2, f1_c,
-//                                                f2_1, f2_2, f2_c,
-//                                                f_1, f_2, f_c,
-//                                                g, g3, g3_c, g_c,
-//                                                rho, s11, s12, s13, s22, s23, s33,
-//                                                1.0f, 1.0f, nx, ny, nz,
-//                                                0, 0, nx-1, ny-1);
-//
-//#undef np
-//#undef nq
-//#undef nr
-//    }
+#endif
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Original stress kernel
+#if USE_STRESS_ORIGINAL
+{
+        dim3 threads (64, 8, 1);
+        dim3 blocks ((nz-7)/(threads.x)+1, 
+                     (ny-1)/(threads.y)+1,
+                     1);
+        dtopo_str_111<<<blocks, threads>>>(
+            s11, s22, s33, s12, s13, s23, r1, r2, r3, r4, r5, r6, u1, u2, u3, f,
+            f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
+            lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
+            d_wwo, nx, ny, nz, rankx, ranky, nz, 4, nx, 4, ny);
+}
 #endif
 
   }
 
-  if (cudaDeviceSynchronize() != cudaSuccess) {
-    printf ("Kernels failed\n");
-    return -1;
-  }
+  CUCHK(cudaDeviceSynchronize());
 
   cudaProfilerStop();
   return 0;

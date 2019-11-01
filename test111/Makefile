@@ -9,7 +9,7 @@ sm61="-dlcm=ca"
 
 
 c:
-	nvcc test111.cu -lcurand -arch=$(arch) -use_fast_math --ptxas-options=-v -o test111.x -D$(arch)
+	nvcc test111.cu -lcurand -arch=$(arch) -use_fast_math --ptxas-options=-v -o test111.x -D$(arch) $(debug)
 
 p:
 	nvprof --log-file $(log) ./test111.x $(nx) $(ny) $(nz) $(nt); 
@@ -38,4 +38,7 @@ l2:
 
 sed:
 	sed -i -e 's/(.*)//g' $(log); cat $(log)
+
+clean:
+	rm test111.x
 
