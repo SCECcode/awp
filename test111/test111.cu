@@ -2,6 +2,10 @@
 #include <curand.h>
 #include <cuda_profiler_api.h>
 
+
+// Enable / Disable correctness test
+#define TEST 1
+
 // Velocity kernel optimizations to choose from
 #ifndef USE_ORIGINAL_VEL
 #define USE_ORIGINAL_VEL 0
@@ -24,6 +28,9 @@
 #define USE_STRESS_ORIGINAL 1
 #endif
 
+#ifndef USE_STRESS_MACRO
+#define USE_STRESS_MACRO 1
+#endif
 
 #define align 32
 #define ngsl 4
@@ -37,12 +44,6 @@ __device__ int err;
 // Turning __restrict__ on or off...
 #define RSTRCT __restrict__
  
-// Disable testing
-#define CURAND_CALL(x) do { if((x) != CURAND_STATUS_SUCCESS) { \
-      printf("Error at %s:%d\n",__FILE__,__LINE__);            \
-      return EXIT_FAILURE;}} while(0)
-#define CURAND_CALL(x) 
-
 #ifndef CUCHK
 #ifndef NDEBUG
 #define CUCHK(call) {                                                         \
@@ -1522,6 +1523,59 @@ __global__ void dtopo_vel_111_blocks(
 #undef _s33
 }
 
+#define _f(field, i, j, k)                                                   \
+        field[(k) + align +                                               \
+           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
+           (2 * align + nz) * ((j) + ngsl + 2)]
+
+__global__ void fill(float *RSTRCT u1, int seed,
+                        int nx, int ny, int nz)
+{
+        const int k = threadIdx.x + blockIdx.x * blockDim.x;
+        const int j = threadIdx.y + blockIdx.y * blockDim.y;
+        const int i = threadIdx.z + blockIdx.z * blockDim.z;
+
+        if (i >= nx || j >= ny || k >= nz)
+                return;
+
+        _f(u1, i, j, k) = (1.0f * k + seed) / (1.0f * k + 1 + seed) * j /
+                          (1.0f * j + 1) * i / (i + 1);
+}
+
+__global__ void fill1(float *RSTRCT u1, int seed, int n)
+{
+        const int k = threadIdx.x + blockIdx.x * blockDim.x;
+
+        if (k >= n)
+                return;
+
+        u1[k] = (1.0f * k + seed) / (1.0f * k + 1 + seed);
+}
+
+__global__ void fill2(float *RSTRCT u1, int seed, int nx, int ny)
+{
+        const int k = threadIdx.x + blockIdx.x * blockDim.x;
+        const int j = threadIdx.y + blockIdx.y * blockDim.y;
+
+        if (k >= ny || j >= nx)
+                return;
+
+        u1[k + j * ny] = (1.0f * k + seed) / (1.0f * k + 1 + seed) * j / (1.0f * j + 1);
+}
+
+template <typename T>
+__global__ void set_const(T *RSTRCT u1, T value, int nx, int ny,
+                            int nz) {
+        const int k = threadIdx.x + blockIdx.x * blockDim.x;
+        const int j = threadIdx.y + blockIdx.y * blockDim.y;
+        const int i = threadIdx.z + blockIdx.z * blockDim.z;
+
+        if (i >= nx || j >= ny || k >= nz)
+                return;
+
+        _f(u1, i, j, k) = value;
+}
+
 __global__ void compare(const float *RSTRCT u1,
                         const float *RSTRCT u2,
                         const float *RSTRCT u3,
@@ -1533,15 +1587,9 @@ __global__ void compare(const float *RSTRCT u1,
         const int k = threadIdx.x + blockIdx.x * blockDim.x;
         const int j = threadIdx.y + blockIdx.y * blockDim.y;
         const int i = threadIdx.z + blockIdx.z * blockDim.z;
-        if (k >= nz - 12) return;
+        if (k >= nz) return;
         if (j >= ny) return;
         if (i >= nx) return;
-
-
-#define _f(field, i, j, k)                                                   \
-        field[(k) + align +                                               \
-           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-           (2 * align + nz) * ((j) + ngsl + 2)]
 
         if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-7 ||
             fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-7 ||
@@ -1557,14 +1605,16 @@ __global__ void compare(const float *RSTRCT u1,
                                 _f(v3, i, j, k));
 #endif
         }
-#undef _f
 }
+
+#undef _f
 
 #include "split.cu"
 #include "unroll.cu"
 #include "dm.cu"
 #include "dm_unroll.cu"
 #include "stress.cu"
+#include "stress_macro.cu"
 
 #undef RSTRCT
 // *****************************************************************************
@@ -1625,34 +1675,30 @@ int main (int argc, char **argv) {
   int ldimy = ny + 2 * ngsl + 4;
   int ldimx = nx + 2 * ngsl + 4;
  
-  CURAND_CALL(curandCreateGenerator(&gen1,
-                                    CURAND_RNG_PSEUDO_DEFAULT));
-  CURAND_CALL(curandCreateGenerator(&gen2,
-                                    CURAND_RNG_PSEUDO_DEFAULT));
-  CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen1, 1234ULL));
-  CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen2, 1234ULL));
-  
   printf ("Running (NX, NY, NZ) = (%d, %d, %d) -> (%d, %d, %d) x %d iterations\n",
           nx, ny, nz, ldimx, ldimy, ldimz, nt);
 
   int rankx = 0;
   int ranky = 0;
 
-  set_constants(1.0, 1.0, nx, ny, nz);
+  set_constants(1.0, 1e-3, nx, ny, nz);
 
   // 3D arrays, with padding
-  int pad = 6;
-  float *rho, *u1, *u2, *u3, *v1, *v2, *v3, *s11, *s12, *s13, *s22, *s23, *s33;
-  float *r1, *r2, *r3, *r4, *r5, *r6, *lam, *mu, *qp, *coeff, *qs, *d_vx1,
-      *d_vx2, *d_wwo;
+  int pad = 0;
+  float *lam, *mu, *qp, *coeff, *qs, *d_vx1, *d_vx2, *d_wwo;
   int *d_ww;
+  float *rho, *u1, *u2, *u3, *s11, *s12, *s13, *s22, *s23, *s33;
+  float *r1, *r2, *r3, *r4, *r5, *r6;
+  // 3D arrays for testing
+  // When testing is disabled these arrays will point to their corresponding
+  // arrays, i.e.
+  // v = u, t = s, p = r
+  float *v1, *v2, *v3, *t11, *t12, *t13, *t22, *t23, *t33, *p1, *p2, *p3, *p4,
+      *p5, *p6;
   gpuPaddedAlloc (rho, ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (u1,  ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (u2,  ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (u3,  ldimx, ldimy, ldimz, pad);
-  gpuPaddedAlloc (v1,  ldimx, ldimy, ldimz, pad);
-  gpuPaddedAlloc (v2,  ldimx, ldimy, ldimz, pad);
-  gpuPaddedAlloc (v3,  ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (s11, ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (s12, ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (s13, ldimx, ldimy, ldimz, pad);
@@ -1675,21 +1721,92 @@ int main (int argc, char **argv) {
   gpuPaddedAlloc (d_wwo, ldimx, ldimy, ldimz, pad);
   gpuPaddedAlloc (d_ww, ldimx, ldimy, ldimz, pad);
 
+#if TEST
+  gpuPaddedAlloc (v1,  ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (v2,  ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (v3,  ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (t11, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (t12, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (t13, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (t22, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (t23, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (t33, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (p1, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (p2, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (p3, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (p4, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (p5, ldimx, ldimy, ldimz, pad);
+  gpuPaddedAlloc (p6, ldimx, ldimy, ldimz, pad);
+#else
+  v1 = u1;
+  v2 = u2;
+  v3 = u3;
+  t11 = s11;
+  t22 = s22;
+  t33 = s33;
+  t12 = s12;
+  t13 = s13;
+  t23 = s23;
+  p1 = r1;
+  p2 = r2;
+  p3 = r3;
+  p4 = r4;
+  p5 = r5;
+  p6 = r6;
+#endif
+
   /* Generate n floats on device */
   int n = ldimx * ldimy * ldimz; 
-  CURAND_CALL(curandGenerateUniform(gen1, u1, n));
-  CURAND_CALL(curandGenerateUniform(gen1, u2, n));
-  CURAND_CALL(curandGenerateUniform(gen1, u3, n));
-  CURAND_CALL(curandGenerateUniform(gen1, rho, n));
-  CURAND_CALL(curandGenerateUniform(gen1, s11, n));
-  CURAND_CALL(curandGenerateUniform(gen1, s12, n));
-  CURAND_CALL(curandGenerateUniform(gen1, s13, n));
-  CURAND_CALL(curandGenerateUniform(gen1, s11, n));
-  CURAND_CALL(curandGenerateUniform(gen1, s22, n));
-  CURAND_CALL(curandGenerateUniform(gen1, s33, n));
-  CURAND_CALL(curandGenerateUniform(gen2, v1, n));
-  CURAND_CALL(curandGenerateUniform(gen2, v2, n));
-  CURAND_CALL(curandGenerateUniform(gen2, v3, n));
+  {
+  dim3 threads (512, 1, 1);
+  dim3 blocks ((nz - 1) / threads.x + 1, 
+               (ny - 1) / threads.y + 1,
+               (nx - 1) / threads.z + 1);
+  fill<<<blocks, threads>>>(u1, 11, nx, ny, nz);
+  fill<<<blocks, threads>>>(u2, 12, nx, ny, nz);
+  fill<<<blocks, threads>>>(u3, 13, nx, ny, nz);
+  fill<<<blocks, threads>>>(s11, 14, nx, ny, nz);
+  fill<<<blocks, threads>>>(s22, 15, nx, ny, nz);
+  fill<<<blocks, threads>>>(s33, 16, nx, ny, nz);
+  fill<<<blocks, threads>>>(s12, 17, nx, ny, nz);
+  fill<<<blocks, threads>>>(s13, 18, nx, ny, nz);
+  fill<<<blocks, threads>>>(s23, 19, nx, ny, nz);
+  fill<<<blocks, threads>>>(r1, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(r2, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(r3, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(r4, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(r5, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(r6, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(rho, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(lam, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(mu, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(qp, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(qs, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(d_wwo, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(d_vx1, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(d_vx2, 10, nx, ny, nz);
+
+#if TEST
+  fill<<<blocks, threads>>>(v1, 11, nx, ny, nz);
+  fill<<<blocks, threads>>>(v2, 12, nx, ny, nz);
+  fill<<<blocks, threads>>>(v3, 13, nx, ny, nz);
+  fill<<<blocks, threads>>>(t11, 14, nx, ny, nz);
+  fill<<<blocks, threads>>>(t22, 15, nx, ny, nz);
+  fill<<<blocks, threads>>>(t33, 16, nx, ny, nz);
+  fill<<<blocks, threads>>>(t12, 17, nx, ny, nz);
+  fill<<<blocks, threads>>>(t13, 18, nx, ny, nz);
+  fill<<<blocks, threads>>>(t23, 19, nx, ny, nz);
+  fill<<<blocks, threads>>>(p1, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(p2, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(p3, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(p4, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(p5, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(p6, 10, nx, ny, nz);
+#endif
+  set_const<<<blocks, threads>>>(d_ww, 1, nx, ny, nz);
+  set_const<<<blocks, threads>>>(qp, 0.0f, nx, ny, nz);
+  set_const<<<blocks, threads>>>(qs, 0.0f, nx, ny, nz);
+  }
 
   // 2D arrays
   float *f, *f_1, *f_2, *f_c, *f1_1, *f2_1, *f1_2, *f2_2, *f1_c, *f2_c;
@@ -1707,17 +1824,26 @@ int main (int argc, char **argv) {
     printf ("CudaMalloc 2D failed\n");
     return -1;
   }
+  {
+
+  dim3 threads (64, 8, 1);
+  int ldimy2 = ldimy + 2 * align;
+  dim3 blocks((ldimy2 - 1) / threads.x + 1, (ldimx - 1) / threads.y, 1);
+
+  fill2<<<blocks, threads>>>(f, 18, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f_1, 19, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f_2, 20, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f_c, 20, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f1_1, 19, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f1_2, 21, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f1_c, 22, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f2_1, 23, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f2_2, 24, ldimx, ldimy2);
+  fill2<<<blocks, threads>>>(f2_c, 25, ldimx, ldimy2);
+
+  }
 
   n = ldimx * (2 * align + ldimy);
-  CURAND_CALL(curandGenerateUniform(gen1, f, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f_1, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f_2, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f_c, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f1_1, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f2_1, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f1_2, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f1_c, n));
-  CURAND_CALL(curandGenerateUniform(gen1, f2_c, n));
 
   // 1D arrays
   float *g, *g_c, *g3, *g3_c, *dcrjx, *dcrjy, *dcrjz;
@@ -1731,14 +1857,32 @@ int main (int argc, char **argv) {
     printf ("CudaMalloc 1D failed\n");
     return -1;
   }
+
+  {
+  dim3 threads (256, 1, 1);
+  dim3 blocks ((ldimx - 1) / threads.x + 1, 1, 1);
+
+  fill1<<<blocks, threads>>>(dcrjx, 31, ldimx);
+  }
+
+  {
+  dim3 threads (256, 1, 1);
+  dim3 blocks ((ldimy - 1) / threads.x + 1, 1, 1);
+  fill1<<<blocks, threads>>>(dcrjy, 32, ldimy);
+  }
+  
+  {
+  dim3 threads (256, 1, 1);
+  dim3 blocks ((ldimz - 1) / threads.x + 1, 1, 1);
+
+  fill1<<<blocks, threads>>>(g, 27, ldimz);
+  fill1<<<blocks, threads>>>(g_c, 28, ldimz);
+  fill1<<<blocks, threads>>>(g3, 29, ldimz);
+  fill1<<<blocks, threads>>>(g3_c, 30, ldimz);
+  fill1<<<blocks, threads>>>(dcrjz, 33, ldimz);
+  }
+
       
-  CURAND_CALL(curandGenerateUniform(gen1, g, ldimz));
-  CURAND_CALL(curandGenerateUniform(gen1, g_c, ldimz));
-  CURAND_CALL(curandGenerateUniform(gen1, g3, ldimz));
-  CURAND_CALL(curandGenerateUniform(gen1, g3_c, ldimz));
-  CURAND_CALL(curandGenerateUniform(gen1, dcrjx, ldimz));
-  CURAND_CALL(curandGenerateUniform(gen1, dcrjy, ldimz));
-  CURAND_CALL(curandGenerateUniform(gen1, dcrjz, ldimz));
   
   CUCHK(cudaDeviceSynchronize());
  
@@ -1763,7 +1907,7 @@ int main (int argc, char **argv) {
                                          0, 0, nx-1, ny-1);
     }
 
-     Original with 3D block
+    // Original with 3D block
     {
       dim3 threads (64, 4, 4);
       dim3 blocks ((nz-7)/threads.x+1, (ny-1)/threads.y+1, (nx-1)/threads.z+1);
@@ -1858,7 +2002,7 @@ int main (int argc, char **argv) {
                 cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
                                      cudaMemcpyDeviceToHost);
                 if (_err) {
-                        printf("Consistency check failed\n");
+                        printf("Correctness check failed\n");
                         //return -1;
                 }
         }
@@ -1950,7 +2094,7 @@ int main (int argc, char **argv) {
                 cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
                                      cudaMemcpyDeviceToHost);
                 if (_err) {
-                        printf("Consistency check failed\n");
+                        printf("Correctness check failed\n");
                         //return -1;
                 }
         }
@@ -2032,7 +2176,54 @@ int main (int argc, char **argv) {
             s11, s22, s33, s12, s13, s23, r1, r2, r3, r4, r5, r6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
             lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
-            d_wwo, nx, ny, nz, rankx, ranky, nz, 4, nx, 4, ny);
+            d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
+
+  CUCHK(cudaDeviceSynchronize());
+}
+#endif
+
+// Stress kernel that uses loop unrolling but accesses all arrays using macros
+#if USE_STRESS_MACRO
+{
+        dim3 threads (64, 8, 1);
+        dim3 blocks ((nz-7)/(threads.x)+1, 
+                     (ny-1)/(threads.y)+1,
+                     1);
+        dtopo_str_111_macro<<<blocks, threads>>>(
+            t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
+            f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
+            lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
+            d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
+
+        
+        if (iter == 0) { 
+
+                if (cudaDeviceSynchronize() != cudaSuccess) {
+                  printf ("Kernels failed\n");
+                }
+
+                dim3 threads (64, 8, 1);
+                dim3 blocks ((nz-7)/(threads.x)+1, 
+                             (ny-1)/(threads.y)+1,
+                             (nx-1)/(threads.z)+1);
+
+                compare<<<blocks, threads>>>(s11, s22, s33, t11, t22, t33, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(s12, s13, s23, t12, t13, t23, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(r1, r2, r3, p1, p2, p3, nx, ny,
+                                             nz);
+                compare<<<blocks, threads>>>(r4, r5, r6, p4, p5, p6, nx, ny,
+                                             nz);
+
+                int _err = 0;
+                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
+                                     cudaMemcpyDeviceToHost);
+                if (_err) {
+                        printf("Correctness check failed\n");
+                        //return -1;
+                }
+        }
 }
 #endif
 

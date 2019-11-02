@@ -13,6 +13,7 @@
 #define _g_c(k) g_c[(k)]
 #define _g(k) g[(k)]
 #define _g3(k) g3[(k)]
+#define LDG(x) x
 
 #define _u1(i, j, k)                                                           \
   u1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
@@ -24,60 +25,19 @@
   w1[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
 
-#define LDG(x) x
+#define _lam(i, j, k)                                                           \
+  lam[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _mu(i, j, k)                                                           \
+  mu[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
 
 typedef float _prec;
 
-__constant__ _prec d_c1;
-__constant__ _prec d_c2;
-__constant__ _prec d_dth;
-__constant__ _prec d_dt1;
-__constant__ _prec d_dh1;
-__constant__ _prec d_DT;
-__constant__ _prec d_DH;
-__constant__ int   d_nxt;
-__constant__ int   d_nyt;
-__constant__ int   d_nzt;
-__constant__ int   d_slice_1;
-__constant__ int   d_slice_2;
-__constant__ int   d_yline_1;
-__constant__ int   d_yline_2;
-
-void set_constants(const _prec dh, const _prec dt, const int nxt, const int
-                nyt, const int nzt)
-{
-    _prec h_c1, h_c2, h_dth, h_dt1, h_dh1;
-
-    h_c1  = 9.0/8.0;
-    h_c2  = -1.0/24.0;
-    h_dt1 = 1.0/dt;
-
-    h_dth = dt/dh;
-    h_dh1 = 1.0/dh;
-    int slice_1  = (nyt+4+ngsl2)*(nzt+2*align);
-    int slice_2  = (nyt+4+ngsl2)*(nzt+2*align)*2;
-    int yline_1  = nzt+2*align;
-    int yline_2  = (nzt+2*align)*2;
-
-
-    CUCHK(cudaMemcpyToSymbol(d_c1,      &h_c1,    sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_c2,      &h_c2,    sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_dt1,     &h_dt1,   sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_DT,      &dt,      sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_dth,     &h_dth,   sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_dh1,     &h_dh1,   sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_DH,      &dh,      sizeof(_prec)));
-    CUCHK(cudaMemcpyToSymbol(d_nxt,     &nxt,     sizeof(int)));
-    CUCHK(cudaMemcpyToSymbol(d_nyt,     &nyt,     sizeof(int)));
-    CUCHK(cudaMemcpyToSymbol(d_nzt,     &nzt,     sizeof(int)));
-    CUCHK(cudaMemcpyToSymbol(d_slice_1, &slice_1, sizeof(int)));
-    CUCHK(cudaMemcpyToSymbol(d_slice_2, &slice_2, sizeof(int)));
-    CUCHK(cudaMemcpyToSymbol(d_yline_1, &yline_1, sizeof(int)));
-    CUCHK(cudaMemcpyToSymbol(d_yline_2, &yline_2, sizeof(int)));
-}
 
 __launch_bounds__ (512)
-__global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTRCT zz,
+__global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTRCT zz,
            _prec*  RSTRCT xy, _prec*  RSTRCT xz, _prec*  RSTRCT yz,
        _prec*  RSTRCT r1, _prec*  RSTRCT r2,  _prec*  RSTRCT r3, 
        _prec*  RSTRCT r4, _prec*  RSTRCT r5,  _prec*  RSTRCT r6,
@@ -309,7 +269,7 @@ __global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTR
     xmu2     = xmu2+d_DT*h2;
     xmu3     = xmu3+d_DT*h3;
     vx1      = d_DT*(1+f_vx2*f_vx1);
-        
+
     u1_ip2   = u1_ip1;
     u1_ip1   = f_u1;
     f_u1     = u1_im1;
@@ -638,6 +598,7 @@ __global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTR
 
 
     pos     = pos_im1;
+
   }
 
 #undef _dcrjx
