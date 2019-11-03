@@ -13,7 +13,6 @@
 #define _g(k) g[(k)]
 #define _g3(k) g3[(k)]
 #define LDG(x) x
-
 #define _u1(i, j, k)                                                           \
   u1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
@@ -209,9 +208,6 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     f_wwo = _d_wwo(i, j, k);
     
     f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
-
-
-    pos_im1  = pos-d_slice_1;
 
     xl       = 8.0f/(  LDG(_lam(i, j, k))      + LDG(_lam(i+1, j, k)) +
                     LDG(_lam(i, j - 1, k)) + LDG(_lam(i+1,j-1,k))
@@ -607,24 +603,45 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     _yz(i, j, k) = (f_yz + d_DT*f_rtmp)*f_dcrj; 
 
-
-    pos     = pos_im1;
-
   }
 
-#undef _dcrjx
-#undef _dcrjy
-#undef _dcrjz
-#undef _lami
-#undef _mui
-#undef _s11
-#undef _s12
-#undef _s13
-#undef _s22
-#undef _s23
-#undef _s33
-#undef _u1
-#undef _u2
-#undef _u3
 }
 
+#undef _f 
+#undef _f_1 
+#undef _f_2 
+#undef _f2_c
+#undef _f1_1
+#undef _f2_1
+#undef _f2_2
+#undef _f_c 
+#undef _f1_c
+#undef _f1_2
+#undef _g3_c 
+#undef _g_c 
+#undef _g
+#undef _g3
+#undef LDG
+#undef _u1     
+#undef _v1     
+#undef _w1     
+#undef _lam    
+#undef _mu     
+#undef _qp     
+#undef _qs     
+#undef _r1     
+#undef _r2     
+#undef _r3     
+#undef _r4     
+#undef _r5     
+#undef _r6     
+#undef _xx     
+#undef _yy     
+#undef _zz     
+#undef _xy     
+#undef _xz     
+#undef _yz     
+#undef _d_vx1  
+#undef _d_vx2  
+#undef _d_ww   
+#undef _d_wwo  

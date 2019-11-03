@@ -4,12 +4,13 @@ nz=512
 nt=10
 arch=sm_70
 log=prof.txt
+args=
 all: c p
 sm61="-dlcm=ca"
-
+exe=test111.x
 
 c:
-	nvcc test111.cu -lcurand -arch=$(arch) $(debug)   -use_fast_math --ptxas-options=-v -o test111.x -D$(arch)
+	nvcc test111.cu -lcurand -arch=$(arch) $(debug) $(args) -use_fast_math --ptxas-options=-v -o $(exe) -D$(arch)
 
 p:
 	nvprof --log-file $(log) ./test111.x $(nx) $(ny) $(nz) $(nt); 

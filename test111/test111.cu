@@ -2,6 +2,32 @@
 #include <curand.h>
 #include <cuda_profiler_api.h>
 
+//-----------------------------------------------------------------------------
+// Configuration for Stress macro unroll kernel (stress_macro_unroll.cu)
+// Unroll factor in CUDA x
+#ifndef STRMU_NA
+#define STRMU_NA 1
+#endif
+
+// Unroll factor in CUDA y
+#ifndef STRMU_NB
+#define STRMU_NB 2
+#endif
+
+// Threads in x, y, z
+#ifndef STRMU_TX
+#define STRMU_TX 16
+#endif
+
+#ifndef STRMU_TY
+#define STRMU_TY 8
+#endif
+
+#ifndef STRMU_TZ
+#define STRMU_TZ 2
+#endif
+//-----------------------------------------------------------------------------
+
 
 // Enable / Disable correctness test
 #define TEST 1
@@ -29,7 +55,11 @@
 #endif
 
 #ifndef USE_STRESS_MACRO
-#define USE_STRESS_MACRO 1
+#define USE_STRESS_MACRO 0
+#endif
+
+#ifndef USE_STRESS_MACRO_UNROLL
+#define USE_STRESS_MACRO_UNROLL 1
 #endif
 
 #define align 32
@@ -1591,6 +1621,12 @@ __global__ void compare(const float *RSTRCT u1,
         if (j >= ny) return;
         if (i >= nx) return;
 
+        if (isnan(_f(v1, i, j, k)) ||
+            isnan(_f(v2, i, j, k)) ||
+            isnan(_f(v3, i, j, k))) {
+                err = -1;
+        }
+
         if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-7 ||
             fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-7 ||
             fabs(_f(u3, i, j, k) - _f(v3, i, j, k)) > 1e-7) {
@@ -1615,6 +1651,7 @@ __global__ void compare(const float *RSTRCT u1,
 #include "dm_unroll.cu"
 #include "stress.cu"
 #include "stress_macro.cu"
+#include "stress_macro_unroll.cu"
 
 #undef RSTRCT
 // *****************************************************************************
@@ -2169,7 +2206,7 @@ int main (int argc, char **argv) {
 #if USE_STRESS_ORIGINAL
 {
         dim3 threads (64, 4, 1);
-        dim3 blocks ((nz-7)/(threads.x)+1, 
+        dim3 blocks ((nz-4)/(threads.x)+1, 
                      (ny-1)/(threads.y)+1,
                      1);
         dtopo_str_111<<<blocks, threads>>>(
@@ -2182,11 +2219,11 @@ int main (int argc, char **argv) {
 }
 #endif
 
-// Stress kernel that uses loop unrolling but accesses all arrays using macros
+// Stress kernel that accesses all arrays using macros
 #if USE_STRESS_MACRO
 {
         dim3 threads (64, 8, 1);
-        dim3 blocks ((nz-7)/(threads.x)+1, 
+        dim3 blocks ((nz-4)/(threads.x)+1, 
                      (ny-1)/(threads.y)+1,
                      1);
         dtopo_str_111_macro<<<blocks, threads>>>(
@@ -2201,6 +2238,54 @@ int main (int argc, char **argv) {
                 if (cudaDeviceSynchronize() != cudaSuccess) {
                   printf ("Kernels failed\n");
                 }
+
+                dim3 threads (64, 8, 1);
+                dim3 blocks ((nz-7)/(threads.x)+1, 
+                             (ny-1)/(threads.y)+1,
+                             1);
+
+                compare<<<blocks, threads>>>(s11, s22, s33, t11, t22, t33, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(s12, s13, s23, t12, t13, t23, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(r1, r2, r3, p1, p2, p3, nx, ny,
+                                             nz);
+                compare<<<blocks, threads>>>(r4, r5, r6, p4, p5, p6, nx, ny,
+                                             nz);
+
+                int _err = 0;
+                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
+                                     cudaMemcpyDeviceToHost);
+                if (_err) {
+                        printf("Correctness check failed\n");
+                        //return -1;
+                }
+        }
+}
+#endif
+
+#if USE_STRESS_MACRO_UNROLL
+{
+#define na STRMU_NA 
+#define nb STRMU_NB 
+        dim3 threads (STRMU_TX, STRMU_TY, STRMU_TZ);
+        dim3 blocks ((nz-4)/(na * threads.x)+1, 
+                     (ny-1)/(nb * threads.y)+1,
+                     (nx-1)/(threads.z)+1);
+        dtopo_str_111_macro_unroll<na, nb, STRMU_TX, STRMU_TY, STRMU_TZ><<<blocks, threads>>>(
+            t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
+            f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
+            lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
+            d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
+
+        
+        if (iter == 0) { 
+
+                if (cudaDeviceSynchronize() != cudaSuccess) {
+                  printf ("Kernels failed\n");
+                }
+
+                printf("Running error check\n");
 
                 dim3 threads (64, 8, 1);
                 dim3 blocks ((nz-7)/(threads.x)+1, 
