@@ -76,7 +76,7 @@ void set_constants(const _prec dh, const _prec dt, const int nxt, const int
     CUCHK(cudaMemcpyToSymbol(d_yline_2, &yline_2, sizeof(int)));
 }
 
-__launch_bounds__ (512)
+__launch_bounds__ (256)
 __global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTRCT zz,
            _prec*  RSTRCT xy, _prec*  RSTRCT xz, _prec*  RSTRCT yz,
        _prec*  RSTRCT r1, _prec*  RSTRCT r2,  _prec*  RSTRCT r3, 

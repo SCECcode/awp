@@ -1771,17 +1771,17 @@ int main (int argc, char **argv) {
   fill<<<blocks, threads>>>(s12, 17, nx, ny, nz);
   fill<<<blocks, threads>>>(s13, 18, nx, ny, nz);
   fill<<<blocks, threads>>>(s23, 19, nx, ny, nz);
-  fill<<<blocks, threads>>>(r1, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(r2, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(r3, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(r4, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(r5, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(r6, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(r1, 31, nx, ny, nz);
+  fill<<<blocks, threads>>>(r2, 32, nx, ny, nz);
+  fill<<<blocks, threads>>>(r3, 33, nx, ny, nz);
+  fill<<<blocks, threads>>>(r4, 34, nx, ny, nz);
+  fill<<<blocks, threads>>>(r5, 35, nx, ny, nz);
+  fill<<<blocks, threads>>>(r6, 36, nx, ny, nz);
   fill<<<blocks, threads>>>(rho, 10, nx, ny, nz);
   fill<<<blocks, threads>>>(lam, 10, nx, ny, nz);
   fill<<<blocks, threads>>>(mu, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(qp, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(qs, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(qp, 41, nx, ny, nz);
+  fill<<<blocks, threads>>>(qs, 42, nx, ny, nz);
   fill<<<blocks, threads>>>(d_wwo, 10, nx, ny, nz);
   fill<<<blocks, threads>>>(d_vx1, 10, nx, ny, nz);
   fill<<<blocks, threads>>>(d_vx2, 10, nx, ny, nz);
@@ -1796,16 +1796,16 @@ int main (int argc, char **argv) {
   fill<<<blocks, threads>>>(t12, 17, nx, ny, nz);
   fill<<<blocks, threads>>>(t13, 18, nx, ny, nz);
   fill<<<blocks, threads>>>(t23, 19, nx, ny, nz);
-  fill<<<blocks, threads>>>(p1, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(p2, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(p3, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(p4, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(p5, 10, nx, ny, nz);
-  fill<<<blocks, threads>>>(p6, 10, nx, ny, nz);
+  fill<<<blocks, threads>>>(p1, 31, nx, ny, nz);
+  fill<<<blocks, threads>>>(p2, 32, nx, ny, nz);
+  fill<<<blocks, threads>>>(p3, 33, nx, ny, nz);
+  fill<<<blocks, threads>>>(p4, 34, nx, ny, nz);
+  fill<<<blocks, threads>>>(p5, 35, nx, ny, nz);
+  fill<<<blocks, threads>>>(p6, 36, nx, ny, nz);
 #endif
   set_const<<<blocks, threads>>>(d_ww, 1, nx, ny, nz);
-  set_const<<<blocks, threads>>>(qp, 0.0f, nx, ny, nz);
-  set_const<<<blocks, threads>>>(qs, 0.0f, nx, ny, nz);
+  //set_const<<<blocks, threads>>>(qp, 0.0f, nx, ny, nz);
+  //set_const<<<blocks, threads>>>(qs, 0.0f, nx, ny, nz);
   }
 
   // 2D arrays
@@ -2168,7 +2168,7 @@ int main (int argc, char **argv) {
 // Original stress kernel
 #if USE_STRESS_ORIGINAL
 {
-        dim3 threads (64, 8, 1);
+        dim3 threads (64, 4, 1);
         dim3 blocks ((nz-7)/(threads.x)+1, 
                      (ny-1)/(threads.y)+1,
                      1);
@@ -2226,6 +2226,7 @@ int main (int argc, char **argv) {
         }
 }
 #endif
+
 
   }
 

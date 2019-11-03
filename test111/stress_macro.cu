@@ -1,4 +1,3 @@
-#define CURVILINEAR
 #define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_1(i, j) f_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_2(i, j) f_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
@@ -31,6 +30,78 @@
 
 #define _mu(i, j, k)                                                           \
   mu[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _qp(i, j, k)                                                           \
+  qp[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _qs(i, j, k)                                                           \
+  qs[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _r1(i, j, k)                                                           \
+  r1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _r2(i, j, k)                                                           \
+  r2[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _r3(i, j, k)                                                           \
+  r3[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _r4(i, j, k)                                                           \
+  r4[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _r5(i, j, k)                                                           \
+  r5[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _r6(i, j, k)                                                           \
+  r6[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _xx(i, j, k)                                                           \
+  xx[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _yy(i, j, k)                                                           \
+  yy[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _zz(i, j, k)                                                           \
+  zz[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _xy(i, j, k)                                                           \
+  xy[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _xz(i, j, k)                                                           \
+  xz[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _yz(i, j, k)                                                           \
+  yz[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _d_vx1(i, j, k)                                                           \
+  d_vx1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _d_vx2(i, j, k)                                                           \
+  d_vx2[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _d_ww(i, j, k)                                                           \
+  d_ww[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+     (2 * align + nz) * (j)]
+
+#define _d_wwo(i, j, k)                                                           \
+  d_wwo[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
 
 typedef float _prec;
@@ -116,6 +187,7 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
   int dm_offset = 3;
   k    = blockIdx.x*blockDim.x+threadIdx.x+align;
   j    = blockIdx.y*blockDim.y+threadIdx.y+s_j;
+  i    = blockIdx.z*blockDim.z+threadIdx.y+s_i;
 
   if (j >= e_j)
     return;
@@ -124,61 +196,39 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
   if (k >= nz - 6 + align)
     return;
 
-  
-
-  i    = e_i - 1;
-  pos  = i*d_slice_1+j*d_yline_1+k;
 
 
-
-  u1_ip1 = u1[pos+d_slice_2];
-  f_u1   = u1[pos+d_slice_1];
-  u1_im1 = u1[pos];    
-  f_v1   = v1[pos+d_slice_1];
-  v1_im1 = v1[pos];
-  v1_im2 = v1[pos-d_slice_1];
-  f_w1   = w1[pos+d_slice_1];
-  w1_im1 = w1[pos];
-  w1_im2 = w1[pos-d_slice_1];
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
 
   for(i=e_i-1;i>=s_i;i--)
   {         
-    f_vx1 = d_vx1[pos];
-    f_vx2 = d_vx2[pos];
-    f_ww  = d_ww[pos];
-    f_wwo = d_wwo[pos];
+    f_vx1 = _d_vx1(i, j, k);
+    f_vx2 = _d_vx2(i, j, k);
+    f_ww  = _d_ww(i, j, k);
+    f_wwo = _d_wwo(i, j, k);
     
     f_dcrj   = dcrjx[i]*f_dcrjy*f_dcrjz;
 
 
-    pos_km2  = pos-2;
-    pos_km1  = pos-1;
-    pos_kp1  = pos+1;
-    pos_kp2  = pos+2;
-    pos_jm2  = pos-d_yline_2;
-    pos_jm1  = pos-d_yline_1;
-    pos_jp1  = pos+d_yline_1;
-    pos_jp2  = pos+d_yline_2;
-    pos_im2  = pos-d_slice_2;
     pos_im1  = pos-d_slice_1;
-    pos_ip1  = pos+d_slice_1;
-    pos_jk1  = pos-d_yline_1-1;
-    pos_ik1  = pos+d_slice_1-1;
-    pos_ijk  = pos+d_slice_1-d_yline_1;
-    pos_ijk1 = pos+d_slice_1-d_yline_1-1;
 
-    xl       = 8.0f/(  LDG(lam[pos])      + LDG(lam[pos_ip1]) + LDG(lam[pos_jm1]) + LDG(lam[pos_ijk])
-                       + LDG(lam[pos_km1])  + LDG(lam[pos_ik1]) + LDG(lam[pos_jk1]) + LDG(lam[pos_ijk1]) );
-    xm       = 16.0f/( LDG(mu[pos])       + LDG(mu[pos_ip1])  + LDG(mu[pos_jm1])  + LDG(mu[pos_ijk])
-                       + LDG(mu[pos_km1])   + LDG(mu[pos_ik1])  + LDG(mu[pos_jk1])  + LDG(mu[pos_ijk1]) );
-    xmu1     = 2.0f/(  LDG(mu[pos])       + LDG(mu[pos_km1]) );
-    xmu2     = 2.0/(  LDG(mu[pos])       + LDG(mu[pos_jm1]) );
-    xmu3     = 2.0/(  LDG(mu[pos])       + LDG(mu[pos_ip1]) );
+    xl       = 8.0f/(  LDG(_lam(i, j, k))      + LDG(_lam(i+1, j, k)) +
+                    LDG(_lam(i, j - 1, k)) + LDG(_lam(i+1,j-1,k))
+                       + LDG(_lam(i, j, k - 1))  + LDG(_lam(i+1,j,k-1)) +
+                       LDG(_lam(i,j-1,k-1)) + LDG(_lam(i+1,j-1,k-1)) );
+    xm       = 16.0f/( LDG(_mu(i, j , k))       + LDG(_mu(i+1, j, k))  +
+                    LDG(_mu(i, j - 1, k))  + LDG(_mu(i+1, j-1, k))
+                       + LDG(_mu(i, j, k - 1))   + LDG(_mu(i+1, j, k - 1))  +
+                       LDG(_mu(i,j-1,k-1))  + LDG(_mu(i+1,j-1,k-1)) );
+    xmu1     = 2.0f/(  LDG(_mu(i, j, k))       + LDG(_mu(i, j, k - 1)) );
+    xmu2     = 2.0/(  LDG(_mu(i, j, k))       + LDG(_mu(i, j - 1, k)) );
+    xmu3     = 2.0/(  LDG(_mu(i, j, k))       + LDG(_mu(i+1, j, k)) );
     xl       = xl  +  xm;
-    qpa      = 0.0625f*( LDG(qp[pos])     + LDG(qp[pos_ip1]) + LDG(qp[pos_jm1]) + LDG(qp[pos_ijk])
-                         + LDG(qp[pos_km1]) + LDG(qp[pos_ik1]) + LDG(qp[pos_jk1]) + LDG(qp[pos_ijk1]) );
+    qpa = 0.0625f * (LDG(_qp(i, j, k)) + LDG(_qp(i + 1, j, k)) +
+                     LDG(_qp(i, j - 1, k)) + LDG(_qp(i + 1, j - 1, k)) +
+                     LDG(_qp(i, j, k - 1)) + LDG(_qp(i + 1, j, k - 1)) +
+                     LDG(_qp(i, j - 1, k - 1)) + LDG(_qp(i + 1, j - 1, k - 1)));
 
     if(1.0f/(qpa*2.0f)<=200.0f)
     {
@@ -192,8 +242,10 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     qpaw=qpaw/f_wwo;
 
 
-    h        = 0.0625f*( LDG(qs[pos])     + LDG(qs[pos_ip1]) + LDG(qs[pos_jm1]) + LDG(qs[pos_ijk])
-                         + LDG(qs[pos_km1]) + LDG(qs[pos_ik1]) + LDG(qs[pos_jk1]) + LDG(qs[pos_ijk1]) );
+    h        = 0.0625f*( LDG(_qs(i, j, k ))     + LDG(_qs(i + 1, j, k)) +
+                    LDG(_qs(i, j - 1, k)) + LDG(_qs(i+1, j - 1, k))
+                         + LDG(_qs(i, j, k - 1)) + LDG(_qs(i + 1, j, k - 1)) +
+                         LDG(_qs(i, j -1, k - 1)) + LDG(_qs(i+1, j - 1, k - 1)) );
 
     if(1.0f/(h*2.0f)<=200.0f)
     {
@@ -207,7 +259,7 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     hw=hw/f_wwo;
 
 
-    h1       = 0.250f*(  qs[pos]     + qs[pos_km1] );
+    h1       = 0.250f*(_qs(i, j , k) + _qs(i, j, k - 1));
 
     if(1.0f/(h1*2.0f)<=200.0f)
     {
@@ -220,7 +272,7 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     }
     h1w=h1w/f_wwo;
 
-    h2       = 0.250f*(  qs[pos]     + qs[pos_jm1] );
+    h2       = 0.250f*(  _qs(i, j, k) + _qs(i, j - 1, k) );
     if(1.0f/(h2*2.0f)<=200.0f)
     {
       h2w=coeff[f_ww*2-2]*(2.0f*h2)*(2.0f*h2)+coeff[f_ww*2-1]*(2.0f*h2);
@@ -233,7 +285,7 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     h2w=h2w/f_wwo;
 
 
-    h3       = 0.250f*(  qs[pos]     + qs[pos_ip1] );
+    h3       = 0.250f*( _qs(i, j, k)     + _qs(i + 1, j, k ) );
     if(1.0f/(h3*2.0f)<=200.0f)
     {
       h3w=coeff[f_ww*2-2]*(2.0f*h3)*(2.0f*h3)+coeff[f_ww*2-1]*(2.0f*h3);
@@ -270,25 +322,9 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     xmu3     = xmu3+d_DT*h3;
     vx1      = d_DT*(1+f_vx2*f_vx1);
 
-    u1_ip2   = u1_ip1;
-    u1_ip1   = f_u1;
-    f_u1     = u1_im1;
-    u1_im1   = u1[pos_im1];
-    v1_ip1   = f_v1;
-    f_v1     = v1_im1;
-    v1_im1   = v1_im2;
-    v1_im2   = v1[pos_im2];
-    w1_ip1   = f_w1;
-    f_w1     = w1_im1;
-    w1_im1   = w1_im2;
-    w1_im2   = w1[pos_im2];
-
 
 
     // xx, yy, zz
-
-#ifdef CURVILINEAR
-
     float Jii = _f_c(i, j) * _g3_c(k);
           Jii = 1.0 * 1.0 / Jii;
           
@@ -385,41 +421,34 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
   vs3 =
       Jii * (dhz4[2] * _w1(i, j, k) + dhz4[0] * _w1(i, j, k - 2) +
              dhz4[1] * _w1(i, j, k - 1) + dhz4[3] * _w1(i, j, k + 1));
-#else
-    // Cartesian      
-    vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
-    vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
-    vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
-#endif
 
     tmp      = xl*(vs1+vs2+vs3);
 
     a1       = qpa*(vs1+vs2+vs3);
     tmp      = tmp+d_DT*a1;
 
-    f_r      = r1[pos];
+    f_r      = _r1(i, j, k);
     f_rtmp   = -h*(vs2+vs3) + a1; 
-    f_xx     = xx[pos]  + tmp - xm*(vs2+vs3) + vx1*f_r;  
-    r1[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+    f_xx     = _xx(i, j, k)  + tmp - xm*(vs2+vs3) + vx1*f_r;  
+    _r1(i, j, k)  = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
-    xx[pos]  = (f_xx + d_DT*f_rtmp)*f_dcrj;
+    _xx(i, j, k)  = (f_xx + d_DT*f_rtmp)*f_dcrj;
 
-    f_r      = r2[pos];
+    f_r      = _r2(i, j, k);
     f_rtmp   = -h*(vs1+vs3) + a1;  
-    f_yy     = (yy[pos]  + tmp - xm*(vs1+vs3) + vx1*f_r)*f_dcrj;
-    r2[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+    f_yy     = (_yy(i, j, k)  + tmp - xm*(vs1+vs3) + vx1*f_r)*f_dcrj;
+    _r2(i, j, k)  = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
-    yy[pos]  = (f_yy + d_DT*f_rtmp)*f_dcrj;
+    _yy(i, j, k)  = (f_yy + d_DT*f_rtmp)*f_dcrj;
 	
-    f_r      = r3[pos];
+    f_r      = _r3(i, j, k);
     f_rtmp   = -h*(vs1+vs2) + a1;
-    f_zz     = (zz[pos]  + tmp - xm*(vs1+vs2) + vx1*f_r)*f_dcrj;
-    r3[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+    f_zz     = (_zz(i, j, k) + tmp - xm*(vs1+vs2) + vx1*f_r)*f_dcrj;
+    _r3(i, j, k)  = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp   = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1);  
-    zz[pos]  = (f_zz + d_DT*f_rtmp)*f_dcrj;
+    _zz(i, j, k)  = (f_zz + d_DT*f_rtmp)*f_dcrj;
 
     // xy
-#ifdef CURVILINEAR
   float J12i = _f(i, j) * _g3_c(k + 6);
   J12i = 1.0 / J12i;
 
@@ -483,22 +512,15 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
                 phdz4[4] * _v1(i + 1, j, k + 1) +
                 phdz4[5] * _v1(i + 1, j, k + 2) +
                 phdz4[6] * _v1(i + 1, j, k + 3)));
-#else
-    // Cartesian
-    vs1      = d_c1*(u1[pos_jp1] - f_u1)   + d_c2*(u1[pos_jp2] - u1[pos_jm1]);
-    vs2      = d_c1*(f_v1        - v1_im1) + d_c2*(v1_ip1      - v1_im2);
-#endif
 
-    f_r      = r4[pos];
+    f_r      = _r4(i, j, k);
     f_rtmp   = h1*(vs1+vs2); 
-    f_xy     = xy[pos]  + xmu1*(vs1+vs2) + vx1*f_r;
-    r4[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+    f_xy     = _xy(i, j, k)  + xmu1*(vs1+vs2) + vx1*f_r;
+    _r4(i, j, k)  = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1);
-    xy[pos]  = (f_xy + d_DT*f_rtmp)*f_dcrj;
+    _xy(i, j, k)  = (f_xy + d_DT*f_rtmp)*f_dcrj;
 
     // xz
-#ifdef CURVILINEAR
-
   float J13i = _f_1(i, j) * _g3(k);
   J13i = 1.0 * 1.0 / J13i;
 
@@ -535,20 +557,14 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
                 pdhz4[5] * _w1(i + 1, j, k + 2) +
                 pdhz4[6] * _w1(i + 1, j, k + 3)));
 
-#else
-    vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
-    vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
-#endif
-    f_r     = r5[pos];
+    f_r     = _r5(i, j, k);
     f_rtmp  = h2*(vs1+vs2);
-    f_xz    = xz[pos]  + xmu2*(vs1+vs2) + vx1*f_r; 
-    r5[pos] = f_vx2*f_r + f_wwo*f_rtmp; 
+    f_xz    = _xz(i, j, k)  + xmu2*(vs1+vs2) + vx1*f_r; 
+    _r5(i, j, k) = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
-    xz[pos] = (f_xz + d_DT*f_rtmp)*f_dcrj;
+    _xz(i, j, k) = (f_xz + d_DT*f_rtmp)*f_dcrj;
 
     // yz
-
-#ifdef CURVILINEAR
     float J23i = _f_2(i, j) * _g3(k);
     J23i = 1.0 * 1.0 / J23i;
     vs1 = J23i * (dz4[1] * _v1(i, j, k) + dz4[0] * _v1(i, j, k - 1) +
@@ -583,18 +599,13 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
                   pdhz4[4] * _w1(i, j + 2, k + 1) +
                   pdhz4[5] * _w1(i, j + 2, k + 2) +
                   pdhz4[6] * _w1(i, j + 2, k + 3)));
-#else
-    // Cartesian
-    vs1     = d_c1*(v1[pos_kp1] - f_v1) + d_c2*(v1[pos_kp2] - v1[pos_km1]);
-    vs2     = d_c1*(w1[pos_jp1] - f_w1) + d_c2*(w1[pos_jp2] - w1[pos_jm1]);
-#endif
            
-    f_r     = r6[pos];
+    f_r     = _r6(i, j, k);
     f_rtmp  = h3*(vs1+vs2);
-    f_yz    = yz[pos]  + xmu3*(vs1+vs2) + vx1*f_r;
-    r6[pos] = f_vx2*f_r + f_wwo*f_rtmp;
+    f_yz    = _yz(i, j, k)  + xmu3*(vs1+vs2) + vx1*f_r;
+    _r6(i, j, k) = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
-    yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
+    _yz(i, j, k) = (f_yz + d_DT*f_rtmp)*f_dcrj; 
 
 
     pos     = pos_im1;
@@ -616,6 +627,4 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 #undef _u2
 #undef _u3
 }
-
-
 
