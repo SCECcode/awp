@@ -203,6 +203,7 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
           j = j0 + b;
 #pragma unroll
   for (int a = 0; a < na; ++a) {
+          k = k0 + a;
 
   f_dcrjz = dcrjz[k];
   f_dcrjy = dcrjy[j];
@@ -593,7 +594,7 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   for (int b = 0; b < nb; ++b) {
      j = j0 + b;
      if (j >= e_j)
-       continue;
+       return;
 #pragma unroll
   for (int a = 0; a < na; ++a) {
      k = k0 + a;

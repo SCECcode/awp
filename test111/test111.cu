@@ -6,21 +6,21 @@
 // Configuration for Stress macro unroll kernel (stress_macro_unroll.cu)
 // Unroll factor in CUDA x
 #ifndef STRMU_NA
-#define STRMU_NA 1
+#define STRMU_NA 4
 #endif
 
 // Unroll factor in CUDA y
 #ifndef STRMU_NB
-#define STRMU_NB 2
+#define STRMU_NB 1
 #endif
 
 // Threads in x, y, z
 #ifndef STRMU_TX
-#define STRMU_TX 16
+#define STRMU_TX 32
 #endif
 
 #ifndef STRMU_TY
-#define STRMU_TY 8
+#define STRMU_TY 2
 #endif
 
 #ifndef STRMU_TZ
@@ -69,7 +69,8 @@
 #define RADIUSZ 3
 
 __device__ int err;
-#define PRINTERR 0
+__device__ int nan_err;
+#define PRINTERR 1
 
 // Turning __restrict__ on or off...
 #define RSTRCT __restrict__
@@ -1621,15 +1622,9 @@ __global__ void compare(const float *RSTRCT u1,
         if (j >= ny) return;
         if (i >= nx) return;
 
-        if (isnan(_f(v1, i, j, k)) ||
-            isnan(_f(v2, i, j, k)) ||
-            isnan(_f(v3, i, j, k))) {
-                err = -1;
-        }
-
-        if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-7 ||
-            fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-7 ||
-            fabs(_f(u3, i, j, k) - _f(v3, i, j, k)) > 1e-7) {
+        if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-6 ||
+            fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-6 ||
+            fabs(_f(u3, i, j, k) - _f(v3, i, j, k)) > 1e-6) {
                 err = -1;
 #if PRINTERR
                 printf("%d %d %d | %f %f | %f %f | %f %f \n", i, j, k, 
@@ -1641,6 +1636,20 @@ __global__ void compare(const float *RSTRCT u1,
                                 _f(v3, i, j, k));
 #endif
         }
+}
+
+__global__ void chknan(const float *RSTRCT u1,
+                        int nx, int ny, int nz)
+{
+        const int k = threadIdx.x + blockIdx.x * blockDim.x;
+        const int j = threadIdx.y + blockIdx.y * blockDim.y;
+        const int i = threadIdx.z + blockIdx.z * blockDim.z;
+        if (k >= nz) return;
+        if (j >= ny) return;
+        if (i >= nx) return;
+
+        if (isnan(_f(u1, i, j, k)))
+                nan_err = -1;
 }
 
 #undef _f
@@ -2268,6 +2277,7 @@ int main (int argc, char **argv) {
 {
 #define na STRMU_NA 
 #define nb STRMU_NB 
+        printf("Unroll settings: %d %d \n", na, nb);
         dim3 threads (STRMU_TX, STRMU_TY, STRMU_TZ);
         dim3 blocks ((nz-4)/(na * threads.x)+1, 
                      (ny-1)/(nb * threads.y)+1,
@@ -2292,6 +2302,11 @@ int main (int argc, char **argv) {
                              (ny-1)/(threads.y)+1,
                              (nx-1)/(threads.z)+1);
 
+                float *vars[12] = {t11, t22, t33, t12, t13, t23,
+                                   r1,  r2,  r3,  r4,  r5,  r6};
+                for (int pt = 0; pt < 12; ++pt) {
+                        chknan<<<blocks, threads>>>(vars[pt], nx, ny, nz);
+                }
                 compare<<<blocks, threads>>>(s11, s22, s33, t11, t22, t33, nx,
                                              ny, nz);
                 compare<<<blocks, threads>>>(s12, s13, s23, t12, t13, t23, nx,
@@ -2304,8 +2319,17 @@ int main (int argc, char **argv) {
                 int _err = 0;
                 cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
                                      cudaMemcpyDeviceToHost);
+
+                int _nan_err = 0;
+                cudaMemcpyFromSymbol(&_nan_err, nan_err, sizeof(_nan_err), 0,
+                                     cudaMemcpyDeviceToHost);
                 if (_err) {
                         printf("Correctness check failed\n");
+                        //return -1;
+                }
+
+                if (_nan_err) {
+                        printf("Error: nan detected\n");
                         //return -1;
                 }
         }
