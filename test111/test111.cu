@@ -17,6 +17,7 @@
 #ifndef STRMU_TZ
 #define STRMU_TZ 8
 #endif
+
 // Unroll factor in CUDA x
 #ifndef STRMU_NA
 #define STRMU_NA 2
@@ -43,6 +44,35 @@
             
 #ifndef STRI_TZ
 #define STRI_TZ 1
+#endif
+
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Configuration for Stress index with loop unrolling kernel
+// (stress_index_unroll.cu)
+
+// Threads in x, y, z
+#ifndef STRIU_TX
+#define STRIU_TX 64
+#endif      
+            
+#ifndef STRIU_TY
+#define STRIU_TY 4
+#endif      
+            
+#ifndef STRIU_TZ
+#define STRIU_TZ 1
+#endif
+
+// Unroll factor in CUDA x
+#ifndef STRIU_NA
+#define STRIU_NA 1
+#endif
+
+// Unroll factor in CUDA y
+#ifndef STRIU_NB
+#define STRIU_NB 1
 #endif
 
 //-----------------------------------------------------------------------------
@@ -82,7 +112,11 @@
 #endif
 
 #ifndef USE_STRESS_INDEX
-#define USE_STRESS_INDEX 1
+#define USE_STRESS_INDEX 0
+#endif
+
+#ifndef USE_STRESS_INDEX_UNROLL
+#define USE_STRESS_INDEX_UNROLL 1
 #endif
 
 #define align 32
@@ -1688,6 +1722,7 @@ __global__ void chknan(const float *RSTRCT u1,
 #include "stress_macro.cu"
 #include "stress_macro_unroll.cu"
 #include "stress_index.cu"
+#include "stress_index_unroll.cu"
 
 #undef RSTRCT
 // *****************************************************************************
@@ -2296,8 +2331,8 @@ int main (int argc, char **argv) {
                                      cudaMemcpyDeviceToHost);
                 if (_err) {
                         printf("Correctness check failed\n");
-                        //return -1;
                 }
+                printf("done.\n");
         }
 }
 #endif
@@ -2353,13 +2388,12 @@ int main (int argc, char **argv) {
                                      cudaMemcpyDeviceToHost);
                 if (_err) {
                         printf("Correctness check failed\n");
-                        //return -1;
                 }
 
                 if (_nan_err) {
                         printf("Error: nan detected\n");
-                        //return -1;
                 }
+                printf("done.\n");
         }
 }
 #endif
@@ -2415,13 +2449,74 @@ int main (int argc, char **argv) {
                                      cudaMemcpyDeviceToHost);
                 if (_err) {
                         printf("Correctness check failed\n");
-                        //return -1;
                 }
 
                 if (_nan_err) {
                         printf("Error: nan detected\n");
-                        //return -1;
                 }
+                printf("done.\n");
+        }
+}
+#endif
+
+#if USE_STRESS_INDEX_UNROLL
+{
+#define na STRIU_NA 
+#define nb STRIU_NB 
+        dim3 threads (STRIU_TX, STRIU_TY, STRIU_TZ);
+        dim3 blocks ((nz-4)/(na*threads.x)+1, 
+                     (ny-1)/(nb*threads.y)+1,
+                     (nx-1)/(threads.z)+1);
+        dtopo_str_111_index_unroll<STRIU_TX, STRIU_TY, STRIU_TZ, na, nb><<<blocks, threads>>>(
+            t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
+            f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
+            lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
+            d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
+
+        
+        if (iter == 0) { 
+
+                if (cudaDeviceSynchronize() != cudaSuccess) {
+                  printf ("Kernels failed\n");
+                }
+
+                printf("Running error check\n");
+
+                dim3 threads (64, 8, 1);
+                dim3 blocks ((nz-7)/(threads.x)+1, 
+                             (ny-1)/(threads.y)+1,
+                             (nx-1)/(threads.z)+1);
+
+                float *vars[12] = {t11, t22, t33, t12, t13, t23,
+                                   r1,  r2,  r3,  r4,  r5,  r6};
+                for (int pt = 0; pt < 12; ++pt) {
+                        chknan<<<blocks, threads>>>(vars[pt], nx, ny, nz);
+                }
+                compare<<<blocks, threads>>>(s11, s22, s33, t11, t22, t33, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(s12, s13, s23, t12, t13, t23, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(r1, r2, r3, p1, p2, p3, nx, ny,
+                                             nz);
+                compare<<<blocks, threads>>>(r4, r5, r6, p4, p5, p6, nx, ny,
+                                             nz);
+
+                int _err = 0;
+                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
+                                     cudaMemcpyDeviceToHost);
+
+                int _nan_err = 0;
+                cudaMemcpyFromSymbol(&_nan_err, nan_err, sizeof(_nan_err), 0,
+                                     cudaMemcpyDeviceToHost);
+                if (_err) {
+                        printf("Correctness check failed\n");
+                }
+
+                if (_nan_err) {
+                        printf("Error: nan detected\n");
+                }
+
+                printf("done.\n");
         }
 }
 #endif
