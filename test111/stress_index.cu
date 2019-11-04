@@ -1,4 +1,3 @@
-#define CURVILINEAR
 #define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_1(i, j) f_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_2(i, j) f_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
@@ -13,16 +12,6 @@
 #define _g_c(k) g_c[(k)]
 #define _g(k) g[(k)]
 #define _g3(k) g3[(k)]
-
-#define _u1(i, j, k)                                                           \
-  u1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-#define _v1(i, j, k)                                                           \
-  v1[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-#define _w1(i, j, k)                                                           \
-  w1[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
 
 #define LDG(x) x
 
@@ -136,6 +125,97 @@ __global__ void dtopo_str_111_index(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 
   for(i=e_i-1;i>=s_i;i--)
   {         
+  // i - 1, j, k - 3: k + 3
+  int m2p0m3 = pos - d_slice_2 - 3;
+  int m2p0m2 = pos - d_slice_2 - 2;
+  int m2p0m1 = pos - d_slice_2 - 1;
+  int m2p0p0 = pos - d_slice_2 + 0;
+  int m2p0p1 = pos - d_slice_2 + 1;
+  int m2p0p2 = pos - d_slice_2 + 2;
+  int m2p0p3 = pos - d_slice_2 + 3;
+
+
+  // i - 1, j, k - 3: k + 3
+  int m1p0m3 = pos - d_slice_1 - 3;
+  int m1p0m2 = pos - d_slice_1 - 2;
+  int m1p0m1 = pos - d_slice_1 - 1;
+  int m1p0p0 = pos - d_slice_1 + 0;
+  int m1p0p1 = pos - d_slice_1 + 1;
+  int m1p0p2 = pos - d_slice_1 + 2;
+  int m1p0p3 = pos - d_slice_1 + 3;
+
+  // i, j, k - 3: k + 3
+  int p0p0m3 = pos - 3;
+  int p0p0m2 = pos - 2;
+  int p0p0m1 = pos - 1;
+  int p0p0p0 = pos + 0;
+  int p0p0p1 = pos + 1;
+  int p0p0p2 = pos + 2;
+  int p0p0p3 = pos + 3;
+
+  // i + 1, j, k - 3: k + 3
+  int p1p0m3 = pos + d_slice_1 - 3;
+  int p1p0m2 = pos + d_slice_1 - 2;
+  int p1p0m1 = pos + d_slice_1 - 1;
+  int p1p0p0 = pos + d_slice_1 + 0;
+  int p1p0p1 = pos + d_slice_1 + 1;
+  int p1p0p2 = pos + d_slice_1 + 2;
+  int p1p0p3 = pos + d_slice_1 + 3;
+
+  // i + 2, j, k - 3: k + 3
+  int p2p0m3 = pos + d_slice_2 - 3;
+  int p2p0m2 = pos + d_slice_2 - 2;
+  int p2p0m1 = pos + d_slice_2 - 1;
+  int p2p0p0 = pos + d_slice_2 + 0;
+  int p2p0p1 = pos + d_slice_2 + 1;
+  int p2p0p2 = pos + d_slice_2 + 2;
+  int p2p0p3 = pos + d_slice_2 + 3;
+
+  // i, j - 2, k - 3: k + 3
+  int p0m2m3 = pos - d_yline_2 - 3;
+  int p0m2m2 = pos - d_yline_2 - 2;
+  int p0m2m1 = pos - d_yline_2 - 1;
+  int p0m2p0 = pos - d_yline_2 + 0;
+  int p0m2p1 = pos - d_yline_2 + 1;
+  int p0m2p2 = pos - d_yline_2 + 2;
+  int p0m2p3 = pos - d_yline_2 + 3;
+
+  // i, j - 1, k - 3: k + 3
+  int p0m1m3 = pos - d_yline_1 - 3;
+  int p0m1m2 = pos - d_yline_1 - 2;
+  int p0m1m1 = pos - d_yline_1 - 1;
+  int p0m1p0 = pos - d_yline_1 + 0;
+  int p0m1p1 = pos - d_yline_1 + 1;
+  int p0m1p2 = pos - d_yline_1 + 2;
+  int p0m1p3 = pos - d_yline_1 + 3;
+
+  // i, j + 1, k - 3: k + 3
+  int p0p1m3 = pos + d_yline_1 - 3;
+  int p0p1m2 = pos + d_yline_1 - 2;
+  int p0p1m1 = pos + d_yline_1 - 1;
+  int p0p1p0 = pos + d_yline_1 + 0;
+  int p0p1p1 = pos + d_yline_1 + 1;
+  int p0p1p2 = pos + d_yline_1 + 2;
+  int p0p1p3 = pos + d_yline_1 + 3;
+
+  // i, j + 2, k - 3: k + 3
+  int p0p2m3 = pos + d_yline_2 - 3;
+  int p0p2m2 = pos + d_yline_2 - 2;
+  int p0p2m1 = pos + d_yline_2 - 1;
+  int p0p2p0 = pos + d_yline_2 + 0;
+  int p0p2p1 = pos + d_yline_2 + 1;
+  int p0p2p2 = pos + d_yline_2 + 2;
+  int p0p2p3 = pos + d_yline_2 + 3;
+
+
+  // i - 2 : i + 1, j
+  //int m2p0 = fpos - d_fline_2;
+  //int m1p0 = fpos - d_fline_1;
+  //int p0p0 = fpos;
+  //int p1p0 = fpos + d_fline_1;
+  //int p2p0 = fpos + d_fline_2;
+
+
     f_vx1 = d_vx1[pos];
     f_vx2 = d_vx2[pos];
     f_ww  = d_ww[pos];
@@ -278,110 +358,104 @@ __global__ void dtopo_str_111_index(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 
     // xx, yy, zz
 
-#ifdef CURVILINEAR
-
     float Jii = _f_c(i, j) * _g3_c(k);
           Jii = 1.0 * 1.0 / Jii;
-          
+
     vs1 =
-      dx4[1] * _u1(i, j, k) + dx4[0] * _u1(i - 1, j, k) +
-      dx4[2] * _u1(i + 1, j, k) + dx4[3] * _u1(i + 2, j, k) -
+      dx4[1] * u1[p0p0p0] + dx4[0] * u1[m1p0p0] +
+      dx4[2] * u1[p1p0p0] + dx4[3] * u1[p2p0p0] -
       Jii * _g_c(k) *
           (
            px4[0] * _f1_1(i - 1, j) *
                (
-                phdz4[0] * _u1(i - 1, j, k - 3) +
-                phdz4[1] * _u1(i - 1, j, k - 2) +
-                phdz4[2] * _u1(i - 1, j, k - 1) +
-                phdz4[3] * _u1(i - 1, j, k) +
-                phdz4[4] * _u1(i - 1, j, k + 1) +
-                phdz4[5] * _u1(i - 1, j, k + 2) +
-                phdz4[6] * _u1(i - 1, j, k + 3)
-                ) +
+                phdz4[0] * u1[m1p0m3] +
+                phdz4[1] * u1[m1p0m2] +
+                phdz4[2] * u1[m1p0m1] +
+                phdz4[3] * u1[m1p0p0] +
+                phdz4[4] * u1[m1p0p1] +
+                phdz4[5] * u1[m1p0p2] +
+                phdz4[6] * u1[m1p0p3]
+                ) 
+               +
            px4[1] * _f1_1(i, j) *
                (
-                phdz4[0] * _u1(i, j, k - 3) +
-                phdz4[1] * _u1(i, j, k - 2) +
-                phdz4[2] * _u1(i, j, k - 1) +
-                phdz4[3] * _u1(i, j, k) +
-                phdz4[4] * _u1(i, j, k + 1) + 
-                phdz4[5] * _u1(i, j, k + 2) +
-                phdz4[6] * _u1(i, j, k + 3)
+                phdz4[0] * u1[p0p0m3] +
+                phdz4[1] * u1[p0p0m2] +
+                phdz4[2] * u1[p0p0m1] +
+                phdz4[3] * u1[p0p0p0] +
+                phdz4[4] * u1[p0p0p1] +
+                phdz4[5] * u1[p0p0p2] +
+                phdz4[6] * u1[p0p0p3]
                 ) +
            px4[2] * _f1_1(i + 1, j) *
                (
-                phdz4[0] * _u1(i + 1, j, k - 3) +
-                phdz4[1] * _u1(i + 1, j, k - 2) +
-                phdz4[2] * _u1(i + 1, j, k - 1) +
-                phdz4[3] * _u1(i + 1, j, k) +
-                phdz4[4] * _u1(i + 1, j, k + 1) +
-                phdz4[5] * _u1(i + 1, j, k + 2) +
-                phdz4[6] * _u1(i + 1, j, k + 3)
+                phdz4[0] * u1[p1p0m3] +
+                phdz4[1] * u1[p1p0m2] +
+                phdz4[2] * u1[p1p0m1] +
+                phdz4[3] * u1[p1p0p0] +
+                phdz4[4] * u1[p1p0p1] +
+                phdz4[5] * u1[p1p0p2] +
+                phdz4[6] * u1[p1p0p3]
                 ) +
            px4[3] * _f1_1(i + 2, j) *
                (
-                phdz4[0] * _u1(i + 2, j, k - 3) +
-                phdz4[1] * _u1(i + 2, j, k - 2) +
-                phdz4[2] * _u1(i + 2, j, k - 1) +
-                phdz4[3] * _u1(i + 2, j, k) +
-                phdz4[4] * _u1(i + 2, j, k + 1) +
-                phdz4[5] * _u1(i + 2, j, k + 2) +
-                phdz4[6] * _u1(i + 2, j, k + 3)
+                phdz4[0] * u1[p2p0m3] +
+                phdz4[1] * u1[p2p0m2] +
+                phdz4[2] * u1[p2p0m1] +
+                phdz4[3] * u1[p2p0p0] +
+                phdz4[4] * u1[p2p0p1] +
+                phdz4[5] * u1[p2p0p2] +
+                phdz4[6] * u1[p2p0p3]
                 )
          );
     vs2 =
-      dhy4[2] * _v1(i, j, k) + dhy4[0] * _v1(i, j - 2, k) +
-      dhy4[1] * _v1(i, j - 1, k) + dhy4[3] * _v1(i, j + 1, k) -
+      dhy4[2] * v1[p0p0p0] + dhy4[0] * v1[p0m2p0] +
+      dhy4[1] * v1[p0m1p0] + dhy4[3] * v1[p0p1p0] -
       Jii * _g_c(k) *
-          (phy4[2] * _f2_2(i, j) *
-               (
-                phdz4[0] * _v1(i, j, k - 3) +
-                phdz4[1] * _v1(i, j, k - 2) +
-                phdz4[2] * _v1(i, j, k - 1) +
-                phdz4[3] * _v1(i, j, k) +
-                phdz4[4] * _v1(i, j, k + 1) +
-                phdz4[5] * _v1(i, j, k + 2) +
-                phdz4[6] * _v1(i, j, k + 3)
-                ) +
-           phy4[0] * _f2_2(i, j - 2) *
+           (phy4[0] * _f2_2(i, j - 2) *
                 (
-                phdz4[0] * _v1(i, j - 2, k - 3) +
-                phdz4[1] * _v1(i, j - 2, k - 2) +
-                phdz4[2] * _v1(i, j - 2, k - 1) +
-                phdz4[3] * _v1(i, j - 2, k) +
-                phdz4[4] * _v1(i, j - 2, k + 1) +
-                phdz4[5] * _v1(i, j - 2, k + 2) +
-                phdz4[6] * _v1(i, j - 2, k + 3)
+                phdz4[0] * v1[p0m2m3] +
+                phdz4[1] * v1[p0m2m2] +
+                phdz4[2] * v1[p0m2m1] +
+                phdz4[3] * v1[p0m2p0] +
+                phdz4[4] * v1[p0m2p1] +
+                phdz4[5] * v1[p0m2p2] +
+                phdz4[6] * v1[p0m2p3]
                 ) +
            phy4[1] * _f2_2(i, j - 1) *
                (
-                phdz4[0] * _v1(i, j - 1, k - 3) +
-                phdz4[1] * _v1(i, j - 1, k - 2) +
-                phdz4[2] * _v1(i, j - 1, k - 1) +
-                phdz4[3] * _v1(i, j - 1, k) + 
-                phdz4[4] * _v1(i, j - 1, k + 1) +
-                phdz4[5] * _v1(i, j - 1, k + 2) +
-                phdz4[6] * _v1(i, j - 1, k + 3)) +
+                phdz4[0] * v1[p0m1m3] +
+                phdz4[1] * v1[p0m1m2] +
+                phdz4[2] * v1[p0m1m1] +
+                phdz4[3] * v1[p0m1p0] +
+                phdz4[4] * v1[p0m1p1] +
+                phdz4[5] * v1[p0m1p2] +
+                phdz4[6] * v1[p0m1p3]
+               ) +
+          phy4[2] * _f2_2(i, j) *
+               (
+                phdz4[0] * v1[p0p0m3] +
+                phdz4[1] * v1[p0p0m2] +
+                phdz4[2] * v1[p0p0m1] +
+                phdz4[3] * v1[p0p0p0] +
+                phdz4[4] * v1[p0p0p1] +
+                phdz4[5] * v1[p0p0p2] +
+                phdz4[6] * v1[p0p0p3]
+                ) +
            phy4[3] * _f2_2(i, j + 1) *
                (
-                phdz4[0] * _v1(i, j + 1, k - 3) +
-                phdz4[1] * _v1(i, j + 1, k - 2) +
-                phdz4[2] * _v1(i, j + 1, k - 1) +
-                phdz4[3] * _v1(i, j + 1, k) + 
-                phdz4[4] * _v1(i, j + 1, k + 1) +
-                phdz4[5] * _v1(i, j + 1, k + 2) +
-                phdz4[6] * _v1(i, j + 1, k + 3)
+                phdz4[0] * v1[p0p1m3] +
+                phdz4[1] * v1[p0p1m2] +
+                phdz4[2] * v1[p0p1m1] +
+                phdz4[3] * v1[p0p1p0] +
+                phdz4[4] * v1[p0p1p1] +
+                phdz4[5] * v1[p0p1p2] +
+                phdz4[6] * v1[p0p1p3]
                 )
                );
   vs3 =
-      Jii * (dhz4[2] * _w1(i, j, k) + dhz4[0] * _w1(i, j, k - 2) +
-             dhz4[1] * _w1(i, j, k - 1) + dhz4[3] * _w1(i, j, k + 1));
-#else
-    // Cartesian      
-    vs1      = d_c1*(u1_ip1 - f_u1)        + d_c2*(u1_ip2      - u1_im1);
-    vs2      = d_c1*(f_v1   - v1[pos_jm1]) + d_c2*(v1[pos_jp1] - v1[pos_jm2]);
-    vs3      = d_c1*(f_w1   - w1[pos_km1]) + d_c2*(w1[pos_kp1] - w1[pos_km2]);
-#endif
+      Jii * (dhz4[2] * w1[p0p0p0] + dhz4[0] * w1[p0p0m2] +
+             dhz4[1] * w1[p0p0m1] + dhz4[3] * w1[p0p0p1]);
 
     tmp      = xl*(vs1+vs2+vs3);
 
@@ -410,75 +484,96 @@ __global__ void dtopo_str_111_index(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     zz[pos]  = (f_zz + d_DT*f_rtmp)*f_dcrj;
 
     // xy
-#ifdef CURVILINEAR
   float J12i = _f(i, j) * _g3_c(k + 6);
   J12i = 1.0 / J12i;
 
   vs1 =
-      dy4[1] * _u1(i, j, k) + dy4[0] * _u1(i, j - 1, k) +
-      dy4[2] * _u1(i, j + 1, k) + dy4[3] * _u1(i, j + 2, k) -
+      dy4[1] * u1[p0p0p0] + dy4[0] * u1[p0m1p0] +
+      dy4[2] * u1[p0p1p0] + dy4[3] * u1[p0p2p0] -
       J12i * _g_c(k) *
-          (py4[1] * _f2_1(i, j) *
-               (phdz4[3] * _u1(i, j, k) + phdz4[0] * _u1(i, j, k - 3) +
-                phdz4[1] * _u1(i, j, k - 2) + phdz4[2] * _u1(i, j, k - 1) +
-                phdz4[4] * _u1(i, j, k + 1) + phdz4[5] * _u1(i, j, k + 2) +
-                phdz4[6] * _u1(i, j, k + 3)) +
+          (
            py4[0] * _f2_1(i, j - 1) *
-               (phdz4[3] * _u1(i, j - 1, k) + phdz4[0] * _u1(i, j - 1, k - 3) +
-                phdz4[1] * _u1(i, j - 1, k - 2) +
-                phdz4[2] * _u1(i, j - 1, k - 1) +
-                phdz4[4] * _u1(i, j - 1, k + 1) +
-                phdz4[5] * _u1(i, j - 1, k + 2) +
-                phdz4[6] * _u1(i, j - 1, k + 3)) +
+               (
+                phdz4[0] * u1[p0m1m3] +
+                phdz4[1] * u1[p0m1m2] +
+                phdz4[2] * u1[p0m1m1] +
+                phdz4[3] * u1[p0m1p0] +
+                phdz4[4] * u1[p0m1p1] +
+                phdz4[5] * u1[p0m1p2] +
+                phdz4[6] * u1[p0m1p3]) +
+           py4[1] * _f2_1(i, j) *
+               (
+                phdz4[0] * u1[p0p0m3] +
+                phdz4[1] * u1[p0p0m2] +
+                phdz4[2] * u1[p0p0m1] +
+                phdz4[3] * u1[p0p0p0] +
+                phdz4[4] * u1[p0p0p1] +
+                phdz4[5] * u1[p0p0p2] +
+                phdz4[6] * u1[p0p0p3]) +
            py4[2] * _f2_1(i, j + 1) *
-               (phdz4[3] * _u1(i, j + 1, k) + phdz4[0] * _u1(i, j + 1, k - 3) +
-                phdz4[1] * _u1(i, j + 1, k - 2) +
-                phdz4[2] * _u1(i, j + 1, k - 1) +
-                phdz4[4] * _u1(i, j + 1, k + 1) +
-                phdz4[5] * _u1(i, j + 1, k + 2) +
-                phdz4[6] * _u1(i, j + 1, k + 3)) +
+               (
+                phdz4[0] * u1[p0p1m3] +
+                phdz4[1] * u1[p0p1m2] +
+                phdz4[2] * u1[p0p1m1] +
+                phdz4[3] * u1[p0p1p0] +
+                phdz4[4] * u1[p0p1p1] +
+                phdz4[5] * u1[p0p1p2] +
+                phdz4[6] * u1[p0p1p3]) +
            py4[3] * _f2_1(i, j + 2) *
-               (phdz4[3] * _u1(i, j + 2, k) + phdz4[0] * _u1(i, j + 2, k - 3) +
-                phdz4[1] * _u1(i, j + 2, k - 2) +
-                phdz4[2] * _u1(i, j + 2, k - 1) +
-                phdz4[4] * _u1(i, j + 2, k + 1) +
-                phdz4[5] * _u1(i, j + 2, k + 2) +
-                phdz4[6] * _u1(i, j + 2, k + 3)));
+               (
+                phdz4[0] * u1[p0p2m3] +
+                phdz4[1] * u1[p0p2m2] +
+                phdz4[2] * u1[p0p2m1] +
+                phdz4[3] * u1[p0p2p0] +
+                phdz4[4] * u1[p0p2p1] +
+                phdz4[5] * u1[p0p2p2] +
+                phdz4[6] * u1[p0p2p3]) 
+                );
   vs2 =
-      dhx4[2] * _v1(i, j, k) + dhx4[0] * _v1(i - 2, j, k) +
-      dhx4[1] * _v1(i - 1, j, k) + dhx4[3] * _v1(i + 1, j, k) -
+      dhx4[2] * v1[p0p0p0] + dhx4[0] * v1[m2p0p0] +
+      dhx4[1] * v1[m1p0p0] + dhx4[3] * v1[p1p0p0] -
       J12i * _g_c(k) *
-          (phx4[2] * _f1_2(i, j) *
-               (phdz4[3] * _v1(i, j, k) + phdz4[0] * _v1(i, j, k - 3) +
-                phdz4[1] * _v1(i, j, k - 2) + phdz4[2] * _v1(i, j, k - 1) +
-                phdz4[4] * _v1(i, j, k + 1) + phdz4[5] * _v1(i, j, k + 2) +
-                phdz4[6] * _v1(i, j, k + 3)) +
+          (
            phx4[0] * _f1_2(i - 2, j) *
-               (phdz4[3] * _v1(i - 2, j, k) + phdz4[0] * _v1(i - 2, j, k - 3) +
-                phdz4[1] * _v1(i - 2, j, k - 2) +
-                phdz4[2] * _v1(i - 2, j, k - 1) +
-                phdz4[4] * _v1(i - 2, j, k + 1) +
-                phdz4[5] * _v1(i - 2, j, k + 2) +
-                phdz4[6] * _v1(i - 2, j, k + 3)) +
+               (
+                phdz4[0] * v1[m2p0m3] +
+                phdz4[1] * v1[m2p0m2] +
+                phdz4[2] * v1[m2p0m1] +
+                phdz4[3] * v1[m2p0p0] +
+                phdz4[4] * v1[m2p0p1] +
+                phdz4[5] * v1[m2p0p2] +
+                phdz4[6] * v1[m2p0p3]
+                ) +
            phx4[1] * _f1_2(i - 1, j) *
-               (phdz4[3] * _v1(i - 1, j, k) + phdz4[0] * _v1(i - 1, j, k - 3) +
-                phdz4[1] * _v1(i - 1, j, k - 2) +
-                phdz4[2] * _v1(i - 1, j, k - 1) +
-                phdz4[4] * _v1(i - 1, j, k + 1) +
-                phdz4[5] * _v1(i - 1, j, k + 2) +
-                phdz4[6] * _v1(i - 1, j, k + 3)) +
+               (
+                phdz4[0] * v1[m1p0m3] +
+                phdz4[1] * v1[m1p0m2] +
+                phdz4[2] * v1[m1p0m1] +
+                phdz4[3] * v1[m1p0p0] +
+                phdz4[4] * v1[m1p0p1] +
+                phdz4[5] * v1[m1p0p2] +
+                phdz4[6] * v1[m1p0p3]
+                ) +
+           phx4[2] * _f1_2(i, j) *
+               (
+                phdz4[0] * v1[p0p0m3] +
+                phdz4[1] * v1[p0p0m2] +
+                phdz4[2] * v1[p0p0m1] +
+                phdz4[3] * v1[p0p0p0] +
+                phdz4[4] * v1[p0p0p1] +
+                phdz4[5] * v1[p0p0p2] +
+                phdz4[6] * v1[p0p0p3]
+                ) +
            phx4[3] * _f1_2(i + 1, j) *
-               (phdz4[3] * _v1(i + 1, j, k) + phdz4[0] * _v1(i + 1, j, k - 3) +
-                phdz4[1] * _v1(i + 1, j, k - 2) +
-                phdz4[2] * _v1(i + 1, j, k - 1) +
-                phdz4[4] * _v1(i + 1, j, k + 1) +
-                phdz4[5] * _v1(i + 1, j, k + 2) +
-                phdz4[6] * _v1(i + 1, j, k + 3)));
-#else
-    // Cartesian
-    vs1      = d_c1*(u1[pos_jp1] - f_u1)   + d_c2*(u1[pos_jp2] - u1[pos_jm1]);
-    vs2      = d_c1*(f_v1        - v1_im1) + d_c2*(v1_ip1      - v1_im2);
-#endif
+               (
+                phdz4[0] * v1[p1p0m3] +
+                phdz4[1] * v1[p1p0m2] +
+                phdz4[2] * v1[p1p0m1] +
+                phdz4[3] * v1[p1p0p0] +
+                phdz4[4] * v1[p1p0p1] +
+                phdz4[5] * v1[p1p0p2] +
+                phdz4[6] * v1[p1p0p3]
+                ));
 
     f_r      = r4[pos];
     f_rtmp   = h1*(vs1+vs2); 
@@ -488,48 +583,53 @@ __global__ void dtopo_str_111_index(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     xy[pos]  = (f_xy + d_DT*f_rtmp)*f_dcrj;
 
     // xz
-#ifdef CURVILINEAR
 
   float J13i = _f_1(i, j) * _g3(k);
   J13i = 1.0 * 1.0 / J13i;
 
-  vs1 = J13i * (dz4[1] * _u1(i, j, k) + dz4[0] * _u1(i, j, k - 1) +
-                      dz4[2] * _u1(i, j, k + 1) + dz4[3] * _u1(i, j, k + 2));
+  vs1 = J13i * (dz4[1] * u1[p0p0p0] + dz4[0] * u1[p0p0m1] +
+                dz4[2] * u1[p0p0p1] + dz4[3] * u1[p0p0p2]);
   vs2 =
-      dhx4[2] * _w1(i, j, k) + dhx4[0] * _w1(i - 2, j, k) +
-      dhx4[1] * _w1(i - 1, j, k) + dhx4[3] * _w1(i + 1, j, k) -
+      dhx4[2] * w1[p0p0p0] + dhx4[0] * w1[m2p0p0] +
+      dhx4[1] * w1[m1p0p0] + dhx4[3] * w1[p1p0p0] -
       J13i * _g(k) *
-          (phx4[2] * _f1_c(i, j) *
-               (pdhz4[3] * _w1(i, j, k) + pdhz4[0] * _w1(i, j, k - 3) +
-                pdhz4[1] * _w1(i, j, k - 2) + pdhz4[2] * _w1(i, j, k - 1) +
-                pdhz4[4] * _w1(i, j, k + 1) + pdhz4[5] * _w1(i, j, k + 2) +
-                pdhz4[6] * _w1(i, j, k + 3)) +
+          (     
            phx4[0] * _f1_c(i - 2, j) *
-               (pdhz4[3] * _w1(i - 2, j, k) + pdhz4[0] * _w1(i - 2, j, k - 3) +
-                pdhz4[1] * _w1(i - 2, j, k - 2) +
-                pdhz4[2] * _w1(i - 2, j, k - 1) +
-                pdhz4[4] * _w1(i - 2, j, k + 1) +
-                pdhz4[5] * _w1(i - 2, j, k + 2) +
-                pdhz4[6] * _w1(i - 2, j, k + 3)) +
+               (
+                pdhz4[0] * w1[m2p0m3] +
+                pdhz4[1] * w1[m2p0m2] +
+                pdhz4[2] * w1[m2p0m1] +
+                pdhz4[3] * w1[m2p0p0] +
+                pdhz4[4] * w1[m2p0p1] +
+                pdhz4[5] * w1[m2p0p2] +
+                pdhz4[6] * w1[m2p0p3]
+               ) + 
            phx4[1] * _f1_c(i - 1, j) *
-               (pdhz4[3] * _w1(i - 1, j, k) + pdhz4[0] * _w1(i - 1, j, k - 3) +
-                pdhz4[1] * _w1(i - 1, j, k - 2) +
-                pdhz4[2] * _w1(i - 1, j, k - 1) +
-                pdhz4[4] * _w1(i - 1, j, k + 1) +
-                pdhz4[5] * _w1(i - 1, j, k + 2) +
-                pdhz4[6] * _w1(i - 1, j, k + 3)) +
+                (
+                pdhz4[0] * w1[m1p0m3] +
+                pdhz4[1] * w1[m1p0m2] +
+                pdhz4[2] * w1[m1p0m1] +
+                pdhz4[3] * w1[m1p0p0] +
+                pdhz4[4] * w1[m1p0p1] +
+                pdhz4[5] * w1[m1p0p2] +
+                pdhz4[6] * w1[m1p0p3]) +
+           phx4[2] * _f1_c(i, j) *
+               (pdhz4[0] * w1[p0p0m3] +
+                pdhz4[1] * w1[p0p0m2] +
+                pdhz4[2] * w1[p0p0m1] +
+                pdhz4[3] * w1[p0p0p0] +
+                pdhz4[4] * w1[p0p0p1] +
+                pdhz4[5] * w1[p0p0p2] +
+                pdhz4[6] * w1[p0p0p3]) +
            phx4[3] * _f1_c(i + 1, j) *
-               (pdhz4[3] * _w1(i + 1, j, k) + pdhz4[0] * _w1(i + 1, j, k - 3) +
-                pdhz4[1] * _w1(i + 1, j, k - 2) +
-                pdhz4[2] * _w1(i + 1, j, k - 1) +
-                pdhz4[4] * _w1(i + 1, j, k + 1) +
-                pdhz4[5] * _w1(i + 1, j, k + 2) +
-                pdhz4[6] * _w1(i + 1, j, k + 3)));
-
-#else
-    vs1     = d_c1*(u1[pos_kp1] - f_u1)   + d_c2*(u1[pos_kp2] - u1[pos_km1]);
-    vs2     = d_c1*(f_w1        - w1_im1) + d_c2*(w1_ip1      - w1_im2);
-#endif
+               (pdhz4[0] * w1[p1p0m3] +
+                pdhz4[1] * w1[p1p0m2] +
+                pdhz4[2] * w1[p1p0m1] +
+                pdhz4[3] * w1[p1p0p0] +
+                pdhz4[4] * w1[p1p0p1] +
+                pdhz4[5] * w1[p1p0p2] +
+                pdhz4[6] * w1[p1p0p3]
+                ));
     f_r     = r5[pos];
     f_rtmp  = h2*(vs1+vs2);
     f_xz    = xz[pos]  + xmu2*(vs1+vs2) + vx1*f_r; 
@@ -539,46 +639,55 @@ __global__ void dtopo_str_111_index(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 
     // yz
 
-#ifdef CURVILINEAR
     float J23i = _f_2(i, j) * _g3(k);
     J23i = 1.0 * 1.0 / J23i;
-    vs1 = J23i * (dz4[1] * _v1(i, j, k) + dz4[0] * _v1(i, j, k - 1) +
-                        dz4[2] * _v1(i, j, k + 1) + dz4[3] * _v1(i, j, k + 2));
+    vs1 = J23i * (dz4[1] * v1[p0p0p0] + dz4[0] * v1[p0p0m1] +
+                  dz4[2] * v1[p0p0p1] + dz4[3] * v1[p0p0p2]);
     vs2 =
-        dy4[1] * _w1(i, j, k) + dy4[0] * _w1(i, j - 1, k) +
-        dy4[2] * _w1(i, j + 1, k) + dy4[3] * _w1(i, j + 2, k) -
+        dy4[1] * w1[p0p0p0] + dy4[0] * w1[p0m1p0] +
+        dy4[2] * w1[p0p1p0] + dy4[3] * w1[p0p2p0] -
         J23i * _g(k) *
-            (py4[1] * _f2_c(i, j) *
-                 (pdhz4[3] * _w1(i, j, k) + pdhz4[0] * _w1(i, j, k - 3) +
-                  pdhz4[1] * _w1(i, j, k - 2) + pdhz4[2] * _w1(i, j, k - 1) +
-                  pdhz4[4] * _w1(i, j, k + 1) + pdhz4[5] * _w1(i, j, k + 2) +
-                  pdhz4[6] * _w1(i, j, k + 3)) +
+            (
              py4[0] * _f2_c(i, j - 1) *
-                 (pdhz4[3] * _w1(i, j - 1, k) + pdhz4[0] * _w1(i, j - 1, k - 3) +
-                  pdhz4[1] * _w1(i, j - 1, k - 2) +
-                  pdhz4[2] * _w1(i, j - 1, k - 1) +
-                  pdhz4[4] * _w1(i, j - 1, k + 1) +
-                  pdhz4[5] * _w1(i, j - 1, k + 2) +
-                  pdhz4[6] * _w1(i, j - 1, k + 3)) +
+                 (
+                  pdhz4[0] * w1[p0m1m3] +
+                  pdhz4[1] * w1[p0m1m2] +
+                  pdhz4[2] * w1[p0m1m1] +
+                  pdhz4[3] * w1[p0m1p0] +
+                  pdhz4[4] * w1[p0m1p1] +
+                  pdhz4[5] * w1[p0m1p2] +
+                  pdhz4[6] * w1[p0m1p3]
+                  ) +
+             py4[1] * _f2_c(i, j) *
+                 (
+                  pdhz4[0] * w1[p0p0m3] +
+                  pdhz4[1] * w1[p0p0m2] +
+                  pdhz4[2] * w1[p0p0m1] +
+                  pdhz4[3] * w1[p0p0p0] +
+                  pdhz4[4] * w1[p0p0p1] +
+                  pdhz4[5] * w1[p0p0p2] +
+                  pdhz4[6] * w1[p0p0p3]
+                  ) +
              py4[2] * _f2_c(i, j + 1) *
-                 (pdhz4[3] * _w1(i, j + 1, k) + pdhz4[0] * _w1(i, j + 1, k - 3) +
-                  pdhz4[1] * _w1(i, j + 1, k - 2) +
-                  pdhz4[2] * _w1(i, j + 1, k - 1) +
-                  pdhz4[4] * _w1(i, j + 1, k + 1) +
-                  pdhz4[5] * _w1(i, j + 1, k + 2) +
-                  pdhz4[6] * _w1(i, j + 1, k + 3)) +
+                 (
+                  pdhz4[0] * w1[p0p1m3] +
+                  pdhz4[1] * w1[p0p1m2] +
+                  pdhz4[2] * w1[p0p1m1] +
+                  pdhz4[3] * w1[p0p1p0] +
+                  pdhz4[4] * w1[p0p1p1] +
+                  pdhz4[5] * w1[p0p1p2] +
+                  pdhz4[6] * w1[p0p1p3]
+                  ) +
              py4[3] * _f2_c(i, j + 2) *
-                 (pdhz4[3] * _w1(i, j + 2, k) + pdhz4[0] * _w1(i, j + 2, k - 3) +
-                  pdhz4[1] * _w1(i, j + 2, k - 2) +
-                  pdhz4[2] * _w1(i, j + 2, k - 1) +
-                  pdhz4[4] * _w1(i, j + 2, k + 1) +
-                  pdhz4[5] * _w1(i, j + 2, k + 2) +
-                  pdhz4[6] * _w1(i, j + 2, k + 3)));
-#else
-    // Cartesian
-    vs1     = d_c1*(v1[pos_kp1] - f_v1) + d_c2*(v1[pos_kp2] - v1[pos_km1]);
-    vs2     = d_c1*(w1[pos_jp1] - f_w1) + d_c2*(w1[pos_jp2] - w1[pos_jm1]);
-#endif
+                 (
+                  pdhz4[0] * w1[p0p2m3] +
+                  pdhz4[1] * w1[p0p2m2] +
+                  pdhz4[2] * w1[p0p2m1] +
+                  pdhz4[3] * w1[p0p2p0] +
+                  pdhz4[4] * w1[p0p2p1] +
+                  pdhz4[5] * w1[p0p2p2] +
+                  pdhz4[6] * w1[p0p2p3]
+                  ));
            
     f_r     = r6[pos];
     f_rtmp  = h3*(vs1+vs2);
