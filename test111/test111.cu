@@ -4,15 +4,6 @@
 
 //-----------------------------------------------------------------------------
 // Configuration for Stress macro unroll kernel (stress_macro_unroll.cu)
-// Unroll factor in CUDA x
-#ifndef STRMU_NA
-#define STRMU_NA 4
-#endif
-
-// Unroll factor in CUDA y
-#ifndef STRMU_NB
-#define STRMU_NB 1
-#endif
 
 // Threads in x, y, z
 #ifndef STRMU_TX
@@ -20,12 +11,22 @@
 #endif
 
 #ifndef STRMU_TY
-#define STRMU_TY 2
+#define STRMU_TY 1
 #endif
 
 #ifndef STRMU_TZ
-#define STRMU_TZ 2
+#define STRMU_TZ 8
 #endif
+// Unroll factor in CUDA x
+#ifndef STRMU_NA
+#define STRMU_NA 2
+#endif
+
+// Unroll factor in CUDA y
+#ifndef STRMU_NB
+#define STRMU_NB 1
+#endif
+
 //-----------------------------------------------------------------------------
 
 
@@ -62,7 +63,7 @@
 #define USE_STRESS_MACRO_UNROLL 1
 #endif
 
-#define align 32
+#define align 0
 #define ngsl 4
 #define ngsl2 8
 
@@ -2277,12 +2278,11 @@ int main (int argc, char **argv) {
 {
 #define na STRMU_NA 
 #define nb STRMU_NB 
-        printf("Unroll settings: %d %d \n", na, nb);
         dim3 threads (STRMU_TX, STRMU_TY, STRMU_TZ);
         dim3 blocks ((nz-4)/(na * threads.x)+1, 
                      (ny-1)/(nb * threads.y)+1,
                      (nx-1)/(threads.z)+1);
-        dtopo_str_111_macro_unroll<na, nb, STRMU_TX, STRMU_TY, STRMU_TZ><<<blocks, threads>>>(
+        dtopo_str_111_macro_unroll<STRMU_TX, STRMU_TY, STRMU_TZ, na, nb><<<blocks, threads>>>(
             t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
             lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,

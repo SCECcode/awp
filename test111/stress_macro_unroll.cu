@@ -102,7 +102,7 @@
 #define _d_wwo(i, j, k)                                                           \
   d_wwo[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * (j)]
-template <int na, int nb, int tx, int ty, int tz>
+template <int tx, int ty, int tz, int na, int nb>
 __launch_bounds__ (tx * ty * tz)
 __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTRCT zz,
            _prec*  RSTRCT xy, _prec*  RSTRCT xz, _prec*  RSTRCT yz,
