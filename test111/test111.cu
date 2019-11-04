@@ -85,7 +85,7 @@
 #define USE_STRESS_INDEX 1
 #endif
 
-#define align 0
+#define align 32
 #define ngsl 4
 #define ngsl2 8
 
