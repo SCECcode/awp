@@ -29,6 +29,24 @@
 
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+// Configuration for Stress index kernel (stress_index.cu)
+
+// Threads in x, y, z
+#ifndef STRI_TX
+#define STRI_TX 64
+#endif      
+            
+#ifndef STRI_TY
+#define STRI_TY 4
+#endif      
+            
+#ifndef STRI_TZ
+#define STRI_TZ 1
+#endif
+
+//-----------------------------------------------------------------------------
+
 
 // Enable / Disable correctness test
 #define TEST 1
@@ -60,7 +78,11 @@
 #endif
 
 #ifndef USE_STRESS_MACRO_UNROLL
-#define USE_STRESS_MACRO_UNROLL 1
+#define USE_STRESS_MACRO_UNROLL 0
+#endif
+
+#ifndef USE_STRESS_INDEX
+#define USE_STRESS_INDEX 1
 #endif
 
 #define align 0
@@ -71,7 +93,7 @@
 
 __device__ int err;
 __device__ int nan_err;
-#define PRINTERR 1
+#define PRINTERR 0
 
 // Turning __restrict__ on or off...
 #define RSTRCT __restrict__
@@ -1662,6 +1684,7 @@ __global__ void chknan(const float *RSTRCT u1,
 #include "stress.cu"
 #include "stress_macro.cu"
 #include "stress_macro_unroll.cu"
+#include "stress_index.cu"
 
 #undef RSTRCT
 // *****************************************************************************
@@ -2228,7 +2251,9 @@ int main (int argc, char **argv) {
   CUCHK(cudaDeviceSynchronize());
 }
 #endif
+//-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
 // Stress kernel that accesses all arrays using macros
 #if USE_STRESS_MACRO
 {
@@ -2283,6 +2308,68 @@ int main (int argc, char **argv) {
                      (ny-1)/(nb * threads.y)+1,
                      (nx-1)/(threads.z)+1);
         dtopo_str_111_macro_unroll<STRMU_TX, STRMU_TY, STRMU_TZ, na, nb><<<blocks, threads>>>(
+            t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
+            f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
+            lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
+            d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
+
+        
+        if (iter == 0) { 
+
+                if (cudaDeviceSynchronize() != cudaSuccess) {
+                  printf ("Kernels failed\n");
+                }
+
+                printf("Running error check\n");
+
+                dim3 threads (64, 8, 1);
+                dim3 blocks ((nz-7)/(threads.x)+1, 
+                             (ny-1)/(threads.y)+1,
+                             (nx-1)/(threads.z)+1);
+
+                float *vars[12] = {t11, t22, t33, t12, t13, t23,
+                                   r1,  r2,  r3,  r4,  r5,  r6};
+                for (int pt = 0; pt < 12; ++pt) {
+                        chknan<<<blocks, threads>>>(vars[pt], nx, ny, nz);
+                }
+                compare<<<blocks, threads>>>(s11, s22, s33, t11, t22, t33, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(s12, s13, s23, t12, t13, t23, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(r1, r2, r3, p1, p2, p3, nx, ny,
+                                             nz);
+                compare<<<blocks, threads>>>(r4, r5, r6, p4, p5, p6, nx, ny,
+                                             nz);
+
+                int _err = 0;
+                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
+                                     cudaMemcpyDeviceToHost);
+
+                int _nan_err = 0;
+                cudaMemcpyFromSymbol(&_nan_err, nan_err, sizeof(_nan_err), 0,
+                                     cudaMemcpyDeviceToHost);
+                if (_err) {
+                        printf("Correctness check failed\n");
+                        //return -1;
+                }
+
+                if (_nan_err) {
+                        printf("Error: nan detected\n");
+                        //return -1;
+                }
+        }
+}
+#endif
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+#if USE_STRESS_INDEX
+{
+        dim3 threads (STRI_TX, STRI_TY, STRI_TZ);
+        dim3 blocks ((nz-4)/(threads.x)+1, 
+                     (ny-1)/(threads.y)+1,
+                     1);
+        dtopo_str_111_index<STRI_TX, STRI_TY, STRI_TZ><<<blocks, threads>>>(
             t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
             lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
