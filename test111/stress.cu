@@ -460,7 +460,7 @@ __global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTR
 
     // xy
 #ifdef CURVILINEAR
-  float J12i = _f(i, j) * _g3_c(k + 6);
+  float J12i = _f(i, j) * _g3_c(k);
   J12i = 1.0 / J12i;
 
   vs1 =

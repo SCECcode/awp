@@ -484,7 +484,7 @@ __global__ void dtopo_str_111_index(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
     zz[pos]  = (f_zz + d_DT*f_rtmp)*f_dcrj;
 
     // xy
-  float J12i = _f(i, j) * _g3_c(k + 6);
+  float J12i = _f(i, j) * _g3_c(k);
   J12i = 1.0 / J12i;
 
   vs1 =
