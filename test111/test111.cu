@@ -1592,8 +1592,9 @@ __global__ void fill(float *RSTRCT u1, int seed,
         if (i >= nx || j >= ny || k >= nz)
                 return;
 
-        _f(u1, i, j, k) = (1.0f * k + seed) / (1.0f * k + 1 + seed) * j /
-                          (1.0f * j + 1) * i / (i + 1);
+        _f(u1, i, j, k) =
+            0.1 + ((512 * i + 1024 * k + 2047 * j + seed) % (65776 - 1)) *
+                      1.0f / 65776.0f;
 }
 
 __global__ void fill1(float *RSTRCT u1, int seed, int n)
@@ -1603,7 +1604,8 @@ __global__ void fill1(float *RSTRCT u1, int seed, int n)
         if (k >= n)
                 return;
 
-        u1[k] = (1.0f * k + seed) / (1.0f * k + 1 + seed);
+        u1[k] =
+            0.1 + ((1024 * k + seed ) % (65776 - 1)) * 1.0f / 65776.0f;
 }
 
 __global__ void fill2(float *RSTRCT u1, int seed, int nx, int ny)
@@ -1614,7 +1616,8 @@ __global__ void fill2(float *RSTRCT u1, int seed, int nx, int ny)
         if (k >= ny || j >= nx)
                 return;
 
-        u1[k + j * ny] = (1.0f * k + seed) / (1.0f * k + 1 + seed) * j / (1.0f * j + 1);
+        u1[k + j * ny] =
+            0.1 + ((1024 * k + 2047 * j + seed) % (65776 - 1)) * 1.0f / 65776.0f;
 }
 
 template <typename T>
@@ -1645,9 +1648,9 @@ __global__ void compare(const float *RSTRCT u1,
         if (j >= ny) return;
         if (i >= nx) return;
 
-        if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-12 ||
-            fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-12 ||
-            fabs(_f(u3, i, j, k) - _f(v3, i, j, k)) > 1e-12) {
+        if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-6 ||
+            fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-6 ||
+            fabs(_f(u3, i, j, k) - _f(v3, i, j, k)) > 1e-6) {
                 err = -1;
 #if PRINTERR
                 printf("%d %d %d | %f %f | %f %f | %f %f \n", i, j, k, 
