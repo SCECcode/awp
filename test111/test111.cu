@@ -1645,9 +1645,9 @@ __global__ void compare(const float *RSTRCT u1,
         if (j >= ny) return;
         if (i >= nx) return;
 
-        if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-6 ||
-            fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-6 ||
-            fabs(_f(u3, i, j, k) - _f(v3, i, j, k)) > 1e-6) {
+        if (fabs(_f(u1, i, j, k) - _f(v1, i, j, k)) > 1e-12 ||
+            fabs(_f(u2, i, j, k) - _f(v2, i, j, k)) > 1e-12 ||
+            fabs(_f(u3, i, j, k) - _f(v3, i, j, k)) > 1e-12) {
                 err = -1;
 #if PRINTERR
                 printf("%d %d %d | %f %f | %f %f | %f %f \n", i, j, k, 
