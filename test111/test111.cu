@@ -54,25 +54,25 @@
 
 // Threads in x, y, z
 #ifndef STRIU_TX
-#define STRIU_TX 64
+#define STRIU_TX 32
 #endif      
             
 #ifndef STRIU_TY
-#define STRIU_TY 4
+#define STRIU_TY 1
 #endif      
             
 #ifndef STRIU_TZ
-#define STRIU_TZ 1
+#define STRIU_TZ 4
 #endif
 
 // Unroll factor in CUDA x
 #ifndef STRIU_NA
-#define STRIU_NA 2
+#define STRIU_NA 1
 #endif
 
 // Unroll factor in CUDA y
 #ifndef STRIU_NB
-#define STRIU_NB 1
+#define STRIU_NB 2
 #endif
 
 //-----------------------------------------------------------------------------

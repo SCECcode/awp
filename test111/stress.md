@@ -140,6 +140,7 @@ This setting slowsdown the baseline, but speeds-up the unrolled version.
 We perform a brute force search to see if there is a better configuration available
 when align is disabled.
 ```
+            Type  Time      Time     Calls       Avg       Min       Max  Name
                    41.05%  3.12865s       100  31.287ms  30.178ms  32.207ms  void dtopo_str_111_macro_unroll<int=32, int=1, int=4, int=1, int=2>
                    41.10%  3.11504s       100  31.150ms  29.719ms  32.471ms  void dtopo_str_111_macro_unroll<int=32, int=1, int=8, int=2, int=1>
                    41.56%  3.18147s       100  31.815ms  30.730ms  33.946ms  void dtopo_str_111_macro_unroll<int=64, int=1, int=4, int=2, int=1>
@@ -261,4 +262,47 @@ The indexed version runs slightly slower compared to the macro version:
   GPU activities:   49.81%  4.64623s       100  46.462ms  45.177ms  49.540ms  void dtopo_str_111_index<int=64, int=4, int=1>
                    49.22%  4.59038s       100  45.904ms  44.811ms  50.941ms  dtopo_str_111
 ```
+### Unrolled version
 
+We do a brute force search to determine the optimal configuration for the
+indexed version with loop unrolling (found in `stress_index_unroll.cu`). Without
+alignment:
+```
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+ GPU activities:
+                   40.78%  3.30812s       100  33.081ms  31.474ms  34.150ms  void dtopo_str_111_index_unroll<int=32, int=1, int=4, int=1, int=2>
+                   40.99%  3.30751s       100  33.075ms  31.523ms  34.460ms  void dtopo_str_111_index_unroll<int=32, int=1, int=8, int=2, int=1>
+                   41.17%  3.70335s       100  37.034ms  34.403ms  44.713ms  void dtopo_str_111_index_unroll<int=64, int=1, int=8, int=1, int=1>
+                   41.28%  3.37491s       100  33.749ms  32.216ms  34.980ms  void dtopo_str_111_index_unroll<int=32, int=1, int=8, int=1, int=1>
+                   41.38%  3.36043s       100  33.604ms  32.228ms  34.517ms  void dtopo_str_111_index_unroll<int=16, int=1, int=8, int=2, int=1>
+                   41.56%  3.42915s       100  34.292ms  32.600ms  35.599ms  void dtopo_str_111_index_unroll<int=128, int=1, int=4, int=1, int=1>
+                   41.70%  3.46757s       100  34.676ms  32.748ms  37.654ms  void dtopo_str_111_index_unroll<int=32, int=2, int=8, int=1, int=1>
+                   41.73%  3.43135s       100  34.314ms  32.335ms  37.448ms  void dtopo_str_111_index_unroll<int=32, int=2, int=4, int=2, int=1>
+                   41.77%  3.43965s       100  34.396ms  32.277ms  37.357ms  void dtopo_str_111_index_unroll<int=32, int=1, int=4, int=2, int=1>
+                   41.95%  3.45595s       100  34.560ms  33.370ms  35.872ms  void dtopo_str_111_index_unroll<int=32, int=1, int=4, int=1, int=1>
+                   41.98%  3.46114s       100  34.611ms  32.893ms  38.553ms  void dtopo_str_111_index_unroll<int=16, int=1, int=4, int=2, int=1>
+                   41.98%  3.48308s       100  34.831ms  33.276ms  36.080ms  void dtopo_str_111_index_unroll<int=32, int=2, int=4, int=1, int=1>
+                   41.99%  3.80448s       100  38.045ms  35.554ms  46.319ms  void dtopo_str_111_index_unroll<int=64, int=1, int=4, int=1, int=1>
+                   42.06%  3.80597s       100  38.060ms  35.647ms  55.410ms  void dtopo_str_111_index_unroll<int=64, int=1, int=2, int=1, int=2>
+                   42.09%  3.47320s       100  34.732ms  33.121ms  36.629ms  void dtopo_str_111_index_unroll<int=16, int=2, int=8, int=2, int=1>
+                   42.11%  3.52628s       100  35.263ms  33.791ms  36.022ms  void dtopo_str_111_index_unroll<int=32, int=1, int=2, int=1, int=2>
+                   42.12%  3.82138s       100  38.214ms  35.846ms  48.273ms  void dtopo_str_111_index_unroll<int=64, int=2, int=4, int=1, int=1>
+                   42.15%  3.51179s       100  35.118ms  32.766ms  37.940ms  void dtopo_str_111_index_unroll<int=16, int=2, int=4, int=2, int=1>
+                   42.19%  3.46888s       100  34.689ms  33.564ms  35.389ms  void dtopo_str_111_index_unroll<int=32, int=2, int=2, int=2, int=1>
+                   42.19%  3.50862s       100  35.086ms  33.445ms  38.061ms  void dtopo_str_111_index_unroll<int=32, int=4, int=2, int=2, int=1>
+                   42.30%  3.52117s       100  35.212ms  33.969ms  36.237ms  void dtopo_str_111_index_unroll<int=32, int=2, int=2, int=1, int=2>
+                   42.36%  3.48916s       100  34.892ms  34.003ms  36.137ms  void dtopo_str_111_index_unroll<int=32, int=1, int=2, int=2, int=1>
+                   42.41%  3.90276s       100  39.028ms  35.194ms  43.167ms  void dtopo_str_111_index_unroll<int=64, int=1, int=4, int=2, int=1>
+                   42.46%  3.61837s       100  36.184ms  33.932ms  43.026ms  void dtopo_str_111_index_unroll<int=32, int=4, int=4, int=1, int=1>
+                   42.61%  3.58398s       100  35.840ms  33.712ms  37.740ms  void dtopo_str_111_index_unroll<int=128, int=1, int=2, int=2, int=1>
+                   42.68%  3.57061s       100  35.706ms  34.408ms  37.562ms  void dtopo_str_111_index_unroll<int=128, int=1, int=2, int=1, int=1>
+                   42.73%  3.59884s       100  35.988ms  33.879ms  42.943ms  void dtopo_str_111_index_unroll<int=64, int=1, int=2, int=2, int=1>
+                   42.75%  3.96464s       100  39.646ms  37.273ms  50.243ms  void dtopo_str_111_index_unroll<int=64, int=1, int=2, int=1, int=1>
+                   42.77%  3.60614s       100  36.061ms  33.382ms  38.028ms  void dtopo_str_111_index_unroll<int=16, int=4, int=4, int=2, int=1>
+                   42.80%  3.58257s       100  35.826ms  34.027ms  38.523ms  void dtopo_str_111_index_unroll<int=16, int=2, int=2, int=2, int=1>
+                   42.81%  3.59149s       100  35.915ms  34.409ms  37.488ms  void dtopo_str_111_index_unroll<int=128, int=2, int=2, int=1, int=1>
+                   42.85%  4.01364s       100  40.136ms  36.383ms  47.901ms  void dtopo_str_111_index_unroll<int=64, int=2, int=2, int=2, int=1>
+                   42.91%  3.94522s       100  39.452ms  36.528ms  42.822ms  void dtopo_str_111_index_unroll<int=64, int=1, int=4, int=1, int=2>
+                   42.98%  3.63233s       100  36.323ms  34.942ms  38.163ms  void dtopo_str_111_index_unroll<int=32, int=1, int=2, int=1, int=1>
+                   43.02%  3.63648s       100  36.365ms  33.879ms  38.215ms  void dtopo_str_111_index_unroll<int=16, int=4, int=2, int=2, int=1>
+```
