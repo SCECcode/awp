@@ -26,6 +26,7 @@ static int mz;
 static prec h;
 static int px;
 static int py;
+static int rpt;
 const char *input;
 const char *output;
 const char *property;
@@ -55,10 +56,10 @@ int main(int argc, char **argv)
         struct Mpi m;
         mpi_init(&m, argc, argv);
 
-        if (argc <= 10 && m.rank == 0) {
+        if (argc <= 11 && m.rank == 0) {
                 printf(
                     "usage: %s <input> <output> <prop> <mesh> <nx> "
-                    "<ny> <nz> <mz> <h> <px> <py> \n",
+                    "<ny> <nz> <mz> <h> <px> <py> <rpt>\n",
                     argv[0]);
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
                        VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
@@ -81,7 +82,9 @@ int main(int argc, char **argv)
                     "the x-direction\n");
                 printf(" py int         Number of MPI partitions in "
                     "the y-direction\n");
-                printf(" Expect %d argc, got %d\n", 11, argc);
+                printf(" rpt int        Whether repeat top layer when "
+                    "write (1 = True, 0 = False) \n");
+                printf(" Expect %d argc, got %d\n", 12, argc);
                 MPI_Finalize();
                 return -1;
         }
@@ -97,6 +100,7 @@ int main(int argc, char **argv)
         h = atof(argv[9]);
         px = atoi(argv[10]);
         py = atoi(argv[11]);
+        rpt = atoi(argv[12]);
 
         if (m.rank == 0) {
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
@@ -104,10 +108,21 @@ int main(int argc, char **argv)
                 printf(
                     "input = %s output = %s property file = %s "
                     "mesh file = %s nx = %d ny = %d nz = %d "
-                    "mz = %d h = %g px = %d py = %d\n",
-                    input, output, property, mesh, nx, ny, nz, mz, h, px, py);
+                    "mz = %d h = %g px = %d py = %d rpt = %d\n",
+                    input, output, property, mesh, nx, ny, nz, mz, h, px,
+                    py, rpt);
                 int size = nvars * nx * ny * nz * sizeof(prec);
                 printf("Expected file size: %d \n", size);
+                if (rpt > 1 || rpt < 0) {
+                    printf("rpt should be either 0 (False) or "
+                           "1 (True)\n");
+                    MPI_Finalize();
+                    return -1;
+                }
+                else if (rpt == 1) {
+                    printf("The top layer will be repeated twice "
+                           " in terms of properties\n");
+                }
         }
 
 
@@ -115,6 +130,7 @@ int main(int argc, char **argv)
         int part[2] = {px, py};
         int alloc = 1;
         int err = 0;
+        int k0;
         char mpiErrStr[100];
         int mpiErrStrLen;
 
@@ -187,21 +203,26 @@ int main(int argc, char **argv)
 
         int show_info = (int) (nz / 10);
         show_info = show_info == 0 ? 1 : show_info;
-        double H = (nz - 1) * h;
+        double H = (nz - 1 - rpt) * h;
 
         int len = buffer_size * nz;
         if (m.rank == 0) printf("Processing...\n");
 
         for (int k = 0; k < nz; ++k) {
+            // If k > 0 and we need repeat (rpt == 1), 
+            // we shift the domain up by 1
+            k0 = k == 0 ? k : k - rpt;  
+            double rk = (double) k0 / (double) (nz - 1 - rpt);
             for (int i = 0; i < m.nxt; ++i) {
                 for (int j = 0; j < m.nyt; ++j) {
                     size_t lmy = 4 + m.nyt + 2 * ngsl + 2 * align;
                     size_t local_pos = 2 + align + (j + ngsl) +
                                        (2 + i + ngsl) * lmy;
                     // Depth, k=0 is the surface
-                    double rk = (double) k / (double) (nz - 1);
                     double mapping =
                         (H + f[local_pos]) * (1 - rk) - H;
+                    buffer[2 + nvars * i + j * nvars * m.nxt] =
+                            (prec)mapping;
                     
                     // For fp reading and mesh writing, we  start from the
                     // the surface, to keep compatible with the queried
@@ -212,20 +233,21 @@ int main(int argc, char **argv)
                     if (idx_z >= mz) {
                         printf("Error! Curvilinear grids deeper than property "
                                 "mesh\nAborting...\n");
-                        exit(-1);
+                        MPI_Finalize();
+                        return(-1);
                     }
                     size_t pos = nvars * (idx_z * m.nxt * m.nyt +
                                           j * m.nxt + i);
                     memcpy(buffer_m + nvars * (k * m.nxt * m.nyt +  
                                                j * m.nxt + i),
                            prop + pos, nvars * sizeof(float));
-                    buffer[2 + nvars * i + j * nvars * m.nxt] =
-                            (prec)mapping;
                 }
             }
                 MPICHK(MPI_File_write_all(fh, buffer, buffer_size, MPI_FLOAT,
                                           &filestatus));
         }
+        MPICHK(MPI_File_write_all(fm, buffer_m, len,  MPI_FLOAT,
+                                  &filestatus));
         free(buffer);
         MPICHK(MPI_File_close(&fh));
         free(buffer_m);
