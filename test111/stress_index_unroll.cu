@@ -108,10 +108,10 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     return;
   if (j0 >= e_j)
     return;
-  if (k0 < dm_offset + align)
-    return;
-  if (k0 >= nz - 6 + align)
-    return;
+  //if (k0 < dm_offset + align)
+  //  return;
+  //if (k0 >= nz - 6 + align)
+  //  return;
 
   
 #pragma unroll
@@ -477,23 +477,23 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     f_r      = r1[pos];
     f_rtmp   = -h*(vs2+vs3) + a1; 
     f_xx     = xx[pos]  + tmp - xm*(vs2+vs3) + vx1*f_r;  
-    r1[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+    rr1[b][a]  = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
-    xx[pos]  = (f_xx + d_DT*f_rtmp)*f_dcrj;
+    rxx[b][a]  = (f_xx + d_DT*f_rtmp)*f_dcrj;
 
     f_r      = r2[pos];
     f_rtmp   = -h*(vs1+vs3) + a1;  
     f_yy     = (yy[pos]  + tmp - xm*(vs1+vs3) + vx1*f_r)*f_dcrj;
-    r2[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+    rr2[b][a]  = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1); 
-    yy[pos]  = (f_yy + d_DT*f_rtmp)*f_dcrj;
+    ryy[b][a]  = (f_yy + d_DT*f_rtmp)*f_dcrj;
 	
     f_r      = r3[pos];
     f_rtmp   = -h*(vs1+vs2) + a1;
     f_zz     = (zz[pos]  + tmp - xm*(vs1+vs2) + vx1*f_r)*f_dcrj;
-    r3[pos]  = f_vx2*f_r + f_wwo*f_rtmp;
+    rr3[b][a]  = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp   = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1);  
-    zz[pos]  = (f_zz + d_DT*f_rtmp)*f_dcrj;
+    rzz[b][a]  = (f_zz + d_DT*f_rtmp)*f_dcrj;
 
     // xy
   float J12i = _f(i, j) * _g3_c(k);
@@ -590,9 +590,9 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     f_r      = r4[pos];
     f_rtmp   = h1*(vs1+vs2); 
     f_xy     = xy[pos]  + xmu1*(vs1+vs2) + vx1*f_r;
-    r4[pos]  = f_vx2*f_r + f_wwo*f_rtmp; 
+    rr4[b][a]  = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp   = f_rtmp*(f_wwo-1) + f_vx2*f_r*(1-f_vx1);
-    xy[pos]  = (f_xy + d_DT*f_rtmp)*f_dcrj;
+    rxy[b][a]  = (f_xy + d_DT*f_rtmp)*f_dcrj;
 
     // xz
 
@@ -645,9 +645,9 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     f_r     = r5[pos];
     f_rtmp  = h2*(vs1+vs2);
     f_xz    = xz[pos]  + xmu2*(vs1+vs2) + vx1*f_r; 
-    r5[pos] = f_vx2*f_r + f_wwo*f_rtmp; 
+    rr5[b][a] = f_vx2*f_r + f_wwo*f_rtmp; 
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
-    xz[pos] = (f_xz + d_DT*f_rtmp)*f_dcrj;
+    rxz[b][a] = (f_xz + d_DT*f_rtmp)*f_dcrj;
 
     // yz
 
@@ -704,24 +704,39 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     f_r     = r6[pos];
     f_rtmp  = h3*(vs1+vs2);
     f_yz    = yz[pos]  + xmu3*(vs1+vs2) + vx1*f_r;
-    r6[pos] = f_vx2*f_r + f_wwo*f_rtmp;
+    rr6[b][a] = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
-    yz[pos] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
+    ryz[b][a] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
   }
   }
 
 #pragma unroll
   for (int b = 0; b < nb; ++b) {
           j = j0 + b;
+     if (j >= e_j)
+       continue;
 #pragma unroll
   for (int a = 0; a < na; ++a) {
-          k = k0 + a;
-
      k = k0 + a;
+     pos  = i*d_slice_1+j*d_yline_1+k;
      if (k < dm_offset + align)
        continue;
      if (k >= nz - 6 + align)
        continue;
+
+        xx[pos] =  rxx[b][a];
+        yy[pos] =  ryy[b][a];
+        zz[pos] =  rzz[b][a];
+        xy[pos] =  rxy[b][a];
+        xz[pos] =  rxz[b][a];
+        yz[pos] =  ryz[b][a];
+        
+        r1[pos] =  rr1[b][a];
+        r2[pos] =  rr2[b][a];
+        r3[pos] =  rr3[b][a];
+        r4[pos] =  rr4[b][a];
+        r5[pos] =  rr5[b][a];
+        r6[pos] =  rr6[b][a];
 
         }
   }

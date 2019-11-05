@@ -20,12 +20,12 @@
 
 // Unroll factor in CUDA x
 #ifndef STRMU_NA
-#define STRMU_NA 2
+#define STRMU_NA 1
 #endif
 
 // Unroll factor in CUDA y
 #ifndef STRMU_NB
-#define STRMU_NB 1
+#define STRMU_NB 2
 #endif
 
 //-----------------------------------------------------------------------------
@@ -67,7 +67,7 @@
 
 // Unroll factor in CUDA x
 #ifndef STRIU_NA
-#define STRIU_NA 1
+#define STRIU_NA 2
 #endif
 
 // Unroll factor in CUDA y
@@ -127,7 +127,7 @@
 
 __device__ int err;
 __device__ int nan_err;
-#define PRINTERR 0
+#define PRINTERR 1
 
 // Turning __restrict__ on or off...
 #define RSTRCT __restrict__
