@@ -16,6 +16,7 @@
 #include <test/test.h>
 #include <awp/error.h>
 #include <utils/array.h>
+#include <topography/sources/source.h>
 #include <topography/sources/sources.h>
 #include <readers/input.h>
 int test_sources(const char *inputfile, int rank, int size, const int px);
@@ -144,7 +145,6 @@ int test_sources(const char *inputfile, int rank, int size, const int px)
 
         return test_last_error();
 }
-
 
 void write_source(const char *filename, size_t num_sources, size_t num_steps)
 {

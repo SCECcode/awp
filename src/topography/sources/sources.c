@@ -100,6 +100,45 @@ void sources_add_curvilinear(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,
                                grid_num);
 }
 
+source_t sources_get_source(enum grid_types grid_type)
+{
+        switch (grid_type)
+        {
+                case XX:
+                        return Mxx;
+                        break;
+                case YY:
+                        return Myy;
+                        break;
+                case ZZ:
+                        return Mzz;
+                        break;
+                case XY:
+                        return Mxy;
+                        break;
+                case XZ:
+                        return Mxz;
+                        break;
+                case YZ:
+                        return Myz;
+                        break;
+                case X:
+                        fprintf(stderr, "No source can exist on grid X\n");
+                        break;
+                case Y:
+                        fprintf(stderr, "No source can exist on grid Y\n");
+                        break;
+                case Z:
+                        fprintf(stderr, "No source can exist on grid Z\n");
+                        break;
+                case NODE:
+                        fprintf(stderr, "No source can exist on grid NODE\n");
+                        break;
+        }
+
+        return Mxx; 
+}
+
 void sources_finalize(void)
 {
         if (!use) return;
