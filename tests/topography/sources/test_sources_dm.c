@@ -132,10 +132,10 @@ int test_sources_dm(const char *inputfile, int rank, int size, const int px)
                 
                 // Once setup has been confirmed, we can add some test cases to
                 // ensure that we don't break this configuration in the future.
-                if (i == 0) err = s_assert(err == 0 && ix == 1);
-                if (i == 1) err = s_assert(err == 0 && ix == 0);
-                if (i == 0) err = s_assert(err == 0 && iy == 2);
-                if (i == 1) err = s_assert(err == 0 && iy == 0);
+                if (i == 0) err |= s_assert(ix == 1);
+                if (i == 0) err |= s_assert(iy == 2);
+                if (i == 1) err |= s_assert(ix == 0);
+                if (i == 1) err |= s_assert(iy == 0);
 
                 printf("     - Mxx(%ld), index         = [%d, %d, %d]\n"\
                        "               user(x, y, z) = [%g, %g, %g],\n"\

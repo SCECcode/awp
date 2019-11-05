@@ -148,12 +148,6 @@ void source_init_common(source_t *src, const char *filename,
 {
         sprintf(src->filename, "%s_%s", input->file, filename);
 
-
-
-        // Shift by 0.5 such that x = 0, y = 0 is
-        // located at a material or topography grid
-        // point.
-
         _prec *x = malloc(sizeof x * input->length);
         _prec *y = malloc(sizeof y * input->length);
 
@@ -177,8 +171,12 @@ void source_init_common(source_t *src, const char *filename,
                         }
                         for (size_t i = 0; i < input->length; ++i) {
                                 if (grid_number[i] != j) continue;
-                                
-                                x[i] = input->x[i];
+
+                                // Shift by 0.5 such that x = 0, y = 0 is
+                                // located at a material or topography grid
+                                // point.
+                                x[i] = input->x[i] +
+                                       SOURCE_OFFSET_X * grid.gridspacing;
                                 y[i] = input->y[i];
 
                                 // Skip DM-specific shift for the top grid block
@@ -186,12 +184,10 @@ void source_init_common(source_t *src, const char *filename,
                                         continue;
 
                                 // Apply DM-specific shift for all other blocks
-                                x[i] =
-                                    x[i] + SOURCE_OFFSET_X * grid.gridspacing +
-                                    SOURCE_DM_OFFSET_X * grid_prev.gridspacing;
-                                y[i] = 
-                                    y[i] + 
-                                    SOURCE_DM_OFFSET_Y * grid_prev.gridspacing;
+                                x[i] = x[i] + SOURCE_DM_OFFSET_X *
+                                                  grid_prev.gridspacing;
+                                y[i] = y[i] + SOURCE_DM_OFFSET_Y *
+                                                  grid_prev.gridspacing;
                         }
                 }
 
