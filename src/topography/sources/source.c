@@ -87,9 +87,15 @@ void source_find_grid_number(const input_t *input, const
         for (int i = 0; i < num_grids; ++i) {
                 z_grid = grid_grid1_z(grids[i].z);
                 grid_fill1(z1, z_grid);
-                upper  = upper + lower;
+                upper  = lower;
                 lower  = lower - z1[z_grid.end];
-                if (i + 1 != num_grids) overlap = z_grid.gridspacing * OVERLAP;
+                // Shift lower position by "overlap" for all grids except the
+                // last grid. No shift is applied if there is only one grid.
+                if (i + 1 != num_grids) {
+                        overlap = z_grid.gridspacing * OVERLAP;
+                } else {
+                        overlap = 0.0f;
+                }
                 lower = lower + overlap;
                 for (int j = 0; j < length; ++j) {
                         _prec z = input->z[indices[j]];
