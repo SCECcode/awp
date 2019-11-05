@@ -80,22 +80,85 @@ int test_sources_dm(const char *inputfile, int rank, int size, const int px)
 
         test = test_init(" * sources_dm", rank, size);
         sources_init(inputfile, grids, ngrids, NULL, MPI_COMM_WORLD, rank, size);
-        err = test_finalize(&test, err);
         source_t Mxx = sources_get_source(XX);
 
+        float dm_x = 0.0f;
+        float dm_y = 0.0f;
+
         for (size_t i = 0; i < (size_t)ngrids; ++i) {
-                printf("   - Grid: %ld \n", i); 
+                grid3_t xx = grids[i].xx;
+                printf("   - Grid: %ld, grid spacing: %g \n", i, xx.gridspacing); 
                 for (size_t j = 0; j < Mxx.lengths[i]; ++j) {
 
-                printf("     - Mxx(%ld), index: [%d, %d, %d], " \
-                       "int(x, y, z) = [%f, %f, %f] \n", 
+                grid3_t vel_grid = grid_init_velocity_grid(
+                                   xx.inner_size, xx.shift, xx.coordinate,
+                                   xx.boundary1, xx.boundary2, xx.gridspacing);
+                grid1_t x_grid = grid_grid1_x(vel_grid);
+                grid1_t y_grid = grid_grid1_y(vel_grid);
+                grid1_t z_grid = grid_grid1_z(vel_grid);
+
+                prec *x1 = malloc(sizeof x1 * x_grid.size);
+                prec *y1 = malloc(sizeof y1 * y_grid.size);
+                prec *z1 = malloc(sizeof z1 * z_grid.size);
+
+                grid_fill1(x1, x_grid);
+                grid_fill1(y1, y_grid);
+                grid_fill1(z1, z_grid);
+
+                if (i > 0) {
+                        dm_x = SOURCE_DM_OFFSET_X * grids[i-1].xx.gridspacing; 
+                        dm_y = SOURCE_DM_OFFSET_X * grids[i-1].xx.gridspacing; 
+                }
+                // The user coordinate system (user) defines (0, 0, 0) at
+                // material grid point and is a global coordinate system (a
+                // single coordinate system defined for all blocks, irrespective
+                // of MPI partition)
+                //
+                // The internal coordinate system (int) is local with respect to
+                // each block and mpi partition. 
+                //
+                // However, Mxx.x, Mxx.y, Mxx.z contains the coordinates of the
+                // source at a normal stress position in the internal
+                // coordinates system that shifts by -0.5 * grid spacings in the 
+                // y and z-directions (see shift.c, xx = [0, 1, 1]), 
+                // but with adjustments to the x-direction,
+                // and y-directions due to the DM and due having (0, 0, 0) at a
+                // material point in the user coordinate system.
+                //
+                //
+                int ix = Mxx.interpolation[i].ix[j] - ngsl;
+                int iy = Mxx.interpolation[i].iy[j] - ngsl;
+                int iz = Mxx.interpolation[i].iz[j];
+                
+                // Once setup has been confirmed, we can add some test cases to
+                // ensure that we don't break this configuration in the future.
+                if (i == 0) err = s_assert(err == 0 && ix == 1);
+                if (i == 1) err = s_assert(err == 0 && ix == 0);
+                if (i == 0) err = s_assert(err == 0 && iy == 2);
+                if (i == 1) err = s_assert(err == 0 && iy == 0);
+
+                printf("     - Mxx(%ld), index         = [%d, %d, %d]\n"\
+                       "               user(x, y, z) = [%g, %g, %g],\n"\
+                       "               int(x, y, z)  = [%g, %g, %g]\n"\
+                       "               int x = [%g %g %g ... ] (no DM shift)\n"\
+                       "               int y = [%g %g %g ... ] (no DM shift)\n"\
+                       "               int x = [%g %g %g ... ] (w. DM shift)\n"\
+                       "               int y = [%g %g %g ... ] (w. DM shift)\n", 
                                 j, 
-                                Mxx.interpolation[i].ix[j],
-                                Mxx.interpolation[i].iy[j],
-                                Mxx.interpolation[i].iz[j],
-                                Mxx.x[i][j], Mxx.y[i][j], Mxx.z[i][j]);
+                                ix, iy, iz,
+                                Mxx.xu[i][j], Mxx.yu[i][j], Mxx.zu[i][j], 
+                                Mxx.x[i][j], Mxx.y[i][j], Mxx.z[i][j],
+                                x1[0], x1[1], x1[2], 
+                                y1[0], y1[1], y1[2], 
+                                x1[0] + dm_x, x1[1] + dm_x, x1[2] + dm_x, 
+                                y1[0] + dm_y, y1[1] + dm_y, y1[2] + dm_y);
+                free(x1);
+                free(y1);
+                free(z1);
+
                 }
         }
+        err = test_finalize(&test, err);
         
         sources_finalize();
         grids_finalize(grids);

@@ -15,6 +15,15 @@
 #include <mpi/io.h>
 #include <interpolation/interpolation.cuh>
 
+// Offsets in grid spacings factor with respect to the previous grid
+#define SOURCE_DM_OFFSET_X -1
+#define SOURCE_DM_OFFSET_Y -2
+
+// Shift due to inconsistency with the user coordinate (0, 0, 0) defined at a
+// material grid point, but (0, 0, 0) defined at the shear stress xz in the
+// internal coordinate system (see shift.c)
+#define SOURCE_OFFSET_X -0.5
+
 typedef struct {
         int *indices;
         int *offsets;
@@ -22,9 +31,16 @@ typedef struct {
         size_t length;
         // parameter space coordinates
         int *global_indices[MAXGRIDS];
+        // Adjusted coordinates for placing sources/receivers consistent with
+        // DM with respect to grids that use a local coordinate system (internal
+        // coordinate system)
         prec *x[MAXGRIDS];
         prec *y[MAXGRIDS];
         prec *z[MAXGRIDS];
+        // User coordinates that are specified in the input file
+        prec *xu[MAXGRIDS];
+        prec *yu[MAXGRIDS];
+        prec *zu[MAXGRIDS];
         int *type[MAXGRIDS];
         size_t lengths[MAXGRIDS];
         size_t num_elements;
