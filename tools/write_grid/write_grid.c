@@ -4,9 +4,9 @@
  * curvilinear grid.
  *
  */ 
-#define VERSION_MAJOR 1
+#define VERSION_MAJOR 2
 #define VERSION_MINOR 0
-#define VERSION_PATCH 1
+#define VERSION_PATCH 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,9 +65,9 @@ int main(int argc, char **argv)
                 printf("\n");
                 printf("Args:\n");
                 printf(" input          Topography binary file\n");
-                printf(" output         Binary file to write\n");
-                printf(" property       Property binary file\n");
-                printf(" mesh           Mesh binary file\n");
+                printf(" output         Binary file to write containing grid coordinates\n");
+                printf(" property       Property binary file to read\n");
+                printf(" mesh           Mesh binary file to write containing curvilinear grid properties\n");
                 printf(" nx int         Number of grid points in the "
                     "x-direction\n");
                 printf(" ny int         Number of grid points in the "
@@ -226,40 +226,6 @@ int main(int argc, char **argv)
                 MPICHK(MPI_File_write_all(fh, buffer, buffer_size, MPI_FLOAT,
                                           &filestatus));
         }
-        /* It seems we don't need storing z-coordinates if we have the 
-         * mesh prepared
-        for (int k = 0; k < nz; ++k) {
-                // Depth,
-                double H = (nz - 1) * h;
-                for (int j = 0; j < m.nyt; ++j) {
-                        for (int i = 0; i < m.nxt; ++i) {
-                                // Evaluate the topography function f at
-                                // position f(x_i, y_j) and compute the
-                                // coordinate
-                                // z_k = (H + f(x_i, y_j)) *( 1 - r_k) - H,
-                                // where 0 <= r_k <= 1.
-                                // This function maps to z = f(x_i, y_j) at the
-                                // free surface and to z = -H at the bottom.
-                                size_t lmy = 4 + m.nyt + 2 * ngsl + 2 * align;
-                                size_t local_pos = 2 + align + (j + ngsl) +
-                                                   (2 + i + ngsl) * lmy;
-                                double rk = (double) k / (double) (nz - 1);
-                                double mapping =
-                                    (H + f[local_pos]) * (1 - rk) - H;
-                                buffer[2 + nvars * i + j * nvars * m.nxt] =
-                                        (prec)mapping;
-                        }
-                }
-                MPICHK(MPI_File_write_all(fh, buffer, len, MPI_FLOAT,
-                                          &filestatus));
-                if (m.rank == 0)
-                if (k % show_info == 0 && m.rank == 0)
-                printf(" Slice z = %d out of nz = %d \n", k + 1, nz);
-        }
-        */
-        MPICHK(MPI_File_write_all(fm, buffer_m, len,  MPI_FLOAT,
-                                  &filestatus));
-
         free(buffer);
         MPICHK(MPI_File_close(&fh));
         free(buffer_m);
