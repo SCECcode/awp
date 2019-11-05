@@ -129,6 +129,7 @@ int input_parse(input_t *out, const char *line)
 
         char variable[INPUT_DATA_STRING_LENGTH];
         char value[INPUT_DATA_STRING_LENGTH];
+        
         int err = input_parse_arg(variable, value, line);
         if (err != SUCCESS) {
                 fprintf(stderr, "Failed to parse: %s \n", line);
@@ -313,6 +314,13 @@ int _read_header(input_t *out, FILE *fp)
         char line[INPUT_DATA_STRING_LENGTH];
         int match = 1;
         while (parse_arg == SUCCESS && match == 1) {
+                match = fscanf(fp, "#%[^\n]", line);
+                // Skip comments
+                if (match) {
+                        getc(fp);
+                        continue;
+                }
+
                 match = fscanf(fp, "%s\n", line);
                 if (strcmp(line, "coordinates") == 0) {
                         break;
