@@ -603,3 +603,8 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 #undef _g_c
 #undef _g
 #undef _g3
+
+#undef ml
+#undef USE_CONST_ARRAY_INDEX_ACCESS
+#undef ms
+#undef my

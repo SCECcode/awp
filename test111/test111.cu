@@ -1,6 +1,65 @@
 #include <stdio.h>
 #include <curand.h>
 #include <cuda_profiler_api.h>
+//-----------------------------------------------------------------------------
+// Velocity kernel optimizations to choose from
+#ifndef USE_ORIGINAL_VEL
+#define USE_ORIGINAL_VEL 0
+#endif
+#ifndef USE_SHARED_VEL
+#define USE_SHARED_VEL 0
+#endif
+#ifndef USE_DM_VEL
+#define USE_DM_VEL 0
+#endif
+#ifndef USE_SPLIT_VEL
+#define USE_SPLIT_VEL 0
+#endif
+#ifndef USE_UNROLL_VEL
+#define USE_UNROLL_VEL 0
+#endif
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Stress kernel optimizations to choose from
+#ifndef USE_STRESS_ORIGINAL
+#define USE_STRESS_ORIGINAL 1
+#endif
+
+#ifndef USE_STRESS_MACRO
+#define USE_STRESS_MACRO 0
+#endif
+
+#ifndef USE_STRESS_MACRO_UNROLL
+#define USE_STRESS_MACRO_UNROLL 1
+#endif
+
+#ifndef USE_STRESS_INDEX
+#define USE_STRESS_INDEX 0
+#endif
+
+#ifndef USE_STRESS_INDEX_UNROLL
+#define USE_STRESS_INDEX_UNROLL 0
+#endif
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Configuration for original stress kernel (stress.cu)
+
+// Threads in x, y, z
+#ifndef STR_TX
+#define STR_TX 64
+#endif
+
+#ifndef STR_TY
+#define STR_TY 8
+#endif
+
+#ifndef STR_TZ
+#define STR_TZ 1
+#endif
+
+//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Configuration for Stress macro kernel (stress_macro.cu)
@@ -29,11 +88,11 @@
 #endif
 
 #ifndef STRMU_TY
-#define STRMU_TY 1
+#define STRMU_TY 2
 #endif
 
 #ifndef STRMU_TZ
-#define STRMU_TZ 8
+#define STRMU_TZ 2
 #endif
 
 // Unroll factor in CUDA x
@@ -43,7 +102,7 @@
 
 // Unroll factor in CUDA y
 #ifndef STRMU_NB
-#define STRMU_NB 1
+#define STRMU_NB 2
 #endif
 
 //-----------------------------------------------------------------------------
@@ -98,48 +157,6 @@
 
 // Enable / Disable correctness test
 #define TEST 1
-
-//-----------------------------------------------------------------------------
-// Velocity kernel optimizations to choose from
-#ifndef USE_ORIGINAL_VEL
-#define USE_ORIGINAL_VEL 0
-#endif
-#ifndef USE_SHARED_VEL
-#define USE_SHARED_VEL 0
-#endif
-#ifndef USE_DM_VEL
-#define USE_DM_VEL 0
-#endif
-#ifndef USE_SPLIT_VEL
-#define USE_SPLIT_VEL 0
-#endif
-#ifndef USE_UNROLL_VEL
-#define USE_UNROLL_VEL 0
-#endif
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-// Stress kernel optimizations to choose from
-#ifndef USE_STRESS_ORIGINAL
-#define USE_STRESS_ORIGINAL 1
-#endif
-
-#ifndef USE_STRESS_MACRO
-#define USE_STRESS_MACRO 1
-#endif
-
-#ifndef USE_STRESS_MACRO_UNROLL
-#define USE_STRESS_MACRO_UNROLL 0
-#endif
-
-#ifndef USE_STRESS_INDEX
-#define USE_STRESS_INDEX 0
-#endif
-
-#ifndef USE_STRESS_INDEX_UNROLL
-#define USE_STRESS_INDEX_UNROLL 0
-#endif
-//-----------------------------------------------------------------------------
 
 #define align 32
 #define ngsl 4
@@ -2298,11 +2315,11 @@ int main (int argc, char **argv) {
 // Original stress kernel
 #if USE_STRESS_ORIGINAL
 {
-        dim3 threads (64, 4, 1);
+        dim3 threads (STR_TX, STR_TY, STR_TZ);
         dim3 blocks ((nz-4)/(threads.x)+1, 
                      (ny-1)/(threads.y)+1,
                      1);
-        dtopo_str_111<<<blocks, threads>>>(
+        dtopo_str_111<STR_TX, STR_TY, STR_TZ><<<blocks, threads>>>(
             s11, s22, s33, s12, s13, s23, r1, r2, r3, r4, r5, r6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
             lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
@@ -2328,7 +2345,7 @@ int main (int argc, char **argv) {
             d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
 
         
-        if (iter == 0) { 
+        if (iter == 0 && TEST) { 
 
                 if (cudaDeviceSynchronize() != cudaSuccess) {
                   printf ("Kernels failed\n");
@@ -2368,7 +2385,7 @@ int main (int argc, char **argv) {
         dim3 threads (STRMU_TX, STRMU_TY, STRMU_TZ);
         dim3 blocks ((nz-4)/(na * threads.x)+1, 
                      (ny-1)/(nb * threads.y)+1,
-                     1);
+                     (nx-1)/(threads.z) + 1);
         dtopo_str_111_macro_unroll<STRMU_TX, STRMU_TY, STRMU_TZ, na, nb><<<blocks, threads>>>(
             t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
@@ -2376,7 +2393,7 @@ int main (int argc, char **argv) {
             d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
 
         
-        if (iter == 0) { 
+        if (iter == 0 && TEST) { 
 
                 if (cudaDeviceSynchronize() != cudaSuccess) {
                   printf ("Kernels failed\n");
@@ -2437,7 +2454,7 @@ int main (int argc, char **argv) {
             d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
 
         
-        if (iter == 0) { 
+        if (iter == 0 && TEST) { 
 
                 if (cudaDeviceSynchronize() != cudaSuccess) {
                   printf ("Kernels failed\n");
@@ -2498,7 +2515,7 @@ int main (int argc, char **argv) {
             d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
 
         
-        if (iter == 0) { 
+        if (iter == 0 && TEST) { 
 
                 if (cudaDeviceSynchronize() != cudaSuccess) {
                   printf ("Kernels failed\n");
