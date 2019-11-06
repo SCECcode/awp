@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         struct Mpi m;
         mpi_init(&m, argc, argv);
 
-        if (argc <= 11 && m.rank == 0) {
+        if (argc < 12 && m.rank == 0) {
                 printf(
                     "usage: %s <input> <output> <prop> <mesh> <nx> "
                     "<ny> <nz> <mz> <h> <px> <py> <rpt>\n",
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
                     "the y-direction\n");
                 printf(" rpt int        Whether repeat top layer when "
                     "write (1 = True, 0 = False) \n");
-                printf(" Expect %d argc, got %d\n", 12, argc);
+                printf(" Expect at least %d argc, got %d\n", 12, argc);
                 MPI_Finalize();
                 return -1;
         }
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         h = atof(argv[9]);
         px = atoi(argv[10]);
         py = atoi(argv[11]);
-        rpt = atoi(argv[12]);
+        rpt = argc < 13 ? 1 : atoi(argv[12]);
 
         if (m.rank == 0) {
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
