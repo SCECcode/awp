@@ -3,6 +3,24 @@
 #include <cuda_profiler_api.h>
 
 //-----------------------------------------------------------------------------
+// Configuration for Stress macro kernel (stress_macro.cu)
+
+// Threads in x, y, z
+#ifndef STRM_TX
+#define STRM_TX 64
+#endif
+
+#ifndef STRM_TY
+#define STRM_TY 8
+#endif
+
+#ifndef STRM_TZ
+#define STRM_TZ 1
+#endif
+
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
 // Configuration for Stress macro unroll kernel (stress_macro_unroll.cu)
 
 // Threads in x, y, z
@@ -25,7 +43,7 @@
 
 // Unroll factor in CUDA y
 #ifndef STRMU_NB
-#define STRMU_NB 2
+#define STRMU_NB 1
 #endif
 
 //-----------------------------------------------------------------------------
@@ -39,7 +57,7 @@
 #endif      
             
 #ifndef STRI_TY
-#define STRI_TY 4
+#define STRI_TY 8
 #endif      
             
 #ifndef STRI_TZ
@@ -81,6 +99,7 @@
 // Enable / Disable correctness test
 #define TEST 1
 
+//-----------------------------------------------------------------------------
 // Velocity kernel optimizations to choose from
 #ifndef USE_ORIGINAL_VEL
 #define USE_ORIGINAL_VEL 0
@@ -97,14 +116,16 @@
 #ifndef USE_UNROLL_VEL
 #define USE_UNROLL_VEL 0
 #endif
+//-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
 // Stress kernel optimizations to choose from
 #ifndef USE_STRESS_ORIGINAL
 #define USE_STRESS_ORIGINAL 1
 #endif
 
 #ifndef USE_STRESS_MACRO
-#define USE_STRESS_MACRO 0
+#define USE_STRESS_MACRO 1
 #endif
 
 #ifndef USE_STRESS_MACRO_UNROLL
@@ -116,8 +137,9 @@
 #endif
 
 #ifndef USE_STRESS_INDEX_UNROLL
-#define USE_STRESS_INDEX_UNROLL 1
+#define USE_STRESS_INDEX_UNROLL 0
 #endif
+//-----------------------------------------------------------------------------
 
 #define align 32
 #define ngsl 4
@@ -127,7 +149,7 @@
 
 __device__ int err;
 __device__ int nan_err;
-#define PRINTERR 1
+#define PRINTERR 0
 
 // Turning __restrict__ on or off...
 #define RSTRCT __restrict__
@@ -2295,7 +2317,7 @@ int main (int argc, char **argv) {
 // Stress kernel that accesses all arrays using macros
 #if USE_STRESS_MACRO
 {
-        dim3 threads (64, 8, 1);
+        dim3 threads (STRM_TX, STRM_TY, STRM_TZ);
         dim3 blocks ((nz-4)/(threads.x)+1, 
                      (ny-1)/(threads.y)+1,
                      1);
@@ -2312,10 +2334,12 @@ int main (int argc, char **argv) {
                   printf ("Kernels failed\n");
                 }
 
+                printf("Running error check\n");
+
                 dim3 threads (64, 8, 1);
                 dim3 blocks ((nz-7)/(threads.x)+1, 
                              (ny-1)/(threads.y)+1,
-                             1);
+                             (nx-1)/(threads.z)+1);
 
                 compare<<<blocks, threads>>>(s11, s22, s33, t11, t22, t33, nx,
                                              ny, nz);
@@ -2344,7 +2368,7 @@ int main (int argc, char **argv) {
         dim3 threads (STRMU_TX, STRMU_TY, STRMU_TZ);
         dim3 blocks ((nz-4)/(na * threads.x)+1, 
                      (ny-1)/(nb * threads.y)+1,
-                     (nx-1)/(threads.z)+1);
+                     1);
         dtopo_str_111_macro_unroll<STRMU_TX, STRMU_TY, STRMU_TZ, na, nb><<<blocks, threads>>>(
             t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
