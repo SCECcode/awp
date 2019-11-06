@@ -69,6 +69,7 @@ by the layer height h. Since the original regular grids are stretched in Z
 direction, the height of the domain will increase from `nz * h` to some value 
 larger. It is therefore necessary to prepare a larger domain that is able to 
 hold the stretched domain, which determines the value of `mz`.
+[Check how](#requirement).
 
 ### mesh
 `dimensions = (nz, ny, nx, 3)`
