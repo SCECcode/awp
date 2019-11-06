@@ -1,64 +1,48 @@
-#define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_1(i, j) f_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_2(i, j) f_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_c(i, j) f2_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_1(i, j) f1_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_1(i, j) f2_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f2_2(i, j) f2_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f_c(i, j) f_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_c(i, j) f1_c[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
-#define _f1_2(i, j) f1_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+#define USE_CONST_ARRAY_INDEX_ACCESS 1
+#if USE_CONST_ARRAY_INDEX_ACCESS
+#define ml d_yline_1
+#define ms d_slice_1 
+#else
+#define ml (2 * align + nz) 
+#define ms (2 * ngsl + ny + 4) * (2 * align + nz)
+#endif
+
+#define my (2 * align + 2 * ngsl + ny + 4)
+
+
+#define _f(i, j) f[(j) + align + (i) * my]
+#define _f_1(i, j) f_1[(j) + align + (i) * my]
+#define _f_2(i, j) f_2[(j) + align + (i) * my]
+#define _f2_c(i, j) f2_c[(j) + align + (i) * my]
+#define _f1_1(i, j) f1_1[(j) + align + (i) * my]
+#define _f2_1(i, j) f2_1[(j) + align + (i) * my]
+#define _f2_2(i, j) f2_2[(j) + align + (i) * my]
+#define _f_c(i, j) f_c[(j) + align + (i) * my]
+#define _f1_c(i, j) f1_c[(j) + align + (i) * my]
+#define _f1_2(i, j) f1_2[(j) + align + (i) * my]
 #define _g3_c(k) g3_c[(k)]
 #define _g_c(k) g_c[(k)]
 #define _g(k) g[(k)]
 #define _g3(k) g3[(k)]
 
-#define _u1(i, j, k)                                                           \
-  u1[k + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-#define _v1(i, j, k)                                                           \
-  v1[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-#define _w1(i, j, k)                                                           \
-  w1[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
+#define _u1(i, j, k) u1[k +  (i) * ms + ml * (j)]
+#define _v1(i, j, k) v1[k +  (i) * ms + ml * (j)]
+#define _w1(i, j, k) w1[k +  (i) * ms + ml * (j)]
+#define _lam(i, j, k) lam[k +  (i) * ms + ml * (j)]
+#define _mu(i, j, k) mu[k +  (i) * ms + ml * (j)]
+#define _qp(i, j, k) qp[k +  (i) * ms + ml * (j)]
+#define _qs(i, j, k) qs[k +  (i) * ms + ml * (j)]
+#define _d_vx1(i, j, k) d_vx1[k +  (i) * ms + ml * (j)]
+#define _d_vx2(i, j, k) d_vx2[k +  (i) * ms + ml * (j)]
+#define _d_ww(i, j, k) d_ww[k +  (i) * ms + ml * (j)]
+#define _d_wwo(i, j, k) d_wwo[k +  (i) * ms + ml * (j)]
 
-#define _lam(i, j, k)                                                           \
-  lam[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-
-#define _mu(i, j, k)                                                           \
-  mu[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-
-#define _qp(i, j, k)                                                           \
-  qp[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-
-#define _qs(i, j, k)                                                           \
-  qs[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-
-#define _d_vx1(i, j, k)                                                           \
-  d_vx1[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-
-#define _d_vx2(i, j, k)                                                           \
-  d_vx2[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-
-#define _d_ww(i, j, k)                                                           \
-  d_ww[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
-
-#define _d_wwo(i, j, k)                                                           \
-  d_wwo[(k) + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
-     (2 * align + nz) * (j)]
 
 #define LDG(x) x
 
 
-__launch_bounds__ (512)
+template <int tx, int ty, int tz>
+__launch_bounds__ (tx * ty * tz)
 __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTRCT zz,
            _prec*  RSTRCT xy, _prec*  RSTRCT xz, _prec*  RSTRCT yz,
        _prec*  RSTRCT r1, _prec*  RSTRCT r2,  _prec*  RSTRCT r3, 
@@ -584,6 +568,9 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 #undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
+#undef _u1     
+#undef _v1     
+#undef _w1     
 #undef _lam
 #undef _qp
 #undef _qs
@@ -602,4 +589,17 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 #undef _d_ww
 #undef _d_wwo
 
-
+#undef _f
+#undef _f_1
+#undef _f_2
+#undef _f2_c
+#undef _f1_1
+#undef _f2_1
+#undef _f2_2
+#undef _f_c
+#undef _f1_c
+#undef _f1_2
+#undef _g3_c
+#undef _g_c
+#undef _g
+#undef _g3

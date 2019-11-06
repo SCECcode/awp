@@ -2321,7 +2321,7 @@ int main (int argc, char **argv) {
         dim3 blocks ((nz-4)/(threads.x)+1, 
                      (ny-1)/(threads.y)+1,
                      1);
-        dtopo_str_111_macro<<<blocks, threads>>>(
+        dtopo_str_111_macro<STRM_TX, STRM_TY, STRM_TZ><<<blocks, threads>>>(
             t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
             lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,

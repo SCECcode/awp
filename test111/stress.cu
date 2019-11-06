@@ -640,6 +640,8 @@ __global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTR
     pos     = pos_im1;
   }
 
+}
+
 #undef _dcrjx
 #undef _dcrjy
 #undef _dcrjz
@@ -654,7 +656,22 @@ __global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTR
 #undef _u1
 #undef _u2
 #undef _u3
-}
+#undef _u1
+#undef _v1
+#undef _w1
 
 
-
+#undef _f
+#undef _f_1
+#undef _f_2
+#undef _f2_c
+#undef _f1_1
+#undef _f2_1
+#undef _f2_2
+#undef _f_c
+#undef _f1_c
+#undef _f1_2
+#undef _g3_c
+#undef _g_c
+#undef _g
+#undef _g3
