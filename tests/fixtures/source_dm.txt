@@ -1,6 +1,6 @@
 2.1.0
 file=source
-length=2 
+length=3 
 steps=600
 stride=1
 degree=0
@@ -13,5 +13,6 @@ num_writes=2
 # * the second source should map to i=0 j=0 in block 1 (bottom block)
 
 coordinates
-0 1.5 1.5 -2.0
-0 1.5 1.5 -12.0
+0 4.5 1.5 -2.0
+0 4.5 1.5 -8.0
+0 4.5 1.5 -12.0

@@ -67,12 +67,13 @@ int test_sources_dm(const char *inputfile, int rank, int size, const int px)
         int ny = 11;
         int nz = 11;
         prec h = 1.0;
-        int ngrids = 2;
+        int ngrids = 3;
         int err = 0;
-        grids_t grids[2] = {
-            grids_init(3 * nx, 3 * ny, nz, coord_x, coord_y, coord_z, 0,
+        grids_t grids[3] = {
+            grids_init(9 * nx, 9 * ny, nz, coord_x, coord_y, coord_z, 0,
                        h),
-            grids_init(nx, ny, nz, coord_x, coord_y, coord_z, 0, 3 * h)
+            grids_init(3 * nx, 3 * ny, nz, coord_x, coord_y, coord_z, 0, 3 * h), 
+            grids_init(nx, ny, nz, coord_x, coord_y, coord_z, 0, 9 * h)
 
         };
 
