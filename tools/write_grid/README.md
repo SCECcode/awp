@@ -10,7 +10,7 @@ with the values at the nearest regular grid point.
 ## Usage
 
 ```
-write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py> 
+write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py> <rpt>
 ```
 ---------------------------------------------------------------
 |  Argument   |  Description                                  |
@@ -26,7 +26,7 @@ write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py>
 | h `float`   |   Grid spacing                                |
 | px `int`    |   Number of MPI partitions in the x-direction |
 | py `int`    |   Number of MPI partitions in the y-direction |
-| rpt `bool`  |   Write the top layer twice  (0: disable; 1: enable)                     |
+| rpt `bool`  |   Write the top layer twice (0: disable; default=1: enable)            |
 
 See
 [awp-benchmarks](https://github.com/SCECcode/awp-benchmarks/tree/master/tests/topography/write_grid)
