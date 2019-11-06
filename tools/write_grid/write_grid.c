@@ -66,9 +66,14 @@ int main(int argc, char **argv)
                 printf("\n");
                 printf("Args:\n");
                 printf(" input          Topography binary file\n");
-                printf(" output         Binary file to write containing grid coordinates\n");
-                printf(" property       Property binary file to read\n");
-                printf(" mesh           Mesh binary file to write containing curvilinear grid properties\n");
+                printf(
+                    " output         Binary file to write containing "
+                    "curvilinear grid coordinates\n");
+                printf(
+                    " property       Material property binary file to read\n");
+                printf(
+                    " mesh           Mesh binary file to write containing "
+                    "material properties in the curvilinear grid \n");
                 printf(" nx int         Number of grid points in the "
                     "x-direction\n");
                 printf(" ny int         Number of grid points in the "
@@ -85,6 +90,7 @@ int main(int argc, char **argv)
                 printf(" rpt int        Whether repeat top layer when "
                     "write (1 = True, 0 = False) \n");
                 printf(" Expect at least %d argc, got %d\n", 12, argc);
+
                 MPI_Finalize();
                 return -1;
         }
