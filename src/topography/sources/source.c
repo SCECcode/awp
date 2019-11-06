@@ -162,40 +162,37 @@ void source_init_common(source_t *src, const char *filename,
                 source_find_grid_number(input, grids, grid_number, indices,
                                         input->length, ngrids);
 
-                grid3_t grid_prev;
+                // Determine offsets for the DM
+                _prec *dm_offset_x = malloc(sizeof dm_offset_x * ngrids);
+                _prec *dm_offset_y = malloc(sizeof dm_offset_y * ngrids);
                 grid3_t grid_top = grids_select(grid_type, &grids[0]);
-                for (int j = 0; j < ngrids; ++j) {
-                        if (j > 0) {
-                                grid_prev =
-                                    grids_select(grid_type, &grids[j - 1]);
-                        }
-                        for (size_t i = 0; i < input->length; ++i) {
-                                if (grid_number[i] > j) continue;
-
-                                // Shift by 0.5 such that x = 0, y = 0 is
-                                // located at a material or topography grid
-                                // point.
-                                x[i] = input->x[i] +
-                                       SOURCE_OFFSET_X * grid_top.gridspacing;
-                                y[i] = input->y[i];
-
-                                // Skip DM-specific shift for the top grid block
-                                if (grid_number[i] == 0) 
-                                        continue;
-
-                                // Apply DM-specific shift for all other blocks
-                                // 1, 4, 8
-                                // 0: 0
-                                // 1: 1
-                                // 2: 3*1 + 1
-                                // 3: 3*(3) + 3*1 + 1
-                                x[i] = x[i] + SOURCE_DM_OFFSET_X *
-                                                  grid_prev.gridspacing;
-                                y[i] = y[i] + SOURCE_DM_OFFSET_Y *
-                                                  grid_prev.gridspacing;
-                        }
+                dm_offset_x[0] = 0;
+                dm_offset_y[0] = 0;
+                for (int j = 1; j < ngrids; ++j) {
+                        grid3_t grid = grids_select(grid_type, &grids[j-1]);
+                        dm_offset_x[j] = dm_offset_x[j - 1] +
+                                         SOURCE_DM_OFFSET_X * grid.gridspacing;
+                        dm_offset_y[j] = dm_offset_y[j - 1] +
+                                         SOURCE_DM_OFFSET_Y * grid.gridspacing;
                 }
 
+                for (size_t i = 0; i < input->length; ++i) {
+                     // Shift by 0.5 such that x = 0, y = 0 is
+                     // located at a material or topography grid
+                     // point.
+                     x[i] = input->x[i] +
+                            SOURCE_OFFSET_X * grid_top.gridspacing;
+                     y[i] = input->y[i];
+
+                     int grid_num = grid_number[i];
+
+                     // Apply DM-specific shift for all other blocks
+                     x[i] = x[i] + dm_offset_x[grid_num];
+                     y[i] = y[i] + dm_offset_y[grid_num];
+                }
+
+                free(dm_offset_x);
+                free(dm_offset_y);
                 free(indices);
                 free(grid_number);
         }
