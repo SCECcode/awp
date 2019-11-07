@@ -96,13 +96,13 @@
 #endif
 
 // Unroll factor in CUDA x
-#ifndef STRMU_NA
-#define STRMU_NA 1
+#ifndef STRMU_RX
+#define STRMU_RX 1
 #endif
 
 // Unroll factor in CUDA y
-#ifndef STRMU_NB
-#define STRMU_NB 2
+#ifndef STRMU_RY
+#define STRMU_RY 2
 #endif
 
 //-----------------------------------------------------------------------------
@@ -143,20 +143,20 @@
 #endif
 
 // Unroll factor in CUDA x
-#ifndef STRIU_NA
-#define STRIU_NA 1
+#ifndef STRIU_RX
+#define STRIU_RX 1
 #endif
 
 // Unroll factor in CUDA y
-#ifndef STRIU_NB
-#define STRIU_NB 2
+#ifndef STRIU_RY
+#define STRIU_RY 2
 #endif
 
 //-----------------------------------------------------------------------------
 
 
 // Enable / Disable correctness test
-#define TEST 1
+#define TEST 0
 
 #define align 32
 #define ngsl 4
@@ -1225,7 +1225,7 @@ __global__ void dtopo_vel_111(
 // *****************************************************************************
 
 
-__launch_bounds__ (1024)
+__launch_bounds__ (512)
 __global__ void dtopo_vel_111_blocks(
     float *RSTRCT u1, float *RSTRCT u2, float *RSTRCT u3, const float *RSTRCT dcrjx, const float *RSTRCT dcrjy,
     const float *RSTRCT dcrjz, const float *RSTRCT f, const float *RSTRCT f1_1, const float *RSTRCT f1_2,
@@ -1824,6 +1824,7 @@ int main (int argc, char **argv) {
  
   printf ("Running (NX, NY, NZ) = (%d, %d, %d) -> (%d, %d, %d) x %d iterations\n",
           nx, ny, nz, ldimx, ldimy, ldimz, nt);
+  if (!TEST) printf("Testing disabled \n");
 
   int rankx = 0;
   int ranky = 0;
@@ -2380,8 +2381,8 @@ int main (int argc, char **argv) {
 
 #if USE_STRESS_MACRO_UNROLL
 {
-#define na STRMU_NA 
-#define nb STRMU_NB 
+#define na STRMU_RX 
+#define nb STRMU_RY 
         dim3 threads (STRMU_TX, STRMU_TY, STRMU_TZ);
         dim3 blocks((nz - 4) / (na * threads.x) + 1,
                     (ny - 1) / (nb * threads.y) + 1,
@@ -2504,8 +2505,8 @@ int main (int argc, char **argv) {
 
 #if USE_STRESS_INDEX_UNROLL
 {
-#define na STRIU_NA 
-#define nb STRIU_NB 
+#define na STRIU_RX 
+#define nb STRIU_RY 
         dim3 threads (STRIU_TX, STRIU_TY, STRIU_TZ);
         dim3 blocks((nz - 4) / (na * threads.x) + 1,
                     (ny - 1) / (nb * threads.y) + 1,
