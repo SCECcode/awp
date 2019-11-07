@@ -1,5 +1,5 @@
-#define USE_CONST_ARRAY_INDEX_ACCESS 0
-#if USE_CONST_ARRAY_INDEX_ACCESS
+#define USE_CONST_ARRAY_ACCESS 0
+#if USE_CONST_ARRAY_ACCESS
 #define ml d_yline_1
 #define ms d_slice_1 
 #else
@@ -566,7 +566,7 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   for (int b = 0; b < nb; ++b) {
           j = j0 + b;
      if (j >= e_j)
-       continue;
+       return;
 #pragma unroll
   for (int a = 0; a < na; ++a) {
      k = k0 + a;
@@ -643,4 +643,4 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
 #undef ml
 #undef ms
 #undef my
-#undef USE_CONST_ARRAY_INDEX_ACCESS
+#undef USE_CONST_ARRAY_ACCESS

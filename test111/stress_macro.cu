@@ -1,5 +1,5 @@
-#define USE_CONST_ARRAY_INDEX_ACCESS 1
-#if USE_CONST_ARRAY_INDEX_ACCESS
+#define USE_CONST_ARRAY_ACCESS 1
+#if USE_CONST_ARRAY_ACCESS
 #define ml d_yline_1
 #define ms d_slice_1 
 #else
@@ -605,6 +605,6 @@ __global__ void dtopo_str_111_macro(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*
 #undef _g3
 
 #undef ml
-#undef USE_CONST_ARRAY_INDEX_ACCESS
+#undef USE_CONST_ARRAY_ACCESS
 #undef ms
 #undef my
