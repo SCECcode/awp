@@ -154,3 +154,39 @@ With `dlcm=cg`,
                    30.75%  3.14827s       100  31.483ms  31.083ms  34.106ms  void dtopo_str_111_index_unroll<int=32, int=1, int=4, int=1, int=2>
                    30.04%  3.07511s       100  30.751ms  30.419ms  32.648ms  void dtopo_str_111_macro_unroll<int=32, int=1, int=4, int=1, int=2>
 ```
+
+##  Exhaustive parameter space search
+
+We search for the best available thread block configuration and loop unrolling
+factors. It turns out that all of the previous experiments have been configured
+at the optimal settings for Pascal. After trying more than 170 different
+combinations, `void dtopo_str_111_macro_unroll<int=32, int=1, int=4, int=1, int=2>` is the fastest
+
+
+On Volta, the best configuration (for macro unroll) was achieved using <32, 2,
+8, 1, 1> which corresponds to no loop unrolling!
+```
+==15444== NVPROF is profiling process 15444, command: ./str_32_2_8_1_1 300 350 512 100
+==15444== Profiling application: ./str_32_2_8_1_1 300 350 512 100
+==15444== Profiling result:
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   44.68%  1.80164s       100  18.016ms  17.855ms  18.656ms  void dtopo_str_111<int=64, int=8, int=1>
+                   28.05%  1.13113s       100  11.311ms  11.270ms  11.341ms  void dtopo_str_111_index_unroll<int=32, int=1, int=4, int=1, int=2>
+                   27.11%  1.09298s       100  10.930ms  10.897ms  11.134ms  void dtopo_str_111_macro_unroll<int=32, int=2, int=8, int=1, int=1>
+```
+
+## Plane cycling
+The kernel `stress_macro_planes.cu` loops over the slowest dimension and puts
+all of the velocity components in a register queue that is cycled. It also uses
+loop unrolling for the other two dimensions. However, loop unrolling causes too
+much register pressure and results in spilling; at least on Pascal.
+
+
+```
+==21953== NVPROF is profiling process 21953, command: ./test111.x 300 350 512 100
+==21953== Profiling application: ./test111.x 300 350 512 100
+==21953== Profiling result:
+            Type  Time      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   53.70%  3.96536s       100  39.654ms  38.794ms  50.799ms  void dtopo_str_111<int=64, int=8, int=1>
+                   45.06%  3.32738s       100  33.274ms  32.845ms  37.400ms  void dtopo_str_111_macro_planes<int=64, int=4, int=1, int=1>
+```

@@ -41,6 +41,10 @@
 #ifndef USE_STRESS_INDEX_UNROLL
 #define USE_STRESS_INDEX_UNROLL 1
 #endif
+
+#ifndef USE_STRESS_MACRO_PLANES
+#define USE_STRESS_MACRO_PLANES 1
+#endif
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
@@ -105,6 +109,19 @@
 #define STRMU_RY 2
 #endif
 
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Configuration for Stress macro kernel with plane cycling (stress_macro_planes.cu)
+
+// Threads in x, y
+#ifndef STRMP_TX
+#define STRMP_TX 64
+#endif
+
+#ifndef STRMP_TY
+#define STRMP_TY 4
+#endif
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
@@ -1760,6 +1777,7 @@ __global__ void chknan(const float *RSTRCT u1,
 #include "stress.cu"
 #include "stress_macro.cu"
 #include "stress_macro_unroll.cu"
+#include "stress_macro_planes.cu"
 #include "stress_index.cu"
 #include "stress_index_unroll.cu"
 
@@ -2392,6 +2410,72 @@ int main (int argc, char **argv) {
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
             lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz, d_vx1, d_vx2, d_ww,
             d_wwo, nx, ny, nz, rankx, ranky, nz, 8, nx - 8, 8, ny - 8);
+
+#undef na
+#undef nb
+        
+        if (iter == 0 && TEST) { 
+
+                if (cudaDeviceSynchronize() != cudaSuccess) {
+                  printf ("Kernels failed\n");
+                }
+
+                printf("Running error check\n");
+
+                dim3 threads (64, 8, 1);
+                dim3 blocks ((nz-7)/(threads.x)+1, 
+                             (ny-1)/(threads.y)+1,
+                             (nx-1)/(threads.z)+1);
+
+                float *vars[12] = {t11, t22, t33, t12, t13, t23,
+                                   r1,  r2,  r3,  r4,  r5,  r6};
+                for (int pt = 0; pt < 12; ++pt) {
+                        chknan<<<blocks, threads>>>(vars[pt], nx, ny, nz);
+                }
+                compare<<<blocks, threads>>>(s11, s22, s33, t11, t22, t33, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(s12, s13, s23, t12, t13, t23, nx,
+                                             ny, nz);
+                compare<<<blocks, threads>>>(r1, r2, r3, p1, p2, p3, nx, ny,
+                                             nz);
+                compare<<<blocks, threads>>>(r4, r5, r6, p4, p5, p6, nx, ny,
+                                             nz);
+
+                int _err = 0;
+                cudaMemcpyFromSymbol(&_err, err, sizeof(_err), 0,
+                                     cudaMemcpyDeviceToHost);
+
+                int _nan_err = 0;
+                cudaMemcpyFromSymbol(&_nan_err, nan_err, sizeof(_nan_err), 0,
+                                     cudaMemcpyDeviceToHost);
+                if (_err) {
+                        printf("Correctness check failed\n");
+                }
+
+                if (_nan_err) {
+                        printf("Error: nan detected\n");
+                }
+                printf("done.\n");
+        }
+}
+#endif
+//-----------------------------------------------------------------------------
+
+#if USE_STRESS_MACRO_PLANES
+{
+#define na 1 
+#define nb 1 
+        dim3 threads (STRMP_TX, STRMP_TY, 1);
+        dim3 blocks((nz - 4) / (na * threads.x) + 1,
+                    (ny - 1) / (nb * threads.y) + 1,
+                    1);
+        dtopo_str_111_macro_planes<STRMP_TX, STRMP_TY, na, nb>
+            <<<blocks, threads>>>(t11, t22, t33, t12, t13, t23, p1, p2, p3, p4,
+                                  p5, p6, u1, u2, u3, f, f1_1, f1_2, f1_c, f2_1,
+                                  f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
+                                  lam, mu, qp, coeff, qs, dcrjx, dcrjy, dcrjz,
+                                  d_vx1, d_vx2, d_ww, d_wwo, nx, ny, nz, rankx,
+                                  ranky, nz, 8, nx - 8, 8, ny - 8);
 
 #undef na
 #undef nb
