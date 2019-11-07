@@ -63,6 +63,7 @@ for ty in ${threads_y[@]}
 do
 for tz in ${threads_z[@]}
 do
+echo "threads: <$tx, $ty, $tz>"
         let mt=$tx*$ty*$tz
         if (( ${mt} > ${max_threads} ))
         then
@@ -79,12 +80,12 @@ do
         do
                 for b in ${unroll_y[@]}
                 do
+
                         if (( $a*$b  > ${max_unroll} ))
                         then
                                 echo "Maximum loop unrolling factor exceeded"
                                 continue;
                         fi
-                        echo "Compiling: <$tx, $ty, $tz, $a, $b>"
                         args="-D${config}_RX=$a -D${config}_RY=$b -D${config}_TX=$tx -D${config}_TY=$ty -D${config}_TZ=$tz"
                         exe="str_${tx}_${ty}_${tz}_${a}_${b}"
                         nvcc test111.cu -arch=${arch} -use_fast_math --ptxas-options=-v -o $out/$exe $args &> $out/log/$exe.txt
@@ -101,7 +102,7 @@ do
                                         rm $out/$exe;
                                         rm $out/log/$exe.txt
                                         echo "Ignoring configuration due to" \
-                                             "spillage."
+                                             "spillage"
                                 fi
                         else
                                 echo wrote: $out/$exe
