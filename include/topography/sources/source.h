@@ -16,7 +16,7 @@
 #include <interpolation/interpolation.cuh>
 
 // Offsets in grid spacings factor with respect to the previous grid
-#define SOURCE_DM_OFFSET_X -1
+#define SOURCE_DM_OFFSET_X 0
 #define SOURCE_DM_OFFSET_Y -1
 
 // Shift due to inconsistency with the user coordinate (0, 0, 0) defined at a

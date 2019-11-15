@@ -137,13 +137,15 @@ int test_sources_dm(const char *inputfile, int rank, int size, const int px)
                        "               user(x, y, z) = [%g, %g, %g],\n"\
                        "               int(x, y, z)  = [%g, %g, %g]\n"\
                        "               int x = [%g %g %g ... ]\n"\
-                       "               int y = [%g %g %g ... ]\n", 
+                       "               int y = [%g %g %g ... ]\n"\
+                       "               int z = [%g %g %g ... ]\n", 
                                 j, 
                                 ix, iy, iz,
                                 Mxx.xu[i][j], Mxx.yu[i][j], Mxx.zu[i][j], 
                                 Mxx.x[i][j], Mxx.y[i][j], Mxx.z[i][j],
                                 x1[0], x1[1], x1[2], 
-                                y1[0], y1[1], y1[2]);
+                                y1[0], y1[1], y1[2],
+				z1[0], z1[1], z1[2]);
                 free(x1);
                 free(y1);
                 free(z1);
