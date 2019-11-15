@@ -61,6 +61,9 @@ void source_finalize(source_t *src)
                 if (src->x[i] != NULL) free(src->x[i]);
                 if (src->y[i] != NULL) free(src->y[i]);
                 if (src->z[i] != NULL) free(src->z[i]);
+                if (src->xu[i] != NULL) free(src->xu[i]);
+                if (src->yu[i] != NULL) free(src->yu[i]);
+                if (src->zu[i] != NULL) free(src->zu[i]);
                 if (src->type[i] != NULL) free(src->type[i]);
         }
 }
@@ -72,25 +75,23 @@ void source_find_grid_number(const input_t *input, const
                              const int num_grids)
 {
 
-        prec *z1 = malloc(sizeof z1 * grids[0].z.size.z);
 
         for (int j = 0; j < length; ++j) {
                 grid_number[j] = -1;
         }
 
-        grid1_t z_grid = grid_grid1_z(grids[0].z);
-        grid_fill1(z1, z_grid);
 
         _prec lower = 0;
         _prec upper = 0;
-        _prec overlap = 0;
+	_prec overlap = 0;
         for (int i = 0; i < num_grids; ++i) {
-                z_grid = grid_grid1_z(grids[i].z);
+		prec *z1 = malloc(sizeof z1 * grids[i].z.size.z);
+		grid1_t z_grid = grid_grid1_z(grids[i].z);
                 grid_fill1(z1, z_grid);
-                upper  = upper + lower;
+
+                upper  = lower;
                 lower  = lower - z1[z_grid.end];
-                if (i + 1 != num_grids) overlap = z_grid.gridspacing * OVERLAP;
-                lower = lower + overlap;
+
                 for (int j = 0; j < length; ++j) {
                         _prec z = input->z[indices[j]];
                         // Take into account that topography can yield positive
@@ -102,20 +103,20 @@ void source_find_grid_number(const input_t *input, const
                         else if (z > 0) {
                                 grid_number[j] = 0;
                         }
-                        else if (lower < z && z <= upper) {
+                        else if (z > lower && z <= upper - overlap) {
                                 grid_number[j] = i;
                         }
-                        else if (lower - overlap <= z && z <= lower) {
-                                fprintf(stderr, 
-                                "Source/receiver id=%d is in overlap zone.\n",
-                                j);
                         }
 
+                if (i + 1 != num_grids) {
+                       	overlap = z_grid.gridspacing * OVERLAP;
+                } else {
+                        overlap = 0.0f;
                 }
+		lower = lower + overlap;
+		free(z1);
+	}
 
-        }
-
-        free(z1);
 
         for (int j = 0; j < length; ++j) {
                 if (grid_number[j] == -1) {
@@ -139,21 +140,74 @@ void source_init_common(source_t *src, const char *filename,
 {
         sprintf(src->filename, "%s_%s", input->file, filename);
 
-        grid3_t grid = grids_select(grid_type, &grids[0]);
-
-
-        // Shift by 0.5 such that x = 0, y = 0 is
-        // located at a material or topography grid
-        // point.
-
         _prec *x = malloc(sizeof x * input->length);
-        for (size_t i = 0; i < input->length; ++i) {
-                x[i] = input->x[i] - 0.5 * grid.gridspacing;
+        _prec *y = malloc(sizeof y * input->length);
+        _prec *z = malloc(sizeof z * input->length);
+
+        {
+                int *grid_number = malloc(sizeof grid_number * input->length);
+                int *indices = malloc(sizeof indices * input->length);
+
+                for (size_t i = 0; i < input->length; ++i) {
+                        indices[i] = i;
+                }
+
+                source_find_grid_number(input, grids, grid_number, indices,
+                                        input->length, ngrids);
+
+                // Determine offsets for the DM
+                _prec *dm_offset_x = malloc(sizeof dm_offset_x * ngrids);
+                _prec *dm_offset_y = malloc(sizeof dm_offset_y * ngrids);
+                _prec *dm_offset_z = malloc(sizeof dm_offset_z * ngrids);
+                grid3_t grid_top = grids_select(grid_type, &grids[0]);
+                dm_offset_x[0] = 0;
+                dm_offset_y[0] = 0;
+		dm_offset_z[0] = 0;
+                for (int j = 1; j < ngrids; ++j) {
+                        grid3_t grid_pre = grids_select(grid_type, &grids[j-1]);
+			grid3_t grid_cur = grids_select(grid_type, &grids[j]);
+                        dm_offset_x[j] = dm_offset_x[j - 1] +
+                                         SOURCE_DM_OFFSET_X * grid_pre.gridspacing-
+					 (grid_cur.shift.x * 0.5 * grid_cur.gridspacing
+						-grid_pre.shift.x * 0.5 * grid_pre.gridspacing);
+                        dm_offset_y[j] = dm_offset_y[j - 1] +
+                                         SOURCE_DM_OFFSET_Y * grid_pre.gridspacing-
+                                         (grid_cur.shift.y * 0.5 * grid_cur.gridspacing
+                                                -grid_pre.shift.y * 0.5 * grid_pre.gridspacing);
+			dm_offset_z[j] = grid_top.shift.z * 0.5 * grid_top.gridspacing - 
+					 (grid_cur.shift.z * 0.5 * grid_cur.gridspacing);
+                }
+
+                for (size_t i = 0; i < input->length; ++i) {
+                     // Shift by 0.5 such that x = 0, y = 0 is
+                     // located at a material or topography grid
+                     // point.
+                     x[i] = input->x[i] +
+                            SOURCE_OFFSET_X * grid_top.gridspacing;
+                     y[i] = input->y[i];
+		     z[i] = input->z[i];
+
+                     int grid_num = grid_number[i];
+
+                     // Apply DM-specific shift for all other blocks
+                     x[i] = x[i] + dm_offset_x[grid_num];
+                     y[i] = y[i] + dm_offset_y[grid_num];
+		     z[i] = z[i] + dm_offset_z[grid_num];
+                }
+
+                free(dm_offset_x);
+                free(dm_offset_y);
+                free(dm_offset_z);
+                free(indices);
+                free(grid_number);
         }
 
 
+        grid3_t grid = grids_select(grid_type, &grids[0]);
+
+
         AWPCHK(dist_indices(&src->indices, &src->length, x,
-                            input->y, input->length, grid));
+                            y, input->length, grid));
 
 
 
@@ -187,6 +241,9 @@ void source_init_common(source_t *src, const char *filename,
                 src->x[j] = malloc(sizeof src->x * src->lengths[j]);
                 src->y[j] = malloc(sizeof src->y * src->lengths[j]);
                 src->z[j] = malloc(sizeof src->z * src->lengths[j]);
+                src->xu[j] = malloc(sizeof src->x * src->lengths[j]);
+                src->yu[j] = malloc(sizeof src->y * src->lengths[j]);
+                src->zu[j] = malloc(sizeof src->z * src->lengths[j]);
                 src->type[j] = malloc(sizeof src->type *  src->lengths[j]);
         }
 
@@ -196,8 +253,11 @@ void source_init_common(source_t *src, const char *filename,
                         if (grid_number[i] != j) continue;
                         src->global_indices[j][local_idx] = i;
                         src->x[j][local_idx] = x[src->indices[i]];
-                        src->y[j][local_idx] = input->y[src->indices[i]];
-                        src->z[j][local_idx] = input->z[src->indices[i]];
+                        src->y[j][local_idx] = y[src->indices[i]];
+                        src->z[j][local_idx] = z[src->indices[i]];
+                        src->xu[j][local_idx] = input->x[src->indices[i]];
+                        src->yu[j][local_idx] = input->y[src->indices[i]];
+                        src->zu[j][local_idx] = input->z[src->indices[i]];
                         src->type[j][local_idx] = input->type[src->indices[i]];
                         local_idx++;
                 }
@@ -320,55 +380,93 @@ void source_init_common(source_t *src, const char *filename,
                                         full_grid, src->x[j], src->y[j], src->z[j],
                                         src->global_indices[j],
                                         src->lengths[j], input->degree));
- 
 
 
-       // FIXME: remove this stuff
-       /*
-        grid3_t vel_grid = grid_init_velocity_grid(
-                           grid.inner_size, grid.shift, grid.coordinate,
-                           grid.boundary1, grid.boundary2, grid.gridspacing);
-        grid1_t x_grid = grid_grid1_x(vel_grid);
-        grid1_t y_grid = grid_grid1_y(vel_grid);
-        grid1_t z_grid = grid_grid1_z(vel_grid);
+		//Special treatment for sources located in the overlap zone
+		if(ngrids > 1)
+		{
+ 			for (size_t k = 0; k < src->lengths[j]; ++k)
+                	{
+				//top block
+				if (j == 0)
+				{
+					//bottom two grids will not be used
+					if(src->interpolation[j].iz[k] < 2)
+					{
+					src->interpolation[j].iz[k]=2;
+					}
+				}
+				//blocks in between 
+				else if(j > 0 && j != ngrids-1)
+				{
+					//bottom two grids will not be used
+                                	if(src->interpolation[j].iz[k] < 2)
+                                	{
+                                	src->interpolation[j].iz[k]=2;
+                                	}
+					else if(src->interpolation[j].iz[k] > grid.size.z-3)
+					{
+					//the top two grids in the coarse grid will not be used
+					src->interpolation[j].iz[k]=grid.size.z-3;
+					}			
+				}
+				//bottom block
+				else if(j > 0 && j == ngrids - 1)
+				{
+                                        if(src->interpolation[j].iz[k] > grid.size.z-3)
+                                        {
+					//the top two grids in the coarse grid will not be used
+					src->interpolation[j].iz[k]=grid.size.z-3;
+					}
+				}
+			}//k loop
+		}
+		
 
-        prec *x1 = malloc(sizeof x1 * x_grid.size);
-        prec *y1 = malloc(sizeof y1 * y_grid.size);
-        prec *z1 = malloc(sizeof z1 * z_grid.size);
+//------------------------------------------------------------------------------
+//Added by Te-Yang for printing purpose
+                grid3_t vel_grid = grid_init_stress_grid(
+                            grid.inner_size, grid.shift, grid.coordinate,
+                            grid.boundary1, grid.boundary2, grid.gridspacing);
+                        grid1_t x_grid = grid_grid1_x(vel_grid);
+                        grid1_t y_grid = grid_grid1_y(vel_grid);
+                        grid1_t z_grid = grid_grid1_z(vel_grid);
 
-        grid_fill1(x1, x_grid);
-        grid_fill1(y1, y_grid);
-        grid_fill1(z1, z_grid);
-        prec h = grid.gridspacing;
-        int ix = src->interpolation[j].ix[0];
-        int iy = src->interpolation[j].iy[0];
-        int iz = src->interpolation[j].iz[0];
-        int offx = 8;
-        int offy = 8;
+                        prec *x1 = malloc(sizeof x1 * x_grid.size);
+                        prec *y1 = malloc(sizeof y1 * y_grid.size);
+                        prec *z1 = malloc(sizeof z1 * z_grid.size);
 
-        inspect_far(x1, 0, 10);
-        inspect_far(y1, 0, 10);
-        printf("rank = %d, grid = %d %d %d id = %d index = %d %d %d"\
-             " front, bottom, left = %g %g %g, original? %g %g %g pos = %g %g %g \n",
+                        grid_fill1(x1, x_grid);
+                        grid_fill1(y1, y_grid);
+                        grid_fill1(z1, z_grid);
+
+
+                printf("rank = %d, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
                                 rank, grid.shift.x, grid.shift.y, grid.shift.z,
                                 j,
-                                ix,
-                                iy,
-                                iz,
-                                x1[0], y1[0], z1[0],
-                                x1[0] + 0.5 * h , y1[0] + 0.5 *h , z1[0] + 0.5 *h,
-                                x1[ix-offx], y1[iy-offy], z1[iz]
-                                );
-       free(x1);
-       free(y1);
-       free(z1);
-       */
+                                x1[ngsl/2], y1[ngsl/2], z1[0],	
+                                grid.gridspacing);
+
+		for (size_t k = 0; k < src->lengths[j]; ++k)
+		{
+		printf("query int x y z = %f %f %f | nearest x y z = %f %f %f | index = %d %d %d\n", 
+			src->x[j][k], src->y[j][k], src->z[j][k],
+			x1[ngsl/2+src->interpolation[j].ix[k]-ngsl],
+                        y1[ngsl/2+src->interpolation[j].iy[k]-ngsl],
+                        z1[src->interpolation[j].iz[k]],
+                        src->interpolation[j].ix[k],
+                        src->interpolation[j].iy[k],
+                        src->interpolation[j].iz[k]);
+		}
+		fflush(stdout);
+//--------------------------------------------------------------------------------
                                         
                 grid_data_free(&xyz);
         } // end loop j
 
         free(grid_number);
         free(x);
+        free(y);
         
 
         src->buffer = buffer_init(src->length,
