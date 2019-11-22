@@ -10,23 +10,24 @@ with the values at the nearest regular grid point.
 ## Usage
 
 ```
-write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py> <rpt>
+write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py> <mesh_out> <rpt>
 ```
 ---------------------------------------------------------------
-|  Argument   |  Description                                  |
-|-------------|-----------------------------------------------|
-| input       |   Topography binary file                      |
-| output      |   Binary file to write containing curvilinear grid coordinates           |
-| property    |   Property binary file to read                |
-| mesh        |   Mesh binary file to write containing properties at curvilinear grids   | 
-| nx `int`    |   Number of grid points in the x-direction    |
-| ny `int`    |   Number of grid points in the y-direction    |
-| nz `int`    |   Number of grid points in the z-direction    |
-| mz `int`    |   Number of grid points in the z-direction of the regular property grid  |
-| h `float`   |   Grid spacing                                |
-| px `int`    |   Number of MPI partitions in the x-direction |
-| py `int`    |   Number of MPI partitions in the y-direction |
-| rpt `bool`  |   Write the top layer twice (0: disable; default=1: enable)            |
+|  Argument       |  Description                                  |
+|-----------------|-----------------------------------------------|
+| input           |   Topography binary file                      |
+| output          |   Binary file to write containing curvilinear grid coordinates           |
+| property        |   Property binary file to read                |
+| mesh            |   Mesh binary file to write containing properties at curvilinear grids   | 
+| nx `int`        |   Number of grid points in the x-direction    |
+| ny `int`        |   Number of grid points in the y-direction    |
+| nz `int`        |   Number of grid points in the z-direction    |
+| mz `int`        |   Number of grid points in the z-direction of the regular property grid  |
+| h `float`       |   Grid spacing                                |
+| px `int`        |   Number of MPI partitions in the x-direction |
+| py `int`        |   Number of MPI partitions in the y-direction |
+| mesh_out `int`  |   Generate mesh output (0: disalbe; 1:enable  |
+| rpt `bool`      |   Write the top layer twice (0: disable; default=1: enable)            |
 
 See
 [awp-benchmarks](https://github.com/SCECcode/awp-benchmarks/tree/master/tests/topography/write_grid)
@@ -78,6 +79,7 @@ This file is quite similar with the `output` file, except that the three entries
 in `output` are (x, y, z) coordinates, while `mesh` contains three entries 
 (vp, vs, rho), which is the same order of the input `property` file.
 
+When `mesh_out` is set to 0, no mesh file is generated.
 ### Requirement
 `mz > nz`
 At each curvilinear grid point (green, `nz` layers), the code searches its nearest
