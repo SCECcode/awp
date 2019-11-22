@@ -32,7 +32,7 @@
 #include <topography/geometry/geometry.h>
 #include <buffers/buffer.h>
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 int main(int argc,char **argv)
 {
@@ -1371,10 +1371,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
 
     SetDeviceConstValue(DH, DT, nxt, nyt, nzt, ngrids, fmajor, fminor, Rz, RzT);
     print_const_H(ngrids);
-#if VERBOSE
-    fprintf(stdout, "fmajor in main = %f\n", fmajor);
-    fflush(stdout);
-#endif
 
     CUCHK(cudaStreamCreate(&stream_1));
     CUCHK(cudaStreamCreate(&stream_2));
@@ -2008,7 +2004,6 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                                               cur_step, DH[p], DT, p);
                 }
          }
-
          //update source input
          if ((IFAULT < 4) && (cur_step<NST)) {
             CUCHK(cudaDeviceSynchronize());
@@ -2260,19 +2255,12 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
           for (p=0; p<ngrids; p++){
              if (grid_output[p]){
 		if(!rank) time_gpuio_tmp = -gethrtime();
-#if VERBOSE
-                fprintf(stdout, "starting velbuffer_H, p=%d\n", p);
-                fflush(stdout);
-#endif
                 velbuffer_H(d_u1[p], d_v1[p], d_w1[p], d_neta[p], 
                     d_Bufx[p], d_Bufy[p], d_Bufz[p], d_Bufeta[p], NVE,
                     rec_nbgx[p], rec_nedx[p], NSKPX[p], rec_nbgy[p], rec_nedy[p], NSKPY[p], 
                     rec_nbgz[p], rec_nedz[p], NSKPZ[p], rec_nxt[p], rec_nyt[p], rec_nzt[p], 
                     stream_i, FOLLOWBATHY, d_bathy, p);
 		cudaStreamSynchronize(stream_i);
-#if VERBOSE
-                fprintf(stdout, "ending velbuffer_H\n");
-#endif
 
 		/*num_bytes = sizeof(float)*(nxt[p]+4+ngsl2)*(nyt[p]+4+ngsl2)*(nzt[p]+2*align);
 		CUCHK(cudaMemcpy(&u1[p][0][0][0],d_u1[p],num_bytes,cudaMemcpyDeviceToHost));
