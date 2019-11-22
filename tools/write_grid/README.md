@@ -26,7 +26,7 @@ write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py> 
 | h `float`       |   Grid spacing                                |
 | px `int`        |   Number of MPI partitions in the x-direction |
 | py `int`        |   Number of MPI partitions in the y-direction |
-| mesh_out `int`  |   Generate mesh output (0: disalbe; 1:enable  |
+| mesh_out `int`  |   Generate mesh output (0: disalbe; 1:enable) |
 | rpt `bool`      |   Write the top layer twice (0: disable; default=1: enable)            |
 
 See
