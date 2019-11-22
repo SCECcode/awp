@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 #define INPUT_MAJOR 2
-#define INPUT_MINOR 0
+#define INPUT_MINOR 1
 #define INPUT_PATCH 0
 #define INPUT_DATA_STRING_LENGTH 2048
 

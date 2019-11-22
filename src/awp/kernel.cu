@@ -3950,9 +3950,9 @@ __global__ void velbuffer(const float *u1, const float *v1, const float *w1, con
        int nbgx, int nedx, int nskpx, int nbgy, int nedy, int nskpy, int nbgz, int nedz, int nskpz,
        int rec_nxt, int rec_nyt, int FOLLOWBATHY, const int *bathy, int d_i)
 {
-    register int i, j, k, ko;
+    register int i, j, k, ko, koz;
 
-    int tmpInd, pos, bpos;
+    int tmpInd, pos, posz, bpos;
 
     i = 2+ngsl+nbgx + (blockIdx.x*blockDim.x+threadIdx.x) * nskpx;
     j = 2+ngsl+nbgy + (blockIdx.y*blockDim.y+threadIdx.y) * nskpy;
@@ -3962,13 +3962,39 @@ __global__ void velbuffer(const float *u1, const float *v1, const float *w1, con
     if (j > 2+ngsl+nedy) return;
     if (k > nedz) return;
    
-    if (FOLLOWBATHY && d_i == 0){
+/*    if (FOLLOWBATHY && d_i == 0){
        bpos=j*(d_nxt[0]+4+ngsl2)+i;
        ko=bathy[bpos] - k;
     }
     else ko=d_nzt[d_i]+align-1-k;
                       
     pos = i*d_slice_1[d_i]+j*d_yline_1[d_i]+ko;
+*/
+
+    if(d_i > 0)
+        {
+        ko=d_nzt[d_i]+align-1-k;
+        koz=ko;
+        }
+
+    else
+        {
+        if(FOLLOWBATHY == 0)
+                {
+                ko=d_nzt[d_i]+align-1-k;
+                koz=ko-1;
+                }
+        else if(FOLLOWBATHY == 1)
+                {
+                bpos=j*(d_nxt[0]+4+ngsl2)+i;
+                ko=bathy[bpos] - k;
+                if(bathy[bpos] == d_nzt[d_i]+align-1 )koz=ko-1;
+                if(bathy[bpos] < d_nzt[d_i]+align-1 )koz=ko;
+                }
+        }
+
+     pos = i*d_slice_1[d_i]+j*d_yline_1[d_i]+ko;
+     posz = i*d_slice_1[d_i]+j*d_yline_1[d_i]+koz;
 
     tmpInd =  (k - nbgz)/nskpz*rec_nxt*rec_nyt + 
 	       (j-2-ngsl-nbgy)/nskpy*rec_nxt + 
@@ -3979,7 +4005,7 @@ __global__ void velbuffer(const float *u1, const float *v1, const float *w1, con
 
     Bufx[tmpInd] = u1[pos];
     Bufy[tmpInd] = v1[pos];
-    Bufz[tmpInd] = w1[pos];
+    Bufz[tmpInd] = w1[posz];
 
     if (NVE == 3) Bufeta[tmpInd] = neta[pos];
 }
