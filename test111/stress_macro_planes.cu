@@ -54,9 +54,9 @@
 #define LDG(x) x
 
 
-template <int tx, int ty, int tz, int na, int nb>
-__launch_bounds__ (tx * ty * tz)
-__global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTRCT zz,
+template <int tx, int ty, int na, int nb>
+__launch_bounds__ (tx * ty)
+__global__ void dtopo_str_111_macro_planes(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTRCT zz,
            _prec*  RSTRCT xy, _prec*  RSTRCT xz, _prec*  RSTRCT yz,
        _prec*  RSTRCT r1, _prec*  RSTRCT r2,  _prec*  RSTRCT r3, 
        _prec*  RSTRCT r4, _prec*  RSTRCT r5,  _prec*  RSTRCT r6,
@@ -129,7 +129,7 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   int dm_offset = 3;
   int k0 = na * (blockIdx.x * blockDim.x + threadIdx.x) + align;
   int j0 = nb * (blockIdx.y * blockDim.y + threadIdx.y) + s_j;
-  i = blockIdx.z * blockDim.z + threadIdx.z + s_i;
+  i = s_i;
 
   float rxx[nb][na], ryy[nb][na], rzz[nb][na];
   float rxy[nb][na], rxz[nb][na], ryz[nb][na];
@@ -137,18 +137,55 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   float rr4[nb][na], rr5[nb][na], rr6[nb][na];
 
 
-  if (i >= e_i)
-    return;
   if (j0 >= e_j)
     return;
 
-  
+  float ru1[4][7][nb][na];
+  float rv1[4][7][nb][na];
+  float rw1[4][7][nb][na];
+
+  // Prime the register queue
 #pragma unroll
   for (int b = 0; b < nb; ++b) {
           j = j0 + b;
 #pragma unroll
   for (int a = 0; a < na; ++a) {
           k = k0 + a;
+
+        # pragma unroll
+        for (int q = -3; q < 4; ++q) {
+                ru1[0][3 + q][b][a] = _u1(i - 1, j, k + q);
+                ru1[1][3 + q][b][a] = _u1(i, j, k + q);
+                ru1[2][3 + q][b][a] = _u1(i + 1, j, k + q);
+
+                rv1[0][3 + q][b][a] = _v1(i - 2, j, k + q);
+                rv1[1][3 + q][b][a] = _v1(i - 1, j, k + q);
+                rv1[2][3 + q][b][a] = _v1(i + 0, j, k + q);
+                
+                rw1[0][3 + q][b][a] = _w1(i - 2, j, k + q);
+                rw1[1][3 + q][b][a] = _w1(i - 1, j, k + q);
+                rw1[2][3 + q][b][a] = _w1(i + 0, j, k + q);
+        }
+
+        }
+        }
+
+
+  for (int i = s_i; i < e_i; ++i) {
+
+#pragma unroll
+  for (int b = 0; b < nb; ++b) {
+          j = j0 + b;
+#pragma unroll
+  for (int a = 0; a < na; ++a) {
+          k = k0 + a;
+  
+   #pragma unroll
+   for (int q = -3; q < 4; ++q) {
+        ru1[3][3 + q][b][a] = _u1(i + 2, j, k + q);
+        rv1[3][3 + q][b][a] = _v1(i + 1, j, k + q);
+        rw1[3][3 + q][b][a] = _w1(i + 1, j, k + q);
+   }
 
 
 
@@ -279,65 +316,65 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
           Jii = 1.0 * 1.0 / Jii;
           
     vs1 =
-      dx4[1] * _u1(i, j, k) + dx4[0] * _u1(i - 1, j, k) +
-      dx4[2] * _u1(i + 1, j, k) + dx4[3] * _u1(i + 2, j, k) -
+      dx4[1] * ru1[1][3][b][a] + dx4[0] * ru1[0][3][b][a] +
+      dx4[2] * ru1[2][3][b][a] + dx4[3] * ru1[3][3][b][a] -
       Jii * _g_c(k) *
           (
            px4[0] * _f1_1(i - 1, j) *
                (
-                phdz4[0] * _u1(i - 1, j, k - 3) +
-                phdz4[1] * _u1(i - 1, j, k - 2) +
-                phdz4[2] * _u1(i - 1, j, k - 1) +
-                phdz4[3] * _u1(i - 1, j, k) +
-                phdz4[4] * _u1(i - 1, j, k + 1) +
-                phdz4[5] * _u1(i - 1, j, k + 2) +
-                phdz4[6] * _u1(i - 1, j, k + 3)
+                phdz4[0] * ru1[0][0][b][a] + 
+                phdz4[1] * ru1[0][1][b][a] + 
+                phdz4[2] * ru1[0][2][b][a] + 
+                phdz4[3] * ru1[0][3][b][a] + 
+                phdz4[4] * ru1[0][4][b][a] + 
+                phdz4[5] * ru1[0][5][b][a] + 
+                phdz4[6] * ru1[0][6][b][a]
                 ) +
            px4[1] * _f1_1(i, j) *
                (
-                phdz4[0] * _u1(i, j, k - 3) +
-                phdz4[1] * _u1(i, j, k - 2) +
-                phdz4[2] * _u1(i, j, k - 1) +
-                phdz4[3] * _u1(i, j, k) +
-                phdz4[4] * _u1(i, j, k + 1) + 
-                phdz4[5] * _u1(i, j, k + 2) +
-                phdz4[6] * _u1(i, j, k + 3)
+                phdz4[0] * ru1[1][0][b][a] + 
+                phdz4[1] * ru1[1][1][b][a] + 
+                phdz4[2] * ru1[1][2][b][a] + 
+                phdz4[3] * ru1[1][3][b][a] + 
+                phdz4[4] * ru1[1][4][b][a] + 
+                phdz4[5] * ru1[1][5][b][a] + 
+                phdz4[6] * ru1[1][6][b][a]
                 ) +
            px4[2] * _f1_1(i + 1, j) *
                (
-                phdz4[0] * _u1(i + 1, j, k - 3) +
-                phdz4[1] * _u1(i + 1, j, k - 2) +
-                phdz4[2] * _u1(i + 1, j, k - 1) +
-                phdz4[3] * _u1(i + 1, j, k) +
-                phdz4[4] * _u1(i + 1, j, k + 1) +
-                phdz4[5] * _u1(i + 1, j, k + 2) +
-                phdz4[6] * _u1(i + 1, j, k + 3)
+                phdz4[0] * ru1[2][0][b][a] + 
+                phdz4[1] * ru1[2][1][b][a] + 
+                phdz4[2] * ru1[2][2][b][a] + 
+                phdz4[3] * ru1[2][3][b][a] + 
+                phdz4[4] * ru1[2][4][b][a] + 
+                phdz4[5] * ru1[2][5][b][a] + 
+                phdz4[6] * ru1[2][6][b][a]
                 ) +
            px4[3] * _f1_1(i + 2, j) *
                (
-                phdz4[0] * _u1(i + 2, j, k - 3) +
-                phdz4[1] * _u1(i + 2, j, k - 2) +
-                phdz4[2] * _u1(i + 2, j, k - 1) +
-                phdz4[3] * _u1(i + 2, j, k) +
-                phdz4[4] * _u1(i + 2, j, k + 1) +
-                phdz4[5] * _u1(i + 2, j, k + 2) +
-                phdz4[6] * _u1(i + 2, j, k + 3)
+                phdz4[0] * ru1[3][0][b][a] + 
+                phdz4[1] * ru1[3][1][b][a] + 
+                phdz4[2] * ru1[3][2][b][a] + 
+                phdz4[3] * ru1[3][3][b][a] + 
+                phdz4[4] * ru1[3][4][b][a] + 
+                phdz4[5] * ru1[3][5][b][a] + 
+                phdz4[6] * ru1[3][6][b][a]
                 )
          );
     vs2 =
-      dhy4[2] * _v1(i, j, k) + dhy4[0] * _v1(i, j - 2, k) +
+      dhy4[2] * rv1[2][3][b][a] + dhy4[0] * _v1(i, j - 2, k) +
       dhy4[1] * _v1(i, j - 1, k) + dhy4[3] * _v1(i, j + 1, k) -
       Jii * _g_c(k) *
           (phy4[2] * _f2_2(i, j) *
                (
-                phdz4[0] * _v1(i, j, k - 3) +
-                phdz4[1] * _v1(i, j, k - 2) +
-                phdz4[2] * _v1(i, j, k - 1) +
-                phdz4[3] * _v1(i, j, k) +
-                phdz4[4] * _v1(i, j, k + 1) +
-                phdz4[5] * _v1(i, j, k + 2) +
-                phdz4[6] * _v1(i, j, k + 3)
-                ) +
+                phdz4[0] * rv1[2][0][b][a] +
+                phdz4[1] * rv1[2][1][b][a] +
+                phdz4[2] * rv1[2][2][b][a] +
+                phdz4[3] * rv1[2][3][b][a]+
+                phdz4[4] * rv1[2][4][b][a] +
+                phdz4[5] * rv1[2][5][b][a] +
+                phdz4[6] * rv1[2][6][b][a]
+                ) +        
            phy4[0] * _f2_2(i, j - 2) *
                 (
                 phdz4[0] * _v1(i, j - 2, k - 3) +
@@ -369,8 +406,8 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
                 )
                );
   vs3 =
-      Jii * (dhz4[2] * _w1(i, j, k) + dhz4[0] * _w1(i, j, k - 2) +
-             dhz4[1] * _w1(i, j, k - 1) + dhz4[3] * _w1(i, j, k + 1));
+      Jii * (dhz4[2] * rw1[2][3][b][a] + dhz4[0] * rw1[2][1][b][a] +
+             dhz4[1] * rw1[2][2][b][a] + dhz4[3] * rw1[2][4][b][a]);
 
     tmp      = xl*(vs1+vs2+vs3);
 
@@ -403,14 +440,19 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   J12i = 1.0 / J12i;
 
   vs1 =
-      dy4[1] * _u1(i, j, k) + dy4[0] * _u1(i, j - 1, k) +
+      dy4[1] * ru1[1][3][b][a] + dy4[0] * _u1(i, j - 1, k) +
       dy4[2] * _u1(i, j + 1, k) + dy4[3] * _u1(i, j + 2, k) -
       J12i * _g_c(k) *
           (py4[1] * _f2_1(i, j) *
-               (phdz4[3] * _u1(i, j, k) + phdz4[0] * _u1(i, j, k - 3) +
-                phdz4[1] * _u1(i, j, k - 2) + phdz4[2] * _u1(i, j, k - 1) +
-                phdz4[4] * _u1(i, j, k + 1) + phdz4[5] * _u1(i, j, k + 2) +
-                phdz4[6] * _u1(i, j, k + 3)) +
+               (
+               phdz4[0] * ru1[1][0][b][a] +
+               phdz4[1] * ru1[1][1][b][a] +
+               phdz4[2] * ru1[1][2][b][a] +
+               phdz4[3] * ru1[1][3][b][a] +
+               phdz4[4] * ru1[1][4][b][a] +
+               phdz4[5] * ru1[1][5][b][a] +
+               phdz4[6] * ru1[1][6][b][a]
+                ) +
            py4[0] * _f2_1(i, j - 1) *
                (phdz4[3] * _u1(i, j - 1, k) + phdz4[0] * _u1(i, j - 1, k - 3) +
                 phdz4[1] * _u1(i, j - 1, k - 2) +
@@ -437,31 +479,46 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
       dhx4[1] * _v1(i - 1, j, k) + dhx4[3] * _v1(i + 1, j, k) -
       J12i * _g_c(k) *
           (phx4[2] * _f1_2(i, j) *
-               (phdz4[3] * _v1(i, j, k) + phdz4[0] * _v1(i, j, k - 3) +
-                phdz4[1] * _v1(i, j, k - 2) + phdz4[2] * _v1(i, j, k - 1) +
-                phdz4[4] * _v1(i, j, k + 1) + phdz4[5] * _v1(i, j, k + 2) +
-                phdz4[6] * _v1(i, j, k + 3)) +
+               (
+                phdz4[0] * rv1[2][0][b][a] +
+                phdz4[1] * rv1[2][1][b][a] +
+                phdz4[2] * rv1[2][2][b][a] +
+                phdz4[3] * rv1[2][3][b][a] +
+                phdz4[4] * rv1[2][4][b][a] +
+                phdz4[5] * rv1[2][5][b][a] +
+                phdz4[6] * rv1[2][6][b][a]
+                ) +
            phx4[0] * _f1_2(i - 2, j) *
-               (phdz4[3] * _v1(i - 2, j, k) + phdz4[0] * _v1(i - 2, j, k - 3) +
-                phdz4[1] * _v1(i - 2, j, k - 2) +
-                phdz4[2] * _v1(i - 2, j, k - 1) +
-                phdz4[4] * _v1(i - 2, j, k + 1) +
-                phdz4[5] * _v1(i - 2, j, k + 2) +
-                phdz4[6] * _v1(i - 2, j, k + 3)) +
+               (
+                phdz4[0] * rv1[0][0][b][a] +
+                phdz4[1] * rv1[0][1][b][a] +
+                phdz4[2] * rv1[0][2][b][a] +
+                phdz4[3] * rv1[0][3][b][a] +
+                phdz4[4] * rv1[0][4][b][a] +
+                phdz4[5] * rv1[0][5][b][a] +
+                phdz4[6] * rv1[0][6][b][a]
+               ) +
            phx4[1] * _f1_2(i - 1, j) *
-               (phdz4[3] * _v1(i - 1, j, k) + phdz4[0] * _v1(i - 1, j, k - 3) +
-                phdz4[1] * _v1(i - 1, j, k - 2) +
-                phdz4[2] * _v1(i - 1, j, k - 1) +
-                phdz4[4] * _v1(i - 1, j, k + 1) +
-                phdz4[5] * _v1(i - 1, j, k + 2) +
-                phdz4[6] * _v1(i - 1, j, k + 3)) +
+               (
+                phdz4[0] * rv1[1][0][b][a] +
+                phdz4[1] * rv1[1][1][b][a] +
+                phdz4[2] * rv1[1][2][b][a] +
+                phdz4[3] * rv1[1][3][b][a] +
+                phdz4[4] * rv1[1][4][b][a] +
+                phdz4[5] * rv1[1][5][b][a] +
+                phdz4[6] * rv1[1][6][b][a]
+                ) +
            phx4[3] * _f1_2(i + 1, j) *
-               (phdz4[3] * _v1(i + 1, j, k) + phdz4[0] * _v1(i + 1, j, k - 3) +
-                phdz4[1] * _v1(i + 1, j, k - 2) +
-                phdz4[2] * _v1(i + 1, j, k - 1) +
-                phdz4[4] * _v1(i + 1, j, k + 1) +
-                phdz4[5] * _v1(i + 1, j, k + 2) +
-                phdz4[6] * _v1(i + 1, j, k + 3)));
+               (
+                phdz4[0] * rv1[3][0][b][a] +
+                phdz4[1] * rv1[3][1][b][a] +
+                phdz4[2] * rv1[3][2][b][a] +
+                phdz4[3] * rv1[3][3][b][a] +
+                phdz4[4] * rv1[3][4][b][a] +
+                phdz4[5] * rv1[3][5][b][a] +
+                phdz4[6] * rv1[3][6][b][a]
+                )
+               );
 
     f_r      = _r4(i,j,k);
     f_rtmp   = h1*(vs1+vs2); 
@@ -475,38 +532,51 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   float J13i = _f_1(i, j) * _g3(k);
   J13i = 1.0 * 1.0 / J13i;
 
-  vs1 = J13i * (dz4[1] * _u1(i, j, k) + dz4[0] * _u1(i, j, k - 1) +
-                      dz4[2] * _u1(i, j, k + 1) + dz4[3] * _u1(i, j, k + 2));
+  vs1 = J13i * (dz4[1] * ru1[1][3][b][a] + dz4[0] * ru1[1][2][b][a] +
+                      dz4[2] * ru1[1][4][b][a] + dz4[3] * ru1[1][5][b][a]);
   vs2 =
-      dhx4[2] * _w1(i, j, k) + dhx4[0] * _w1(i - 2, j, k) +
-      dhx4[1] * _w1(i - 1, j, k) + dhx4[3] * _w1(i + 1, j, k) -
+    + dhx4[0] * rw1[0][3][b][a] +
+      dhx4[1] * rw1[1][3][b][a] +
+      dhx4[2] * rw1[2][3][b][a] +
+    + dhx4[3] * rw1[3][3][b][a] -
       J13i * _g(k) *
-          (phx4[2] * _f1_c(i, j) *
-               (pdhz4[3] * _w1(i, j, k) + pdhz4[0] * _w1(i, j, k - 3) +
-                pdhz4[1] * _w1(i, j, k - 2) + pdhz4[2] * _w1(i, j, k - 1) +
-                pdhz4[4] * _w1(i, j, k + 1) + pdhz4[5] * _w1(i, j, k + 2) +
-                pdhz4[6] * _w1(i, j, k + 3)) +
+          (
            phx4[0] * _f1_c(i - 2, j) *
-               (pdhz4[3] * _w1(i - 2, j, k) + pdhz4[0] * _w1(i - 2, j, k - 3) +
-                pdhz4[1] * _w1(i - 2, j, k - 2) +
-                pdhz4[2] * _w1(i - 2, j, k - 1) +
-                pdhz4[4] * _w1(i - 2, j, k + 1) +
-                pdhz4[5] * _w1(i - 2, j, k + 2) +
-                pdhz4[6] * _w1(i - 2, j, k + 3)) +
+               (
+              + pdhz4[0] * rw1[0][0][b][a] +
+                pdhz4[1] * rw1[0][1][b][a] +
+                pdhz4[2] * rw1[0][2][b][a] +
+                pdhz4[3] * rw1[0][3][b][a] +
+                pdhz4[4] * rw1[0][4][b][a] +
+                pdhz4[5] * rw1[0][5][b][a] +
+                pdhz4[6] * rw1[0][6][b][a]) +
            phx4[1] * _f1_c(i - 1, j) *
-               (pdhz4[3] * _w1(i - 1, j, k) + pdhz4[0] * _w1(i - 1, j, k - 3) +
-                pdhz4[1] * _w1(i - 1, j, k - 2) +
-                pdhz4[2] * _w1(i - 1, j, k - 1) +
-                pdhz4[4] * _w1(i - 1, j, k + 1) +
-                pdhz4[5] * _w1(i - 1, j, k + 2) +
-                pdhz4[6] * _w1(i - 1, j, k + 3)) +
+               (
+              + pdhz4[0] * rw1[1][0][b][a] +
+                pdhz4[1] * rw1[1][1][b][a] +
+                pdhz4[2] * rw1[1][2][b][a] +
+                pdhz4[3] * rw1[1][3][b][a] +
+                pdhz4[4] * rw1[1][4][b][a] +
+                pdhz4[5] * rw1[1][5][b][a] +
+                pdhz4[6] * rw1[1][6][b][a]) +
+           phx4[2] * _f1_c(i, j) *
+               (
+                pdhz4[0] * rw1[2][0][b][a] +
+                pdhz4[1] * rw1[2][1][b][a] +
+                pdhz4[2] * rw1[2][2][b][a] +
+                pdhz4[3] * rw1[2][3][b][a] +
+                pdhz4[4] * rw1[2][4][b][a] +
+                pdhz4[5] * rw1[2][5][b][a] +
+                pdhz4[6] * rw1[2][6][b][a]) +
            phx4[3] * _f1_c(i + 1, j) *
-               (pdhz4[3] * _w1(i + 1, j, k) + pdhz4[0] * _w1(i + 1, j, k - 3) +
-                pdhz4[1] * _w1(i + 1, j, k - 2) +
-                pdhz4[2] * _w1(i + 1, j, k - 1) +
-                pdhz4[4] * _w1(i + 1, j, k + 1) +
-                pdhz4[5] * _w1(i + 1, j, k + 2) +
-                pdhz4[6] * _w1(i + 1, j, k + 3)));
+           (
+              + pdhz4[0] * rw1[3][0][b][a] +
+                pdhz4[1] * rw1[3][1][b][a] +
+                pdhz4[2] * rw1[3][2][b][a] +
+                pdhz4[3] * rw1[3][3][b][a] +
+                pdhz4[4] * rw1[3][4][b][a] +
+                pdhz4[5] * rw1[3][5][b][a] +
+                pdhz4[6] * rw1[3][6][b][a]));
 
     f_r     = _r5(i,j,k);
     f_rtmp  = h2*(vs1+vs2);
@@ -519,17 +589,23 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
 
     float J23i = _f_2(i, j) * _g3(k);
     J23i = 1.0 * 1.0 / J23i;
-    vs1 = J23i * (dz4[1] * _v1(i, j, k) + dz4[0] * _v1(i, j, k - 1) +
-                        dz4[2] * _v1(i, j, k + 1) + dz4[3] * _v1(i, j, k + 2));
+    vs1 = J23i * (dz4[1] * rv1[2][3][b][a] + dz4[0] * rv1[2][2][b][a] +
+                  dz4[2] * rv1[2][4][b][a] + dz4[3] * rv1[2][5][b][a]);
     vs2 =
-        dy4[1] * _w1(i, j, k) + dy4[0] * _w1(i, j - 1, k) +
-        dy4[2] * _w1(i, j + 1, k) + dy4[3] * _w1(i, j + 2, k) -
+        dy4[0] * _w1(i, j - 1, k) +
+        dy4[1] * _w1(i, j, k) +
+        dy4[2] * _w1(i, j + 1, k) + 
+        dy4[3] * _w1(i, j + 2, k) -
         J23i * _g(k) *
             (py4[1] * _f2_c(i, j) *
-                 (pdhz4[3] * _w1(i, j, k) + pdhz4[0] * _w1(i, j, k - 3) +
-                  pdhz4[1] * _w1(i, j, k - 2) + pdhz4[2] * _w1(i, j, k - 1) +
-                  pdhz4[4] * _w1(i, j, k + 1) + pdhz4[5] * _w1(i, j, k + 2) +
-                  pdhz4[6] * _w1(i, j, k + 3)) +
+                 (
+                  pdhz4[0] * rw1[2][0][b][a] +
+                  pdhz4[1] * rw1[2][1][b][a] +
+                  pdhz4[2] * rw1[2][2][b][a] +
+                  pdhz4[3] * rw1[2][3][b][a] +
+                  pdhz4[4] * rw1[2][4][b][a] +
+                  pdhz4[5] * rw1[2][5][b][a] +
+                  pdhz4[6] * rw1[2][6][b][a]) +
              py4[0] * _f2_c(i, j - 1) *
                  (pdhz4[3] * _w1(i, j - 1, k) + pdhz4[0] * _w1(i, j - 1, k - 3) +
                   pdhz4[1] * _w1(i, j - 1, k - 2) +
@@ -558,6 +634,21 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     rr6[b][a] = f_vx2*f_r + f_wwo*f_rtmp;
     f_rtmp  = f_rtmp*(f_wwo-1.0f) + f_vx2*f_r*(1.0f-f_vx1); 
     ryz[b][a] = (f_yz + d_DT*f_rtmp)*f_dcrj; 
+
+   # pragma unroll
+   for (int q = -3; q < 4; ++q) {
+        ru1[0][3+q][b][a] = ru1[1][3+q][b][a];
+        ru1[1][3+q][b][a] = ru1[2][3+q][b][a];
+        ru1[2][3+q][b][a] = ru1[3][3+q][b][a];
+
+        rv1[0][3+q][b][a] = rv1[1][3+q][b][a];
+        rv1[1][3+q][b][a] = rv1[2][3+q][b][a];
+        rv1[2][3+q][b][a] = rv1[3][3+q][b][a];
+
+        rw1[0][3+q][b][a] = rw1[1][3+q][b][a];
+        rw1[1][3+q][b][a] = rw1[2][3+q][b][a];
+        rw1[2][3+q][b][a] = rw1[3][3+q][b][a];
+   }
 
   }
   }
@@ -591,6 +682,10 @@ __global__ void dtopo_str_111_macro_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
 
         }
   }
+  
+  }
+
+
 
 
 }

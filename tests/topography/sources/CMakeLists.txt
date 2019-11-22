@@ -1,4 +1,5 @@
 add_executable(test_topography_sources test_sources.c)
+add_executable(test_topography_sources_dm test_sources_dm.c)
 
 target_link_libraries(test_topography_sources 
         topography
@@ -7,7 +8,19 @@ target_link_libraries(test_topography_sources
         testing
         )
 
+target_link_libraries(test_topography_sources_dm
+        topography
+        buffers
+        ${MPI_C_LIBRARIES}
+        testing
+        )
+
 target_include_directories(test_topography_sources
+        PUBLIC
+        ${AWP_MINI_SOURCE_DIR}/include/
+        )
+
+target_include_directories(test_topography_sources_dm
         PUBLIC
         ${AWP_MINI_SOURCE_DIR}/include/
         )

@@ -4,8 +4,8 @@
  * curvilinear grid.
  *
  */ 
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 0
+#define VERSION_MAJOR 2
+#define VERSION_MINOR 1
 #define VERSION_PATCH 0
 
 #include <stdio.h>
@@ -22,12 +22,16 @@
 static int nx;
 static int ny;
 static int nz;
+static int mz;
 static prec h;
 static int px;
 static int py;
+static int mesh_out;
+static int rpt;
 const char *input;
 const char *output;
-
+const char *property;
+const char *mesh;
 static int nvars = 3;
 
 struct Mpi
@@ -46,58 +50,97 @@ struct Mpi
 
 void mpi_init(struct Mpi *m, int argc, char **argv);
 void mpi_cart(struct Mpi *m, const int *size, const int *part);
-MPI_Datatype data_type(const struct Mpi *mpi);
+MPI_Datatype data_type(const struct Mpi *mpi, int nz);
 
 int main(int argc, char **argv)
 {
         struct Mpi m;
         mpi_init(&m, argc, argv);
 
-        if (argc <= 7 && m.rank == 0) {
+        if (argc < 13 && m.rank == 0) {
                 printf(
-                    "usage: %s <input> <output> <nx> <ny> <nz> <h> <px> <py> "
-                    "\n",
+                    "usage: %s <input> <output> <prop> <mesh> <nx> "
+                    "<ny> <nz> <mz> <h> <px> <py> <rpt>\n",
                     argv[0]);
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
                        VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
                 printf("\n");
                 printf("Args:\n");
                 printf(" input          Topography binary file\n");
-                printf(" output         Binary file to write\n");
+                printf(
+                    " output         Binary file to write containing "
+                    "curvilinear grid coordinates\n");
+                printf(
+                    " property       Material property binary file to read\n");
+                printf(
+                    " mesh           Mesh binary file to write containing "
+                    "material properties in the curvilinear grid \n");
                 printf(" nx int         Number of grid points in the "
                     "x-direction\n");
                 printf(" ny int         Number of grid points in the "
                     "y-direction\n");
                 printf(" nz int         Number of grid points in the "
                     "z-direction\n");
+                printf(" mz int         Number of grid points in the "
+                    "z-direction of the property grid\n");
                 printf(" h float        Grid spacing\n");
                 printf(" px int         Number of MPI partitions in "
                     "the x-direction\n");
                 printf(" py int         Number of MPI partitions in "
                     "the y-direction\n");
+                printf(" mesh_out       Whether to output the mesh "
+                    "(1 = True, 0 = False) \n");
+                printf(" rpt int        Whether to repeat top layer when "
+                    "writing (1 = True, 0 = False) \n");
+                printf(" Expect at least %d argc, got %d\n", 13, argc);
+
                 MPI_Finalize();
                 return -1;
         }
 
         input = argv[1];
         output = argv[2];
-        nx = atoi(argv[3]);
-        ny = atoi(argv[4]);
-        nz = atoi(argv[5]);
-        h = atof(argv[6]);
-        px = atoi(argv[7]);
-        py = atoi(argv[8]);
+        property = argv[3];
+        mesh = argv[4];
+        nx = atoi(argv[5]);
+        ny = atoi(argv[6]);
+        nz = atoi(argv[7]);
+        mz = atoi(argv[8]);
+        h = atof(argv[9]);
+        px = atoi(argv[10]);
+        py = atoi(argv[11]);
+        mesh_out = atoi(argv[12]);
+        rpt = argc < 14 ? 1 : atoi(argv[13]);
 
         if (m.rank == 0) {
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
                        VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
                 printf(
-                    "input = %s output= %s nx = %d ny = %d nz = %d h = %g px = "
-                    "%d py = "
-                    "%d\n",
-                    input, output, nx, ny, nz, h, px, py);
+                    "input = %s output = %s property file = %s "
+                    "mesh file = %s nx = %d ny = %d nz = %d "
+                    "mz = %d h = %g px = %d py = %d mesh_out = %d "
+                    "rpt = %d\n",
+                    input, output, property, mesh, nx, ny, nz, mz, h, px,
+                    py, mesh_out, rpt);
                 int size = nvars * nx * ny * nz * sizeof(prec);
                 printf("Expected file size: %d \n", size);
+                if (rpt > 1 || rpt < 0) {
+                    printf("rpt should be either 0 (False) or "
+                           "1 (True)\n");
+                    MPI_Finalize();
+                    return -1;
+                }
+                else if (rpt == 1) {
+                    if (mesh_out == 0) {
+                        printf("The top layer will be repeated twice "
+                            "when writing coordinates.\n");
+                    }
+                    else {
+                        printf("The top layer will be repeated twice "
+                            "when writing coordinates and properties.\n");
+                    }
+
+                }
         }
 
 
@@ -105,6 +148,10 @@ int main(int argc, char **argv)
         int part[2] = {px, py};
         int alloc = 1;
         int err = 0;
+        int k0;
+        char mpiErrStr[100];
+        int mpiErrStrLen;
+
         prec *f;
         mpi_cart(&m, size, part);
         
@@ -122,24 +169,25 @@ int main(int argc, char **argv)
                 MPI_Finalize();
                 return -1;
         }
-
         err |= topo_read_serial(input, m.rank, px, py, m.coord, m.nxt, m.nyt,
                                 alloc, &f);
 
 
-        MPI_Datatype readtype = data_type(&m);
-
-        MPI_File     fh;
+        MPI_Datatype readtype = data_type(&m, nz);
+        MPI_Datatype readtype_m = data_type(&m, mz);
+        MPI_File     fh, fm, fp;
         MPI_Status   filestatus;
         MPICHK(MPI_File_open(m.MCW, output, MPI_MODE_WRONLY | MPI_MODE_CREATE,
                             MPI_INFO_NULL, &fh));
 
         MPICHK(MPI_File_set_view(fh, 0, MPI_FLOAT, readtype, "native", 
                           MPI_INFO_NULL));
+        
 
-        float *buffer;
         int buffer_size = m.nxt * m.nyt * nvars;
-        buffer = malloc(sizeof buffer * buffer_size);
+        float *buffer = (float*) calloc(buffer_size * nz, sizeof(float));
+        float *prop = (float*) calloc(buffer_size * mz, sizeof(float));
+        float *buffer_m = (float*) calloc(buffer_size * nz, sizeof(float));
 
         for (int j = 0; j < m.nyt; ++j) {
         for (int i = 0; i < m.nxt; ++i) {
@@ -148,38 +196,82 @@ int main(int argc, char **argv)
         }
         }
 
+        if (mesh_out == 1) {
+            MPICHK(MPI_File_open(m.MCW, mesh, MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                                MPI_INFO_NULL, &fm));
+            MPICHK(MPI_File_set_view(fm, 0, MPI_FLOAT, readtype, "native", 
+                            MPI_INFO_NULL));
+
+            MPICHK(MPI_File_open(m.MCW, property, MPI_MODE_RDONLY,
+                                MPI_INFO_NULL, &fp));
+            
+            err = MPI_File_set_view(fp, 0, MPI_FLOAT, readtype_m, "native", 
+                                    MPI_INFO_NULL);
+            if (err != MPI_SUCCESS) {
+                MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+                printf("%d) ERROR! MPI-IO reading property file set view: %s\n",
+                            m.rank, mpiErrStr); 
+            }
+            err = MPI_File_read_all(fp, prop, buffer_size * mz, 
+                            MPI_FLOAT, &filestatus);
+            if (err != MPI_SUCCESS) {
+                MPICHK(MPI_Error_string(err, mpiErrStr, &mpiErrStrLen));
+                printf("%d) ERROR! MPI-IO reading property file read: %s\n",
+                            m.rank, mpiErrStr);
+            }
+        }
+
         int show_info = (int) (nz / 10);
         show_info = show_info == 0 ? 1 : show_info;
+        double H = (nz - 1 - rpt) * h;
 
-        int len = m.nxt * m.nyt * nvars;
+        int len = buffer_size * nz;
         if (m.rank == 0) printf("Processing...\n");
+
         for (int k = 0; k < nz; ++k) {
-                // Depth,
-                double H = (nz - 1) * h;
+            // If k > 0 and we need repeat (rpt == 1), 
+            // we shift the domain up by 1
+            k0 = k == 0 ? k : k - rpt;  
+            double rk = (double) k0 / (double) (nz - 1 - rpt);
+            for (int i = 0; i < m.nxt; ++i) {
                 for (int j = 0; j < m.nyt; ++j) {
-                        for (int i = 0; i < m.nxt; ++i) {
-                                // Evaluate the topography function f at
-                                // position f(x_i, y_j) and compute the
-                                // coordinate
-                                // z_k = (H + f(x_i, y_j)) *( 1 - r_k) - H,
-                                // where 0 <= r_k <= 1.
-                                // This function maps to z = f(x_i, y_j) at the
-                                // free surface and to z = -H at the bottom.
-                                size_t lmy = 4 + m.nyt + 2 * ngsl + 2 * align;
-                                size_t local_pos = 2 + align + (j + ngsl) +
-                                                   (2 + i + ngsl) * lmy;
-                                double rk = (double) k / (double) (nz - 1);
-                                double mapping =
-                                    (H + f[local_pos]) * (1 - rk) - H;
-                                buffer[2 + nvars * i + j * nvars * m.nxt] =
-                                        (prec)mapping;
+                    size_t lmy = 4 + m.nyt + 2 * ngsl + 2 * align;
+                    size_t local_pos = 2 + align + (j + ngsl) +
+                                       (2 + i + ngsl) * lmy;
+                    // Depth, k=0 is the surface
+                    double mapping =
+                        (H + f[local_pos]) * (1 - rk) - H;
+                    buffer[2 + nvars * i + j * nvars * m.nxt] =
+                            (prec)mapping;
+                    if (mesh_out == 1) {           
+                        // For reading and mesh writing, we start from the
+                        // the surface, to keep compatible with the queried
+                        // by depth CVM.
+                        // k = 0  <--->  idx_z = 0
+                        // idx_z should not exceed mz
+                        int idx_z = (int) rintf((f[local_pos] - mapping)/ h);
+                        if (idx_z >= mz) {
+                            printf("Error! Curvilinear grids deeper than property "
+                                    "mesh\nAborting...\n");
+                            MPI_Finalize();
+                            return(-1);
                         }
+                        size_t pos = nvars * (idx_z * m.nxt * m.nyt +
+                                            j * m.nxt + i);
+                        memcpy(buffer_m + nvars * (k * m.nxt * m.nyt +  
+                                                j * m.nxt + i),
+                            prop + pos, nvars * sizeof(float));
+                    }
                 }
-                MPICHK(MPI_File_write_all(fh, buffer, len, MPI_FLOAT,
+            }
+                MPICHK(MPI_File_write_all(fh, buffer, buffer_size, MPI_FLOAT,
                                           &filestatus));
-                if (m.rank == 0)
-                if (k % show_info == 0 && m.rank == 0)
-                printf(" Slice z = %d out of nz = %d \n", k + 1, nz);
+        }
+        if (mesh_out == 1) {
+            MPICHK(MPI_File_write_all(fm, buffer_m, len,  MPI_FLOAT,
+                                    &filestatus));
+            free(buffer_m);
+            MPICHK(MPI_File_close(&fm));
         }
         free(buffer);
         MPICHK(MPI_File_close(&fh));
@@ -219,13 +311,13 @@ void mpi_cart(struct Mpi *m, const int *size, const int *part)
 }
 
 
-MPI_Datatype data_type(const struct Mpi *mpi)
+MPI_Datatype data_type(const struct Mpi *mpi, int num_z)
 {
   int old[3], new[3], offset[3];
-  old[0] = nz;
+  old[0] = num_z;
   old[1] = ny;
   old[2] = nx * nvars;
-  new[0] = nz;
+  new[0] = num_z;
   new[1] = mpi->nyt;
   new[2] = mpi->nxt * nvars;
   offset[0] = 0;

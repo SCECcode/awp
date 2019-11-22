@@ -1,3 +1,4 @@
+#!/bin/bash
 nx=512
 ny=512
 nz=512
@@ -6,11 +7,15 @@ arch=sm_70
 log=prof.txt
 args=
 all: c p
-sm61="-dlcm=ca"
 exe=test111.x
 
+ifeq ($(arch), sm_61) 
+# Disable L1 caching on Pascal
+extra_args=-Xptxas -dlcm=cg
+endif
+
 c:
-	nvcc test111.cu -lcurand -arch=$(arch) $(debug) $(args) -use_fast_math --ptxas-options=-v -o $(exe) -D$(arch)
+	nvcc test111.cu -arch=$(arch) $(extra_args) $(debug) $(args) -use_fast_math --ptxas-options=-v -o $(exe) -D$(arch);
 
 p:
 	nvprof --log-file $(log) ./test111.x $(nx) $(ny) $(nz) $(nt); 
