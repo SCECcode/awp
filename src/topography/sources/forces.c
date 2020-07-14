@@ -43,7 +43,7 @@ void forces_init(const char *filename, const grids_t *grids, int ngrids,
        Fy = source_init("fy", Y, &input, grids, ngrids, f, rank, comm);
        Fz = source_init("fz", Z, &input, grids, ngrids, f, rank, comm);
 
-       AWPCHK(forces_boundary_check(&Fx));
+       if (Fx.use) AWPCHK(forces_boundary_check(&Fx));
 
 }
 
