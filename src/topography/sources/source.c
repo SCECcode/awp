@@ -213,6 +213,8 @@ void source_init_common(source_t *src, const char *filename,
 
         src->ngrids = ngrids;
         src->use = src->length > 0 ? 1 : 0;
+        src->steps = input->steps;
+
 
         MPI_Comm_split(comm, src->use, rank, &src->comm);
 
@@ -497,6 +499,10 @@ void source_read(source_t *src, size_t step)
 {
         if (!src->use)
                 return;
+        if (step > src->steps) {
+                src->use = 0;
+                return;
+        }
         if (buffer_is_host_empty(&src->buffer, step)) {
              prec *host_ptr = buffer_get_host_ptr(&src->buffer, step);
              mpi_io_idx_read(&src->io, host_ptr, src->filename);

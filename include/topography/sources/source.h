@@ -52,6 +52,7 @@ typedef struct {
         int use;
         char filename[STR_LEN*2];
         int ngrids;
+        size_t steps;
 
 } source_t;
 
