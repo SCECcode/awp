@@ -122,6 +122,15 @@ source_t sources_get_source(enum grid_types grid_type)
                 case YZ:
                         return Myz;
                         break;
+                case SX:
+                        fprintf(stderr, "No source can exist on grid SX\n");
+                        break;
+                case SY:
+                        fprintf(stderr, "No source can exist on grid SY\n");
+                        break;
+                case SZ:
+                        fprintf(stderr, "No source can exist on grid SZ\n");
+                        break;
                 case X:
                         fprintf(stderr, "No source can exist on grid X\n");
                         break;
