@@ -34,6 +34,10 @@
 
 #define VERBOSE 1
 
+// Uncomment this line to allow for gdb to attach to the mpi process with 
+// rank = 0 
+// #define GDB_ATTACH
+
 int main(int argc,char **argv)
 {
 //  variable definition begins
@@ -316,6 +320,16 @@ int main(int argc,char **argv)
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&size_tot);
+
+#ifdef GDB_ATTACH
+    if ( rank == 0) {
+        volatile int i = 0;
+        printf("Process ID %d is ready for attach\n", getpid());
+        fflush(stdout);
+        while (0 == i)
+            sleep(5);
+    }
+#endif
 
     time_init = gethrtime();
     if (rank == 0) fprintf(stdout, "Initializing...\n");
