@@ -13,6 +13,7 @@
 #include <topography/topography.h>
 #include <topography/readers/serial_reader.h>
 #include <topography/topography.cuh>
+#include <test/test.h>
 
 topo_t topo_init(const int USETOPO, 
                  const char *INTOPO, 
@@ -207,25 +208,16 @@ void topo_d_free(topo_t *T)
         CUCHK(cudaFree(T->dcrjz));
 }
 
-void topo_init_metrics(topo_t *T)
-{
-        if (!T->use) return;
-
-        int size[3] = {T->nx, T->ny, T->nz};
-        T->metrics_f = metrics_init_f(size, T->gridspacing);
-        T->metrics_g = metrics_init_g(size, T->gridspacing);
-}
-
 void topo_init_geometry(topo_t *T)
 {
         int err = 0;
         int alloc = 0;
 
         err |= topo_read_serial(T->topography_file, T->rank, T->px, T->py,
-                                T->coord, T->nx, T->ny, alloc, &T->metrics_f.f);
+                                T->coord, T->nx, T->ny, alloc, &T->metrics_f_init.f);
         geom_no_grid_stretching(&T->metrics_g);
-        geom_custom(&T->metrics_f, T->topography_grid, T->px, T->py,
-                    T->metrics_f.f);
+        geom_custom(&T->metrics_f_init, T->topography_grid, T->px, T->py,
+                    T->metrics_f_init.f);
 
         if (err > 0) {
                 printf("%s \n", error_message(err));
@@ -234,11 +226,24 @@ void topo_init_geometry(topo_t *T)
         }
 }
 
+void topo_init_metrics(topo_t *T)
+{
+        if (!T->use) return;
+        int size[3] = {T->nx, T->ny, T->nz};
+        T->metrics_f_init = metrics_init_f(size, T->gridspacing, metrics_padding);
+        T->metrics_f = metrics_init_f(size, T->gridspacing, ngsl);
+        T->metrics_g = metrics_init_g(size, T->gridspacing);
+}
+
 void topo_build(topo_t *T)
 {
         if (!T->use) return;
 
-        metrics_build_f(&T->metrics_f);
+        metrics_build_f(&T->metrics_f_init);
+        metrics_shift_f(&T->metrics_f, &T->metrics_f_init);
+        metrics_d_copy_f(&T->metrics_f);
+        metrics_free_f(&T->metrics_f_init);
+
         metrics_build_g(&T->metrics_g);
 
         #if TOPO_USE_CONST_MATERIAL

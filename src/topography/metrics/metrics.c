@@ -8,23 +8,27 @@
 #include <grid/shift.h>
 #include <topography/metrics/metrics.h>
 #include <topography/metrics/kernel.h>
+#include <topography/metrics/shift.h>
 #include <test/test.h>
 #include "interpolation/interpolation.h"
 
-f_grid_t metrics_init_f(const int *size, const _prec gridspacing)
-{
-        f_grid_t out = {
-            .size = {size[0], size[1], 1},
-            .mem = {size[0] + 4 + 2*ngsl, size[1] + 4 + 2*ngsl + 2 * align, 1},
-            .bounds_x = {-ngsl, size[0] + ngsl},
-            .bounds_y = {-ngsl, size[1] + ngsl},
-            .bounds_stress_x = {-ngsl / 2, size[0] + ngsl / 2},
-            .bounds_stress_y = {-ngsl / 2, size[1] + ngsl / 2},
-            .offset = {2 + ngsl, 2 + ngsl + align, 0},
-            .hi = 1.0/gridspacing
-        };
+
+// This parameter pads the compute region. Its needed for the computation of
+// derivative and interpolation stencils. Do not change its value.
+
+f_grid_t metrics_init_f(const int *size, const _prec gridspacing,
+                            const int pad) {
+        f_grid_t out = {.size = {size[0], size[1], 1},
+                        .mem = {size[0] + 4 + 2 * pad,
+                                size[1] + 4 + 2 * pad + 2 * align, 1},
+                        .bounds_x = {-pad, size[0] + pad},
+                        .bounds_y = {-pad, size[1] + pad},
+                        .bounds_stress_x = {-pad / 2, size[0] + pad / 2},
+                        .bounds_stress_y = {-pad / 2, size[1] + pad / 2},
+                        .offset = {2 + pad, 2 + pad + align, 0},
+                        .hi = 1.0 / gridspacing};
         out.line = out.mem[2];
-        out.slice = out.mem[1]*out.mem[2];
+        out.slice = out.mem[1] * out.mem[2];
 
         metrics_h_malloc_f(&out);
         metrics_d_malloc_f(&out);
@@ -166,6 +170,24 @@ void metrics_differentiate_f(f_grid_t *f)
                              f->size[2]);
         metrics_f_diff_2_1_111(f->f2_c, f->f_2, f->hi, f->size[0], f->size[1],
                              f->size[2]);
+}
+
+void metrics_shift_f(f_grid_t *fout, const f_grid_t *fin)
+{
+        int nx = fout->size[0];
+        int ny = fout->size[1];
+        metrics_shift_f_apply(fout->f, fin->f, nx, ny);
+        metrics_shift_f_apply(fout->f_1, fin->f_1, nx, ny);
+        metrics_shift_f_apply(fout->f_2, fin->f_2, nx, ny);
+        metrics_shift_f_apply(fout->f_c, fin->f_c, nx, ny);
+
+        metrics_shift_f_apply(fout->f1_1, fin->f1_1, nx, ny);
+        metrics_shift_f_apply(fout->f1_2, fin->f1_2, nx, ny);
+        metrics_shift_f_apply(fout->f1_c, fin->f1_c, nx, ny);
+
+        metrics_shift_f_apply(fout->f2_1, fin->f2_1, nx, ny);
+        metrics_shift_f_apply(fout->f2_2, fin->f2_2, nx, ny);
+        metrics_shift_f_apply(fout->f2_c, fin->f2_c, nx, ny);
 }
 
 int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,

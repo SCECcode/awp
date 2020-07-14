@@ -29,11 +29,11 @@ typedef float prec;
 #endif
 
 #ifndef ngsl
-#define ngsl 8
+#define ngsl 4
 #endif
 
 #ifndef ngsl2
-#define ngsl2 16
+#define ngsl2 8
 #endif
 
 #ifndef align

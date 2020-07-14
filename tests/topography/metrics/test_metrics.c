@@ -77,7 +77,7 @@ f_grid_t test_f_init(test_t *test)
 {
         int size[3] = {32, 16, 1};
         _prec gridspacing = 1.0;
-        f_grid_t out = metrics_init_f(size, gridspacing);
+        f_grid_t out = metrics_init_f(size, gridspacing, 8);
         assert(out.size[0] == size[0]);
         assert(out.size[1] == size[1]);
         assert(out.size[2] == size[2]);

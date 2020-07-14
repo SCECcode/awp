@@ -73,11 +73,11 @@ void topo_write_geometry_vtk(topo_t *T, const int mode)
         _prec *y = malloc(T->topography_grid.num_bytes);
         _prec *z = malloc(T->topography_grid.num_bytes);
 
-        grid_fill3_x(x, T->x1, T->stress_grid);
-        grid_fill3_y(y, T->y1, T->stress_grid);
-        grid_fill3_z(z, T->z1, T->stress_grid);
+        grid_fill3_x(x, T->x1, T->velocity_grid);
+        grid_fill3_y(y, T->y1, T->velocity_grid);
+        grid_fill3_z(z, T->z1, T->velocity_grid);
 
-        geom_mapping_z(z, T->stress_grid, grid_node(), &T->metrics_f,
+        geom_mapping_z(z, T->velocity_grid, grid_node(), &T->metrics_f,
                        &T->metrics_g);
 
         char vtk_file[256];

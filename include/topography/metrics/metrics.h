@@ -22,12 +22,17 @@
 #include <awp/definitions.h>
 #include <grid/grid_3d.h>
 
+// This parameter pads the compute region. Its needed for the computation of
+// derivative and interpolation stencils. Do not change its value.
+
 #define pmetrics_f_index(g,i,j) ((g)->offset[1] + (g)->bounds_y[0] + j) + \
                                ((g)->offset[0] + (g)->bounds_x[0] + i) * \
                                (g)->slice
 #define metrics_f_index(g,i,j) ((g).offset[1] + (g).bounds_y[0] + j) + \
                                ((g).offset[0] + (g).bounds_x[0] + i) * \
                                (g).slice
+
+static const int metrics_padding = 8;
 
 /*
  * Topography function `f(x1, x2)`. 
@@ -128,7 +133,8 @@ typedef struct
 
 } g_grid_t;
 
-f_grid_t metrics_init_f(const int *size, const _prec gridspacing);
+f_grid_t metrics_init_f(const int *size, const _prec gridspacing,
+                            const int pad);
 void metrics_build_f(f_grid_t *f);
 void metrics_free_f(f_grid_t *f);
 void metrics_print_info_f(const f_grid_t *f);
@@ -142,6 +148,7 @@ void metrics_h_free_f(f_grid_t *f);
 void metrics_d_free_f(f_grid_t *f);
 void metrics_interpolate_f(f_grid_t *f);
 void metrics_differentiate_f(f_grid_t *f);
+void metrics_shift_f(f_grid_t *fout, const f_grid_t *fin);
 int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,
                                 const prec *x, const prec *y,
                                 const grid3_t grid, const prec *qx,

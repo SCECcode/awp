@@ -68,7 +68,7 @@ void init_geometry(prec **f, const int *gsize, const int3_t coord,
                    const int rank, int px, int py) {
         _prec gridspacing = 0.1; 
 
-        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing);
+        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing, 8);
         g_grid_t metrics_g = metrics_init_g(gsize, gridspacing);
 
         int3_t shift = grid_u3();
@@ -137,17 +137,16 @@ void init_geometry(prec **f, const int *gsize, const int3_t coord,
 void write_geometry(const prec *f, const int *gsize, int rank) {
         if (rank != 0)
                 return;
-        int padding = ngsl;
         int nx = gsize[0];
         int ny = gsize[1];
-        int mx = nx + 2 * ngsl;
-        int my = ny + 2 * ngsl;
+        int mx = nx + 2 * metrics_padding;
+        int my = ny + 2 * metrics_padding;
         FILE *fh = fopen(geometry_file, "wb");
         float *data;
         data = malloc(sizeof data * mx * my);
         fwrite(&nx, sizeof nx, 1, fh);
         fwrite(&ny, sizeof ny, 1, fh);
-        fwrite(&padding, sizeof padding, 1, fh);
+        fwrite(&metrics_padding, sizeof metrics_padding, 1, fh);
         int slice = 4 + my + 2 * align;
 
         for (int i = 0; i < mx; ++i) {
@@ -172,23 +171,30 @@ int test_read_grid(int rank, const _prec *local_f, const int *local_size, const
         int lnx, lny;
         lnx = local_size[0];
         lny = local_size[1];
-        int lmy = 4 + lny + 2 * ngsl + 2 * align;
+        int lmx = 4 + lnx + 2 * metrics_padding;
+        int lmy = 4 + lny + 2 * metrics_padding + 2 * align;
         prec *read_f;
         int icoord[2] = {coord.x, coord.y};
         int alloc = 1;
 
+        read_f = malloc(sizeof read_f * lmx * lmy); 
+
+        for (int i = 0; i < lmx * lmy; ++i)
+                read_f[i] = 0.0;
+
         err |= topo_read_serial(geometry_file, rank, px, py, icoord, lnx, lny,
                                 alloc, &read_f);
 
+        MPI_Barrier(MPI_COMM_WORLD);
+
         // Compare data read from file with locally computed data
         float sum = 0;
-        for (int i = 0; i < (lnx + 2 * ngsl); ++i) {
-        for (int j = 0; j < (lny + 2 * ngsl); ++j) {
+        for (int i = 0; i < (lnx + 2 * metrics_padding); ++i) {
+        for (int j = 0; j < (lny + 2 * metrics_padding); ++j) {
                 size_t local_pos = 2 + align + j + (i + 2) * lmy;
                 sum += fabs(read_f[local_pos] - local_f[local_pos]); 
         }
         }
-
 
         free(read_f);
         remove(geometry_file);

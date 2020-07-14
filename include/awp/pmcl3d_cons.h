@@ -19,8 +19,8 @@
 // In the future, it should be possible to keep this number at four, but modify
 // the vertical velocity exchange so that 6 points is exchanged instead of 4.
 // No modifications necessary to the other velocity components. 
-#define ngsl 8     /* number of ghost cells x loop */
-#define ngsl2 16  /* ngsl * 2 */
+#define ngsl 4     /* number of ghost cells x loop */
+#define ngsl2 8  /* ngsl * 2 */
 
 #define Both  0
 #define Left  1

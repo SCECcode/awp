@@ -248,6 +248,7 @@ typedef struct
 
         // Topography function
         f_grid_t metrics_f;
+        f_grid_t metrics_f_init;
         // Grid stretching function
         g_grid_t metrics_g;
         grid3_t topography_grid;
