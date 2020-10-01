@@ -31,8 +31,9 @@ source_t source_init(const char *file_end,
 {
         source_t src;
 
+        const int is_source = 1;
         source_init_common(&src, file_end, grid_type, input, grids, ngrids, f,
-                           rank, comm);
+                           rank, comm, is_source);
 
         if (!src.use) {
                 return src;
@@ -136,7 +137,7 @@ void source_init_common(source_t *src, const char *filename,
                         const grids_t *grids, 
                         const int ngrids,
                         const f_grid_t *f, 
-                        const int rank, const MPI_Comm comm)
+                        const int rank, const MPI_Comm comm, const int is_source)
 {
         sprintf(src->filename, "%s_%s", input->file, filename);
 
@@ -199,15 +200,18 @@ void source_init_common(source_t *src, const char *filename,
                 free(dm_offset_y);
                 free(dm_offset_z);
                 free(indices);
+
+                for (int j = 0; j < ngrids; ++j) {
+                        grid3_t grid = grids_select(grid_type, &grids[j]);
+                        AWPCHK(dist_indices(&src->indices, &src->length, x,
+                                            y, input->length, grid, grid_number, j, is_source));
+                }
                 free(grid_number);
         }
 
 
-        grid3_t grid = grids_select(grid_type, &grids[0]);
 
 
-        AWPCHK(dist_indices(&src->indices, &src->length, x,
-                            y, input->length, grid));
 
 
 
@@ -269,7 +273,7 @@ void source_init_common(source_t *src, const char *filename,
         _prec lower = 0.0;
         _prec block_height = 0.0;
         for (int j = 0; j < ngrids; ++j) {
-                grid = grids_select(grid_type, &grids[j]);
+                grid3_t grid = grids_select(grid_type, &grids[j]);
         
                 grid3_t metric_grid = grid_init_metric_grid( grid.inner_size,
                                 grid_node(), grid.coordinate, grid.boundary1,
@@ -371,7 +375,7 @@ void source_init_common(source_t *src, const char *filename,
                 if (src->lengths[j] == 0) continue;
 
                 // Init grid that covers interior and halo regions
-                grid3_t full_grid = grid_init_metric_grid(
+                grid3_t full_grid = grid_init_full_grid(
                             grid.inner_size, grid.shift, grid.coordinate,
                             grid.boundary1, grid.boundary2, grid.gridspacing);
                 grid_data_t xyz;
@@ -443,6 +447,7 @@ void source_init_common(source_t *src, const char *filename,
                         grid_fill1(z1, z_grid);
 
 
+                if (grid_type == XX) {
                 printf("rank = %d, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
                                 rank, grid.shift.x, grid.shift.y, grid.shift.z,
                                 j,
@@ -459,7 +464,15 @@ void source_init_common(source_t *src, const char *filename,
                         src->interpolation[j].ix[k],
                         src->interpolation[j].iy[k],
                         src->interpolation[j].iz[k]);
+                printf("index-x: %d \n",
+                        src->interpolation[j].ix[0]);
+                print("weights-x: %f %f %f %f \n", 
+                        src->interpolation[j].lx[0],
+                        src->interpolation[j].lx[1],
+                        src->interpolation[j].lx[2],
+                        src->interpolation[j].lx[3]);
 		}
+                }
 		fflush(stdout);
 //--------------------------------------------------------------------------------
                                         

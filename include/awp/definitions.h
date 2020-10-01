@@ -47,6 +47,7 @@ typedef float prec;
 #define STR_LEN 2048
 
 
+
 typedef struct
 {
         _prec x, y, z;

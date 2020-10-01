@@ -22,6 +22,7 @@
 // Shift due to inconsistency with the user coordinate (0, 0, 0) defined at a
 // material grid point, but (0, 0, 0) defined at the shear stress xz in the
 // internal coordinate system (see shift.c)
+//#define SOURCE_OFFSET_X -0.5
 #define SOURCE_OFFSET_X -0.5
 
 typedef struct {
@@ -80,7 +81,8 @@ void source_init_common(source_t *src, const char *filename,
                         const int ngrids,
                         const f_grid_t *f,
                         const int rank, 
-                        const MPI_Comm comm);
+                        const MPI_Comm comm,
+                        const int is_source);
 MPI_Comm source_communicator(source_t *src, const int rank,
                              const MPI_Comm comm);
 void source_read(source_t *src, size_t step);

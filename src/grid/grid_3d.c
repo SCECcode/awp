@@ -101,6 +101,15 @@ grid3_t grid_init_metric_grid(const int3_t size, const int3_t shift,
                          gridspacing);
 }
 
+grid3_t grid_init_full_grid(const int3_t size, const int3_t shift,
+                         const int3_t coordinate, const int3_t boundary1,
+                         const int3_t boundary2,
+                         const _prec gridspacing)
+{
+        return grid_init(size, shift, coordinate, boundary1, boundary2, ngsl + 2,
+                         gridspacing);
+}
+
 //FIXME: remove this function. It should be replaced by "grid_init"
 fcn_grid_t fcn_init_grid(const int3_t size, const int3_t shift,
                          const int3_t coordinate, const int padding,
@@ -305,6 +314,29 @@ int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid)
                 return ERR_OUT_OF_BOUNDS_LOWER;
         }
         if ( q - (x[grid.size - 1] + h / 2) >= 0) {
+                return ERR_OUT_OF_BOUNDS_UPPER;
+        }
+        return SUCCESS;
+}
+
+int grid_in_bounds_part_x(const _prec *x, const _prec q, const grid1_t grid)
+{
+        _prec h = grid.gridspacing;
+        if ( q - (x[0] - h / 2 - 2 * h) < 0 ) {
+                return ERR_OUT_OF_BOUNDS_LOWER;
+        }
+        if ( q - (x[grid.size - 1] + h / 2 + 2 * h) >= 0) {
+                return ERR_OUT_OF_BOUNDS_UPPER;
+        }
+        return SUCCESS;
+}
+int grid_in_bounds_part_y(const _prec *x, const _prec q, const grid1_t grid)
+{
+        _prec h = grid.gridspacing;
+        if ( q - (x[0] - h / 2 - 1.5 * h) < 0 ) {
+                return ERR_OUT_OF_BOUNDS_LOWER;
+        }
+        if ( q - (x[grid.size - 1] + h / 2 + 1.5 * h) >= 0) {
                 return ERR_OUT_OF_BOUNDS_UPPER;
         }
         return SUCCESS;

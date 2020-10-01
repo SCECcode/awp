@@ -76,6 +76,9 @@ int test_indices(int rank, int size, enum eshift shifttype)
         prec *qx = malloc(sizeof qx * n);
         prec *qy = malloc(sizeof qy * n);
         prec *qz = malloc(sizeof qz * n);
+        int  *grid_numbers = malloc(sizeof grid_numbers * n);
+        for (int i = 0; i < n; ++i)
+                grid_numbers[i] = 0.0f;
 
         int3_t shift = grid_shift(shifttype);
         
@@ -152,7 +155,8 @@ int test_indices(int rank, int size, enum eshift shifttype)
         size_t nidx = 0;
         int *indices;
 
-        dist_indices(&indices, &nidx, qx,  qy, n, grid);
+        const int is_source = 0;
+        dist_indices(&indices, &nidx, qx,  qy, n, grid, grid_numbers, 0, is_source);
 
         if (coord.x == 0 && coord.y == 0) {
                 int ans[1] = {0};

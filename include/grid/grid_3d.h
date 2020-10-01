@@ -131,6 +131,11 @@ grid3_t grid_init_metric_grid(const int3_t size, const int3_t shift,
                          const int3_t boundary2,
                          const _prec gridspacing);
 
+grid3_t grid_init_full_grid(const int3_t size, const int3_t shift,
+                         const int3_t coordinate, const int3_t boundary1,
+                         const int3_t boundary2,
+                         const _prec gridspacing);
+
 /* Initialize grid
  * 
  * Input arguments:
@@ -206,6 +211,8 @@ int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid);
 
 int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid);
 
+int grid_in_bounds_part_x(const _prec *x, const _prec q, const grid1_t grid);
+int grid_in_bounds_part_y(const _prec *x, const _prec q, const grid1_t grid);
 
 /*
  * Fill the array `out` with the grid point values in the x-direction of a grid

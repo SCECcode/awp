@@ -15,10 +15,7 @@
 #endif
 #define align 32
 #define loop  1 
-// Number of ghost cells is increased from 4 to 8 for topography kernels.
-// In the future, it should be possible to keep this number at four, but modify
-// the vertical velocity exchange so that 6 points is exchanged instead of 4.
-// No modifications necessary to the other velocity components. 
+// Do not change the number of ghost cells.
 #define ngsl 4     /* number of ghost cells x loop */
 #define ngsl2 8  /* ngsl * 2 */
 

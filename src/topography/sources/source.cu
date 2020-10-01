@@ -8,6 +8,12 @@
 #include <interpolation/interpolation.cuh>
 #include <test/test.h>
 
+
+// Enable or disable atomic operations. If the sources are overlapping, disabling atomics causes
+// parallel synchronization issues. Only disable this macro if you know that the sources are
+// non-overlapping.
+#define USE_ATOMICS 1
+
 void cusource_add_cartesian_H(const cu_interp_t *I, prec *out, const prec *in,
                               const prec h, const prec dt)
 {
@@ -40,9 +46,16 @@ __global__ void cusource_add_cartesian(prec *out, const prec *in,
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
-                out[pos] += - dth * lx[q * num_basis + i] *
+                prec value = - dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
                             in[lidx[q]];
+#if USE_ATOMICS
+                atomicAdd(&out[pos], value);
+#else 
+                out[pos] = value;
+#endif
+
+
         }
         }
         }
@@ -90,9 +103,14 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                    1.0 / (_f(i + ix[q], j + iy[q]) *
                           _dg(iz[q] + k));
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
-                out[pos] += - dth * lx[q * num_basis + i] *
+                prec value = - dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
                             in[lidx[q]] * Ji;
+#if USE_ATOMICS
+                atomicAdd(&out[pos], lx[q * num_basis + i]);
+#else 
+                out[pos] = value;
+#endif
         }
         }
         }
@@ -149,8 +167,13 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                     - quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) *
                                    _rho(i + ix[q], j + iy[q], iz[q] + k));
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
-                out[pos] += -dth * lx[q * num_basis + i] *
+                prec value = -dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] * in[lidx[q]] * Ji;
+#if USE_ATOMICS
+                atomicAdd(&out[pos], value);
+#else 
+                out[pos] = value;
+#endif
         }
         }
         }
