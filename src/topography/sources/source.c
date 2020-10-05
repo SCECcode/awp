@@ -156,6 +156,10 @@ void source_init_common(source_t *src, const char *filename,
                 source_find_grid_number(input, grids, grid_number, indices,
                                         input->length, ngrids);
 
+                for (size_t i = 0; i < input->length; ++i) {
+                        printf("rank = %d, i = %ld, grid_number = %d \n", rank, i, grid_number[i]);
+                }
+
                 // Determine offsets for the DM
                 _prec *dm_offset_x = malloc(sizeof dm_offset_x * ngrids);
                 _prec *dm_offset_y = malloc(sizeof dm_offset_y * ngrids);
@@ -238,6 +242,10 @@ void source_init_common(source_t *src, const char *filename,
                 for (int j = 0; j < ngrids; ++j) {
                         if (grid_number[i] == j) src->lengths[j] += 1;
                 }
+        }
+
+        for (size_t i = 0; i < src->length; ++i) {
+                printf("local, rank = %d, i = %ld, grid_number = %d \n", rank, i, grid_number[i]);
         }
 
         // Init arrays that contains local coordinates
