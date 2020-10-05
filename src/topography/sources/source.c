@@ -93,6 +93,8 @@ void source_find_grid_number(const input_t *input, const
                 upper  = lower;
                 lower  = lower - z1[z_grid.end];
 
+                printf("upper = %f lower = %f, grid = [%f %f %f] \n", upper, lower, z1[0], z1[1], z1[2]);
+
                 for (int j = 0; j < length; ++j) {
                         _prec z = input->z[indices[j]];
                         // Take into account that topography can yield positive
@@ -123,7 +125,7 @@ void source_find_grid_number(const input_t *input, const
                 if (grid_number[j] == -1) {
                         fprintf(stderr, 
                                 "Failed to assign source/receiver id=%d "\
-                                " to a grid.\n", j);
+                                " to a grid, z=%f.\n", j, input->z[indices[j]]);
                         exit(1);
                 }
 
@@ -153,11 +155,13 @@ void source_init_common(source_t *src, const char *filename,
                         indices[i] = i;
                 }
 
+                printf("before assignment!, ngrids = %d \n", ngrids);
                 source_find_grid_number(input, grids, grid_number, indices,
                                         input->length, ngrids);
 
+                printf("length = %ld \n", input->length);
                 for (size_t i = 0; i < input->length; ++i) {
-                        printf("rank = %d, i = %ld, grid_number = %d \n", rank, i, grid_number[i]);
+                        printf("global, rank = %d, i = %ld, grid_number = %d \n", rank, i, grid_number[i]);
                 }
 
                 // Determine offsets for the DM
@@ -205,11 +209,24 @@ void source_init_common(source_t *src, const char *filename,
                 free(dm_offset_z);
                 free(indices);
 
-                for (int j = 0; j < ngrids; ++j) {
+                src->length = 0;
+                for (int j = 0; j < ngrids; ++j)  {
+                        size_t num_sources_in_block = 0;
                         grid3_t grid = grids_select(grid_type, &grids[j]);
-                        AWPCHK(dist_indices(&src->indices, &src->length, x,
-                                            y, input->length, grid, grid_number, j, is_source));
+                        AWPCHK(dist_indices(&src->indices, &num_sources_in_block, x, y,
+                                            input->length, grid, grid_number, j, 
+                                            is_source, DIST_COUNT));
+                                            src->length += num_sources_in_block;
                 }
+
+                src->indices = malloc(sizeof(src->indices) * src->length);
+                for (int j = 0; j < ngrids; ++j)  {
+                        grid3_t grid = grids_select(grid_type, &grids[j]);
+                        AWPCHK(dist_indices(&src->indices, &src->length, x, y,
+                                    input->length, grid, grid_number, j, 
+                                    is_source, DIST_INSERT_INDICES));
+                }
+                printf("rank = %d, source/receiver count = %ld \n", rank, src->length);
                 free(grid_number);
         }
 
