@@ -93,8 +93,6 @@ void source_find_grid_number(const input_t *input, const
                 upper  = lower;
                 lower  = lower - z1[z_grid.end];
 
-                printf("upper = %f lower = %f, grid = [%f %f %f] \n", upper, lower, z1[0], z1[1], z1[2]);
-
                 for (int j = 0; j < length; ++j) {
                         _prec z = input->z[indices[j]];
                         // Take into account that topography can yield positive
@@ -155,14 +153,8 @@ void source_init_common(source_t *src, const char *filename,
                         indices[i] = i;
                 }
 
-                printf("before assignment!, ngrids = %d \n", ngrids);
                 source_find_grid_number(input, grids, grid_number, indices,
                                         input->length, ngrids);
-
-                printf("length = %ld \n", input->length);
-                for (size_t i = 0; i < input->length; ++i) {
-                        printf("global, rank = %d, i = %ld, grid_number = %d \n", rank, i, grid_number[i]);
-                }
 
                 // Determine offsets for the DM
                 _prec *dm_offset_x = malloc(sizeof dm_offset_x * ngrids);
@@ -226,14 +218,8 @@ void source_init_common(source_t *src, const char *filename,
                                     input->length, grid, grid_number, j, 
                                     is_source, DIST_INSERT_INDICES));
                 }
-                printf("rank = %d, source/receiver count = %ld \n", rank, src->length);
                 free(grid_number);
         }
-
-
-
-
-
 
 
         src->ngrids = ngrids;
@@ -251,19 +237,18 @@ void source_init_common(source_t *src, const char *filename,
                 src->lengths[j] = 0;
         }
 
+        // identify grid number for each local source
         int *grid_number = malloc(sizeof grid_number * src->length);
         source_find_grid_number(input, grids, grid_number, src->indices,
                                 src->length, ngrids);
 
+        // count number of local sources for each grid
         for (size_t i = 0; i < src->length; ++i) {
                 for (int j = 0; j < ngrids; ++j) {
                         if (grid_number[i] == j) src->lengths[j] += 1;
                 }
         }
 
-        for (size_t i = 0; i < src->length; ++i) {
-                printf("local, rank = %d, i = %ld, grid_number = %d \n", rank, i, grid_number[i]);
-        }
 
         // Init arrays that contains local coordinates
         for (int j = 0; j < ngrids; ++j) {
@@ -278,6 +263,7 @@ void source_init_common(source_t *src, const char *filename,
                 src->type[j] = malloc(sizeof src->type *  src->lengths[j]);
         }
 
+        // copy global source data to local source data
         for (int j = 0; j < ngrids; ++j) {
                 int local_idx = 0;
                 for (size_t i = 0; i < src->length; ++i) {
@@ -454,8 +440,8 @@ void source_init_common(source_t *src, const char *filename,
 		}
 		
 
-//------------------------------------------------------------------------------
-//Added by Te-Yang for printing purpose
+#ifdef DEBUG_SOURCE
+{
                 grid3_t vel_grid = grid_init_stress_grid(
                             grid.inner_size, grid.shift, grid.coordinate,
                             grid.boundary1, grid.boundary2, grid.gridspacing);
@@ -499,6 +485,8 @@ void source_init_common(source_t *src, const char *filename,
 		}
                 }
 		fflush(stdout);
+}
+#endif
 //--------------------------------------------------------------------------------
                                         
                 grid_data_free(&xyz);
