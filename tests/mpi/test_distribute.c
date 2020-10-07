@@ -156,7 +156,9 @@ int test_indices(int rank, int size, enum eshift shifttype)
         int *indices;
 
         const int is_source = 0;
-        dist_indices(&indices, &nidx, qx,  qy, n, grid, grid_numbers, 0, is_source);
+        indices = malloc(sizeof(indices) * nidx);
+        dist_indices(&indices, &nidx, qx,  qy, n, grid, grid_numbers, 0, is_source, DIST_COUNT);
+        dist_indices(&indices, &nidx, qx,  qy, n, grid, grid_numbers, 0, is_source, DIST_INSERT_INDICES);
 
         if (coord.x == 0 && coord.y == 0) {
                 int ans[1] = {0};
