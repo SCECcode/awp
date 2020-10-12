@@ -107,7 +107,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
                             in[lidx[q]] * Ji;
 #if USE_ATOMICS
-                atomicAdd(&out[pos], lx[q * num_basis + i]);
+                atomicAdd(&out[pos], value);
 #else 
                 out[pos] = value;
 #endif
