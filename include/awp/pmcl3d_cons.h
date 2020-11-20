@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H
 #define BLOCK_SIZE_X 2
 #define BLOCK_SIZE_Y 2
-#define BLOCK_SIZE_Z 4
+#define BLOCK_SIZE_Z 32
 #endif
 // Set floating-point precision. Make sure to configure both `_prec` and
 // `_mpi_prec`.
