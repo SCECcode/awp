@@ -1317,7 +1317,7 @@ void inidrpr_hoekbrown_light(int nxt, int nyt, int nzt, int nve, int *coords,
         }
 
         ypos = coords[1] * nyt + j - 2 - ngsl;
-        fltdist = fabsf((_prec) ypos + 0.5 - (_prec) fltpos) * dh;
+        fltdist = fabs((_prec) ypos + 0.5 - (_prec) fltpos) * dh;
         if (fltdist < 225.) {
           GSI_d = GSI_core;
         }

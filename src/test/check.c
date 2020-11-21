@@ -29,7 +29,7 @@ int chk_infl(const size_t *a, const size_t *b, const size_t n)
 {
         int err = 0;
         for (size_t i = 0; i < n; ++i) {
-                int diff = abs(a[i] - b[i]);
+                int diff = abs((int)a[i] - (int)b[i]);
                 err = diff > err ? diff : err;
         }
         return err;
