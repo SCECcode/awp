@@ -96,6 +96,36 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
 
         prec dth = dt / (h * h * h);
 
+        // Quadrature weights near the top boundary in the z-direction. First weight is on the
+        // boundary
+        // hweights: weights at the nodal grid points
+        const prec hweights[4] = {0.34939236111111110494320541874913,
+                                  1.24348958333333325931846502498956,
+                                  0.88151041666666662965923251249478,
+                                  1.02560763888888883954564334999304};
+        // hhatweights: weights at the cell-centered grid points
+        const prec hhatweights[4] = {0.12638888888888888395456433499930,
+                                     0.84635416666666662965923251249478,
+                                     1.03298611111111116045435665000696,
+                                     0.99427083333333332593184650249896};
+
+        int nz = grid.size.z;
+        // Print statements used for debugging
+        //printf("nz = %d %d offset = %d | ", grid.size.z, iz[q], nz - iz[q] - 1);
+        //for (int k = 0; k < num_basis; ++k) 
+        //        printf("%d ", iz[q] + k);
+        //printf("| ");
+        //for (int k = 0; k < num_basis; ++k) 
+        //        printf("%f ", lz[q * num_basis + k]);
+        //printf("| ");
+        //if (zhat == 0) {
+        //for (int k = 0; k < num_basis; ++k) 
+        //        printf("%d ", nz - (iz[q] + 2 + k));
+        //} else {
+        //for (int k = 0; k < num_basis; ++k) 
+        //        printf("%d ", nz - (iz[q] + 1 + k));
+        //}
+        //printf("\n");
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
@@ -103,9 +133,16 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                    1.0 / (_f(i + ix[q], j + iy[q]) *
                           _dg(iz[q] + k));
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
+                prec w = 1.0f;
+                int offset_z = nz - (iz[q] + k + 2);
+                int offset_zhat = nz - (iz[q] + k + 1);
+                if (zhat == 0 &&  offset_z  < 4 && offset_z >= 0)
+                        w = hweights[offset_z];
+                if (zhat == 1 &&  offset_zhat < 4 && offset_zhat >= 0)
+                        w = hhatweights[offset_zhat];
                 prec value = - dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
-                            in[lidx[q]] * Ji;
+                            in[lidx[q]] * Ji * w;
 #if USE_ATOMICS
                 atomicAdd(&out[pos], value);
 #else 
