@@ -89,9 +89,11 @@ void source_read(source_t *src, size_t step);
 void source_add_cartesian(prec *out, source_t *src, const size_t step,
                           const prec h, const prec dt, const int grid_num);
 
+// zhat: indicates if the source should be applied on the cell-centered grid in
+// the z-direction or not
 void source_add_curvilinear(prec *out, source_t *src, const size_t step,
                             const prec h, const prec dt, const prec *f,
-                            const int ny, const prec *dg, const int grid_num);
+                            const int ny, const prec *dg, const int grid_num, const int zhat);
 
 void source_add_force(prec *out, const prec *d1, source_t *src,
                       const size_t step, const prec h, const prec dt,

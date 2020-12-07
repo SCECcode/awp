@@ -86,18 +86,19 @@ void sources_add_curvilinear(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,
         if (!use) return;
 
         int ny = f->size[1];
+        // last argument specifies if the grid is cell-centered in the z-direction
         source_add_curvilinear(d_xx, &Mxx, step, h, dt, f->d_f_c, ny, g->d_g3_c,
-                               grid_num);
+                               grid_num, 1);
         source_add_curvilinear(d_yy, &Myy, step, h, dt, f->d_f_c, ny, g->d_g3_c,
-                               grid_num);
+                               grid_num, 1);
         source_add_curvilinear(d_zz, &Mzz, step, h, dt, f->d_f_c, ny, g->d_g3_c,
-                               grid_num);
+                               grid_num, 1);
         source_add_curvilinear(d_xy, &Mxy, step, h, dt, f->d_f, ny, g->d_g3_c,
-                               grid_num);
+                               grid_num, 1);
         source_add_curvilinear(d_xz, &Mxz, step, h, dt, f->d_f_1, ny, g->d_g3,
-                               grid_num);
+                               grid_num, 0);
         source_add_curvilinear(d_yz, &Myz, step, h, dt, f->d_f_2, ny, g->d_g3,
-                               grid_num);
+                               grid_num, 0);
 }
 
 source_t sources_get_source(enum grid_types grid_type)

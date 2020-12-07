@@ -600,7 +600,7 @@ void source_add_cartesian(prec *out, source_t *src, const size_t step,
 void source_add_curvilinear(prec *out, source_t *src, const size_t step,
                             const prec h, const prec dt, const prec *f,
                             const int ny,
-                            const prec *dg, const int grid_num)
+                            const prec *dg, const int grid_num, const int zhat)
 {
         if (!src->use || !buffer_is_device_ready(&src->buffer, step) ||
             src->lengths[grid_num] == 0)
@@ -608,7 +608,7 @@ void source_add_curvilinear(prec *out, source_t *src, const size_t step,
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
         cusource_add_curvilinear_H(&src->interpolation[grid_num], out,
-                                   source_data, h, dt, f, ny, dg);
+                                   source_data, h, dt, f, ny, dg, zhat);
 }
 
 void source_add_force(prec *out, const prec *d1, source_t *src,

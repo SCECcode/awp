@@ -21,7 +21,7 @@ __global__ void cusource_add_cartesian(prec *out, const prec *in,
                                  const int num_query, const grid3_t grid);
 void cusource_add_curvilinear_H(const cu_interp_t *I, prec *out, const prec *in,
                                 const prec h, const prec dt, const prec *f,
-                                const int ny, const prec *dg);
+                                const int ny, const prec *dg, const int zhat);
 __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                                  const prec *lx, const prec *ly, const prec *lz,
                                  const int num_basis, const int *ix,
@@ -29,7 +29,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                                  const int *lidx,
                                  const prec h, const prec dt,
                                  const int num_query, const grid3_t grid, 
-                                 const prec *f, const int ny, const prec *dg);
+                                 const prec *f, const int ny, const prec *dg, const int zhat);
 void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
                           const prec *d1, const prec h, const prec dt,
                           const prec quad_weight,

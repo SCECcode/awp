@@ -63,7 +63,7 @@ __global__ void cusource_add_cartesian(prec *out, const prec *in,
 
 void cusource_add_curvilinear_H(const cu_interp_t *I, prec *out, const prec *in,
                                 const prec h, const prec dt, const prec *f,
-                                const int ny, const prec *dg) 
+                                const int ny, const prec *dg, const int zhat) 
 {
         dim3 block (INTERP_THREADS, 1, 1);
         dim3 grid((I->num_query + INTERP_THREADS - 1) / INTERP_THREADS,
@@ -71,7 +71,7 @@ void cusource_add_curvilinear_H(const cu_interp_t *I, prec *out, const prec *in,
 
         cusource_add_curvilinear<<<grid, block>>>(
             out, in, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix, I->d_iy,
-            I->d_iz, I->d_ridx, h, dt, I->num_query, I->grid, f, ny, dg);
+            I->d_iz, I->d_ridx, h, dt, I->num_query, I->grid, f, ny, dg, zhat);
         CUCHK(cudaGetLastError());
 }
 
@@ -82,7 +82,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                                  const int *lidx,
                                  const prec h, const prec dt,
                                  const int num_query, const grid3_t grid,
-                                 const prec *f, const int ny, const prec *dg)
+                                 const prec *f, const int ny, const prec *dg, const int zhat)
 {
         int q = threadIdx.x + blockDim.x * blockIdx.x;
         if (q >= num_query) {
