@@ -96,18 +96,14 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
 
         prec dth = dt / (h * h * h);
 
-        // Quadrature weights near the top boundary in the z-direction. First weight is on the
+        // Reciprocal quadrature weights near the top boundary in the z-direction. First weight is on the
         // boundary
         // hweights: weights at the nodal grid points
-        const prec hweights[4] = {0.34939236111111110494320541874913,
-                                  1.24348958333333325931846502498956,
-                                  0.88151041666666662965923251249478,
-                                  1.02560763888888883954564334999304};
+        const prec hweights[4] = {3.55599789310935, 0.6905974224013051,
+                                  1.4771520525102637, 0.914256470417062};
         // hhatweights: weights at the cell-centered grid points
-        const prec hhatweights[4] = {0.12638888888888888395456433499930,
-                                     0.84635416666666662965923251249478,
-                                     1.03298611111111116045435665000696,
-                                     0.99427083333333332593184650249896};
+        const prec hhatweights[4] = {2.9022824945274315, 2.28681149230364,
+                                     0.7658753535345706, 1.0959408329892313};
 
         int nz = grid.size.z;
         // Print statements used for debugging
