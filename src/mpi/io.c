@@ -58,22 +58,27 @@ mpi_io_idx_t mpi_io_idx_init(MPI_Comm comm, int rank, int *indices,
                              int *blocklen, size_t num_blocks, size_t num_writes)
 {
         mpi_io_idx_t out = {.comm = comm, .rank = rank};
-        int *offsets = malloc(sizeof(offsets) * num_blocks);
+        MPI_Aint *offsets = malloc(sizeof(offsets) * num_blocks);
+        int *offsets2 = malloc(sizeof(offsets2) * num_blocks);
         out.num_bytes = 0;
         out.num_elements = 0;
         out.offset = 0;
+        int size;
+        MPICHK2(MPI_Type_size(MPI_PREC, &size), rank);
         for (size_t i = 0; i < num_blocks; ++i)
         {
-                offsets[i] = indices[i] * num_writes;
+                offsets[i] = indices[i] * num_writes * size;
                 out.num_elements += blocklen[i];
         }
         out.num_writes = num_writes;
         out.current_write = 0;
         out.num_bytes = blocklen[0] * sizeof(prec);
-
-        MPICHK2(MPI_Type_indexed(num_blocks, blocklen, offsets, MPI_PREC,
-                                 &out.dtype),
-                rank);
+        
+        MPICHK2(MPI_Type_create_hindexed(num_blocks,
+                             blocklen,
+                             offsets,
+                             MPI_PREC, 
+                             &out.dtype), rank);
         MPI_Type_commit(&out.dtype);
         free(offsets);
         return out;
