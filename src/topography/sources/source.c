@@ -17,6 +17,7 @@
 #include <topography/grids.h>
 
 #define OVERLAP 7.0
+#define DEBUG_SOURCE
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
@@ -492,10 +493,10 @@ void source_init_common(source_t *src, const char *filename,
                         grid_fill1(y1, y_grid);
                         grid_fill1(z1, z_grid);
 
-                        if (grid_type == XX)
+                        if (grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == X || grid_type == Y || grid_type == Z)
                         {
-                                printf("rank = %d, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
-                                       rank, grid.shift.x, grid.shift.y, grid.shift.z,
+                                printf("rank = %d, grid_type = %d, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
+                                       rank, grid_type, grid.shift.x, grid.shift.y, grid.shift.z,
                                        j,
                                        x1[ngsl / 2], y1[ngsl / 2], z1[0],
                                        grid.gridspacing);
@@ -517,6 +518,17 @@ void source_init_common(source_t *src, const char *filename,
                                               src->interpolation[j].lx[1],
                                               src->interpolation[j].lx[2],
                                               src->interpolation[j].lx[3]);
+                                        print("weights-y: %f %f %f %f \n",
+                                              src->interpolation[j].ly[0],
+                                              src->interpolation[j].ly[1],
+                                              src->interpolation[j].ly[2],
+                                              src->interpolation[j].ly[3]);
+                                        print("weights-z: %f %f %f %f \n",
+                                              src->interpolation[j].lz[0],
+                                              src->interpolation[j].lz[1],
+                                              src->interpolation[j].lz[2],
+                                              src->interpolation[j].lz[3]);
+                                        printf("---------------------------------------\n\n");
                                 }
                         }
                         fflush(stdout);

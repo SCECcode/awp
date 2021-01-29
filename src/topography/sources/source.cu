@@ -122,6 +122,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
         //        printf("%d ", nz - (iz[q] + 1 + k));
         //}
         //printf("\n");
+        //
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
@@ -139,6 +140,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                 prec value = - dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
                             in[lidx[q]] * Ji * w;
+
 #if USE_ATOMICS
                 atomicAdd(&out[pos], value);
 #else 
@@ -190,8 +192,16 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
         d1[(k) + align +                                               \
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
-
+                make topography=1 x=1 y=1 source=1 test
         prec dth = dt / (h * h * h);
+
+        printf("nz = %d %d offset = %d | ", grid.size.z, iz[q], nz - iz[q] - 1);
+        for (int k = 0; k < num_basis; ++k) 
+                printf("%d ", iz[q] + k);
+        printf("| ");
+        for (int k = 0; k < num_basis; ++k) 
+                printf("%f ", lz[q * num_basis + k]);
+        printf("| ");
 
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
@@ -199,7 +209,18 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                 prec Ji =
                     - quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) *
                                    _rho(i + ix[q], j + iy[q], iz[q] + k));
-                size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
+                if (isinf(Ji)) Ji = 0.f;
+                printf("quad_weight = %g, f = %g g = %g rho = %g Ji = %g, [%d %d %d] \n", quad_weight, 
+                                _f(i + ix[q], j + iy[q]), 
+                                _dg(iz[q] + k), 
+                                _rho(i + ix[q], j + iy[q], iz[q] + k), 
+                                Ji, i + ix[q], j + iy[q], iz[q] + k
+                                );
+                //size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
+                int pos =
+                    (iz[q] + k) + align +
+                    (2 * align + nz) * ((ix[q] + i) + ngsl + 2) * (2 * ngsl + ny + 4) +
+                    (2 * align + nz) * ((iy[q] + j) + ngsl + 2);
                 prec value = -dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] * in[lidx[q]] * Ji;
 #if USE_ATOMICS
