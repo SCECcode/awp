@@ -211,6 +211,7 @@ int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid);
 
 int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid);
 
+int grid_in_bounds_force_part_x(const _prec *x, const _prec q, const grid1_t grid);
 int grid_in_bounds_part_x(const _prec *x, const _prec q, const grid1_t grid);
 int grid_in_bounds_part_y(const _prec *x, const _prec q, const grid1_t grid);
 

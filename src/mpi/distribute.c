@@ -27,7 +27,7 @@
 
 __inline__ int dist_indices_in_bounds(const prec qx, const prec qy, const prec *x, const prec *y, grid1_t grid_x, grid1_t grid_y, const int is_source)
 {
-        int inbounds_x = is_source ? grid_in_bounds_part_x(x, qx, grid_x) : grid_in_bounds_ext1(x, qx, grid_x);
+        int inbounds_x = is_source ? grid_in_bounds_force_part_x(x, qx, grid_x) : grid_in_bounds_ext1(x, qx, grid_x);
         int inbounds_y = is_source ? grid_in_bounds_part_y(y, qy, grid_y) : grid_in_bounds_ext1(y, qy, grid_y);
         if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)
                 return 1;

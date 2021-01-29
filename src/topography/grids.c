@@ -29,9 +29,9 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
         grids.z = grid_init(size, grid_z(), coord, bnd1, bnd2, 0, h);
  
         // Point force grids
-        grids.sx = grid_init(size, grid_x(), coord, bnd1, bnd2, ngsl / 2, h);
-        grids.sy = grid_init(size, grid_y(), coord, bnd1, bnd2, ngsl / 2, h);
-        grids.sz = grid_init(size, grid_z(), coord, bnd1, bnd2, ngsl / 2, h);
+        grids.sx = grid_init(size, grid_x(), coord, bnd1, bnd2,  0 * ngsl / 2, h);
+        grids.sy = grid_init(size, grid_y(), coord, bnd1, bnd2,  0 * ngsl / 2, h);
+        grids.sz = grid_init(size, grid_z(), coord, bnd1, bnd2,  0 * ngsl / 2, h);
 
         // stress grids
         grids.xx = grid_init(size, grid_xx(), coord, bnd1, bnd2, ngsl / 2, h);

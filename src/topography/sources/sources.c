@@ -34,8 +34,6 @@ void sources_init(const char *filename, const grids_t *grids, int ngrids,
 
         if (!use) return;
 
-        // FIXME: Add support for multiple grids
-
        if (rank == 0) { 
                AWPCHK(input_init(&input, filename));
        }
