@@ -39,9 +39,9 @@ void forces_init(const char *filename, const grids_t *grids, int ngrids,
        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-       Fx = source_init("fx", SX, &input, grids, ngrids, f, rank, comm);
-       Fy = source_init("fy", SY, &input, grids, ngrids, f, rank, comm);
-       Fz = source_init("fz", SZ, &input, grids, ngrids, f, rank, comm);
+       Fx = source_init("fx", SX, &input, grids, ngrids, f, rank, comm, FORCE);
+       Fy = source_init("fy", SY, &input, grids, ngrids, f, rank, comm, FORCE);
+       Fz = source_init("fz", SZ, &input, grids, ngrids, f, rank, comm, FORCE);
 
        if (Fx.use) AWPCHK(forces_boundary_check(&Fx));
 

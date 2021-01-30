@@ -201,8 +201,8 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
 
 #define _rho(i, j, k)                                                  \
         d1[(k) + align +                                               \
-           (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
-           (2 * align + nz) * ((j) + ngsl + 2)]
+           (2 * align + nz) * ((i) + 2) * (2 * ngsl + ny + 4) + \
+           (2 * align + nz) * ((j) + 2)]
 
         prec dth = dt / (h * h * h);
 

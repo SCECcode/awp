@@ -28,13 +28,13 @@ source_t source_init(const char *file_end,
                      const int ngrids,
                      const f_grid_t *f,
                      const int rank,
-                     const MPI_Comm comm)
+                     const MPI_Comm comm,
+                     const enum source_type st)
 {
         source_t src;
 
-        const int is_source = 1;
         source_init_common(&src, file_end, grid_type, input, grids, ngrids, f,
-                           rank, comm, is_source);
+                           rank, comm, st);
 
         if (!src.use)
         {
@@ -152,7 +152,7 @@ void source_init_common(source_t *src, const char *filename,
                         const grids_t *grids,
                         const int ngrids,
                         const f_grid_t *f,
-                        const int rank, const MPI_Comm comm, const int is_source)
+                        const int rank, const MPI_Comm comm, const enum source_type st)
 {
         sprintf(src->filename, "%s_%s", input->file, filename);
 
@@ -226,7 +226,7 @@ void source_init_common(source_t *src, const char *filename,
                         grid3_t grid = grids_select(grid_type, &grids[j]);
                         AWPCHK(dist_indices(&src->indices, &num_sources_in_block, x, y,
                                             input->length, grid, grid_number, j,
-                                            is_source, DIST_COUNT));
+                                            st, DIST_COUNT));
                         src_count[j] = src->length;
                         src->length += num_sources_in_block;
                 }
@@ -237,7 +237,7 @@ void source_init_common(source_t *src, const char *filename,
                         grid3_t grid = grids_select(grid_type, &grids[j]);
                         AWPCHK(dist_indices(&src->indices, &src_count[j], x, y,
                                             input->length, grid, grid_number, j,
-                                            is_source, DIST_INSERT_INDICES));
+                                            st, DIST_INSERT_INDICES));
                 }
                 free(grid_number);
                 free(src_count);

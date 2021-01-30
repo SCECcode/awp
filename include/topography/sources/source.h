@@ -58,6 +58,10 @@ typedef struct {
 } source_t;
 
 
+// Source type determines how to partition either a moment tensor source, force, or receiver, across
+// a mpi subdomain. 
+enum source_type {MOMENT_TENSOR, FORCE, RECEIVER};
+
 source_t source_init(const char *file_end, 
                      const enum grid_types grid_type,
                      const input_t *input,
@@ -65,7 +69,8 @@ source_t source_init(const char *file_end,
                      const int ngrids,
                      const f_grid_t *f, 
                      const int rank,
-                     const MPI_Comm comm);
+                     const MPI_Comm comm,
+                     const enum source_type st);
 
 void source_finalize(source_t *src);
 
@@ -82,7 +87,7 @@ void source_init_common(source_t *src, const char *filename,
                         const f_grid_t *f,
                         const int rank, 
                         const MPI_Comm comm,
-                        const int is_source);
+                        const enum source_type st);
 MPI_Comm source_communicator(source_t *src, const int rank,
                              const MPI_Comm comm);
 void source_read(source_t *src, size_t step);

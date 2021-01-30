@@ -40,12 +40,12 @@ void sources_init(const char *filename, const grids_t *grids, int ngrids,
        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-       Mxx = source_init("xx", XX, &input, grids, ngrids, f, rank, comm);
-       Myy = source_init("yy", YY, &input, grids, ngrids, f, rank, comm);
-       Mzz = source_init("zz", ZZ, &input, grids, ngrids, f, rank, comm);
-       Mxy = source_init("xy", XY, &input, grids, ngrids, f, rank, comm);
-       Mxz = source_init("xz", XZ, &input, grids, ngrids, f, rank, comm);
-       Myz = source_init("yz", YZ, &input, grids, ngrids, f, rank, comm);
+       Mxx = source_init("xx", XX, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Myy = source_init("yy", YY, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Mzz = source_init("zz", ZZ, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Mxy = source_init("xy", XY, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Mxz = source_init("xz", XZ, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Myz = source_init("yz", YZ, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
 }
 
 void sources_read(size_t step)

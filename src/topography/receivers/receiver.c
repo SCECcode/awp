@@ -27,9 +27,8 @@ recv_t receiver_init(const char *filename,
 
         strcpy(recv.filename, filename);
 
-        const int is_source = 0;
         source_init_common(&recv, filename, grid_type, input, grids, ngrids, f,
-                           rank, comm, is_source);
+                           rank, comm, RECEIVER);
 
         if (!recv.use) {
                 return recv;
