@@ -27,11 +27,6 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
         grids.x = grid_init(size, grid_x(), coord, bnd1, bnd2, 0, h);
         grids.y = grid_init(size, grid_y(), coord, bnd1, bnd2, 0, h);
         grids.z = grid_init(size, grid_z(), coord, bnd1, bnd2, 0, h);
- 
-        // Point force grids
-        grids.sx = grid_init(size, grid_x(), coord, bnd1, bnd2,  0 * ngsl / 2, h);
-        grids.sy = grid_init(size, grid_y(), coord, bnd1, bnd2,  0 * ngsl / 2, h);
-        grids.sz = grid_init(size, grid_z(), coord, bnd1, bnd2,  0 * ngsl / 2, h);
 
         // stress grids
         grids.xx = grid_init(size, grid_xx(), coord, bnd1, bnd2, ngsl / 2, h);
@@ -84,13 +79,13 @@ grid3_t grids_select(const enum grid_types grid_type, const grids_t *grids)
                         return grids->z;
                         break;
                 case SX:
-                        return grids->sx;
+                        return grids->x;
                         break;
                 case SY:
-                        return grids->sy;
+                        return grids->y;
                         break;
                 case SZ:
-                        return grids->sz;
+                        return grids->z;
                         break;
                 case XX:
                         return grids->xx;

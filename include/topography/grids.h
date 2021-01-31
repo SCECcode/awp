@@ -16,10 +16,6 @@ typedef struct
         grid3_t x;
         grid3_t y;
         grid3_t z;
- 
-        grid3_t sx;
-        grid3_t sy;
-        grid3_t sz;
 
         grid3_t xx;
         grid3_t yy;
