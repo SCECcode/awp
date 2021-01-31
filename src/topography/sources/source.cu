@@ -89,15 +89,13 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                 return;
         }
 
-#define _f(i, j)                                                             \
-  f[(j) + align +                                                     \
-      ((i) + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _dg(k) dg[(k) + align]
 
         prec dth = dt / (h * h * h);
 
-        // Reciprocal quadrature weights near the top boundary in the z-direction. First weight is on the
-        // boundary
+        // Reciprocal quadrature weights near the top boundary in the z-direction. First weight is
+        // on the boundary
         // hweights: weights at the nodal grid points
         const prec hweights[4] = {3.55599789310935, 0.6905974224013051,
                                   1.4771520525102637, 0.914256470417062};
@@ -106,41 +104,16 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                                      0.7658753535345706, 1.0959408329892313};
 
         int nz = grid.size.z;
-        // Print statements used for debugging
-        //printf("nz = %d %d offset = %d | ", grid.size.z, iz[q], nz - iz[q] - 1);
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%d ", iz[q] + k);
-        //printf("| ");
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%f ", lz[q * num_basis + k]);
-        //printf("| ");
-        //if (zhat == 0) {
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%d ", nz - (iz[q] + 2 + k));
-        //} else {
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%d ", nz - (iz[q] + 1 + k));
-        //}
-        //printf("\n");
-        //
-        //
-        //
-        //
-        //printf("nz = %d %d offset = %d | ", grid.size.z, iz[q], nz - iz[q] - 1);
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%d ", ix[q] + k);
-        //printf("| ");
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%f ", lx[q * num_basis + k]);
-        //printf("| ");
-        //printf("\n");
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
                prec Ji =
                    1.0 / (_f(i + ix[q], j + iy[q]) *
                           _dg(iz[q] + k));
-                size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
+                int pos =
+                    (iz[q] + k) + align +
+                    (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
+                    (2 * align + nz) * (iy[q] + j);
                 prec w = 1.0f;
                 int offset_z = nz - (iz[q] + k + 2);
                 int offset_zhat = nz - (iz[q] + k + 1);
@@ -179,6 +152,7 @@ void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
         CUCHK(cudaGetLastError());
 }
 
+#include <assert.h>
 __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                                    const prec *lx, const prec *ly,
                                    const prec *lz, const int num_basis,
@@ -194,48 +168,28 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                 return;
         }
 
-#define _f(i, j)                                                             \
-  f[(j) + align +                                                     \
-      ((i) + 2) * (2 * align + 2 * ngsl + ny + 4) + 2]
+#define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _dg(k) dg[(k) + align]
 
-#define _rho(i, j, k)                                                  \
-        d1[(k) + align +                                               \
-           (2 * align + nz) * ((i) + 2) * (2 * ngsl + ny + 4) + \
-           (2 * align + nz) * ((j) + 2)]
+#define _rho(i, j, k)                                                   \
+        d1[(k) + align + (2 * align + nz) * (i) * (2 * ngsl + ny + 4) + \
+           (2 * align + nz) * (j)]
 
         prec dth = dt / (h * h * h);
-
-        //printf("nz = %d %d offset = %d | ", grid.size.z, iz[q], nz - iz[q] - 1);
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%d ", ix[q] + k);
-        //printf("| ");
-        //for (int k = 0; k < num_basis; ++k) 
-        //        printf("%f ", lx[q * num_basis + k]);
-        //printf("| ");
-        //printf("\n");
 
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
                 // Do not apply stencil at halo points
-                if ( ix[q] + i >= nx + ngsl || ix[q] + i < ngsl ||
-                     iy[q] + j >= ny + ngsl || iy[q] + j < ngsl ) continue;
+                if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
+                     iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
                 prec Ji =
                     - quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) *
                                    _rho(i + ix[q], j + iy[q], iz[q] + k));
-                //if (isinf(Ji)) Ji = 0.f;
-                //printf("quad_weight = %g, f = %g g = %g rho = %g Ji = %g, [%d %d %d] \n", quad_weight, 
-                //                _f(i + ix[q], j + iy[q]), 
-                //                _dg(iz[q] + k), 
-                //                _rho(i + ix[q], j + iy[q], iz[q] + k), 
-                //                Ji, i + ix[q], j + iy[q], iz[q] + k
-                //                );
-                //size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
                 int pos =
                     (iz[q] + k) + align +
-                    (2 * align + nz) * ((ix[q] + i) + 2) * (2 * ngsl + ny + 4) +
-                    (2 * align + nz) * ((iy[q] + j) + 2);
+                    (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
+                    (2 * align + nz) * (iy[q] + j);
                 prec value = -dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] * in[lidx[q]] * Ji;
 #if USE_ATOMICS

@@ -17,7 +17,6 @@
 #include <topography/grids.h>
 
 #define OVERLAP 7.0
-#define DEBUG_SOURCE
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
