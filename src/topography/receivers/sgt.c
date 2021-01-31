@@ -77,7 +77,7 @@ void sgt_write_material_properties(const prec *d_d1, const prec *d_lami,
         char *filename;
         filename = malloc(sizeof filename * len);
         sprintf(filename, "%sd1", mat.filename);
-        receiver_write(&mat, 0, filename, d_lami, grid_num);
+        receiver_write(&mat, 0, filename, d_d1, grid_num);
         sprintf(filename, "%slami", mat.filename);
         receiver_write(&mat, 0, filename, d_lami, grid_num);
         sprintf(filename, "%smui", mat.filename);
