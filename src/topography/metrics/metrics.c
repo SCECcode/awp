@@ -211,7 +211,7 @@ int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,
                 out[q] = 0.0;
                 for (int i = 0; i < deg + 1; ++i) {
                 for (int j = 0; j < deg + 1; ++j) {
-                        int pos = pmetrics_f_index(f, ix + i, iy + j);
+                        int pos = metrics_f_index(f, ix + i, iy + j);
                         out[q] += lx[i] * ly[j] * in[pos];
                 }
                 }

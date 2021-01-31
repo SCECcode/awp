@@ -25,12 +25,9 @@
 // This parameter pads the compute region. Its needed for the computation of
 // derivative and interpolation stencils. Do not change its value.
 
-#define pmetrics_f_index(g,i,j) ((g)->offset[1] + (g)->bounds_y[0] + j) + \
+#define metrics_f_index(g,i,j) ((g)->offset[1] + (g)->bounds_y[0] + j) + \
                                ((g)->offset[0] + (g)->bounds_x[0] + i) * \
                                (g)->slice
-#define metrics_f_index(g,i,j) ((g).offset[1] + (g).bounds_y[0] + j) + \
-                               ((g).offset[0] + (g).bounds_x[0] + i) * \
-                               (g).slice
 
 static const int metrics_padding = 8;
 
