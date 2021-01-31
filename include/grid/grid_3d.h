@@ -211,10 +211,9 @@ int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid);
 
 int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid);
 
-int grid_in_bounds_force_part_x(const _prec *x, const _prec q, const grid1_t grid);
-int grid_in_bounds_force_part_y(const _prec *x, const _prec q, const grid1_t grid);
-int grid_in_bounds_part_x(const _prec *x, const _prec q, const grid1_t grid);
-int grid_in_bounds_part_y(const _prec *x, const _prec q, const grid1_t grid);
+int grid_in_bounds_force(const _prec *x, const _prec q, const grid1_t grid);
+int grid_in_bounds_receiver(const _prec *x, const _prec q, const grid1_t grid);
+int grid_in_bounds_moment_tensor(const _prec *x, const _prec q, const grid1_t grid);
 
 /*
  * Fill the array `out` with the grid point values in the x-direction of a grid

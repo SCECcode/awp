@@ -32,20 +32,18 @@ __inline__ int dist_indices_in_bounds(const prec qx, const prec qy,
                                       const enum source_type st) {
         int inbounds_x = 0;
         int inbounds_y = 0;
-        printf("partition! st = %d \n", st);
         switch (st) {
                 case MOMENT_TENSOR:
-                printf("moment tensor!\n");
-                        inbounds_x = grid_in_bounds_part_x(x, qx, grid_x);
-                        inbounds_y = grid_in_bounds_part_y(y, qy, grid_y);
+                        inbounds_x = grid_in_bounds_moment_tensor(x, qx, grid_x);
+                        inbounds_y = grid_in_bounds_moment_tensor(y, qy, grid_y);
                         break;
                 case FORCE:
-                        inbounds_x = grid_in_bounds_force_part_x(x, qx, grid_x);
-                        inbounds_y = grid_in_bounds_force_part_y(y, qy, grid_y);
+                        inbounds_x = grid_in_bounds_force(x, qx, grid_x);
+                        inbounds_y = grid_in_bounds_force(y, qy, grid_y);
                         break;
                 case RECEIVER:
-                        inbounds_x = grid_in_bounds_ext1(x, qx, grid_x);
-                        inbounds_y = grid_in_bounds_ext1(y, qy, grid_y);
+                        inbounds_x = grid_in_bounds_receiver(x, qx, grid_x);
+                        inbounds_y = grid_in_bounds_receiver(y, qy, grid_y);
                         break;
         }
         if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)

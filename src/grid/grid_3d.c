@@ -307,7 +307,7 @@ int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid)
         return SUCCESS;
 }
 
-int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid)
+int grid_in_bounds_receiver(const _prec *x, const _prec q, const grid1_t grid)
 {
         _prec h = grid.gridspacing;
         if ( q - (x[0] - h / 2) < 0 ) {
@@ -320,49 +320,25 @@ int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid)
 
 }
 
-int grid_in_bounds_force_part_x(const _prec *x, const _prec q, const grid1_t grid)
+int grid_in_bounds_force(const _prec *x, const _prec q, const grid1_t grid)
 {
         _prec h = grid.gridspacing;
-        if ( q - (x[0] - 0.5f * h - ngsl * h) < 0 ) {
+        if ( q - (x[0] - 2 * h) < 0 ) {
                 return ERR_OUT_OF_BOUNDS_LOWER;
         }
-        if ( q - (x[grid.size - 1] + 0.5f * h + ngsl * h) >= 0) {
+        if ( q - (x[grid.size - 1] + 2 * h) >= 0) {
                 return ERR_OUT_OF_BOUNDS_UPPER;
         }
         return SUCCESS;
 }
 
-int grid_in_bounds_force_part_y(const _prec *x, const _prec q, const grid1_t grid)
+int grid_in_bounds_moment_tensor(const _prec *x, const _prec q, const grid1_t grid)
 {
         _prec h = grid.gridspacing;
-        if ( q - (x[0] - 0.5f * h - ngsl * h) < 0 ) {
+        if ( q - (x[0] - ngsl / 2 * h) < 0 ) {
                 return ERR_OUT_OF_BOUNDS_LOWER;
         }
-        if ( q - (x[grid.size - 1] + 0.5f * h + ngsl * h) >= 0) {
-                return ERR_OUT_OF_BOUNDS_UPPER;
-        }
-        return SUCCESS;
-}
-
-int grid_in_bounds_part_x(const _prec *x, const _prec q, const grid1_t grid)
-{
-        _prec h = grid.gridspacing;
-        printf("x[0] = %g \n", x[0]);
-        if ( q - (x[0] - h / 2 - grid.padding * h) < 0 ) {
-                return ERR_OUT_OF_BOUNDS_LOWER;
-        }
-        if ( q - (x[grid.size - 1] + h / 2 + grid.padding * h) >= 0) {
-                return ERR_OUT_OF_BOUNDS_UPPER;
-        }
-        return SUCCESS;
-}
-int grid_in_bounds_part_y(const _prec *x, const _prec q, const grid1_t grid)
-{
-        _prec h = grid.gridspacing;
-        if ( q - (x[0] - h - grid.padding * h) < 0 ) {
-                return ERR_OUT_OF_BOUNDS_LOWER;
-        }
-        if ( q - (x[grid.size - 1] + h + grid.padding * h) >= 0) {
+        if ( q - (x[grid.size - 1] + ngsl / 2 * h) >= 0) {
                 return ERR_OUT_OF_BOUNDS_UPPER;
         }
         return SUCCESS;
