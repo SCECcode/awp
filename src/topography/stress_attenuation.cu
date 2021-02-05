@@ -168,13 +168,9 @@ void topo_stress_left_H(topo_t *T)
         if (TOPO_DBG) {
                 printf("launching %s(%d)\n", __func__, T->rank);
         }
-        dim3 block(DTOPO_STR_111_X, DTOPO_STR_111_Y,
-                    DTOPO_STR_111_Z);
         int3_t size = {(int)T->stress_bounds_left[1] - T->stress_bounds_left[0],
                        (int)T->stress_bounds_ydir[1] - T->stress_bounds_ydir[0],
                        (int)T->stress_grid_interior.z};
-        dim3 loop(0, 0, DTOPO_STR_111_LOOP_Z);
-        dim3 grid = set_grid(block, size, loop);
 
         int shift = ngsl + 2;
 
@@ -283,14 +279,16 @@ void topo_stress_right_H(topo_t *T)
 
         int shift = ngsl + 2;
         {
-        dim3 block(DTOPO_STR_111_X, DTOPO_STR_111_Y,
-                    DTOPO_STR_111_Z);
         int3_t size = {(int)T->stress_bounds_right[1] - T->stress_bounds_left[0],
                        (int)T->stress_bounds_ydir[1] - T->stress_bounds_ydir[0],
                        (int)T->stress_grid_interior.z};
-        dim3 loop(0, 0, DTOPO_STR_111_LOOP_Z);
-        dim3 grid = set_grid(block, size, loop);
-        dtopo_str_111<<<grid, block, 0, T->stream_2>>>
+
+        dim3 threads (STRIU_TX, STRIU_TY, STRIU_TZ);
+        dim3 blocks((size.z - 4) / (STRIU_RX * threads.x) + 1,
+                    (size.y - 1) / (STRIU_RY * threads.y) + 1,
+                    (size.x - 1) / (threads.z) + 1);
+
+        dtopo_str_111_index_unroll<STRIU_TX, STRIU_TY, STRIU_TZ, STRIU_RX, STRIU_RY><<<blocks, threads, 0, T->stream_2>>>
                          (
                           T->xx, T->yy, T->zz, 
                           T->xy, T->xz, T->yz,
