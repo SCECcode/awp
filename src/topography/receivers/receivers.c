@@ -35,9 +35,9 @@ void receivers_init(const char *filename, const grids_t *grids, int ngrids,
         AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-        rx = receiver_init("x", X, &input, grids, ngrids, f, rank, comm);
-        ry = receiver_init("y", Y, &input, grids, ngrids, f, rank, comm);
-        rz = receiver_init("z", Z, &input, grids, ngrids, f, rank, comm);
+        rx = receiver_init("x", X, RECEIVER, &input, grids, ngrids, f, rank, comm);
+        ry = receiver_init("y", Y, RECEIVER, &input, grids, ngrids, f, rank, comm);
+        rz = receiver_init("z", Z, RECEIVER, &input, grids, ngrids, f, rank, comm);
 }
 
 void receivers_finalize(void)

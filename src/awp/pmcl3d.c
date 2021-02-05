@@ -1772,7 +1772,7 @@ int main(int argc, char **argv)
       for (p = 0; p < ngrids; p++)
       {
          receivers_write(d_u1[p], d_v1[p], d_w1[p], 0, nt, p);
-         sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[0], d_xz[p], d_yz[p], 0, nt, p);
+         sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 0, nt, p);
       }
       sources_read(0);
       forces_read(0);
@@ -2484,7 +2484,7 @@ int main(int argc, char **argv)
             for (p = 0; p < ngrids; p++)
             {
                receivers_write(d_u1[p], d_v1[p], d_w1[p], cur_step, nt, p);
-               sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[0], d_xz[p], d_yz[p],
+               sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p],
                          cur_step, nt, p);
             }
 

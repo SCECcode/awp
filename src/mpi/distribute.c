@@ -45,6 +45,10 @@ __inline__ int dist_indices_in_bounds(const prec qx, const prec qy,
                         inbounds_x = grid_in_bounds_receiver(x, qx, grid_x);
                         inbounds_y = grid_in_bounds_receiver(y, qy, grid_y);
                         break;
+                case SGT:
+                        inbounds_x = grid_in_bounds_sgt(x, qx, grid_x);
+                        inbounds_y = grid_in_bounds_sgt(y, qy, grid_y);
+                        break;
         }
         if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)
                 return 1;

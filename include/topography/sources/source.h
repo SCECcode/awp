@@ -58,9 +58,9 @@ typedef struct {
 } source_t;
 
 
-// Source type determines how to partition either a moment tensor source, force, or receiver, across
-// a mpi subdomain. 
-enum source_type {MOMENT_TENSOR, FORCE, RECEIVER};
+// Source type determines how to partition velocity and stress input/output types across
+// an MPI subdomain. 
+enum source_type {MOMENT_TENSOR, FORCE, RECEIVER, SGT};
 
 source_t source_init(const char *file_end, 
                      const enum grid_types grid_type,

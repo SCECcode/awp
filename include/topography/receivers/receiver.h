@@ -6,6 +6,7 @@
 typedef source_t recv_t;
 recv_t receiver_init(const char *filename, 
                      const enum grid_types grid_type,
+                     const enum source_type st,
                      const input_t *input,
                      const grids_t *grids, 
                      const int ngrids,

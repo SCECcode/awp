@@ -320,6 +320,20 @@ int grid_in_bounds_receiver(const _prec *x, const _prec q, const grid1_t grid)
 
 }
 
+int grid_in_bounds_sgt(const _prec *x, const _prec q, const grid1_t grid)
+{
+        _prec h = grid.gridspacing;
+        if ( q - (x[0] - h / 2 + h * ngsl / 2) < 0 ) {
+                return ERR_OUT_OF_BOUNDS_LOWER;
+        }
+        if ( q - (x[grid.size - 1] + h / 2 - h * ngsl / 2) >= 0) {
+                return ERR_OUT_OF_BOUNDS_UPPER;
+        }
+
+        return SUCCESS;
+
+}
+
 int grid_in_bounds_force(const _prec *x, const _prec q, const grid1_t grid)
 {
         _prec h = grid.gridspacing;

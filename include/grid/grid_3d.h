@@ -209,10 +209,9 @@ int grid_fill1(prec *out, const grid1_t grid);
  */
 int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid);
 
-int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid);
-
 int grid_in_bounds_force(const _prec *x, const _prec q, const grid1_t grid);
 int grid_in_bounds_receiver(const _prec *x, const _prec q, const grid1_t grid);
+int grid_in_bounds_sgt(const _prec *x, const _prec q, const grid1_t grid);
 int grid_in_bounds_moment_tensor(const _prec *x, const _prec q, const grid1_t grid);
 
 /*
