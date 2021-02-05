@@ -7,6 +7,33 @@
 #include <topography/stress_attenuation.cuh>
 #include <test/test.h>
 
+
+// Threads in x, y, z
+#ifndef STRIU_TX
+#define STRIU_TX 32
+#endif      
+            
+#ifndef STRIU_TY
+#define STRIU_TY 1
+#endif      
+            
+#ifndef STRIU_TZ
+#define STRIU_TZ 4
+#endif
+
+// Unroll factor in CUDA x
+#ifndef STRIU_RX
+#define STRIU_RX 1
+#endif
+
+// Unroll factor in CUDA y
+#ifndef STRIU_RY
+#define STRIU_RY 2
+#endif
+
+#include "kernels/stress_attenuation.cu"
+#include "kernels/stress_index_unroll.cuh"
+
 inline dim3 set_grid(const dim3 block, const int3_t size, const dim3 loop)
 {
         dim3 out;
@@ -33,15 +60,16 @@ void topo_stress_interior_H(topo_t *T)
 
      int shift = ngsl + 2;
      {
-     dim3 block(DTOPO_STR_111_X, DTOPO_STR_111_Y,
-                 DTOPO_STR_111_Z);
      int3_t size = {T->stress_bounds_right[0] - T->stress_bounds_left[0], 
                     T->stress_bounds_ydir[1] -  T->stress_bounds_ydir[0],
                     (int)T->stress_grid_interior.z};
-     dim3 loop(0, 0, DTOPO_STR_112_LOOP_Z);
-     dim3 grid = set_grid(block, size, loop);
 
-        dtopo_str_111<<<grid, block, 0, T->stream_i>>>
+        dim3 threads (STRIU_TX, STRIU_TY, STRIU_TZ);
+        dim3 blocks((size.z - 4) / (STRIU_RX * threads.x) + 1,
+                    (size.y - 1) / (STRIU_RY * threads.y) + 1,
+                    (size.x - 1) / (threads.z) + 1);
+
+        dtopo_str_111_index_unroll<STRIU_TX, STRIU_TY, STRIU_TZ, STRIU_RX, STRIU_RY><<<blocks, threads, 0, T->stream_i>>>
                          (
                           T->xx, T->yy, T->zz, 
                           T->xy, T->xz, T->yz,
@@ -127,193 +155,6 @@ void topo_stress_interior_H(topo_t *T)
                           T->stress_bounds_ydir[1]  + shift);
         CUCHK(cudaGetLastError());
         }
-}
-
-void topo_velocity_interior_H(topo_t *T)
-{
-
-        if (!T->use) return;
-        if (TOPO_DBG) {
-                printf("launching %s(%d)\n", __func__, T->rank);
-        }
-        dim3 block (TBX, TBY, TBZ);
-        dim3 grid ((T->velocity_grid_interior.x+TBX-1)/TBX, 
-                   (T->velocity_grid_interior.y+TBY-1)/TBY,
-                   (T->velocity_grid_interior.z+TBZ-1)/TBZ);
-        // Compute velocities in the front send buffer region. 
-        dtopo_vel_111<<<grid, block, 0, T->stream_1>>>(
-                                                   T->u1, T->v1, T->w1,
-                                                   T->dcrjx, T->dcrjy, T->dcrjz,
-                                                   T->metrics_f.d_f,
-                                                   T->metrics_f.d_f1_1,
-                                                   T->metrics_f.d_f1_2,
-                                                   T->metrics_f.d_f1_c,
-                                                   T->metrics_f.d_f2_1,
-                                                   T->metrics_f.d_f2_2,
-                                                   T->metrics_f.d_f2_c,
-                                                   T->metrics_f.d_f_1,
-                                                   T->metrics_f.d_f_2,
-                                                   T->metrics_f.d_f_c,
-                                                   T->metrics_g.d_g,
-                                                   T->metrics_g.d_g3,
-                                                   T->metrics_g.d_g3_c,
-                                                   T->metrics_g.d_g_c,
-                                                   T->rho,
-                                                   T->xx, T->xy, T->xz, 
-                                                   T->yy, T->yz, T->zz,
-                                                   T->timestep, T->dth,
-                                                   T->nx, T->ny, T->nz,
-                                                   T->velocity_bounds_left[0],
-                                                   T->velocity_bounds_front[0], 
-                                                   T->velocity_bounds_right[1],
-                                                   T->velocity_bounds_front[1]);
-        CUCHK(cudaGetLastError());
-
-        // Compute interior part excluding send buffer regions
-        dtopo_vel_111<<<grid, block, 0, T->stream_i>>>(
-                                                   T->u1, T->v1, T->w1,
-                                                   T->dcrjx, T->dcrjy, T->dcrjz,
-                                                   T->metrics_f.d_f,
-                                                   T->metrics_f.d_f1_1,
-                                                   T->metrics_f.d_f1_2,
-                                                   T->metrics_f.d_f1_c,
-                                                   T->metrics_f.d_f2_1,
-                                                   T->metrics_f.d_f2_2,
-                                                   T->metrics_f.d_f2_c,
-                                                   T->metrics_f.d_f_1,
-                                                   T->metrics_f.d_f_2,
-                                                   T->metrics_f.d_f_c,
-                                                   T->metrics_g.d_g,
-                                                   T->metrics_g.d_g3,
-                                                   T->metrics_g.d_g3_c,
-                                                   T->metrics_g.d_g_c,
-                                                   T->rho,
-                                                   T->xx, T->xy, T->xz, 
-                                                   T->yy, T->yz, T->zz,
-                                                   T->timestep, T->dth,
-                                                   T->nx, T->ny, T->nz,
-                                                   T->velocity_bounds_left[0],
-                                                   T->velocity_bounds_front[1], 
-                                                   T->velocity_bounds_right[1],
-                                                   T->velocity_bounds_back[0]);
-        CUCHK(cudaGetLastError());
-
-        // Compute back send buffer region
-        dtopo_vel_111<<<grid, block, 0, T->stream_2>>>(
-                                                   T->u1, T->v1, T->w1,
-                                                   T->dcrjx, T->dcrjy, T->dcrjz,
-                                                   T->metrics_f.d_f,
-                                                   T->metrics_f.d_f1_1,
-                                                   T->metrics_f.d_f1_2,
-                                                   T->metrics_f.d_f1_c,
-                                                   T->metrics_f.d_f2_1,
-                                                   T->metrics_f.d_f2_2,
-                                                   T->metrics_f.d_f2_c,
-                                                   T->metrics_f.d_f_1,
-                                                   T->metrics_f.d_f_2,
-                                                   T->metrics_f.d_f_c,
-                                                   T->metrics_g.d_g,
-                                                   T->metrics_g.d_g3,
-                                                   T->metrics_g.d_g3_c,
-                                                   T->metrics_g.d_g_c,
-                                                   T->rho,
-                                                   T->xx, T->xy, T->xz, 
-                                                   T->yy, T->yz, T->zz,
-                                                   T->timestep, T->dth,
-                                                   T->nx, T->ny, T->nz,
-                                                   T->velocity_bounds_left[0],
-                                                   T->velocity_bounds_back[0], 
-                                                   T->velocity_bounds_right[1],
-                                                   T->velocity_bounds_back[1]);
-        CUCHK(cudaGetLastError());
-
-        // Adjust grid size for boundary computation
-        grid.z = (TOP_BOUNDARY_SIZE+TBZ-1)/TBZ;
-        // Boundary stencils near free surface
-        
-        dtopo_vel_112<<<grid, block, 0, T->stream_1>>>(
-                                                   T->u1, T->v1, T->w1,
-                                                   T->dcrjx, T->dcrjy, T->dcrjz,
-                                                   T->metrics_f.d_f,
-                                                   T->metrics_f.d_f1_1,
-                                                   T->metrics_f.d_f1_2,
-                                                   T->metrics_f.d_f1_c,
-                                                   T->metrics_f.d_f2_1,
-                                                   T->metrics_f.d_f2_2,
-                                                   T->metrics_f.d_f2_c,
-                                                   T->metrics_f.d_f_1,
-                                                   T->metrics_f.d_f_2,
-                                                   T->metrics_f.d_f_c,
-                                                   T->metrics_g.d_g,
-                                                   T->metrics_g.d_g3,
-                                                   T->metrics_g.d_g3_c,
-                                                   T->metrics_g.d_g_c,
-                                                   T->rho,
-                                                   T->xx, T->xy, T->xz, 
-                                                   T->yy, T->yz, T->zz,
-                                                   T->timestep, T->dth,
-                                                   T->nx, T->ny, T->nz,
-                                                   T->velocity_bounds_left[0],
-                                                   T->velocity_bounds_front[0], 
-                                                   T->velocity_bounds_right[1],
-                                                   T->velocity_bounds_front[1]);
-        CUCHK(cudaGetLastError());
-
-        dtopo_vel_112<<<grid, block, 0, T->stream_i>>>(
-                                                   T->u1, T->v1, T->w1,
-                                                   T->dcrjx, T->dcrjy, T->dcrjz,
-                                                   T->metrics_f.d_f,
-                                                   T->metrics_f.d_f1_1,
-                                                   T->metrics_f.d_f1_2,
-                                                   T->metrics_f.d_f1_c,
-                                                   T->metrics_f.d_f2_1,
-                                                   T->metrics_f.d_f2_2,
-                                                   T->metrics_f.d_f2_c,
-                                                   T->metrics_f.d_f_1,
-                                                   T->metrics_f.d_f_2,
-                                                   T->metrics_f.d_f_c,
-                                                   T->metrics_g.d_g,
-                                                   T->metrics_g.d_g3,
-                                                   T->metrics_g.d_g3_c,
-                                                   T->metrics_g.d_g_c,
-                                                   T->rho,
-                                                   T->xx, T->xy, T->xz, 
-                                                   T->yy, T->yz, T->zz,
-                                                   T->timestep, T->dth,
-                                                   T->nx, T->ny, T->nz,
-                                                   T->velocity_bounds_left[0],
-                                                   T->velocity_bounds_front[1], 
-                                                   T->velocity_bounds_right[1],
-                                                   T->velocity_bounds_back[0]);
-        CUCHK(cudaGetLastError());
-
-        dtopo_vel_112<<<grid, block, 0, T->stream_2>>>(
-                                                   T->u1, T->v1, T->w1,
-                                                   T->dcrjx, T->dcrjy, T->dcrjz,
-                                                   T->metrics_f.d_f,
-                                                   T->metrics_f.d_f1_1,
-                                                   T->metrics_f.d_f1_2,
-                                                   T->metrics_f.d_f1_c,
-                                                   T->metrics_f.d_f2_1,
-                                                   T->metrics_f.d_f2_2,
-                                                   T->metrics_f.d_f2_c,
-                                                   T->metrics_f.d_f_1,
-                                                   T->metrics_f.d_f_2,
-                                                   T->metrics_f.d_f_c,
-                                                   T->metrics_g.d_g,
-                                                   T->metrics_g.d_g3,
-                                                   T->metrics_g.d_g3_c,
-                                                   T->metrics_g.d_g_c,
-                                                   T->rho,
-                                                   T->xx, T->xy, T->xz, 
-                                                   T->yy, T->yz, T->zz,
-                                                   T->timestep, T->dth,
-                                                   T->nx, T->ny, T->nz,
-                                                   T->velocity_bounds_left[0],
-                                                   T->velocity_bounds_back[0], 
-                                                   T->velocity_bounds_right[1],
-                                                   T->velocity_bounds_back[1]);
-        CUCHK(cudaGetLastError());
 }
 
 void topo_stress_left_H(topo_t *T)
