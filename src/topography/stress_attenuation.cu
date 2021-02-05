@@ -177,7 +177,13 @@ void topo_stress_left_H(topo_t *T)
         dim3 grid = set_grid(block, size, loop);
 
         int shift = ngsl + 2;
-        dtopo_str_111<<<grid, block, 0, T->stream_1>>>
+
+        dim3 threads (STRIU_TX, STRIU_TY, STRIU_TZ);
+        dim3 blocks((size.z - 4) / (STRIU_RX * threads.x) + 1,
+                    (size.y - 1) / (STRIU_RY * threads.y) + 1,
+                    (size.x - 1) / (threads.z) + 1);
+
+        dtopo_str_111_index_unroll<STRIU_TX, STRIU_TY, STRIU_TZ, STRIU_RX, STRIU_RY><<<blocks, threads, 0, T->stream_1>>>
                          (
                           T->xx, T->yy, T->zz, 
                           T->xy, T->xz, T->yz,
