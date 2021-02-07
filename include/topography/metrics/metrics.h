@@ -151,6 +151,11 @@ int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,
                                 const grid3_t grid, const prec *qx,
                                 const prec *qy, const int m, const int deg);
 
+int metrics_interpolate_jacobian(const f_grid_t *fgrid, float *out, const float *f, const float *g,
+                        const float *x, const float *y, const float *z,
+                        grid3_t grid, const float *qx,
+                        const float *qy, const float *qz, const int m, const int deg);
+
 g_grid_t metrics_init_g(const int *size, const _prec gridspacing);
 void metrics_build_g(g_grid_t *g);
 void metrics_free_g(g_grid_t *g);

@@ -150,10 +150,10 @@ __global__ void dtopo_vel_111_unroll(
   float c = 0.25f;
   float rho1 = c * (_rho(i, j + q, k + r - 1) + _rho(i, j + q - 1, k + r - 1)) +
                c * (_rho(i, j + q, k + r) + _rho(i, j + q - 1, k + r));
-  float rho2 = c * (_rho(i, j + q, k + r - 1) + _rho(i - 1, j + q, k + r - 1)) +
-               c * (_rho(i, j + q, k + r) + _rho(i - 1, j + q, k + r));
-  float rho3 = c * (_rho(i, j + q, k + r) + _rho(i - 1, j + q, k + r)) +
-               c * (_rho(i, j + q - 1, k + r) + _rho(i - 1, j + q - 1, k + r));
+  float rho2 = c * (_rho(i, j + q, k + r - 1) + _rho(i + 1, j + q, k + r - 1)) +
+               c * (_rho(i, j + q, k + r) + _rho(i + 1, j + q, k + r));
+  float rho3 = c * (_rho(i, j + q, k + r) + _rho(i + 1, j + q, k + r)) +
+               c * (_rho(i, j + q - 1, k + r) + _rho(i + 1, j + q - 1, k + r));
 
   float Ai1 = _f_1(i, j + q) * _g3_c(k + r) * rho1;
   Ai1 = nu * 1.0 / Ai1;

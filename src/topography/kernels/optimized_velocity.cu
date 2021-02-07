@@ -1234,10 +1234,10 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
         int kb = nz - k - 2;
         float rho1 = 0.25 * (_rho(i, j, kb + 0) + _rho(i, j - 1, kb + 0)) +
                      0.25 * (_rho(i, j, kb + 1) + _rho(i, j - 1, kb + 1));
-        float rho2 = 0.25 * (_rho(i, j, kb + 0) + _rho(i - 1, j, kb + 0)) +
-                     0.25 * (_rho(i, j, kb + 1) + _rho(i - 1, j, kb + 1));
-        float rho3 = 0.25 * (_rho(i, j, kb + 1) + _rho(i - 1, j, kb + 1)) +
-                     0.25 * (_rho(i, j - 1, kb + 1) + _rho(i - 1, j - 1, kb + 1));
+        float rho2 = 0.25 * (_rho(i, j, kb + 0) + _rho(i + 1, j, kb + 0)) +
+                     0.25 * (_rho(i, j, kb + 1) + _rho(i + 1, j, kb + 1));
+        float rho3 = 0.25 * (_rho(i, j, kb + 1) + _rho(i + 1, j, kb + 1)) +
+                     0.25 * (_rho(i, j - 1, kb + 1) + _rho(i + 1, j - 1, kb + 1));
 
         float Ai1 = _f_1(i, j) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;

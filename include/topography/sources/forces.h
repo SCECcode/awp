@@ -10,8 +10,8 @@
 #include <topography/metrics/metrics.h>
 
 void forces_init(const char *filename, const grids_t *grids, int ngrids,
-                  const f_grid_t *f, const MPI_Comm comm, const int rank,
-                  const int size);
+                  const f_grid_t *f, const g_grid_t *g, const MPI_Comm comm, const int rank,
+                  const int size, const float *d_rho);
 int forces_boundary_check(const source_t *Fx);
 void forces_read(const size_t step);
 void forces_add(prec *d_u1, prec *d_v1, prec *d_w1, const prec *d_d1,

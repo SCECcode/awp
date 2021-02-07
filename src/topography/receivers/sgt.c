@@ -74,6 +74,8 @@ void sgt_write_material_properties(const prec *d_d1, const prec *d_lami,
         if (!use) return;
         printf("Writing material properties\n");
         int len = strlen(mat.filename) + 4; 
+        //FIXME
+        printf("DENSITY position = %d %d %d \n", mat.interpolation->ix[0], mat.interpolation->iy[0], mat.interpolation->iz[0]);
         char *filename;
         filename = malloc(sizeof filename * len);
         sprintf(filename, "%sd1", mat.filename);

@@ -80,7 +80,7 @@ int test_sources_dm(const char *inputfile, int rank, int size, const int px)
         test_t test;
 
         test = test_init(" * sources_dm", rank, size);
-        sources_init(inputfile, grids, ngrids, NULL, MPI_COMM_WORLD, rank, size);
+        sources_init(inputfile, grids, ngrids, NULL, NULL, MPI_COMM_WORLD, rank, size);
         source_t Mxx = sources_get_source(XX);
 
         for (size_t i = 0; i < (size_t)ngrids; ++i) {

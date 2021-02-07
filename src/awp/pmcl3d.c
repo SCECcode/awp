@@ -1685,6 +1685,7 @@ int main(int argc, char **argv)
       }
 
       f_grid_t *metrics_f = NULL;
+      g_grid_t *metrics_g = NULL;
 
 #if TOPO
 
@@ -1724,17 +1725,18 @@ int main(int argc, char **argv)
       if (T.use)
       {
          metrics_f = &T.metrics_f;
+         metrics_g = &T.metrics_g;
       }
 
       if (usesourcefile)
-         sources_init(SOURCEFILE, grids, ngrids, metrics_f, MCW, rank,
+         sources_init(SOURCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
                       size_tot);
       if (userecvfile)
          receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
                         size_tot);
       if (useforcefile)
-         forces_init(FORCEFILE, grids, ngrids, metrics_f, MCW, rank,
-                     size_tot);
+         forces_init(FORCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
+                     size_tot, (float*)d_d1[0]);
       if (usesgtfile)
       {
          sgt_init(SGTFILE, grids, ngrids, metrics_f, MCW, rank,

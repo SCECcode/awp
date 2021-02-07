@@ -110,6 +110,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                prec Ji =
                    1.0 / (_f(i + ix[q], j + iy[q]) *
                           _dg(iz[q] + k));
+
                 int pos =
                     (iz[q] + k) + align +
                     (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
@@ -177,15 +178,25 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
 
         prec dth = dt / (h * h * h);
 
+                //prec Ji =
+                //    - quad_weight / (f[q] * d1[q]);
+                
+        printf("d1[%d] = %g \n", q, d1[q]);
+        printf("rho[%d] = %g \n", q, _rho(105, 105, 125));
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
                 // Do not apply stencil at halo points
                 if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
                      iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
+
+
+                //printf("f(%d, %d) = %f g'(%d) = %f \n",
+                //                i + ix[q], j + iy[q], 
+                //       _f(i + ix[q], j + iy[q]), iz[q] + k, _dg(iz[q] + k));
+
                 prec Ji =
-                    - quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) *
-                                   _rho(i + ix[q], j + iy[q], iz[q] + k));
+                    - quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) * d1[q]);
                 int pos =
                     (iz[q] + k) + align +
                     (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
