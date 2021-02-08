@@ -3,7 +3,7 @@ cmake_policy(SET CMP0074 NEW)
 project(AWP_MINI VERSION 1.0 LANGUAGES C CUDA)
 
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-set(GCC_COMPILE_FLAGS "-std=c99 -Wall -Werror\
+set(GCC_COMPILE_FLAGS "-std=c99 -Wall\
    -Wextra -Wmissing-prototypes -Wstrict-prototypes \
           -Wold-style-definition -Wno-unused-parameter")
 if (DEFINED ENV{ARCH})

@@ -7,9 +7,11 @@ extern "C" {
 void mms_init(const char *MMSFILE,
         const int *nxt, const int *nyt,
               const int *nzt, const int ngrids, float **d_d1, float **d_lam,
-              float **d_mu, float **d_vx, float **d_vy, float **d_vz,
+              float **d_mu,
+              float **d_qp, float **d_qs,
+              float **d_vx, float **d_vy, float **d_vz,
               float **d_xx, float **d_yy, float **d_zz, float **d_xy,
-              float **d_xz, float **d_yz, int _px, int _py, const float *h);
+              float **d_xz, float **d_yz, int px, int py, const float *h);
 #ifdef __cplusplus
 }
 #endif
