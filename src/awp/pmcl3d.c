@@ -1899,6 +1899,10 @@ if (usemms) {
                   topo_velocity_interior_H(&T);
 #endif
                }
+               if (usemms)
+                       mms_force_velocity(d_u1[p], d_v1[p], d_w1[p], nxt[p],
+                                          nyt[p], nzt[p], DH[p], coord[0],
+                                          coord[1], p, DT * (cur_step - 1));
             }
 
             for (p = 0; p < ngrids; p++)
@@ -2075,6 +2079,16 @@ if (usemms) {
 #if TOPO
                topo_stress_interior_H(&T);
 #endif
+
+               if (usemms) {
+                       for (p = 0; p < ngrids; p++) {
+                               mms_force_stress(d_xx[p], d_yy[p], d_zz[p],
+                                                d_xy[p], d_xz[p], d_yz[p],
+                                                nxt[p], nyt[p], nzt[p], DH[p],
+                                                coord[0], coord[1], p,
+                                                DT * (cur_step - 1) + 0.5 * DT);
+                       }
+               }
             }
             else
             {

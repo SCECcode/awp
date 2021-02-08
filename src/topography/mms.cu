@@ -63,12 +63,15 @@ __inline__ __device__ float material_perturbation(float x, float y, float z, flo
 
 
 __global__ void material_properties(
-              const int nx, const int ny,
-              const int nz, float *d_d1, float *d_lam,
+              float *d_d1, float *d_lam,
               float *d_mu, float *d_qp, float *d_qs,
               const float lam0, const float mu0, const float rho0, 
               const float dlam, const float dmu, const float drho, 
-              const float mode, const float h, const int px, const int py, const int pz
+              const float mode, 
+              const int nx, const int ny,
+              const int nz, 
+              const int px, const int py, const int pz, 
+              const float h
               ) {
 
                 int i = threadIdx.z + blockDim.z * blockIdx.z;
@@ -104,19 +107,19 @@ __global__ void material_properties(
 }
 
 __global__ void exact_velocity(
-              const int nx, const int ny, const int nz, 
               float *d_vx, float *d_vy, float *d_vz, 
-              float *d_xx, float *d_yy, float *d_zz, 
-              float *d_xy, float *d_xz, float *d_yz, 
-              float vx0, float vy0, float vz0, 
-              float xx0, float yy0, float zz0, 
-              float xy0, float xz0, float yz0, 
-              float dvx, float dvy, float dvz, 
-              float dxx, float dyy, float dzz, 
-              float dxy, float dxz, float dyz, 
-              float cp0, float cs0, 
-              float dcp, float dcs, 
-              float mode, const float h, const int px, const int py, const int pz, 
+              const float vx0, const float vy0, const float vz0, 
+              const float xx0, const float yy0, const float zz0, 
+              const float xy0, const float xz0, const float yz0, 
+              const float dvx, const float dvy, const float dvz, 
+              const float dxx, const float dyy, const float dzz, 
+              const float dxy, const float dxz, const float dyz, 
+              const float cp0, const float cs0, const float rho0,
+              const float dcp, const float dcs, const float drho,
+              const float mode,
+              const int nx, const int ny, const int nz, 
+              const int px, const int py, const int pz, 
+              const float h, 
               float t
               ) {
 
@@ -154,20 +157,20 @@ __global__ void exact_velocity(
 }
 
 __global__ void exact_stress(
-              const int nx, const int ny, const int nz, 
-              float *d_vx, float *d_vy, float *d_vz, 
               float *d_xx, float *d_yy, float *d_zz, 
               float *d_xy, float *d_xz, float *d_yz, 
-              float vx0, float vy0, float vz0, 
-              float xx0, float yy0, float zz0, 
-              float xy0, float xz0, float yz0, 
-              float dvx, float dvy, float dvz, 
-              float dxx, float dyy, float dzz, 
-              float dxy, float dxz, float dyz, 
-              float cp0, float cs0, 
-              float dcp, float dcs, 
-              float mode, const float h, const int px, const int py, const int pz, 
-              float t
+              const float vx0, const float vy0, const float vz0, 
+              const float xx0, const float yy0, const float zz0, 
+              const float xy0, const float xz0, const float yz0, 
+              const float dvx, const float dvy, const float dvz, 
+              const float dxx, const float dyy, const float dzz, 
+              const float dxy, const float dxz, const float dyz, 
+              const float cp0, const float cs0, const float rho0,
+              const float dcp, const float dcs, const float drho, 
+              const float mode, 
+              const int nx, const int ny, const int nz, 
+              const int px, const int py, const int pz, 
+              const float h, float t
               ) {
 
                 int i = threadIdx.z + blockDim.z * blockIdx.z;
@@ -203,7 +206,101 @@ __global__ void exact_stress(
                                         
 }
 
+__global__ void force_velocity(
+                float *d_vx, float *d_vy, float *d_vz,
+                const float vx0, const float vy0, const float vz0, 
+                const float xx0, const float yy0, const float zz0, 
+                const float xy0, const float xz0, const float yz0, 
+                const float dvx, const float dvy, const float dvz, 
+                const float dxx, const float dyy, const float dzz, 
+                const float dxy, const float dxz, const float dyz, 
+                const float cp0, const float cs0, const float rho0,
+                const float dcp, const float dcs, const float drho, 
+                const float mode,
+                const int nx, const int ny, const int nz,
+                const int px, const int py, const int pz,
+                const float h, const float t) {
 
+                int i = threadIdx.z + blockDim.z * blockIdx.z;
+                int j = threadIdx.y + blockDim.y * blockIdx.y;
+                int k = align + threadIdx.x + blockDim.x * blockIdx.x;
+
+                if (!in_bounds_velocity(nx, ny, nz, i, j, k)) return;
+
+                float Lx =  length_x(nx, h);
+                float Ly =  length_y(ny, h);
+                float Lz =  length_z(nz, h);
+ 
+                float kx = wavenumber(mode, Lx);
+                float ky = wavenumber(mode, Ly);
+                float kz = wavenumber(mode, Lz);
+
+                float x = xi(i, px, Lx, h);
+                float y = yj(j, py, Ly, h);
+                float z = zk(k, pz, Lz, h);
+
+                int line = 2 * align + nz;
+                int slice = line * (4 + 2 * ngsl + ny);
+                int pos = k + line * j + slice * i;
+
+                float S = material_perturbation(x, y, z, kx, ky, kz);
+
+                float cp = cp0 + dcp * S;
+                float cs = cs0 + dcs * S;
+                float rho = rho0 + drho * S;
+                float om_p = cp / k;
+
+                d_vz[pos] += dvz * om_p * sin(kz * z) * cos(om_p * t) -
+                           dzz * kz * sin(om_p * t) * cos(kz * z) / rho;
+}
+
+__global__ void force_stress(
+                float *d_xx, float *d_yy, float *d_zz, 
+                float *d_xy, float *d_xz, float *d_yz,
+                const float vx0, const float vy0, const float vz0, 
+                const float xx0, const float yy0, const float zz0, 
+                const float xy0, const float xz0, const float yz0, 
+                const float dvx, const float dvy, const float dvz, 
+                const float dxx, const float dyy, const float dzz, 
+                const float dxy, const float dxz, const float dyz, 
+                const float cp0, const float cs0, const float rho0,
+                const float dcp, const float dcs, const float drho,
+                const float mode,
+                const int nx, const int ny, const int nz,
+                const int px, const int py, const int pz,
+                const float h, const float t) {
+
+                int i = threadIdx.z + blockDim.z * blockIdx.z;
+                int j = threadIdx.y + blockDim.y * blockIdx.y;
+                int k = align + threadIdx.x + blockDim.x * blockIdx.x;
+
+                if (!in_bounds_stress(nx, ny, nz, i, j, k)) return;
+
+                float Lx =  length_x(nx, h);
+                float Ly =  length_y(ny, h);
+                float Lz =  length_z(nz, h);
+ 
+                float kx = wavenumber(mode, Lx);
+                float ky = wavenumber(mode, Ly);
+                float kz = wavenumber(mode, Lz);
+
+                float x = xi(i, px, Lx, h);
+                float y = yj(j, py, Ly, h);
+                float z = zk(k, pz, Lz, h);
+
+                int line = 2 * align + nz;
+                int slice = line * (4 + 2 * ngsl + ny);
+                int pos = k + line * j + slice * i;
+
+                float S = material_perturbation(x, y, z, kx, ky, kz);
+
+                float cp = cp0 + dcp * S;
+                float cs = cs0 + dcs * S;
+                float om_p = cp / k;
+
+                d_zz[pos] = zz0 + dzz * sin(kz * z) * cos(om_p * t);
+
+}
 
 void mms_init(const char *MMSFILE,
         const int *nxt, const int *nyt,
@@ -270,27 +367,31 @@ void mms_init(const char *MMSFILE,
                 if (px == 0 && py == 0) printf("Setting material properties for grid = %d \n", p);
                 // Set material properties
                 dim3 blocks( (mz - 1) / threads.x + 1, (my - 1) / threads.y + 1, (mx - 1) / threads.z + 1);
-                material_properties<<<blocks, threads>>>(nxt[p], nyt[p], nzt[p], d_d1[p], d_lam[p], d_mu[p], d_qp[p], d_qs[p],
-                                lam0, mu0, srho0, dlam, dmu, sdrho, smode, h[p], px, py, p);
+                material_properties<<<blocks, threads>>>(
+                    d_d1[p], d_lam[p], d_mu[p], d_qp[p], d_qs[p], lam0, mu0,
+                    srho0, dlam, dmu, sdrho, smode, nxt[p], nyt[p], nzt[p], px,
+                    py, p, h[p]);
 
                 if (px == 0 && py == 0) printf("Setting velocity initial conditions for grid = %d \n", p);
                 // Set initial conditions for velocity
-                exact_velocity<<<blocks, threads>>>(nxt[p], nyt[p], nzt[p], 
+                exact_velocity<<<blocks, threads>>>(
                                 d_vx[p], d_vy[p], d_vz[p],
-                                d_xx[p], d_yy[p], d_zz[p], 
-                                d_xy[p], d_xz[p], d_yz[p], 
                                 svx0, svy0, svz0, 
                                 sxx0, syy0, szz0,
                                 sxy0, sxz0, syz0,
                                 sdvx, sdvy, sdvz, 
                                 sdxx, sdyy, sdzz,
                                 sdxy, sdxz, sdyz,
-                                scp0, scs0, sdcp, sdcs, smode, h[p], px, py, p, 0.0f);
+                                scp0, scs0, srho0,
+                                sdcp, sdcs, sdrho, 
+                                smode, 
+                                nxt[p], nyt[p], nzt[p], 
+                                px, py, p, 
+                                h[p], 0.0f);
 
                 if (px == 0 && py == 0) printf("Setting stress initial conditions for grid = %d \n", p);
                 // Set initial conditions for stress
-                exact_stress<<<blocks, threads>>>(nxt[p], nyt[p], nzt[p], 
-                                d_vx[p], d_vy[p], d_vz[p],
+                exact_stress<<<blocks, threads>>>(
                                 d_xx[p], d_yy[p], d_zz[p], 
                                 d_xy[p], d_xz[p], d_yz[p], 
                                 svx0, svy0, svz0, 
@@ -299,7 +400,12 @@ void mms_init(const char *MMSFILE,
                                 sdvx, sdvy, sdvz, 
                                 sdxx, sdyy, sdzz,
                                 sdxy, sdxz, sdyz,
-                                scp0, scs0, sdcp, sdcs, smode, h[p], px, py, p, 0.0f + 0.5f * dt);
+                                scp0, scs0, srho0,
+                                sdcp, sdcs, sdrho, 
+                                smode, 
+                                nxt[p], nyt[p], nzt[p], 
+                                px, py, p, 
+                                h[p], 0.0f + 0.5f * dt);
 
                 cudaError_t cerr;
                 CUCHK(cerr=cudaGetLastError());
@@ -309,5 +415,50 @@ void mms_init(const char *MMSFILE,
         }
 
                 if (px == 0 && py == 0) printf("MMS initialization done. \n");
+}
+
+void mms_force_velocity(float *d_vx, float *d_vy, float *d_vz, const int nx, const int ny, const int nz, const float h, const int px, const int py, const int pz, const float t)
+{
+                int mz = nz;
+                int my = ny + 2 * ngsl + 4;
+                int mx = nx + 2 * ngsl + 4;
+                dim3 threads (32, 4, 1);
+                dim3 blocks( (mz - 1) / threads.x + 1, (my - 1) / threads.y + 1, (mx - 1) / threads.z + 1);
+                force_velocity<<<blocks, threads>>>(
+                    d_vx, d_vy, d_vz,
+                    svx0, svy0, svz0, 
+                    sxx0, syy0, szz0,
+                    sxy0, sxz0, syz0,
+                    sdvx, sdvy, sdvz, 
+                    sdxx, sdyy, sdzz,
+                    sdxy, sdxz, sdyz,
+                    scp0, scs0, srho0,
+                    sdcp, sdcs, sdrho, 
+                    smode, 
+                    nx, ny, nz, 
+                    px, py, pz, h, t);
+}
+void mms_force_stress(float *d_xx, float *d_yy, float *d_zz, float *d_xy,
+                      float *d_xz, float *d_yz, const int nx, const int ny, const int nz,
+                      const float h, const int px, const int py, const int pz, const float t) {
+        int mz = nz;
+        int my = ny + 2 * ngsl + 4;
+        int mx = nx + 2 * ngsl + 4;
+        dim3 threads(32, 4, 1);
+        dim3 blocks( (mz - 1) / threads.x + 1, (my - 1) / threads.y + 1, (mx - 1) / threads.z + 1);
+        force_stress<<<blocks, threads>>>(
+                    d_xx, d_yy, d_zz, 
+                    d_xy, d_xz, d_yz, 
+                    svx0, svy0, svz0, 
+                    sxx0, syy0, szz0,
+                    sxy0, sxz0, syz0,
+                    sdvx, sdvy, sdvz, 
+                    sdxx, sdyy, sdzz,
+                    sdxy, sdxz, sdyz,
+                    scp0, scs0, srho0,
+                    sdcp, sdcs, sdrho, 
+                    smode, 
+                    nx, ny, nz, 
+                    px, py, pz, h, t);
 }
 
