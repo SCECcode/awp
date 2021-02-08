@@ -13,6 +13,7 @@ set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/grid/shift.h
     ${AWP_MINI_SOURCE_DIR}/include/topography/geometry.h
     ${AWP_MINI_SOURCE_DIR}/include/topography/geometry/geometry.h
+    ${AWP_MINI_SOURCE_DIR}/include/topography/mms.cuh
     ${AWP_MINI_SOURCE_DIR}/include/topography/readers/serial_reader.h
     ${AWP_MINI_SOURCE_DIR}/include/test/test.h     
     ${AWP_MINI_SOURCE_DIR}/include/vtk/vtk.h     
@@ -52,7 +53,7 @@ set(OPT_ATTENUATION_LIBRARIES ${LIBRARIES} optimized_attenuation_kernels nvTools
 
 # Unoptimized version
 add_library(topography
-        topography.c topography.cu geometry.c host.c grids.c
+        topography.c topography.cu geometry.c host.c grids.c mms.cu
         ${UNOPT_HEADERS}
         )
 
@@ -68,7 +69,7 @@ target_link_libraries(topography
 # Optimized version
 add_library(opt_topography
         topography.c opt_topography.cu velocity.cu stress.cu geometry.c host.c
-        grids.c
+        grids.c mms.cu
         ${OPT_HEADERS}
         )
 
@@ -82,10 +83,9 @@ target_link_libraries(opt_topography
         )
 
 
-# Work in progress that takes attenuation into account
 add_library(opt_topography_attenuation
         topography.c opt_topography.cu velocity.cu stress_attenuation.cu
-        geometry.c host.c grids.c
+        geometry.c host.c grids.c mms.cu
         ${OPT_HEADERS}
         )
 

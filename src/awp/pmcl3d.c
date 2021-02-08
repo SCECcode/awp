@@ -30,6 +30,7 @@
 #include <topography/receivers/receivers.h>
 #include <topography/receivers/sgt.h>
 #include <topography/geometry/geometry.h>
+#include <topography/mms.cuh>
 #include <buffers/buffer.h>
 
 #define VERBOSE 1
@@ -93,6 +94,9 @@ int main(int argc, char **argv)
 
    int usesgtfile = 0;
    char SGTFILE[IN_FILE_LEN];
+
+   int usemms = 0;
+   char MMSFILE[IN_FILE_LEN];
 
    //  GPU variables
    long int num_bytes;
@@ -306,7 +310,7 @@ int main(int argc, char **argv)
            &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
-           SGTFILE, &usesgtfile);
+           SGTFILE, &usesgtfile, MMSFILE, &usemms);
 
 #ifndef SEISMIO
 #ifdef NOBGIO
@@ -980,6 +984,7 @@ int main(int argc, char **argv)
          }
       }
 
+if (!usemms) {
 #if VERBOSE
       if (rank == 0)
          printf("Before inimesh\n");
@@ -1119,6 +1124,8 @@ int main(int argc, char **argv)
          }
          fprintf(stdout, "done\n");
       }
+
+}
       MPI_Barrier(MCW);
 
       vx1 = (Grid3D *)calloc(ngrids, sizeof(Grid3D));
@@ -1686,6 +1693,13 @@ int main(int argc, char **argv)
 
       f_grid_t *metrics_f = NULL;
       g_grid_t *metrics_g = NULL;
+
+if (usemms) {
+        if (rank == 0) printf("METHOD OF MANUFACTURED SOLUTIONS ENABLED \n");
+        mms_init(MMSFILE, nxt, nyt, nzt, ngrids, 
+        d_d1, d_lam, d_mu, 
+        d_u1, d_v1, d_w1, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, coord[0], coord[1], DH);
+}
 
 #if TOPO
 

@@ -55,6 +55,7 @@
 *  RECVFILE     <STRING>                      Receiver output file
 *  FORCEFILE    <STRING>                      Boundary point force input file
 *  SGTFILE      <STRING>                      Strain Green's tensor output file
+*  MMSFILE      <STRING>                      MMS input file
 ****************************************************************************************************************
 */
 
@@ -134,6 +135,7 @@ const char def_SOURCEFILE[IN_FILE_LEN] = "";
 const char def_RECVFILE[IN_FILE_LEN] = "";
 const char def_FORCEFILE[IN_FILE_LEN] = "";
 const char def_SGTFILE[IN_FILE_LEN] = "";
+const char def_MMSFILE[IN_FILE_LEN] = "";
 
 void parsemultiple(char *optarg, int *val);
 
@@ -161,7 +163,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              int *USETOPO, char *SOURCEFILE,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE,
              char *FORCEFILE, int *USEFORCEFILE,
-             char *SGTFILE, int *USESGTFILE)
+             char *SGTFILE, int *USESGTFILE, char *MMSFILE, int *USEMMSFILE)
 {
         int p;
 
@@ -222,12 +224,13 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
         strcpy(INTOPO, def_INTOPO);
         strcpy(SOURCEFILE, def_SOURCEFILE);
         strcpy(RECVFILE, def_RECVFILE);
+        strcpy(MMSFILE, def_MMSFILE);
 
 
         extern char *optarg;
         static const char *optstring =
             "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:G:z:i:l:h:30:p:s:r:W:1:2:"
-            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:9:o:c:";
+            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:9:14:o:c:";
         static struct option long_options[] = {
             {"TMAX", required_argument, NULL, 'T'},
             {"DH", required_argument, NULL, 'H'},
@@ -278,6 +281,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
             {"RECVFILE", required_argument, NULL, 109},
             {"FORCEFILE", required_argument, NULL, 9},
             {"SGTFILE", required_argument, NULL, 10},
+            {"MMSFILE", required_argument, NULL, 14},
         };
 
 
@@ -446,6 +450,10 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                 strcpy(SGTFILE, optarg);
                                 *USESGTFILE = 1;
                                 break;
+                        case 14:
+                                strcpy(MMSFILE, optarg);
+                                *USEMMSFILE = 1;
+                                break;
                         default:
                                 printf(
                                     "Usage: %s \nOptions:\n\t[(-T | --TMAX) "
@@ -519,6 +527,9 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                     "file>]\n\n");
                                 printf(
                                     "\n\t[(-10 | --SGTFILE) <SGT "
+                                    "file>]\n\n");
+                                printf(
+                                    "\n\t[(-14 | --MMSFILE) <MMS "
                                     "file>]\n\n");
                                 exit(-1);
                 }
