@@ -11,7 +11,7 @@ void mms_init(const char *MMSFILE,
               float **d_qp, float **d_qs,
               float **d_vx, float **d_vy, float **d_vz,
               float **d_xx, float **d_yy, float **d_zz, float **d_xy,
-              float **d_xz, float **d_yz, int px, int py, const float *h);
+              float **d_xz, float **d_yz, int px, int py, const float *h, const float dt);
 #ifdef __cplusplus
 }
 #endif

@@ -1702,7 +1702,7 @@ if (usemms) {
         if (rank == 0) printf("METHOD OF MANUFACTURED SOLUTIONS ENABLED \n");
         mms_init(MMSFILE, nxt, nyt, nzt, ngrids, 
         d_d1, d_lam, d_mu, d_qp, d_qs, 
-        d_u1, d_v1, d_w1, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, coord[0], coord[1], DH);
+        d_u1, d_v1, d_w1, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, coord[0], coord[1], DH, DT);
 }
 
 #if TOPO
