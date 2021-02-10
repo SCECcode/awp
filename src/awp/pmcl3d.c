@@ -30,6 +30,7 @@
 #include <topography/receivers/receivers.h>
 #include <topography/receivers/sgt.h>
 #include <topography/geometry/geometry.h>
+#include <topography/geometry.h>
 #include <topography/mms.cuh>
 #include <buffers/buffer.h>
 
@@ -1126,9 +1127,6 @@ if (!usemms) {
       }
 
 // MMS ends
-} else {
-printf("MMS!\n");
-
 }
       MPI_Barrier(MCW);
 
@@ -1730,6 +1728,8 @@ if (usemms) {
          topo_init_geometry(&T);
          topo_build(&T);
          topo_set_constants(&T);
+
+        topo_write_geometry_vtk(&T, 1);
       }
 
 #endif
@@ -1899,10 +1899,6 @@ if (usemms) {
                   topo_velocity_interior_H(&T);
 #endif
                }
-               if (usemms)
-                       mms_force_velocity(d_u1[p], d_v1[p], d_w1[p], nxt[p],
-                                          nyt[p], nzt[p], DH[p], coord[0],
-                                          coord[1], p, DT * (cur_step - 1));
             }
 
             for (p = 0; p < ngrids; p++)
@@ -2030,6 +2026,7 @@ if (usemms) {
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 2, rank, size);
             }
 
+
             CUCHK(cudaStreamSynchronize(stream_i));
 
             for (p = 0; p < ngrids; p++)
@@ -2056,6 +2053,28 @@ if (usemms) {
                dump_nonzeros(d_yz[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "yz", p, cur_step, 2, rank, size);
             }
 
+               if (usemms) {
+                       float t =  DT * (cur_step);
+                        for (p = 0; p < ngrids; p++) {
+                       mms_force_velocity(d_u1[p], d_v1[p], d_w1[p], nxt[p],
+                                          nyt[p], nzt[p], DH[p], coord[0],
+                                          coord[1], p, t + 0.5 * DT , DT);
+                        }
+
+                        p = ngrids - 1;
+                        //// Exact solution at bottom boundary
+                        //mms_exact_velocity(d_u1[p], d_v1[p], d_w1[p], 
+                        //nxt[p], nyt[p], nzt[p], coord[0], coord[1], p, 0, 0, 0,
+                        //4 + 2 * ngsl + nxt[p], 4 + 2 * ngsl + nyt[p], 8, DH[p], t);
+
+                        // Exact solution at top boundary
+                        //mms_exact_velocity(d_u1[p], d_v1[p], d_w1[p], 
+                        //    nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 50 , 50, 16, 4 + 2 * ngsl + nxt[p] - 50,
+                        //    4 + 2 * ngsl + nyt[p] - 50, nzt[p] - 16, DH[p], t, 0);
+            }
+
+
             for (p = 0; p < ngrids; p++)
             {
                PostRecvMsg_X(RL_vel[p], RR_vel[p], MCW, request_x[p], &count_x[p], msg_v_size_x[p], x_rank_L, x_rank_R, p);
@@ -2080,15 +2099,6 @@ if (usemms) {
                topo_stress_interior_H(&T);
 #endif
 
-               if (usemms) {
-                       for (p = 0; p < ngrids; p++) {
-                               mms_force_stress(d_xx[p], d_yy[p], d_zz[p],
-                                                d_xy[p], d_xz[p], d_yz[p],
-                                                nxt[p], nyt[p], nzt[p], DH[p],
-                                                coord[0], coord[1], p,
-                                                DT * (cur_step - 1) + 0.5 * DT);
-                       }
-               }
             }
             else
             {
@@ -2165,6 +2175,7 @@ if (usemms) {
                }
             }
             CUCHK(cudaDeviceSynchronize());
+
 
             for (p = 0; p < ngrids; p++)
             {
@@ -2513,6 +2524,41 @@ if (usemms) {
             CUCHK(cudaDeviceSynchronize());
 
             fstr_H(d_zz[0], d_xz[0], d_yz[0], stream_i, xls[0], xre[0], yls[0], yre[0]);
+
+               if (usemms) {
+                       float t = DT * (cur_step - 1) + 0.5 * DT;
+                       for (p = 0; p < ngrids; p++) {
+                               mms_force_stress(d_xx[p], d_yy[p], d_zz[p],
+                                                d_xy[p], d_xz[p], d_yz[p],
+                                                nxt[p], nyt[p], nzt[p], DH[p],
+                                                coord[0], coord[1], p,
+                                                t + 0.5 * DT, DT);
+                       }
+
+                        p = ngrids - 1;
+
+                        // Exact solution at bottom boundary
+                        //mms_exact_stress(
+                        //    d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p],
+                        //    d_yz[p], nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 2 + ngsl, 2 + ngsl, 8, 2 + ngsl + nxt[p],
+                        //    2 + ngsl + nyt[p], nzt[p] - 8, DH[p], t, 0);
+
+                        //// Exact solution at top boundary
+                        //mms_exact_stress(
+                        //    d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p],
+                        //    d_yz[p], nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 0 , 0, nzt[p] - 8, 4 + 2 * ngsl + nxt[p],
+                        //    4 + 2 * ngsl + nyt[p], nzt[p], DH[p], t);
+
+                        //mms_exact_stress(
+                        //    d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p],
+                        //    d_yz[p], nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 50 , 50, 16, 4 + 2 * ngsl + nxt[p] - 50,
+                        //    4 + 2 * ngsl + nyt[p] - 20, nzt[p] - 16, DH[p], t, 0);
+
+                        CUCHK(cudaDeviceSynchronize());
+               }
             CUCHK(cudaDeviceSynchronize());
 
             for (p = 0; p < ngrids; p++)
@@ -2521,6 +2567,10 @@ if (usemms) {
                sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p],
                          cur_step, nt, p);
             }
+
+#define TOPO_USE_VTK 1
+            if (cur_step % 10 == 0)
+            topo_write_vtk(&T, cur_step, 1);
 
             if (cur_step % NTISKP == 0)
             {
