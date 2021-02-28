@@ -24,7 +24,7 @@
 #include <awp/init.h>
 #include <topography/topography.h>
 #include <topography/velocity.cuh>
-#include <topography/stress_attenuation.cuh>
+#include <topography/stress.cuh>
 #include <topography/sources/sources.h>
 #include <topography/sources/forces.h>
 #include <topography/receivers/receivers.h>

@@ -80,7 +80,7 @@ topo_t topo_init(const int USETOPO,
                 printf("Topography:: debugging enabled\n");
 
         if (T.dbg && rank == 0 && T.use)
-                printf("Topography block size:: %d %d %d\n", TBX, TBY, TBZ);
+                printf("Topography min. block size:: %d %d %d\n", TBX, TBY, TBZ);
 
         topo_set_bounds(&T);
 

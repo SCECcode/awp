@@ -1,5 +1,3 @@
-#include <topography/kernels/optimized_launch_config.cuh>
-#include <topography/kernels/optimized_velocity.cuh>
 
 // Turning __restrict__ on or off...
 //#define RSTRCT

@@ -21,12 +21,6 @@ set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/topography/host.h
     )
 
-set(OPT_HEADERS
-    ${HEADERS}
-    ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/optimized_velocity.cuh     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/optimized_stress.cuh     
-    )
-
 set(LIBRARIES
     ${MPI_C_LIBRARIES} 
     grid 
@@ -38,15 +32,13 @@ set(LIBRARIES
     topography_receivers
     readers
     error
-    optimized_attenuation_kernels 
     nvToolsExt
     )
 
 
 add_library(topography
-        topography.c opt_topography.cu velocity.cu stress_attenuation.cu
+        topography.c velocity.cu stress.cu
         geometry.c host.c grids.c mms.cu
-        ${OPT_HEADERS}
         )
 
 target_link_libraries(topography ${LIBRARIES})

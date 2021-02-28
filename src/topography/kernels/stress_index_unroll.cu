@@ -13,6 +13,7 @@
 #define _g(k) g[(k)]
 #define _g3(k) g3[(k)]
 
+#define RSTRCT __restrict__
 #define LDG(x) x
 
 template <int tx, int ty, int tz, int na, int nb>
@@ -108,11 +109,6 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     return;
   if (j0 >= e_j)
     return;
-  //if (k0 < dm_offset + align)
-  //  return;
-  //if (k0 >= nz - 6 + align)
-  //  return;
-
   
 #pragma unroll
   for (int b = 0; b < nb; ++b) {
