@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <topography/grids.h>
 #include <test/test.h>
 #include <grid/grid_3d.h>

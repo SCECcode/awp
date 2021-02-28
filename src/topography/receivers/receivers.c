@@ -3,7 +3,7 @@
 #include <math.h>
 #include <errno.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <test/test.h>
 #include <topography/receivers/receivers.h>
 #include <topography/receivers/receiver.h>

@@ -5,6 +5,7 @@ add_subdirectory(readers)
 add_subdirectory(geometry)
 add_subdirectory(sources)
 add_subdirectory(receivers)
+add_subdirectory(functions)
 
 set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h     
@@ -33,6 +34,8 @@ set(LIBRARIES
     readers
     error
     nvToolsExt
+    nvToolsExt
+    functions
     )
 
 

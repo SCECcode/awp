@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <topography/host.h>
 
 void topo_h_malloc(topo_t *host)

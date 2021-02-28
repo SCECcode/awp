@@ -3,7 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <grid/grid_3d.h>
 #include <grid/shift.h>
 #include <topography/metrics/metrics.h>

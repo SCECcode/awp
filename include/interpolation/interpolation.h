@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <grid/grid_3d.h>
 
 /* 
