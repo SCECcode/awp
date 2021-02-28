@@ -5,7 +5,7 @@
 
 #include <test/test.h>
 #include <readers/version.h>
-#include <readers/error.h>
+#include <awp/error.h>
 
 
 int check_version(void);

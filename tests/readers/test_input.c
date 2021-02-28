@@ -5,7 +5,7 @@
 
 #include <test/test.h>
 #include <readers/input.h>
-#include <readers/error.h>
+#include <awp/error.h>
 
 #define STR_LEN 2048
 

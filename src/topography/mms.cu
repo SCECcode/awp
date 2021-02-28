@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <topography/mms.cuh>
+#include <buffers/buffer.h>
+#include <readers/input.h>
 #include <awp/pmcl3d_cons.h>
-
 // Background values (P-wave speed, S-wave speed, density)
 static float scp0, scs0, srho0;
 // Perturbation values (P-wave speed, S-wave speed, density)
@@ -17,6 +19,10 @@ static float sdvx, sdvy, sdvz, sdxx, sdyy, sdzz, sdxy, sdxz, sdyz;
 
 // Plane wave position
 static float szc;
+
+static input_t input;
+static buffer_t bvx;
+
 
 
 __inline__ __device__ int in_bounds_stress(int nx, int ny, int nz, int i, int j, int k) {
@@ -343,20 +349,28 @@ __global__ void force_stress(
                 float mu = rho * cs * cs;
 }
 
-void mms_init(const char *MMSFILE,
-        const int *nxt, const int *nyt,
-              const int *nzt, const int ngrids, float **d_d1, float **d_lam,
-              float **d_mu,
-              float **d_qp, float **d_qs,
-              float **d_vx, float **d_vy, float **d_vz,
-              float **d_xx, float **d_yy, float **d_zz, float **d_xy,
-              float **d_xz, float **d_yz, int px, int py, const float *h, const float dt)
+void mms_init(const char *MMSFILE, const char *RECVFILE, const int *nxt,
+              const int *nyt, const int *nzt, const int ngrids, float **d_d1,
+              float **d_lam, float **d_mu, float **d_qp, float **d_qs,
+              float **d_vx, float **d_vy, float **d_vz, float **d_xx,
+              float **d_yy, float **d_zz, float **d_xy, float **d_xz,
+              float **d_yz, int px, int py, int rank, const MPI_Comm comm, const float *h, const float dt) 
 {
+        int use = strcmp(RECVFILE, "") != 0 ? 1 : 0;
+        if (!use && rank == 0) {
+                 fprintf(stderr, "MMS: No receiver input file specified! \n");
+                 exit(-1);
+        }
 
+
+        if (rank == 0) {
+                AWPCHK(input_init(&input, RECVFILE));
+        }
+        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
         FILE *fh = fopen(MMSFILE, "r");
         if (!fh)  {
-         if (px == 0 && py == 0) {
+         if (rank == 0) {
                  fprintf(stderr, "Failed to open: %s \n", MMSFILE);
                  exit(-1);
         }

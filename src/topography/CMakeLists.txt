@@ -21,12 +21,6 @@ set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/topography/host.h
     )
 
-set(UNOPT_HEADERS
-    ${HEADERS}
-    ${AWP_MINI_SOURCE_DIR}/include/topography/topography.cuh     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/unoptimized.cuh     
-    )
-
 set(OPT_HEADERS
     ${HEADERS}
     ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/optimized_velocity.cuh     
@@ -44,56 +38,20 @@ set(LIBRARIES
     topography_receivers
     readers
     error
+    optimized_attenuation_kernels 
+    nvToolsExt
     )
 
-set(UNOPT_LIBRARIES ${LIBRARIES} unoptimized_kernels)
-set(OPT_LIBRARIES ${LIBRARIES} optimized_kernels nvToolsExt)
-set(OPT_ATTENUATION_LIBRARIES ${LIBRARIES} optimized_attenuation_kernels nvToolsExt)
 
-
-# Unoptimized version
 add_library(topography
-        topography.c topography.cu geometry.c host.c grids.c mms.cu
-        ${UNOPT_HEADERS}
-        )
-
-target_include_directories(topography
-        PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
-       )
-
-target_link_libraries(topography 
-        ${UNOPT_LIBRARIES}
-        )
-
-# Optimized version
-add_library(opt_topography
-        topography.c opt_topography.cu velocity.cu stress.cu geometry.c host.c
-        grids.c mms.cu
-        ${OPT_HEADERS}
-        )
-
-target_include_directories(opt_topography
-        PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
-       )
-
-target_link_libraries(opt_topography 
-        ${OPT_LIBRARIES} 
-        )
-
-
-add_library(opt_topography_attenuation
         topography.c opt_topography.cu velocity.cu stress_attenuation.cu
         geometry.c host.c grids.c mms.cu
         ${OPT_HEADERS}
         )
 
-target_include_directories(opt_topography_attenuation
+target_link_libraries(topography ${LIBRARIES})
+
+target_include_directories(topography
         PUBLIC
         ${AWP_MINI_SOURCE_DIR}/include/
        )
-
-target_link_libraries(opt_topography_attenuation
-        ${OPT_ATTENUATION_LIBRARIES} 
-        )
