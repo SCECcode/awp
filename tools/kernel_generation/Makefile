@@ -1,5 +1,5 @@
 ifndef $(${AWP_OPT})
-AWP_OPT=../..
+AWP_OPT=../../
 $(warning "The environment variable AWP_OPT is not set. Set it to the path to export kernels to")
 $(info "Using default value: ${AWP_OPT})
 endif

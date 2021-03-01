@@ -100,9 +100,9 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
 
     print("Generating velocity kernels: %s. "%label)
 
-    rho1 = fd.Variable('rho1', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'y', 1), 'z', 1)) 
-    rho2 = fd.Variable('rho2', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'z', 1)) 
-    rho3 = fd.Variable('rho3', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'y', 1)) 
+    rho1 = fd.Variable('rho1', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'y', G.u1[1]), 'z', G.u1[2])) 
+    rho2 = fd.Variable('rho2', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', G.u2[0]), 'z', G.u2[2])) 
+    rho3 = fd.Variable('rho3', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', G.u3[0]), 'y', G.u3[1])) 
 
     # Jacobians
     J1 = F.f_1 * F.g3_c
@@ -282,9 +282,9 @@ def stress(label, debug=0, debug_ops=0, use_cartesian=0):
         F.u3 = F.w1
 
     a, nu = sp.symbols('a nu')
-    rho1 = fd.Variable('rho1', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'y', 1), 'z', 1)) 
-    rho2 = fd.Variable('rho2', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'z', 1)) 
-    rho3 = fd.Variable('rho3', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', 1), 'y', 1)) 
+    rho1 = fd.Variable('rho1', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'y', G.u1[1]), 'z', G.u1[2])) 
+    rho2 = fd.Variable('rho2', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', G.u2[0]), 'z', G.u2[2])) 
+    rho3 = fd.Variable('rho3', dtype=fd.prec, val=Pavg(Pavg(F.rho, 'x', G.u3[0]), 'y', G.u3[1])) 
 
     Jii = fd.Variable('Jii', dtype=fd.prec, val=F.f_c*F.g3_c)
     J12i = fd.Variable('J12i', dtype=fd.prec, val=F.f*F.g3_c)
