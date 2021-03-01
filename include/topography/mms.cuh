@@ -9,7 +9,7 @@ extern "C" {
 
 #include <awp/error.h>
 #endif
-void mms_init(const char *MMSFILE, const char *RECVFILE, const int *nxt,
+void mms_init(const char *MMSFILE, const int *nxt,
               const int *nyt, const int *nzt, const int ngrids, float **d_d1,
               float **d_lam, float **d_mu, float **d_qp, float **d_qs,
               float **d_vx, float **d_vy, float **d_vz, float **d_xx,

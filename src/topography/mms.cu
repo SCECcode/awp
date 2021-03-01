@@ -6,21 +6,20 @@
 #include <readers/input.h>
 #include <awp/pmcl3d_cons.h>
 // Background values (P-wave speed, S-wave speed, density)
-static float scp0, scs0, srho0;
+float scp0, scs0, srho0;
 // Perturbation values (P-wave speed, S-wave speed, density)
-static float sdcp, sdcs, sdrho;
+float sdcp, sdcs, sdrho;
 // Wave mode
-static float smode;
+float smode;
 
 // Background values (velocities and stresses)
-static float svx0, svy0, svz0, sxx0, syy0, szz0, sxy0, sxz0, syz0;
+float svx0, svy0, svz0, sxx0, syy0, szz0, sxy0, sxz0, syz0;
 // Perturbation values (velocities and stresses)
-static float sdvx, sdvy, sdvz, sdxx, sdyy, sdzz, sdxy, sdxz, sdyz;
+float sdvx, sdvy, sdvz, sdxx, sdyy, sdzz, sdxy, sdxz, sdyz;
 
 // Plane wave position
-static float szc;
+float szc;
 
-static input_t input;
 static buffer_t bvx;
 
 
@@ -181,11 +180,12 @@ __global__ void exact_velocity(
                 float cs = cs0 + dcs * S;
 
                 float om_p = cp * kz;
+                float om_s = cs * kz;
 
 
-                d_vx[pos] = 0.0f;
-                d_vy[pos] = 0.0f;
-                d_vz[pos] = vz0 + dvz * gaussian(z, zc, t, kz, om_p);
+                d_vx[pos] =  dvx*exp(-pow(kz*(z - zc) + om_s*t, 2)) + vx0;
+                d_vy[pos] =  dvy*exp(-pow(kz*(z - zc) + om_s*t, 2)) + vy0;
+                d_vz[pos] =  dvz*exp(-pow(kz*(z - zc) + om_p*t, 2)) + vz0;
                 
                                         
 }
@@ -242,15 +242,16 @@ __global__ void exact_stress(
                 float rho = rho0;
 
                 float om_p = cp * kz;
+                float om_s = cs * kz;
 
                 d_xx[pos] = 0.0f;
                 d_yy[pos] = 0.0f;
-                d_zz[pos] = rho * cp * ( zz0 + dzz * gaussian(z, zc, t, kz, om_p) );
+                d_zz[pos] = rho * cp * (dzz*exp(-pow(kz*(z - zc) + om_p*t, 2)) + zz0);
 
                 
                 d_xy[pos] = 0.0f;
-                d_xz[pos] = 0.0f;
-                d_yz[pos] = 0.0f;
+                d_xz[pos] = cs * rho * (dxz*exp(-pow(kz*(z - zc) + om_s*t, 2)) + xz0);
+                d_yz[pos] = cs * rho * (dyz*exp(-pow(kz*(z - zc) + om_s*t, 2)) + yz0);
                                         
 }
 
@@ -349,24 +350,13 @@ __global__ void force_stress(
                 float mu = rho * cs * cs;
 }
 
-void mms_init(const char *MMSFILE, const char *RECVFILE, const int *nxt,
+void mms_init(const char *MMSFILE, const int *nxt,
               const int *nyt, const int *nzt, const int ngrids, float **d_d1,
               float **d_lam, float **d_mu, float **d_qp, float **d_qs,
               float **d_vx, float **d_vy, float **d_vz, float **d_xx,
               float **d_yy, float **d_zz, float **d_xy, float **d_xz,
               float **d_yz, int px, int py, int rank, const MPI_Comm comm, const float *h, const float dt) 
 {
-        int use = strcmp(RECVFILE, "") != 0 ? 1 : 0;
-        if (!use && rank == 0) {
-                 fprintf(stderr, "MMS: No receiver input file specified! \n");
-                 exit(-1);
-        }
-
-
-        if (rank == 0) {
-                AWPCHK(input_init(&input, RECVFILE));
-        }
-        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
         FILE *fh = fopen(MMSFILE, "r");
         if (!fh)  {
