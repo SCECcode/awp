@@ -190,8 +190,11 @@ void source_init_common(source_t *src, const char *filename,
                         dm_offset_y[j] = dm_offset_y[j - 1] +
                                          SOURCE_DM_OFFSET_Y * grid_pre.gridspacing -
                                          (grid_cur.shift.y * 0.5 * grid_cur.gridspacing - grid_pre.shift.y * 0.5 * grid_pre.gridspacing);
+                // Only add a z-offset for fields at nodal grid points in the z-direction
+                if (grid_type == SZ || grid_type == XZ || grid_type == YZ) {
                         dm_offset_z[j] = grid_top.shift.z * 0.5 * grid_top.gridspacing -
                                          (grid_cur.shift.z * 0.5 * grid_cur.gridspacing);
+                }
                 }
 
                 for (size_t i = 0; i < input->length; ++i)
@@ -329,6 +332,7 @@ void source_init_common(source_t *src, const char *filename,
                 }
 
                 lower = lower - block_height + overlap;
+
 
                 if (src->lengths[j] == 0)
                 {
