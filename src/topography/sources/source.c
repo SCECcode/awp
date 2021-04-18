@@ -17,7 +17,7 @@
 #include <topography/grids.h>
 
 #define OVERLAP 7.0
-//#define DEBUG_SOURCE
+#define DEBUG_SOURCE
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
@@ -357,6 +357,7 @@ void source_init_common(source_t *src, const char *filename,
                         grid_fill1(y1, y_grid);
                         grid_fill1(z1, z_grid);
 
+
                         // Interpolate topography data to source location in
                         // (x,y) space
                         prec *f_interp =
@@ -416,7 +417,11 @@ void source_init_common(source_t *src, const char *filename,
                                         // block can be surface
                                         // coordinates
                                         assert(j == 0);
-                                        src->z[j][k] = block_height;
+                                        // Subtract 2h so the source location appears in the
+                                        // interior of the grid. This hack prevents the stencil from
+                                        // becoming one-sided.  The index gets correctly adjusted by
+                                        // changing the interpolation index below
+                                        src->z[j][k] = block_height - 2 * grid.gridspacing;
                                         break;
                                 }
                         }
@@ -439,6 +444,19 @@ void source_init_common(source_t *src, const char *filename,
                                      full_grid, src->x[j], src->y[j], src->z[j],
                                      src->global_indices[j],
                                      src->lengths[j], input->degree));
+
+                // Correct interpolation coefficients when the receivers appear on the free surface
+                if (f == NULL && j == 0) {
+                        for (size_t k = 0; k < src->lengths[j]; ++k) {
+                                switch (src->type[j][k]) {
+                                        case INPUT_SURFACE_COORD:
+                                                src->interpolation[j].iz[k] +=
+                                                    2;
+                                }
+                        }
+                }
+
+                cuinterp_htod(&src->interpolation[j]);
 
                 //Special treatment for sources located in the overlap zone
                 if (ngrids > 1)
@@ -480,6 +498,7 @@ void source_init_common(source_t *src, const char *filename,
                         } //k loop
                 }
 
+
 #ifdef DEBUG_SOURCE
                 {
                         grid3_t vel_grid = grid_init_stress_grid(
@@ -497,10 +516,15 @@ void source_init_common(source_t *src, const char *filename,
                         grid_fill1(y1, y_grid);
                         grid_fill1(z1, z_grid);
 
-                        if (grid_type == SZ || grid_type == XX || grid_type == Z || grid_type == NODE)
+                        for (int i = 120; i < 128; ++i) {
+                                printf("%3.2f ", z1[i]);
+                        }
+                        printf("\n");
+
+                        if (grid_type == X || grid_type == Y || grid_type == Z || grid_type == NODE)
                         {
-                                printf("rank = %d, grid_type = %d, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
-                                       rank, grid_type, grid.shift.x, grid.shift.y, grid.shift.z,
+                                printf("rank = %d, grid_type = %s, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
+                                       rank, grid_shift_label(grid_type), grid.shift.x, grid.shift.y, grid.shift.z,
                                        j,
                                        x1[ngsl / 2], y1[ngsl / 2], z1[0],
                                        grid.gridspacing);
@@ -542,6 +566,7 @@ void source_init_common(source_t *src, const char *filename,
 
                 grid_data_free(&xyz);
         } // end loop j
+
 
         free(grid_number);
         free(x);
