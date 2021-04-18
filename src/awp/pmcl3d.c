@@ -2242,9 +2242,9 @@ if (usemms) {
             }
 
             sources_read(cur_step);
+            forces_read(cur_step);
             if (T.use)
             {
-               forces_read(cur_step);
                sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0],
                                        d_xz[0], d_yz[0], cur_step, DH[0], DT,
                                        &T.metrics_f, &T.metrics_g, 0);
@@ -2259,6 +2259,7 @@ if (usemms) {
             }
             else
             {
+               forces_add_cartesian(d_zz[0], d_xz[0], d_yz[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
                for (p = 0; p < ngrids; p++)
                {
                   sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
