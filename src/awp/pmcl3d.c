@@ -2259,7 +2259,6 @@ if (usemms) {
             }
             else
             {
-               forces_add_cartesian(d_u1[0], d_v1[0], d_w1[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
                for (p = 0; p < ngrids; p++)
                {
                   sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],
@@ -2525,6 +2524,9 @@ if (usemms) {
             CUCHK(cudaDeviceSynchronize());
 
             fstr_H(d_zz[0], d_xz[0], d_yz[0], stream_i, xls[0], xre[0], yls[0], yre[0]);
+            
+            if (!usetopo)
+            forces_add_cartesian(d_xz[0], d_yz[0], d_zz[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
 
                if (usemms) {
                        float t = DT * (cur_step - 1) + 0.5 * DT;

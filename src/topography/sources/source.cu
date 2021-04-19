@@ -141,16 +141,24 @@ void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
                           const prec *d1, const prec h, const prec dt,
                           const prec quad_weight,
                           const prec *f, const int nx, const int ny,
-                          const int nz, const prec *dg, const int iscurvilinear) 
+                          const int nz, const prec *dg, const int sourcetype) 
 {
         dim3 block (INTERP_THREADS, 1, 1);
         dim3 grid((I->num_query + INTERP_THREADS - 1) / INTERP_THREADS,
                   1, 1);
 
+        if (sourcetype == 0) {
         cusource_add_force<<<grid, block>>>(
             out, in, d1, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix,
             I->d_iy, I->d_iz, I->d_ridx, h, dt, quad_weight, I->num_query,
-            I->grid, f, nx, ny, nz, dg, iscurvilinear);
+            I->grid, f, nx, ny, nz, dg);
+        } else {
+        cusource_add_force_stress<<<grid, block>>>(
+            out, in, d1, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix,
+            I->d_iy, I->d_iz, I->d_ridx, h, dt, quad_weight, I->num_query,
+            I->grid, f, nx, ny, nz, dg, sourcetype);
+
+        }
         CUCHK(cudaGetLastError());
 }
 
@@ -162,7 +170,7 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                                    const prec quad_weight,
                                    const int num_query, const grid3_t grid,
                                    const prec *f, const int nx, const int ny,
-                                   const int nz, const prec *dg, const int iscurvilinear) 
+                                   const int nz, const prec *dg) 
 {
         int q = threadIdx.x + blockDim.x * blockIdx.x;
         if (q >= num_query) {
@@ -185,9 +193,7 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                 if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
                      iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
 
-                prec J = 1.0;
-                if (iscurvilinear)
-                        J =  _f(i + ix[q], j + iy[q]) * _dg(iz[q] + k);
+                prec J =  _f(i + ix[q], j + iy[q]) * _dg(iz[q] + k);
                 prec Ji = - quad_weight /(J * d1[q]);
                 int pos =
                     (iz[q] + k) + align +
@@ -201,6 +207,50 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                 out[pos] = value;
 #endif
         }
+        }
+        }
+}
+
+__global__ void cusource_add_force_stress(prec *out, const prec *in, const prec *d1,
+                                   const prec *lx, const prec *ly,
+                                   const prec *lz, const int num_basis,
+                                   const int *ix, const int *iy, const int *iz,
+                                   const int *lidx, const prec h, const prec dt,
+                                   const prec quad_weight,
+                                   const int num_query, const grid3_t grid,
+                                   const prec *f, const int nx, const int ny,
+                                   const int nz, const prec *dg, const int dir) 
+{
+        int q = threadIdx.x + blockDim.x * blockIdx.x;
+        if (q >= num_query) {
+                return;
+        }
+
+
+        prec dth = 1.0 / (h * h);
+        int k = nz - 1;
+
+        for (int i = 0; i < num_basis; ++i) {
+        for (int j = 0; j < num_basis; ++j) {
+                // Do not apply stencil at halo points
+                if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
+                     iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
+
+                int pos =
+                    (k) + align +
+                    (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
+                    (2 * align + nz) * (iy[q] + j);
+                prec value = dth * lx[q * num_basis + i] *
+                            ly[q * num_basis + j] * in[lidx[q]];
+                if (dir == 1 || dir == 2) {
+                        out[pos] = value;
+                        out[pos+1] = 2 * value - out[pos-1];
+                        out[pos+2] = 2 * value - out[pos-2];
+                }
+                if (dir == 3) {
+                        out[pos+1] = 2 * value - out[pos];
+                        out[pos+2] = 2 * value - out[pos-1];
+                }
         }
         }
 }
