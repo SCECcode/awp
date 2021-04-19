@@ -53,7 +53,7 @@ void interpolate_density(float **d_rho_interp, const float *d_rho,
 
 void forces_init(const char *filename, const grids_t *grids, int ngrids,
                   const f_grid_t *f, const g_grid_t *g, const MPI_Comm comm, const int rank,
-                  const int size, const float *rho) 
+                  const int size, const float *rho, const int istopo) 
 {
         use = strcmp(filename, "") != 0 ? 1 : 0;
 
@@ -67,9 +67,15 @@ void forces_init(const char *filename, const grids_t *grids, int ngrids,
        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
+       //if (istopo) {
        Fx = source_init("fx", SX, &input, grids, ngrids, f, rank, comm, FORCE);
        Fy = source_init("fy", SY, &input, grids, ngrids, f, rank, comm, FORCE);
        Fz = source_init("fz", SZ, &input, grids, ngrids, f, rank, comm, FORCE);
+       //} else {
+       //Fx = source_init("fx", XZ, &input, grids, ngrids, f, rank, comm, FORCE);
+       //Fy = source_init("fy", YZ, &input, grids, ngrids, f, rank, comm, FORCE);
+       //Fz = source_init("fz", ZZ, &input, grids, ngrids, f, rank, comm, FORCE);
+       //}
 
        if (Fx.use) AWPCHK(forces_boundary_check(&Fx));
        if (Fy.use) AWPCHK(forces_boundary_check(&Fy));
@@ -123,31 +129,23 @@ void forces_add(prec *d_u1, prec *d_v1, prec *d_w1, const prec *d_d1, const size
         prec q = 3.55599789310935;
         prec qh = 2.9022824945274315;
 
-        // Interpolates the Jacobian to the force location (simpler, less accurate)
-        //source_add_force(d_u1, d_rho_interp, &Fx, step, h, dt, qh, d_F_interp, nx, ny, nz,
-        //                 g->d_g3_c, grid_num);
-        //source_add_force(d_v1, d_rho_interp, &Fy, step, h, dt, qh, d_F_interp, nx, ny, nz,
-        //                 g->d_g3_c, grid_num);
-        //source_add_force(d_w1, d_rho_interp, &Fz, step, h, dt, q, d_F_interp, nx, ny, nz,
-        //                 g->d_g3, grid_num);
-
         source_add_force(d_u1, d_rho_interp_x, &Fx, step, h, dt, qh, f->d_f_1, nx, ny, nz,
-                         g->d_g3_c, grid_num);
+                         g->d_g3_c, grid_num, 1);
         source_add_force(d_v1, d_rho_interp_y, &Fy, step, h, dt, qh, f->d_f_2, nx, ny, nz,
-                         g->d_g3_c, grid_num);
+                         g->d_g3_c, grid_num, 1);
         source_add_force(d_w1, d_rho_interp_z, &Fz, step, h, dt, q, f->d_f_c, nx, ny, nz,
-                         g->d_g3, grid_num);
+                         g->d_g3, grid_num, 1);
 }
 
-void forces_add_cartesian(prec *d_zz, prec *d_xz, prec *d_yz, const size_t step,
+void forces_add_cartesian(prec *d_u1, prec *d_v1, prec *d_w1, const size_t step,
                 const int nx, const int ny, const int nz, const prec h, const prec dt, const int grid_num) 
 {
         
         if (!use) return;
 
-        //source_add_force_cartesian(d_xz, &Fx, step, h, dt, nx, ny, nz, grid_num);
-        //source_add_force_cartesian(d_yz, &Fy, step, h, dt, nx, ny, nz, grid_num);
-        //source_add_force_cartesian(d_zz, &Fz, step, h, dt, nx, ny, nz, grid_num);
+        source_add_force(d_u1, d_rho_interp_x, &Fx, step, h, dt, 2.0, NULL, nx, ny, nz, NULL, grid_num, 0);
+        source_add_force(d_v1, d_rho_interp_y, &Fy, step, h, dt, 2.0, NULL, nx, ny, nz, NULL, grid_num, 0);
+        source_add_force(d_w1, d_rho_interp_z, &Fz, step, h, dt, 2.0, NULL, nx, ny, nz, NULL, grid_num, 0);
 }
 
 void forces_finalize(void)

@@ -1754,7 +1754,7 @@ if (usemms) {
                         size_tot);
       if (useforcefile)
          forces_init(FORCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
-                     size_tot, (float*)d_d1[0]);
+                     size_tot, (float*)d_d1[0], usetopo);
       if (usesgtfile)
       {
          sgt_init(SGTFILE, grids, ngrids, metrics_f, MCW, rank,
@@ -2259,7 +2259,7 @@ if (usemms) {
             }
             else
             {
-               forces_add_cartesian(d_zz[0], d_xz[0], d_yz[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
+               forces_add_cartesian(d_u1[0], d_v1[0], d_w1[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
                for (p = 0; p < ngrids; p++)
                {
                   sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],

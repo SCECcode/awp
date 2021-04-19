@@ -40,6 +40,8 @@ void grid_data_init(grid_data_t *grid_data, const grid3_t grid);
 void grid_data_free(grid_data_t *grid_data);
 grid3_t grids_select(const enum grid_types grid_type, const grids_t *grids);
 
+const char *grid_typename(const enum grid_types gt);
+
 
 
 #endif

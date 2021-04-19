@@ -116,3 +116,35 @@ grid3_t grids_select(const enum grid_types grid_type, const grids_t *grids)
 
 }
 
+const char *grid_typename(const enum grid_types gt) {
+        switch(gt) {
+                case X:
+                        return "X";
+                case Y:
+                        return "Y";
+                case Z:
+                        return "Z";
+                case SX:
+                        return "SX";
+                case SY:
+                        return "SY";
+                case SZ:
+                        return "SZ";
+                case XX:
+                        return "XX";
+                case XY:
+                        return "XY";
+                case YY:
+                        return "YY";
+                case ZZ:
+                        return "ZZ";
+                case XZ:
+                        return "XZ";
+                case YZ:
+                        return "YZ";
+                case NODE:
+                        return "NODE";
+        }
+        return "";
+}
+

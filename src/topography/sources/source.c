@@ -421,7 +421,7 @@ void source_init_common(source_t *src, const char *filename,
                                         // interior of the grid. This hack prevents the stencil from
                                         // becoming one-sided.  The index gets correctly adjusted by
                                         // changing the interpolation index below
-                                        src->z[j][k] = block_height - 2 * grid.gridspacing;
+                                        src->z[j][k] = block_height - 1 * grid.gridspacing;
                                         break;
                                 }
                         }
@@ -451,7 +451,7 @@ void source_init_common(source_t *src, const char *filename,
                                 switch (src->type[j][k]) {
                                         case INPUT_SURFACE_COORD:
                                                 src->interpolation[j].iz[k] +=
-                                                    2;
+                                                    1;
                                 }
                         }
                 }
@@ -521,10 +521,10 @@ void source_init_common(source_t *src, const char *filename,
                         }
                         printf("\n");
 
-                        if (grid_type == X || grid_type == Y || grid_type == Z || grid_type == NODE)
+                        if (grid_type == X || grid_type == Y || grid_type == Z  || grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == NODE)
                         {
                                 printf("rank = %d, grid_type = %s, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
-                                       rank, grid_shift_label(grid_type), grid.shift.x, grid.shift.y, grid.shift.z,
+                                       rank, grid_typename(grid_type), grid.shift.x, grid.shift.y, grid.shift.z,
                                        j,
                                        x1[ngsl / 2], y1[ngsl / 2], z1[0],
                                        grid.gridspacing);
@@ -657,7 +657,7 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
                       const prec quad_weight,
                       const prec *f, const int nx, const int ny, const int nz,
                       const prec *dg,
-                      const int grid_num)
+                      const int grid_num, const int iscurvilinear)
 {
         if (!src->use || !buffer_is_device_ready(&src->buffer, step) ||
             src->lengths[grid_num] == 0)
@@ -665,5 +665,6 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
         cusource_add_force_H(&src->interpolation[grid_num], out,
-                             source_data, d1, h, dt, quad_weight, f, nx, ny, nz, dg);
+                                     source_data, d1, h, dt, quad_weight, f, nx,
+                                     ny, nz, dg, iscurvilinear);
 }

@@ -34,7 +34,7 @@ void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
                           const prec *d1, const prec h, const prec dt,
                           const prec quad_weight,
                           const prec *f, const int nx, const int ny,
-                          const int nz, const prec *dg);
+                          const int nz, const prec *dg, const int iscurvilinear);
 __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                                    const prec *lx, const prec *ly,
                                    const prec *lz, const int num_basis,
@@ -43,7 +43,8 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                                    const prec quad_weight,
                                    const int num_query, const grid3_t grid,
                                    const prec *f, const int nx, const int ny,
-                                   const int nz, const prec *dg);
+                                   const int nz, const prec *dg, const int iscurvilinear);
+
 #ifdef __cplusplus
 }
 #endif

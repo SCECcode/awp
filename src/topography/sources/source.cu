@@ -3,6 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include <topography/sources/source.cuh>
 #include <interpolation/interpolation.cuh>
@@ -140,7 +141,7 @@ void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
                           const prec *d1, const prec h, const prec dt,
                           const prec quad_weight,
                           const prec *f, const int nx, const int ny,
-                          const int nz, const prec *dg) 
+                          const int nz, const prec *dg, const int iscurvilinear) 
 {
         dim3 block (INTERP_THREADS, 1, 1);
         dim3 grid((I->num_query + INTERP_THREADS - 1) / INTERP_THREADS,
@@ -149,11 +150,10 @@ void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
         cusource_add_force<<<grid, block>>>(
             out, in, d1, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix,
             I->d_iy, I->d_iz, I->d_ridx, h, dt, quad_weight, I->num_query,
-            I->grid, f, nx, ny, nz, dg);
+            I->grid, f, nx, ny, nz, dg, iscurvilinear);
         CUCHK(cudaGetLastError());
 }
 
-#include <assert.h>
 __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                                    const prec *lx, const prec *ly,
                                    const prec *lz, const int num_basis,
@@ -162,7 +162,7 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                                    const prec quad_weight,
                                    const int num_query, const grid3_t grid,
                                    const prec *f, const int nx, const int ny,
-                                   const int nz, const prec *dg) 
+                                   const int nz, const prec *dg, const int iscurvilinear) 
 {
         int q = threadIdx.x + blockDim.x * blockIdx.x;
         if (q >= num_query) {
@@ -185,8 +185,10 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
                 if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
                      iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
 
-                prec Ji =
-                    - quad_weight / (_f(i + ix[q], j + iy[q]) * _dg(iz[q] + k) * d1[q]);
+                prec J = 1.0;
+                if (iscurvilinear)
+                        J =  _f(i + ix[q], j + iy[q]) * _dg(iz[q] + k);
+                prec Ji = - quad_weight /(J * d1[q]);
                 int pos =
                     (iz[q] + k) + align +
                     (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
@@ -202,4 +204,3 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
         }
         }
 }
-
