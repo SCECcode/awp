@@ -124,11 +124,11 @@ void forces_add(prec *d_u1, prec *d_v1, prec *d_w1, const prec *d_d1, const size
         prec qh = 2.9022824945274315;
 
         source_add_force(d_u1, d_rho_interp_x, &Fx, step, h, dt, qh, f->d_f_1, nx, ny, nz,
-                         g->d_g3_c, grid_num, 0);
+                         g->d_g3_c, grid_num, 0, 1);
         source_add_force(d_v1, d_rho_interp_y, &Fy, step, h, dt, qh, f->d_f_2, nx, ny, nz,
-                         g->d_g3_c, grid_num, 0);
+                         g->d_g3_c, grid_num, 0, 2);
         source_add_force(d_w1, d_rho_interp_z, &Fz, step, h, dt, q, f->d_f_c, nx, ny, nz,
-                         g->d_g3, grid_num, 0);
+                         g->d_g3, grid_num, 0, 3);
 }
 
 void forces_add_cartesian(prec *d_xz, prec *d_yz, prec *d_zz, const size_t step,
@@ -137,9 +137,20 @@ void forces_add_cartesian(prec *d_xz, prec *d_yz, prec *d_zz, const size_t step,
         
         if (!use) return;
 
-        source_add_force(d_xz, d_rho_interp_x, &Fx, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 1);
-        source_add_force(d_yz, d_rho_interp_y, &Fy, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 2);
-        source_add_force(d_zz, d_rho_interp_z, &Fz, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 3);
+        source_add_force(d_xz, d_rho_interp_x, &Fx, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 1, 1);
+        source_add_force(d_yz, d_rho_interp_y, &Fy, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 1, 2);
+        source_add_force(d_zz, d_rho_interp_z, &Fz, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 1, 3);
+}
+
+void forces_add_cartesian_velocity(prec *d_vx, prec *d_vy, prec *d_vz, const size_t step,
+                const int nx, const int ny, const int nz, const prec h, const prec dt, const int grid_num) 
+{
+        
+        if (!use) return;
+
+        source_add_force(d_vx, d_rho_interp_x, &Fx, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 2, 1);
+        source_add_force(d_vy, d_rho_interp_y, &Fy, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 2, 2);
+        source_add_force(d_vz, d_rho_interp_z, &Fz, step, h, dt, 1.0, NULL, nx, ny, nz, NULL, grid_num, 2, 3);
 }
 
 void forces_finalize(void)

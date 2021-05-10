@@ -657,7 +657,7 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
                       const prec quad_weight,
                       const prec *f, const int nx, const int ny, const int nz,
                       const prec *dg,
-                      const int grid_num, const int iscurvilinear)
+                      const int grid_num, const int sourcetype, const int dir)
 {
         if (!src->use || !buffer_is_device_ready(&src->buffer, step) ||
             src->lengths[grid_num] == 0)
@@ -666,5 +666,5 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
         cusource_add_force_H(&src->interpolation[grid_num], out,
                                      source_data, d1, h, dt, quad_weight, f, nx,
-                                     ny, nz, dg, iscurvilinear);
+                                     ny, nz, dg, sourcetype, dir);
 }

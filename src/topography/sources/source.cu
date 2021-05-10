@@ -141,7 +141,7 @@ void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
                           const prec *d1, const prec h, const prec dt,
                           const prec quad_weight,
                           const prec *f, const int nx, const int ny,
-                          const int nz, const prec *dg, const int sourcetype) 
+                          const int nz, const prec *dg, const int sourcetype, const int dir) 
 {
         dim3 block (INTERP_THREADS, 1, 1);
         dim3 grid((I->num_query + INTERP_THREADS - 1) / INTERP_THREADS,
@@ -152,12 +152,19 @@ void cusource_add_force_H(const cu_interp_t *I, prec *out, const prec *in,
             out, in, d1, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix,
             I->d_iy, I->d_iz, I->d_ridx, h, dt, quad_weight, I->num_query,
             I->grid, f, nx, ny, nz, dg);
-        } else {
+        } 
+        else if (sourcetype == 1) {
         cusource_add_force_stress<<<grid, block>>>(
             out, in, d1, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix,
             I->d_iy, I->d_iz, I->d_ridx, h, dt, quad_weight, I->num_query,
-            I->grid, f, nx, ny, nz, dg, sourcetype);
+            I->grid, f, nx, ny, nz, dg, dir);
 
+        }
+        else {
+            cusource_add_force_velocity<<<grid, block>>>(
+            out, in, d1, I->d_lx, I->d_ly, I->d_lz, I->num_basis, I->d_ix,
+            I->d_iy, I->d_iz, I->d_ridx, h, dt, quad_weight, I->num_query,
+            I->grid, f, nx, ny, nz, dg, dir);
         }
         CUCHK(cudaGetLastError());
 }
@@ -251,6 +258,46 @@ __global__ void cusource_add_force_stress(prec *out, const prec *in, const prec 
                         out[pos+1] = 2 * value - out[pos];
                         out[pos+2] = 2 * value - out[pos-1];
                 }
+        }
+        }
+}
+
+__global__ void cusource_add_force_velocity(prec *out, const prec *in, const prec *d1,
+                                   const prec *lx, const prec *ly,
+                                   const prec *lz, const int num_basis,
+                                   const int *ix, const int *iy, const int *iz,
+                                   const int *lidx, const prec h, const prec dt,
+                                   const prec quad_weight,
+                                   const int num_query, const grid3_t grid,
+                                   const prec *f, const int nx, const int ny,
+                                   const int nz, const prec *dg, const int dir) 
+{
+        int q = threadIdx.x + blockDim.x * blockIdx.x;
+        if (q >= num_query) {
+                return;
+        }
+
+
+        prec dth = dt / (h * h * h);
+        int k = nz - 1;
+
+        for (int i = 0; i < num_basis; ++i) {
+        for (int j = 0; j < num_basis; ++j) {
+                // Do not apply stencil at halo points
+                if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
+                     iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
+
+                int pos =
+                    (k) + align +
+                    (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
+                    (2 * align + nz) * (iy[q] + j);
+                prec value = dth * lx[q * num_basis + i] *
+                            ly[q * num_basis + j] / d1[q] * in[lidx[q]];
+#if USE_ATOMICS
+                atomicAdd(&out[pos], value);
+#else
+                    out[pos] += value;
+#endif
         }
         }
 }

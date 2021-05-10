@@ -105,7 +105,7 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
                       const prec quad_weight,
                       const prec *f, const int nx, const int ny, const int nz, 
                       const prec *dg,
-                      const int grid_num, const int iscurvilinear);
+                      const int grid_num, const int sourcetype, const int dir);
 
 #endif
 

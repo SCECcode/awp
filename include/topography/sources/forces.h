@@ -19,6 +19,8 @@ void forces_add(prec *d_u1, prec *d_v1, prec *d_w1, const prec *d_d1,
                 const f_grid_t *f, const g_grid_t *g, const int grid_num);
 void forces_add_cartesian(prec *d_xz, prec *d_yz, prec *d_zz, const size_t step,
                 const int nx, const int ny, const int nz, const prec h, const prec dt, const int grid_num);
+void forces_add_cartesian_velocity(prec *d_vx, prec *d_vy, prec *d_vz, const size_t step,
+                const int nx, const int ny, const int nz, const prec h, const prec dt, const int grid_num);
 void forces_finalize(void);
 
 #endif
