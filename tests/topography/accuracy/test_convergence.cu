@@ -82,6 +82,19 @@ typedef struct
         _prec *sxz;
         _prec *syz;
         _prec *rho;
+        _prec *lami;
+        _prec *mui;
+        _prec *qpi;
+        _prec *qsi;
+        _prec *r1;
+        _prec *r2;
+        _prec *r3;
+        _prec *r4;
+        _prec *r5;
+        _prec *r6;
+        _prec *wwo;
+        _prec *vx1, *vx2, *coeff;
+        int *ww;
         int num_bytes;
 } variables_t;
 
@@ -153,7 +166,7 @@ int main(int argc, char **argv)
         int num_refinements = 4;
 
         testdata_t test;
-        int3_t initial_size = {32, 32, 32};
+        int3_t initial_size = {16, 16, 16};
 
         vars_err_t err[num_refinements];
         int grid_sizes[num_refinements];
@@ -173,11 +186,21 @@ int main(int argc, char **argv)
                 printf("Testing stresses\n");
                 test_free(&test);
                 test_initialize(&test, grid);
-                //test_stress(&test, &err[grid]);
+                test_stress(&test, &err[grid]);
                 test_free(&test);
         }
         printf("-----------------------------------------------------\n");
 
+        vars_err_t rates[num_refinements - 1]; 
+        for (int i = 0; i < num_refinements - 1; ++i) {
+                convergence_rates(rates, err, grid_spacings, num_refinements); 
+        }
+
+        const int show_velocity = 0;
+        const int show_stress = 1;
+
+
+        if (show_velocity) {
         //printf("\n");
         //printf("\n");
         //printf("Interior truncation error\n");
@@ -187,21 +210,15 @@ int main(int argc, char **argv)
         //               err[i].vx.interior, err[i].vy.interior,
         //               err[i].vz.interior);
         //}
-
-        //printf("N \t sxx        \t syy          \t szz \n");
-        //for (int i = 0; i < num_refinements; ++i) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
-        //               err[i].sxx.interior, err[i].syy.interior,
-        //               err[i].szz.interior);
+        //
+        //
+        //printf("Interior convergence  rates\n");
+        //printf("N \t vx        \t vy          \t vz \n");
+        //for (int i = 0; i < num_refinements - 1; ++i) {
+        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
+        //               rates[i].vx.interior, rates[i].vy.interior,
+        //               rates[i].vz.interior);
         //}
-
-        //printf("N \t sxy        \t sxz          \t syz \n");
-        //for (int i = 0; i < num_refinements; ++i) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
-        //               err[i].sxy.interior, err[i].sxz.interior,
-        //               err[i].syz.interior);
-        //}
-        
         printf("\n");
         printf("Boundary truncation error\n");
         printf("N \t vx        \t vy          \t vz \n");
@@ -213,52 +230,7 @@ int main(int argc, char **argv)
         }
         printf("\n");
         }
-        //printf("N \t sxx        \t syy          \t szz \n");
-        //for (int i = 0; i < num_refinements; ++i) {
-        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
-        //               err[i].sxx.boundary[j], err[i].syy.boundary[j],
-        //               err[i].szz.boundary[j]);
-        //}
-        //}
 
-        //printf("N \t sxy        \t sxz          \t syz \n");
-        //for (int i = 0; i < num_refinements; ++i) {
-        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
-        //               err[i].sxy.boundary[j], err[i].sxz.boundary[j],
-        //               err[i].syz.boundary[j]);
-        //}
-        //}
-
-        vars_err_t rates[num_refinements - 1]; 
-        for (int i = 0; i < num_refinements - 1; ++i) {
-                convergence_rates(rates, err, grid_spacings, num_refinements); 
-        }
-
-        //printf("\n");
-        //printf("\n");
-        //printf("Interior convergence  rates\n");
-        //printf("N \t vx        \t vy          \t vz \n");
-        //for (int i = 0; i < num_refinements - 1; ++i) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
-        //               rates[i].vx.interior, rates[i].vy.interior,
-        //               rates[i].vz.interior);
-        //}
-
-        //printf("N \t sxx        \t syy          \t szz \n");
-        //for (int i = 0; i < num_refinements - 1; ++i) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
-        //               rates[i].sxx.interior, rates[i].syy.interior,
-        //               rates[i].szz.interior);
-        //}
-
-        //printf("N \t sxy        \t sxz          \t syz \n");
-        //for (int i = 0; i < num_refinements - 1; ++i) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
-        //               rates[i].sxy.interior, rates[i].sxz.interior,
-        //               rates[i].syz.interior);
-        //}
         
         printf("\n");
         printf("Boundary convergence  rates\n");
@@ -270,6 +242,44 @@ int main(int argc, char **argv)
                        rates[i].vz.boundary[j]);
         }
         printf("\n");
+        }
+
+
+        }
+
+        if (show_stress) {
+        printf("Interior truncation error\n");
+        printf("N \t sxx        \t syy          \t szz \n");
+        for (int i = 0; i < num_refinements; ++i) {
+                printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
+                       err[i].sxx.interior, err[i].syy.interior,
+                       err[i].szz.interior);
+        }
+
+        printf("N \t sxy        \t sxz          \t syz \n");
+        for (int i = 0; i < num_refinements; ++i) {
+                printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
+                       err[i].sxy.interior, err[i].sxz.interior,
+                       err[i].syz.interior);
+        }
+        printf("\n");
+        printf("\n");
+
+        printf("Interior convergence rates\n");
+
+
+        printf("N \t sxx        \t syy          \t szz \n");
+        for (int i = 0; i < num_refinements - 1; ++i) {
+                printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
+                       rates[i].sxx.interior, rates[i].syy.interior,
+                       rates[i].szz.interior);
+        }
+
+        printf("N \t sxy        \t sxz          \t syz \n");
+        for (int i = 0; i < num_refinements - 1; ++i) {
+                printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
+                       rates[i].sxy.interior, rates[i].sxz.interior,
+                       rates[i].syz.interior);
         }
 
         //printf("N \t z \t sxx        \t syy          \t szz \n");
@@ -289,6 +299,28 @@ int main(int argc, char **argv)
         //               rates[i].syz.boundary[j]);
         //}
         //}
+        
+        //printf("N \t sxx        \t syy          \t szz \n");
+        //for (int i = 0; i < num_refinements; ++i) {
+        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
+        //               err[i].sxx.boundary[j], err[i].syy.boundary[j],
+        //               err[i].szz.boundary[j]);
+        //}
+        //}
+
+        //printf("N \t sxy        \t sxz          \t syz \n");
+        //for (int i = 0; i < num_refinements; ++i) {
+        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
+        //               err[i].sxy.boundary[j], err[i].sxz.boundary[j],
+        //               err[i].syz.boundary[j]);
+        //}
+        //}
+        }
+
+
+
         return 0;
 }
 
@@ -400,8 +432,8 @@ void test_initialize(testdata_t *test, const int grid)
 
         topo_init_metrics(&test->T);
         topo_init_geometry(&test->T);
-        //topo_init_gaussian_geometry(&test->T, amplitude, width, center);
         topo_build(&test->T);
+        topo_set_constants(&test->T);
 
         int num_items = test->T.mx*test->T.my*test->T.mz;
         vars_init(&test->input, num_items);
@@ -597,9 +629,30 @@ void vars_init(variables_t *vars, const int num_items)
         vars->sxz =(_prec*) calloc(num_items, item_size);
         vars->syz =(_prec*) calloc(num_items, item_size);
         vars->rho =(_prec*) calloc(num_items, item_size);
+        vars->lami =(_prec*) calloc(num_items, item_size);
+        vars->mui =(_prec*) calloc(num_items, item_size);
+        vars->qpi =(_prec*) calloc(num_items, item_size);
+        vars->qsi =(_prec*) calloc(num_items, item_size);
+        vars->r1 =(_prec*) calloc(num_items, item_size);
+        vars->r2 =(_prec*) calloc(num_items, item_size);
+        vars->r3 =(_prec*) calloc(num_items, item_size);
+        vars->r4 =(_prec*) calloc(num_items, item_size);
+        vars->r5 =(_prec*) calloc(num_items, item_size);
+        vars->r6 =(_prec*) calloc(num_items, item_size);
+        vars->wwo =(_prec*) calloc(num_items, item_size);
+        vars->vx1 =(_prec*) calloc(num_items, item_size);
+        vars->vx2 =(_prec*) calloc(num_items, item_size);
+        vars->coeff =(_prec*) calloc(num_items, item_size);
+        vars->ww =(int*) calloc(num_items, item_size);
         vars->num_bytes = num_items*item_size;
-        for (int i = 0; i < num_items; ++i)
+        for (int i = 0; i < num_items; ++i) {
             vars->rho[i] = 1.0;
+            vars->lami[i] = 1.0;
+            vars->mui[i] = 1.0;
+            vars->ww[i] = 1;
+            vars->wwo[i] = 1.0;
+
+        }
 }
 
 void vars_copy_to_device(topo_t *topo, const variables_t *vars)
@@ -623,6 +676,36 @@ void vars_copy_to_device(topo_t *topo, const variables_t *vars)
         cudaMemcpy(topo->yz, vars->syz, vars->num_bytes,
                    cudaMemcpyHostToDevice);
         cudaMemcpy(topo->rho, vars->rho, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->lami, vars->lami, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->mui, vars->mui, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->qpi, vars->qpi, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->qsi, vars->qsi, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->r1, vars->r1, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->r2, vars->r2, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->r3, vars->r3, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->r4, vars->r4, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->r5, vars->r5, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->r6, vars->r6, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->wwo, vars->wwo, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->vx1, vars->vx1, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->vx2, vars->vx2, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->coeff, vars->coeff, vars->num_bytes,
+                   cudaMemcpyHostToDevice);
+        cudaMemcpy(topo->ww, vars->ww, vars->num_bytes,
                    cudaMemcpyHostToDevice);
 }
 
@@ -648,6 +731,36 @@ void vars_copy_to_host(variables_t *vars, const topo_t *topo)
                    cudaMemcpyDeviceToHost);
         cudaMemcpy(vars->rho, topo->rho, vars->num_bytes,
                    cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->lami, topo->lami, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->mui, topo->mui, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->qpi, topo->qpi, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->qsi, topo->qsi, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->r1, topo->r1, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->r2, topo->r2, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->r3, topo->r3, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->r4, topo->r4, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->r5, topo->r5, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->r6, topo->r6, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->wwo, topo->wwo, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->vx1, topo->vx1, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->vx2, topo->vx2, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->coeff, topo->coeff, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(vars->ww, topo->ww, vars->num_bytes,
+                   cudaMemcpyDeviceToHost);
 }
 void vars_free(variables_t *vars)
 {
@@ -661,6 +774,16 @@ void vars_free(variables_t *vars)
         free(vars->sxz);
         free(vars->syz);
         free(vars->rho);
+        free(vars->lami);
+        free(vars->mui);
+        free(vars->qpi);
+        free(vars->qsi);
+        free(vars->r1);
+        free(vars->r2);
+        free(vars->r3);
+        free(vars->r4);
+        free(vars->r5);
+        free(vars->r6);
 }
 
 void test_grid_data_init(grid_t *data, const testdata_t *test, const fcn_grid_t grid,
