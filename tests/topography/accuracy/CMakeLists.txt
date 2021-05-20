@@ -9,7 +9,7 @@ add_test(NAME test_accuracy COMMAND test_accuracy)
 
 add_executable(test_convergence test_convergence.cu)
 target_link_libraries(
-        test_convergence topography awp geometry grid)
+        test_convergence topography awp geometry grid functions)
 target_include_directories(test_convergence
         PUBLIC
         ${AWP_MINI_SOURCE_DIR}/include/

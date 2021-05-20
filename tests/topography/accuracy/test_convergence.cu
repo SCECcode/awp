@@ -10,13 +10,63 @@
 #include <topography/metrics/metrics.h>
 #include <topography/velocity.cuh>
 #include <topography/stress.cuh>
-#include <topography/geometry/geometry.h>
+//#include <topography/geometry/geometry.h>
 #include <topography/geometry.h>
 #include <grid/shift.h>
 #include "functions.c"
 #include "grid_check.c"
 //#include "cutopography.cuh"
 #include "mms.c"
+
+void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,
+                    const f_grid_t *metrics_f,
+                    const g_grid_t *metrics_g) {
+        _prec *g;
+        if (shift.z == 0) {
+                g = metrics_g->g;
+        }
+        else {
+                g = metrics_g->g_c;
+        }
+
+        int3_t nodes = grid_node();
+        int3_t u1 = grid_u1();
+        int3_t u2 = grid_u2();
+        _prec *f;
+        if (shift.x == nodes.x && shift.y == nodes.y) {
+                f = metrics_f->f;
+        } 
+        else if(shift.x == u1.x && shift.y == u1.y) {
+                f = metrics_f->f_1;
+        }
+        else if(shift.x == u2.x && shift.y == u2.y) {
+                f = metrics_f->f_2;
+        }
+        else {
+                f = metrics_f->f_c;
+        }
+
+        int f_offset_x = metrics_f->offset[0] + metrics_f->bounds_stress_x[0];
+        int f_offset_y = metrics_f->offset[1] + metrics_f->bounds_stress_y[0];
+
+        // Error: `grid` cannot be larger than the stress grid.
+        //assert(f_offset_x + grid.size.x <= metrics_f->mem[0]);
+        //assert(f_offset_y + grid.size.y <= metrics_f->mem[1]);
+
+        for (int i = 0; i < grid.size.x; ++i) {
+        for (int j = 0; j < grid.size.y; ++j) {
+        for (int k = 0; k < grid.size.z; ++k) {
+                int pos = grid.offset1.z + k +
+                          (grid.offset1.y + j) * grid.line +
+                          (grid.offset1.x + i) * grid.slice;
+                int pos_g = k + metrics_g->offset;
+                int pos_f = f_offset_y + j +
+                            (i + f_offset_x) * metrics_f->slice;
+                out[pos] = g[pos_g] * f[pos_f];
+        }
+        }
+        }
+}
 
 using _prec=float;
 
@@ -325,7 +375,7 @@ void test_initialize(testdata_t *test, const int grid)
         test->coord3.y = coord[1];
         test->grid_spacing = h;
         test->write_vtk = 0;
-        test->mms_wavenumber = 6;
+        test->mms_wavenumber = 32;
 
         _prec amplitude = 0.0;
         _prec3_t width = {.x = 0.1, .y = 0.1, .z = 0};
@@ -607,9 +657,8 @@ void test_grid_data_init(grid_t *data, const testdata_t *test, const fcn_grid_t 
         fcn_shift(data->x, data->x, grid, -ngsl*grid.gridspacing);
         fcn_shift(data->y, data->y, grid, -ngsl*grid.gridspacing);
 
-        //FIXME: this cannot be disabled!!!
-        //geom_mapping_z(data->zp, grid, shift, &test->T.metrics_f,
-        //               &test->T.metrics_g);
+        geom_mapping_z(data->zp, grid, shift, &test->T.metrics_f,
+                       &test->T.metrics_g);
 }
 
 void test_grid_data_free(grid_t *data)
