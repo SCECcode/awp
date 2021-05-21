@@ -14,4 +14,4 @@ target_include_directories(test_convergence
         PUBLIC
         ${AWP_MINI_SOURCE_DIR}/include/
         )
-add_test(NAME test_convergence COMMAND test_convergence)
+    add_test(NAME test_convergence COMMAND test_convergence ${PROJECT_SOURCE_DIR}/tests/topography/accuracy/data/)

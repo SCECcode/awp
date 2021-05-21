@@ -13,7 +13,7 @@ import numpy as np
 import sys
 import pyawp
 
-plot = 0
+plot = 1
 
 filename = sys.argv[1]
 nx = int(sys.argv[2])
@@ -24,10 +24,10 @@ h = float(sys.argv[4])
 ngsl = 8
 T = pyawp.Topography(nx, ny, h, ngsl)
 
-a = 0e3
-b = 1
-xc = 64
-yc = 64
+a = 0.2
+b = 8
+xc = 8
+yc = 8
 gaussian = lambda x, y: a * np.exp(-b**-2*(x - xc) ** 2 -b**-2*(y - yc) ** 2)
 z = T.map(gaussian)
 Z = T.reshape(z)

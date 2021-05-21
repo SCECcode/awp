@@ -7,6 +7,7 @@
 
 
 #define APPLY_BC 0
+#define ERROR_TOLERANCE 2.0
 #include <topography/topography.h>
 #include <topography/metrics/metrics.h>
 #include <topography/velocity.cuh>
@@ -143,10 +144,11 @@ typedef struct
 
 
 int3_t refine(const int3_t initial_size, const int grid);
+prec max_error(vars_err_t *err, const int num_refinements);
 void convergence_rates(vars_err_t *rates, const vars_err_t *err, const _prec *h,
                        const int num_refinements);
 _prec convergence_rate(const _prec err1, const _prec err2, const _prec h1, const _prec h2);
-void test_initialize(testdata_t *test, const int grid);
+void test_initialize(testdata_t *test, const int grid, const char *topoography_dir);
 void test_velocity(testdata_t *test, vars_err_t *err);
 void test_stress(testdata_t *test, vars_err_t *err);
 void test_free(testdata_t *test);
@@ -172,20 +174,21 @@ int main(int argc, char **argv)
         int grid_sizes[num_refinements];
         _prec grid_spacings[num_refinements];
 
+        const char *topography_dir = argv[1];
 
         printf("Convergence rate test\n");
         printf("-----------------------------------------------------\n");
         for (int grid = 0; grid < num_refinements; ++grid) {
                 test.size = refine(initial_size, grid);
                 grid_sizes[grid] = test.size.x;
-                test_initialize(&test, grid);
+                test_initialize(&test, grid, topography_dir);
                 grid_spacings[grid] = test.grid_spacing;
                 printf("Grid refinement: %d  grid size: {%d, %d, %d} \n", 
                         grid, test.size.x, test.size.y, test.size.z);
                 test_velocity(&test, &err[grid]);
                 printf("Testing stresses\n");
                 test_free(&test);
-                test_initialize(&test, grid);
+                test_initialize(&test, grid, topography_dir);
                 test_stress(&test, &err[grid]);
                 test_free(&test);
         }
@@ -334,7 +337,7 @@ int main(int argc, char **argv)
 
 
 
-        return 0;
+        return !(max_error(err, num_refinements) < ERROR_TOLERANCE);
 }
 
 int3_t refine(const int3_t initial_size, const int grid) 
@@ -403,12 +406,33 @@ void convergence_rates(vars_err_t *rates, const vars_err_t *err, const _prec *h,
         }
 }
 
+
+prec max_error(vars_err_t *err, const int num_refinements) {
+
+                double err_max = 0.0;
+                for (int i = 0; i < num_refinements - 1; ++i) {
+                for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+                    err_max = max(err_max, err[i].vx.boundary[j]);
+                    err_max = max(err_max, err[i].vy.boundary[j]);
+                    err_max = max(err_max, err[i].vz.boundary[j]);
+                    err_max = max(err_max, err[i].sxx.boundary[j]);
+                    err_max = max(err_max, err[i].syy.boundary[j]);
+                    err_max = max(err_max, err[i].szz.boundary[j]);
+                    err_max = max(err_max, err[i].sxy.boundary[j]);
+                    err_max = max(err_max, err[i].sxz.boundary[j]);
+                    err_max = max(err_max, err[i].syz.boundary[j]);
+                }
+                }
+                return err_max;
+
+}
+
 _prec convergence_rate(const _prec err1, const _prec err2, const _prec h1,
                        const _prec h2) {
         return log(err1/err2)/log(h1/h2);
 }
 
-void test_initialize(testdata_t *test, const int grid)
+void test_initialize(testdata_t *test, const int grid, const char *topography_dir)
 {
         int rank = 0;
         int x_rank_l = -1;
@@ -427,7 +451,7 @@ void test_initialize(testdata_t *test, const int grid)
         _prec h  = 1.0/(test->size.x - 1);
         printf("Test size: %d %d %d \n", test->size.x, test->size.y, test->size.z);
         char gridname[2048];
-        sprintf(gridname, "topography_%d.bin", grid);
+        sprintf(gridname, "%s/topography_%d.bin", topography_dir, grid);
         test->T = topo_init(1, gridname, rank, x_rank_l, x_rank_r, y_rank_f,
                             y_rank_b, coord, px, py, test->size.x, test->size.y,
                             test->size.z, dt, h, stream_1, stream_2, stream_i);
