@@ -6,17 +6,18 @@
 #include <cuda_runtime.h>
 
 
+#define APPLY_BC 0
 #include <topography/topography.h>
 #include <topography/metrics/metrics.h>
 #include <topography/velocity.cuh>
 #include <topography/stress.cuh>
-//#include <topography/geometry/geometry.h>
 #include <topography/geometry.h>
 #include <grid/shift.h>
 #include "functions.c"
 #include "grid_check.c"
-//#include "cutopography.cuh"
 #include "mms.c"
+
+//using _prec=double;
 
 void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,
                     const f_grid_t *metrics_f,
@@ -68,7 +69,6 @@ void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,
         }
 }
 
-using _prec=float;
 
 typedef struct
 {
@@ -196,35 +196,34 @@ int main(int argc, char **argv)
                 convergence_rates(rates, err, grid_spacings, num_refinements); 
         }
 
-        const int show_velocity = 0;
+        const int show_velocity = 1;
         const int show_stress = 1;
 
 
         if (show_velocity) {
-        //printf("\n");
-        //printf("\n");
-        //printf("Interior truncation error\n");
-        //printf("N \t vx        \t vy          \t vz \n");
-        //for (int i = 0; i < num_refinements; ++i) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
-        //               err[i].vx.interior, err[i].vy.interior,
-        //               err[i].vz.interior);
-        //}
-        //
-        //
-        //printf("Interior convergence  rates\n");
-        //printf("N \t vx        \t vy          \t vz \n");
-        //for (int i = 0; i < num_refinements - 1; ++i) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
-        //               rates[i].vx.interior, rates[i].vy.interior,
-        //               rates[i].vz.interior);
-        //}
-        printf("\n");
-        printf("Boundary truncation error\n");
+        printf("Interior truncation errors\n");
         printf("N \t vx        \t vy          \t vz \n");
         for (int i = 0; i < num_refinements; ++i) {
-        for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
                 printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
+                       err[i].vx.interior, err[i].vy.interior,
+                       err[i].vz.interior);
+        }
+        
+        
+        printf("Interior error rates\n");
+        printf("N \t vx        \t vy          \t vz \n");
+        for (int i = 0; i < num_refinements - 1; ++i) {
+                printf("%d \t %e \t %e \t %e \n", grid_sizes[i+1],
+                       rates[i].vx.interior, rates[i].vy.interior,
+                       rates[i].vz.interior);
+        }
+        printf("\n");
+        printf("\n");
+        printf("Boundary truncation errors\n");
+        printf("N \t z \t  vx        \t vy          \t vz \n");
+        for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        for (int i = 0; i < num_refinements; ++i) {
+                printf("%d \t %d \t %e \t %e \t %e \n", grid_sizes[i], j , 
                        err[i].vx.boundary[j], err[i].vy.boundary[j],
                        err[i].vz.boundary[j]);
         }
@@ -233,10 +232,10 @@ int main(int argc, char **argv)
 
         
         printf("\n");
-        printf("Boundary convergence  rates\n");
+        printf("Boundary error rates\n");
         printf("N \t z \t vx        \t vy          \t vz \n");
-        for (int i = 0; i < num_refinements - 1; ++i) {
         for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        for (int i = 0; i < num_refinements - 1; ++i) {
                 printf("%d \t %d \t %e \t %e \t %e \n", grid_sizes[i+1], j,
                        rates[i].vx.boundary[j], rates[i].vy.boundary[j],
                        rates[i].vz.boundary[j]);
@@ -265,7 +264,7 @@ int main(int argc, char **argv)
         printf("\n");
         printf("\n");
 
-        printf("Interior convergence rates\n");
+        printf("Interior error rates\n");
 
 
         printf("N \t sxx        \t syy          \t szz \n");
@@ -282,41 +281,55 @@ int main(int argc, char **argv)
                        rates[i].syz.interior);
         }
 
-        //printf("N \t z \t sxx        \t syy          \t szz \n");
-        //for (int i = 0; i < num_refinements - 1; ++i) {
-        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
-        //        printf("%d \t %d \t %e \t %e \t %e \n", grid_sizes[i+1], j,
-        //               rates[i].sxx.boundary[j], rates[i].syy.boundary[j],
-        //               rates[i].szz.boundary[j]);
-        //}
-        //}
+        printf("\n");
+        printf("\n");
 
-        //printf("N \t z \t sxy        \t sxz          \t syz \n");
-        //for (int i = 0; i < num_refinements - 1; ++i) {
-        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
-        //        printf("%d \t %d \t %e \t %e \t %e \n", grid_sizes[i+1], j,
-        //               rates[i].sxy.boundary[j], rates[i].sxz.boundary[j],
-        //               rates[i].syz.boundary[j]);
-        //}
-        //}
+        printf("Boundary truncation errors\n");
         
-        //printf("N \t sxx        \t syy          \t szz \n");
-        //for (int i = 0; i < num_refinements; ++i) {
-        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
-        //               err[i].sxx.boundary[j], err[i].syy.boundary[j],
-        //               err[i].szz.boundary[j]);
-        //}
-        //}
+        printf("N \t z \t sxx        \t syy          \t szz \n");
+        for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        for (int i = 0; i < num_refinements; ++i) {
+                printf("%d \t %d \t %e \t %e \t %e \n", grid_sizes[i], j,
+                       err[i].sxx.boundary[j], err[i].syy.boundary[j],
+                       err[i].szz.boundary[j]);
+        }
+        printf("\n");
+        }
 
-        //printf("N \t sxy        \t sxz          \t syz \n");
-        //for (int i = 0; i < num_refinements; ++i) {
-        //for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
-        //        printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
-        //               err[i].sxy.boundary[j], err[i].sxz.boundary[j],
-        //               err[i].syz.boundary[j]);
-        //}
-        //}
+        printf("N \t sxy        \t sxz          \t syz \n");
+        for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        for (int i = 0; i < num_refinements; ++i) {
+                printf("%d \t %e \t %e \t %e \n", grid_sizes[i],
+                       err[i].sxy.boundary[j], err[i].sxz.boundary[j],
+                       err[i].syz.boundary[j]);
+        }
+        printf("\n");
+        }
+
+        printf("Boundary error rates\n");
+
+
+        printf("N \t z \t sxx        \t syy          \t szz \n");
+        for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        for (int i = 0; i < num_refinements - 1; ++i) {
+                printf("%d \t %d \t %e \t %e \t %e \n", grid_sizes[i+1], j,
+                       rates[i].sxx.boundary[j], rates[i].syy.boundary[j],
+                       rates[i].szz.boundary[j]);
+        }
+        printf("\n");
+        }
+
+        printf("N \t z \t sxy        \t sxz          \t syz \n");
+        for (int j = 0; j < TOP_BOUNDARY_SIZE; ++j) {
+        for (int i = 0; i < num_refinements - 1; ++i) {
+                printf("%d \t %d \t %e \t %e \t %e \n", grid_sizes[i+1], j,
+                       rates[i].sxy.boundary[j], rates[i].sxz.boundary[j],
+                       rates[i].syz.boundary[j]);
+        }
+        printf("\n");
+        }
+
+
         }
 
 
@@ -424,7 +437,7 @@ void test_initialize(testdata_t *test, const int grid)
         test->coord3.y = coord[1];
         test->grid_spacing = h;
         test->write_vtk = 0;
-        test->mms_wavenumber = 16;
+        test->mms_wavenumber = 2 * M_PI * 4;
 
         _prec amplitude = 0.0;
         _prec3_t width = {.x = 0.1, .y = 0.1, .z = 0};
@@ -590,6 +603,9 @@ void test_stress(testdata_t *test, vars_err_t *err)
         fcn_apply(test->answer.syz, mms_final_syz, gsyz.x, gsyz.y, gsyz.zp,
                   properties, velocity_grid);
 
+
+        // Exclude solution at ghost point
+        err->vz.boundary[TOP_BOUNDARY_SIZE-1] = 0.0;
         err_t tmp;
         tmp = check_answer(test->output.sxx, test->answer.sxx, velocity_grid);
         err->sxx = tmp;
@@ -603,6 +619,10 @@ void test_stress(testdata_t *test, vars_err_t *err)
         err->sxz = tmp;
         tmp = check_answer(test->output.syz, test->answer.syz, velocity_grid);
         err->syz = tmp;
+
+        // Exclude solution at ghost point
+        err->sxz.boundary[TOP_BOUNDARY_SIZE-1] = 0.0;
+        err->syz.boundary[TOP_BOUNDARY_SIZE-1] = 0.0;
 }
 
 void test_free(testdata_t *test)

@@ -1,5 +1,8 @@
-python3 topography.py ../../../build/topography_0.bin 16 16 0.5
-python3 topography.py ../../../build/topography_1.bin 32 32 0.25
-python3 topography.py ../../../build/topography_2.bin 64 64 0.125
-python3 topography.py ../../../build/topography_3.bin 128 128 0.25
-#python3 topography.py ../../../build/topography_3.bin 256 256 0.125
+x=16
+h=1.0
+for i in 0 1 2 3;
+do
+python3 topography.py ../../../build/topography_$i.bin $x $x $h
+let x=x*2;
+h=`python3 -c "print(${h}/2)"`;
+done
