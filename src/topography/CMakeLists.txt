@@ -51,7 +51,7 @@ add_library(topography_no_bc
 
 target_link_libraries(topography ${LIBRARIES})
 
-target_compile_definitions(topography_no_bc PUBLIC -DAPPLY_BC=0)# -DDOUBLE_PRECISION=1)
+target_compile_definitions(topography_no_bc PUBLIC -DAPPLY_BC=0 -DDOUBLE_PRECISION=1)
 target_link_libraries(topography_no_bc ${LIBRARIES})
 
 target_include_directories(topography
