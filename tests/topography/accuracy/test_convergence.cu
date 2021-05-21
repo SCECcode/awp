@@ -17,7 +17,7 @@
 #include "grid_check.c"
 #include "mms.c"
 
-using _prec=double;
+using _prec=float;
 
 void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,
                     const f_grid_t *metrics_f,
