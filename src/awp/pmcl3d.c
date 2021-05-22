@@ -2053,6 +2053,11 @@ if (usemms) {
                dump_nonzeros(d_yz[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "yz", p, cur_step, 2, rank, size);
             }
 
+            //if (!usetopo)
+            //forces_add_cartesian(d_xz[0], d_yz[0], d_zz[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
+            if (!usetopo)
+            forces_add_cartesian_velocity(d_u1[0], d_v1[0], d_w1[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
+
                if (usemms) {
                        float t =  DT * (cur_step);
                         for (p = 0; p < ngrids; p++) {
@@ -2525,10 +2530,6 @@ if (usemms) {
 
             fstr_H(d_zz[0], d_xz[0], d_yz[0], stream_i, xls[0], xre[0], yls[0], yre[0]);
             
-            //if (!usetopo)
-            //forces_add_cartesian(d_xz[0], d_yz[0], d_zz[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
-            if (!usetopo)
-            forces_add_cartesian_velocity(d_u1[0], d_v1[0], d_w1[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
 
                if (usemms) {
                        float t = DT * (cur_step - 1) + 0.5 * DT;
