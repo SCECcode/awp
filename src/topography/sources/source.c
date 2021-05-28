@@ -521,7 +521,7 @@ void source_init_common(source_t *src, const char *filename,
                         }
                         printf("\n");
 
-                        if (grid_type == X || grid_type == Y || grid_type == Z  || grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == NODE)
+                        if (grid_type == X || grid_type == Y || grid_type == Z  || grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == XX || grid_type == XZ || grid_type == NODE)
                         {
                                 printf("rank = %d, grid_type = %s, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
                                        rank, grid_typename(grid_type), grid.shift.x, grid.shift.y, grid.shift.z,
