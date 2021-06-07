@@ -5,25 +5,29 @@
 #include <stdio.h>
 #include <test/test.h>
 
+#ifndef APPLY_BC
+#define APPLY_BC 1
+#endif
+
 __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
 
     __global__ void dtopo_vel_110(
-        float* RSTRCT u1, float* RSTRCT u2, float* RSTRCT u3,
-        const float* RSTRCT dcrjx, const float* RSTRCT dcrjy,
-        const float* RSTRCT dcrjz, const float* RSTRCT f,
-        const float* RSTRCT f1_1, const float* RSTRCT f1_2,
-        const float* RSTRCT f1_c, const float* RSTRCT f2_1,
-        const float* RSTRCT f2_2, const float* RSTRCT f2_c,
-        const float* RSTRCT f_1, const float* RSTRCT f_2,
-        const float* RSTRCT f_c, const float* RSTRCT g,
-        const float* RSTRCT g3, const float* RSTRCT g3_c,
-        const float* RSTRCT g_c, const float* RSTRCT rho,
-        const float* RSTRCT s11, const float* RSTRCT s12,
-        const float* RSTRCT s13, const float* RSTRCT s22,
-        const float* RSTRCT s23, const float* RSTRCT s33,
-        const float a, const float nu, const int nx, const int ny, const int nz,
+        _prec* RSTRCT u1, _prec* RSTRCT u2, _prec* RSTRCT u3,
+        const _prec* RSTRCT dcrjx, const _prec* RSTRCT dcrjy,
+        const _prec* RSTRCT dcrjz, const _prec* RSTRCT f,
+        const _prec* RSTRCT f1_1, const _prec* RSTRCT f1_2,
+        const _prec* RSTRCT f1_c, const _prec* RSTRCT f2_1,
+        const _prec* RSTRCT f2_2, const _prec* RSTRCT f2_c,
+        const _prec* RSTRCT f_1, const _prec* RSTRCT f_2,
+        const _prec* RSTRCT f_c, const _prec* RSTRCT g,
+        const _prec* RSTRCT g3, const _prec* RSTRCT g3_c,
+        const _prec* RSTRCT g_c, const _prec* RSTRCT rho,
+        const _prec* RSTRCT s11, const _prec* RSTRCT s12,
+        const _prec* RSTRCT s13, const _prec* RSTRCT s22,
+        const _prec* RSTRCT s23, const _prec* RSTRCT s33,
+        const _prec a, const _prec nu, const int nx, const int ny, const int nz,
         const int bi, const int bj, const int ei, const int ej) {
-        const float phz2l[6][7] = {
+        const _prec phz2l[6][7] = {
             {1.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000},
@@ -42,9 +46,9 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
              0.0000000000000000}};
-        const float phy2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phx2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float dhpz4l[6][9] = {
+        const _prec phy2[2] = {0.5000000000000000, 0.5000000000000000};
+        const _prec phx2[2] = {0.5000000000000000, 0.5000000000000000};
+        const _prec dhpz4l[6][9] = {
             {-1.4276800979942257, 0.2875185051606178, 2.0072491465276454,
              -0.8773816261307504, 0.0075022330101095, 0.0027918394266035,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -63,15 +67,15 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
             {-0.0020323834153791, -0.0002106933140862, 0.0013351454085978,
              0.0938400881871787, -0.6816971139746001, 0.0002232904416222,
              0.6796875000000000, -0.0937500000000000, 0.0026041666666667}};
-        const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhz4l[6][7] = {
+        const _prec dhz4l[6][7] = {
             {-1.4511412472637157, 1.8534237417911470, -0.3534237417911469,
              -0.0488587527362844, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000},
@@ -90,15 +94,15 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0416666666666667, -1.1250000000000000, 1.1250000000000000,
              -0.0416666666666667}};
-        const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dphz4l[6][9] = {
+        const _prec dphz4l[6][9] = {
             {-1.3764648947859957, 1.8523239861274134, -0.5524268681758195,
              0.0537413571133823, 0.0228264197210198, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -117,7 +121,7 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, -0.0026041666666667,
              0.0937500000000000, -0.6796875000000000, 0.0000000000000000,
              0.6796875000000000, -0.0937500000000000, 0.0026041666666667}};
-        const float dz4l[6][8] = {
+        const _prec dz4l[6][8] = {
             {-1.7779989465546748, 1.3337480247900155, 0.7775013168066564,
              -0.3332503950419969, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000},
@@ -221,7 +225,7 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
         u3[(k) + align +                                               \
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
-        float rho1 =
+        _prec rho1 =
             phz2l[k][0] *
                 (phy2[1] * _rho(i, j, 0) + phy2[0] * _rho(i, j - 1, 0)) +
             phz2l[k][1] *
@@ -236,7 +240,7 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
                 (phy2[1] * _rho(i, j, 5) + phy2[0] * _rho(i, j - 1, 5)) +
             phz2l[k][6] *
                 (phy2[1] * _rho(i, j, 6) + phy2[0] * _rho(i, j - 1, 6));
-        float rho2 =
+        _prec rho2 =
             phz2l[k][0] *
                 (phx2[1] * _rho(i, j, 0) + phx2[0] * _rho(i - 1, j, 0)) +
             phz2l[k][1] *
@@ -251,17 +255,17 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
                 (phx2[1] * _rho(i, j, 5) + phx2[0] * _rho(i - 1, j, 5)) +
             phz2l[k][6] *
                 (phx2[1] * _rho(i, j, 6) + phx2[0] * _rho(i - 1, j, 6));
-        float rho3 =
+        _prec rho3 =
             phy2[1] * (phx2[1] * _rho(i, j, k) + phx2[0] * _rho(i - 1, j, k)) +
             phy2[0] *
                 (phx2[1] * _rho(i, j - 1, k) + phx2[0] * _rho(i - 1, j - 1, k));
-        float Ai1 = _f_1(i, j) * _g3_c(k) * rho1;
+        _prec Ai1 = _f_1(i, j) * _g3_c(k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
-        float Ai2 = _f_2(i, j) * _g3_c(k) * rho2;
+        _prec Ai2 = _f_2(i, j) * _g3_c(k) * rho2;
         Ai2 = nu * 1.0 / Ai2;
-        float Ai3 = _f_c(i, j) * _g3(k) * rho3;
+        _prec Ai3 = _f_c(i, j) * _g3(k) * rho3;
         Ai3 = nu * 1.0 / Ai3;
-        float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k);
+        _prec f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k);
         _u1(i, j, k) =
             (a * _u1(i, j, k) +
              Ai1 * (dhx4[2] * _f_c(i, j) * _g3_c(k) * _s11(i, j, k) +
@@ -609,48 +613,48 @@ __launch_bounds__(DTOPO_VEL_110_MAX_THREADS_PER_BLOCK)
 __launch_bounds__(DTOPO_VEL_111_MAX_THREADS_PER_BLOCK)
 
 __global__ void dtopo_vel_111(
-        float *RSTRCT u1, float *RSTRCT u2, float *RSTRCT u3,
-        const float *RSTRCT dcrjx, const float *RSTRCT dcrjy,
-        const float *RSTRCT dcrjz, const float *RSTRCT f,
-        const float *RSTRCT f1_1, const float *RSTRCT f1_2,
-        const float *RSTRCT f1_c, const float *RSTRCT f2_1,
-        const float *RSTRCT f2_2, const float *RSTRCT f2_c,
-        const float *RSTRCT f_1, const float *RSTRCT f_2,
-        const float *RSTRCT f_c, const float *RSTRCT g,
-        const float *RSTRCT g3, const float *RSTRCT g3_c,
-        const float *RSTRCT g_c, const float *RSTRCT rho,
-        const float *RSTRCT s11, const float *RSTRCT s12,
-        const float *RSTRCT s13, const float *RSTRCT s22,
-        const float *RSTRCT s23, const float *RSTRCT s33,
-        const float a, const float nu, const int nx, const int ny, const int nz,
+        _prec *RSTRCT u1, _prec *RSTRCT u2, _prec *RSTRCT u3,
+        const _prec *RSTRCT dcrjx, const _prec *RSTRCT dcrjy,
+        const _prec *RSTRCT dcrjz, const _prec *RSTRCT f,
+        const _prec *RSTRCT f1_1, const _prec *RSTRCT f1_2,
+        const _prec *RSTRCT f1_c, const _prec *RSTRCT f2_1,
+        const _prec *RSTRCT f2_2, const _prec *RSTRCT f2_c,
+        const _prec *RSTRCT f_1, const _prec *RSTRCT f_2,
+        const _prec *RSTRCT f_c, const _prec *RSTRCT g,
+        const _prec *RSTRCT g3, const _prec *RSTRCT g3_c,
+        const _prec *RSTRCT g_c, const _prec *RSTRCT rho,
+        const _prec *RSTRCT s11, const _prec *RSTRCT s12,
+        const _prec *RSTRCT s13, const _prec *RSTRCT s22,
+        const _prec *RSTRCT s23, const _prec *RSTRCT s33,
+        const _prec a, const _prec nu, const int nx, const int ny, const int nz,
         const int bi, const int bj, const int ei, const int ej) {
-  const float dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, 0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhz4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, 0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
   int dm_offset = 3;
   const int i = threadIdx.z + blockIdx.z * blockDim.z + bi;
@@ -742,20 +746,20 @@ __global__ void dtopo_vel_111(
 #define _u3(i, j, k)                                                           \
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
-  float rho1 = 0.25 * (_rho(i, j, k - 1) + _rho(i, j - 1, k - 1)) +
+  _prec rho1 = 0.25 * (_rho(i, j, k - 1) + _rho(i, j - 1, k - 1)) +
                0.25 * (_rho(i, j, k) + _rho(i, j - 1, k));
-  float rho2 = 0.25 * (_rho(i, j, k - 1) + _rho(i - 1, j, k - 1)) +
+  _prec rho2 = 0.25 * (_rho(i, j, k - 1) + _rho(i - 1, j, k - 1)) +
                0.25 * (_rho(i, j, k) + _rho(i - 1, j, k));
-  float rho3 = 0.25 * (_rho(i, j, k) + _rho(i - 1, j, k)) +
+  _prec rho3 = 0.25 * (_rho(i, j, k) + _rho(i - 1, j, k)) +
                0.25 * (_rho(i, j - 1, k) + _rho(i - 1, j - 1, k));
 
-  float Ai1 = _f_1(i, j) * _g3_c(k) * rho1;
+  _prec Ai1 = _f_1(i, j) * _g3_c(k) * rho1;
   Ai1 = nu * 1.0 / Ai1;
-  float Ai2 = _f_2(i, j) * _g3_c(k) * rho2;
+  _prec Ai2 = _f_2(i, j) * _g3_c(k) * rho2;
   Ai2 = nu * 1.0 / Ai2;
-  float Ai3 = _f_c(i, j) * _g3(k) * rho3;
+  _prec Ai3 = _f_c(i, j) * _g3(k) * rho3;
   Ai3 = nu * 1.0 / Ai3;
-  float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k);
+  _prec f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k);
   _u1(i, j, k) =
       (a * _u1(i, j, k) +
        Ai1 * (dhx4[2] * _f_c(i, j) * _g3_c(k) * _s11(i, j, k) +
@@ -1036,22 +1040,23 @@ __global__ void dtopo_vel_111(
 __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
 
     __global__ void dtopo_vel_112(
-        float* RSTRCT u1, float* RSTRCT u2, float* RSTRCT u3,
-        const float* RSTRCT dcrjx, const float* RSTRCT dcrjy,
-        const float* RSTRCT dcrjz, const float* RSTRCT f,
-        const float* RSTRCT f1_1, const float* RSTRCT f1_2,
-        const float* RSTRCT f1_c, const float* RSTRCT f2_1,
-        const float* RSTRCT f2_2, const float* RSTRCT f2_c,
-        const float* RSTRCT f_1, const float* RSTRCT f_2,
-        const float* RSTRCT f_c, const float* RSTRCT g,
-        const float* RSTRCT g3, const float* RSTRCT g3_c,
-        const float* RSTRCT g_c, const float* RSTRCT rho,
-        const float* RSTRCT s11, const float* RSTRCT s12,
-        const float* RSTRCT s13, const float* RSTRCT s22,
-        const float* RSTRCT s23, const float* RSTRCT s33,
-        const float a, const float nu, const int nx, const int ny, const int nz,
+        _prec* RSTRCT u1, _prec* RSTRCT u2, _prec* RSTRCT u3,
+        const _prec* RSTRCT dcrjx, const _prec* RSTRCT dcrjy,
+        const _prec* RSTRCT dcrjz, const _prec* RSTRCT f,
+        const _prec* RSTRCT f1_1, const _prec* RSTRCT f1_2,
+        const _prec* RSTRCT f1_c, const _prec* RSTRCT f2_1,
+        const _prec* RSTRCT f2_2, const _prec* RSTRCT f2_c,
+        const _prec* RSTRCT f_1, const _prec* RSTRCT f_2,
+        const _prec* RSTRCT f_c, const _prec* RSTRCT g,
+        const _prec* RSTRCT g3, const _prec* RSTRCT g3_c,
+        const _prec* RSTRCT g_c, const _prec* RSTRCT rho,
+        const _prec* RSTRCT s11, const _prec* RSTRCT s12,
+        const _prec* RSTRCT s13, const _prec* RSTRCT s22,
+        const _prec* RSTRCT s23, const _prec* RSTRCT s33,
+        const _prec a, const _prec nu, const int nx, const int ny, const int nz,
         const int bi, const int bj, const int ei, const int ej) {
-        const float dhpz4r[6][9] = {
+#if APPLY_BC
+        const _prec dhpz4r[6][9] = {
             {-1.5373923010673118, -1.1059180740634813, -0.2134752473866528,
              -0.0352027995732726, -0.0075022330101095, -0.0027918394266035,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -1070,15 +1075,15 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
             {0.0020323834153791, 0.0002106933140862, -0.0013351454085978,
              -0.0938400881871787, 0.6816971139746001, -0.0002232904416222,
              -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
-        const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhz4r[6][8] = {
+        const _prec dhz4r[6][8] = {
             {0.0000000000000000, -1.4511412472637157, -1.8534237417911470,
              0.3534237417911469, 0.0488587527362844, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000},
@@ -1097,15 +1102,15 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, -0.0416666666666667, 1.1250000000000000,
              -1.1250000000000000, 0.0416666666666667}};
-        const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dphz4r[6][9] = {
+        const _prec dphz4r[6][9] = {
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -1124,7 +1129,7 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, -0.0040378273193044, 0.0064139372778371,
              -0.0890062133451850, 0.6749219241340761, 0.0002498459192428,
              -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
-        const float dz4r[6][7] = {
+        const _prec dz4r[6][7] = {
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000},
@@ -1143,6 +1148,101 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              -0.0416666666666667, 1.1250000000000000, -1.1250000000000000,
              0.0416666666666667}};
+
+#else
+  const _prec dhpz4r[6][9] = {
+      {1.4276800979942257, -0.2875185051606178, -2.0072491465276454,
+       0.8773816261307504, -0.0075022330101095, -0.0027918394266035,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.8139439685257414, 0.1273679143938725, -1.1932750007455710,
+       0.1475120181828087, 0.1125814499297686, -0.0081303502866204,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.1639182541610305, 0.3113839909089030, -0.0536007135209480,
+       -0.3910958927076030, -0.0401741813821989, 0.0095685425408165,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0171478318814576, -0.0916600077207278, 0.7187220404622645,
+       -0.1434031863528334, -0.5827389738506837, 0.0847863081664324,
+       -0.0028540125859095, 0.0000000000000000, 0.0000000000000000},
+      {-0.0579176640853654, 0.0022069616616207, 0.0108792602269819,
+       0.6803612607837533, -0.0530169938441240, -0.6736586580761996,
+       0.0937500000000000, -0.0026041666666667, 0.0000000000000000},
+      {0.0020323834153791, 0.0002106933140862, -0.0013351454085978,
+       -0.0938400881871787, 0.6816971139746001, -0.0002232904416222,
+       -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+                         0.5625000000000000, -0.0625000000000000};
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+                         0.5625000000000000, -0.0625000000000000};
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+                         1.1250000000000000, -0.0416666666666667};
+  const _prec dhz4r[6][8] = {
+      {0.0000000000000000, 1.4511412472637157, -1.8534237417911470,
+       0.3534237417911469, 0.0488587527362844, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.8577143189081458, -0.5731429567244373,
+       -0.4268570432755628, 0.1422856810918542, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.1674548505882877, 0.4976354482351368,
+       -0.4976354482351368, -0.1674548505882877, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, -0.1027061113405124, 0.2624541326469860,
+       0.8288742701021167, -1.0342864927831414, 0.0456642013745513,
+       0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       -0.0416666666666667, 1.1250000000000000, -1.1250000000000000,
+       0.0416666666666667, 0.0000000000000000},
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, -0.0416666666666667, 1.1250000000000000,
+       -1.1250000000000000, 0.0416666666666667}};
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
+                        0.5625000000000000, -0.0625000000000000};
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
+                        0.5625000000000000, -0.0625000000000000};
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
+                        1.1250000000000000, -0.0416666666666667};
+  const _prec dphz4r[6][9] = {
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 1.3764648947859957, -1.8523239861274132,
+       0.5524268681758197, -0.0537413571133823, -0.0228264197210198,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.4428256655817484, -0.0574614517751294,
+       -0.2022259589759502, -0.1944663890497050, 0.0113281342190362,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, -0.3360140866060758, 1.2113298407847195,
+       -0.3111668377093505, -0.6714462506479002, 0.1111440843153523,
+       -0.0038467501367455, 0.0000000000000000, 0.0000000000000000},
+      {0.0000000000000000, 0.0338560531369653, -0.0409943223643902,
+       0.5284757132923059, 0.0115571196122084, -0.6162252315536446,
+       0.0857115441015996, -0.0023808762250444, 0.0000000000000000},
+      {0.0000000000000000, -0.0040378273193044, 0.0064139372778371,
+       -0.0890062133451850, 0.6749219241340761, 0.0002498459192428,
+       -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
+  const _prec dz4r[6][7] = {
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000},
+      {1.7779989465546748, -1.3337480247900155, -0.7775013168066564,
+       0.3332503950419969, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000},
+      {0.4410217341392059, 0.1730842484889890, -0.4487228323259926,
+       -0.1653831503022022, 0.0000000000000000, 0.0000000000000000,
+       0.0000000000000000},
+      {-0.1798793213882701, 0.2757257254150788, 0.9597948548284453,
+       -1.1171892610431817, 0.0615480021879277, 0.0000000000000000,
+       0.0000000000000000},
+      {-0.0153911381507088, -0.0568851455503591, 0.1998976464597171,
+       0.8628231468598346, -1.0285385292191949, 0.0380940196007109,
+       0.0000000000000000},
+      {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
+       -0.0416666666666667, 1.1250000000000000, -1.1250000000000000,
+       0.0416666666666667}};
+#endif
         const int i = threadIdx.z + blockIdx.z * blockDim.z + bi;
         if (i >= nx) return;
         if (i >= ei) return;
@@ -1230,20 +1330,20 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
            (2 * align + nz) * ((j) + ngsl + 2)]
 
         int kb = nz - k - 2;
-        float rho1 = 0.25 * (_rho(i, j, kb + 0) + _rho(i, j - 1, kb + 0)) +
+        _prec rho1 = 0.25 * (_rho(i, j, kb + 0) + _rho(i, j - 1, kb + 0)) +
                      0.25 * (_rho(i, j, kb + 1) + _rho(i, j - 1, kb + 1));
-        float rho2 = 0.25 * (_rho(i, j, kb + 0) + _rho(i + 1, j, kb + 0)) +
+        _prec rho2 = 0.25 * (_rho(i, j, kb + 0) + _rho(i + 1, j, kb + 0)) +
                      0.25 * (_rho(i, j, kb + 1) + _rho(i + 1, j, kb + 1));
-        float rho3 = 0.25 * (_rho(i, j, kb + 1) + _rho(i + 1, j, kb + 1)) +
+        _prec rho3 = 0.25 * (_rho(i, j, kb + 1) + _rho(i + 1, j, kb + 1)) +
                      0.25 * (_rho(i, j - 1, kb + 1) + _rho(i + 1, j - 1, kb + 1));
 
-        float Ai1 = _f_1(i, j) * _g3_c(nz - 1 - k) * rho1;
+        _prec Ai1 = _f_1(i, j) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
-        float Ai2 = _f_2(i, j) * _g3_c(nz - 1 - k) * rho2;
+        _prec Ai2 = _f_2(i, j) * _g3_c(nz - 1 - k) * rho2;
         Ai2 = nu * 1.0 / Ai2;
-        float Ai3 = _f_c(i, j) * _g3(nz - 1 - k) * rho3;
+        _prec Ai3 = _f_c(i, j) * _g3(nz - 1 - k) * rho3;
         Ai3 = nu * 1.0 / Ai3;
-        float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(nz - 1 - k);
+        _prec f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(nz - 1 - k);
         _u1(i, j, nz - 1 - k) =
             (a * _u1(i, j, nz - 1 - k) +
              Ai1 * (dhx4[2] * _f_c(i, j) * _g3_c(nz - 1 - k) *
@@ -1626,24 +1726,24 @@ __launch_bounds__(DTOPO_VEL_112_MAX_THREADS_PER_BLOCK)
 __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
 
     __global__ void dtopo_buf_vel_110(
-        float* RSTRCT buf_u1, float* RSTRCT buf_u2,
-        float* RSTRCT buf_u3, const float* RSTRCT dcrjx,
-        const float* RSTRCT dcrjy, const float* RSTRCT dcrjz,
-        const float* RSTRCT f, const float* RSTRCT f1_1,
-        const float* RSTRCT f1_2, const float* RSTRCT f1_c,
-        const float* RSTRCT f2_1, const float* RSTRCT f2_2,
-        const float* RSTRCT f2_c, const float* RSTRCT f_1,
-        const float* RSTRCT f_2, const float* RSTRCT f_c,
-        const float* RSTRCT g, const float* RSTRCT g3,
-        const float* RSTRCT g3_c, const float* RSTRCT g_c,
-        const float* RSTRCT rho, const float* RSTRCT s11,
-        const float* RSTRCT s12, const float* RSTRCT s13,
-        const float* RSTRCT s22, const float* RSTRCT s23,
-        const float* RSTRCT s33, const float* RSTRCT u1,
-        const float* RSTRCT u2, const float* RSTRCT u3,
-        const float a, const float nu, const int nx, const int ny, const int nz,
+        _prec* RSTRCT buf_u1, _prec* RSTRCT buf_u2,
+        _prec* RSTRCT buf_u3, const _prec* RSTRCT dcrjx,
+        const _prec* RSTRCT dcrjy, const _prec* RSTRCT dcrjz,
+        const _prec* RSTRCT f, const _prec* RSTRCT f1_1,
+        const _prec* RSTRCT f1_2, const _prec* RSTRCT f1_c,
+        const _prec* RSTRCT f2_1, const _prec* RSTRCT f2_2,
+        const _prec* RSTRCT f2_c, const _prec* RSTRCT f_1,
+        const _prec* RSTRCT f_2, const _prec* RSTRCT f_c,
+        const _prec* RSTRCT g, const _prec* RSTRCT g3,
+        const _prec* RSTRCT g3_c, const _prec* RSTRCT g_c,
+        const _prec* RSTRCT rho, const _prec* RSTRCT s11,
+        const _prec* RSTRCT s12, const _prec* RSTRCT s13,
+        const _prec* RSTRCT s22, const _prec* RSTRCT s23,
+        const _prec* RSTRCT s33, const _prec* RSTRCT u1,
+        const _prec* RSTRCT u2, const _prec* RSTRCT u3,
+        const _prec a, const _prec nu, const int nx, const int ny, const int nz,
         const int bj, const int ej, const int rj0) {
-        const float phz2l[6][7] = {
+        const _prec phz2l[6][7] = {
             {1.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000},
@@ -1662,9 +1762,9 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
              0.0000000000000000}};
-        const float phy2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float phx2[2] = {0.5000000000000000, 0.5000000000000000};
-        const float dhpz4l[6][9] = {
+        const _prec phy2[2] = {0.5000000000000000, 0.5000000000000000};
+        const _prec phx2[2] = {0.5000000000000000, 0.5000000000000000};
+        const _prec dhpz4l[6][9] = {
             {-1.4276800979942257, 0.2875185051606178, 2.0072491465276454,
              -0.8773816261307504, 0.0075022330101095, 0.0027918394266035,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -1683,15 +1783,15 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
             {-0.0020323834153791, -0.0002106933140862, 0.0013351454085978,
              0.0938400881871787, -0.6816971139746001, 0.0002232904416222,
              0.6796875000000000, -0.0937500000000000, 0.0026041666666667}};
-        const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhz4l[6][7] = {
+        const _prec dhz4l[6][7] = {
             {-1.4511412472637157, 1.8534237417911470, -0.3534237417911469,
              -0.0488587527362844, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000},
@@ -1710,15 +1810,15 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0416666666666667, -1.1250000000000000, 1.1250000000000000,
              -0.0416666666666667}};
-        const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dphz4l[6][9] = {
+        const _prec dphz4l[6][9] = {
             {-1.3764648947859957, 1.8523239861274134, -0.5524268681758195,
              0.0537413571133823, 0.0228264197210198, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -1737,7 +1837,7 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, -0.0026041666666667,
              0.0937500000000000, -0.6796875000000000, 0.0000000000000000,
              0.6796875000000000, -0.0937500000000000, 0.0026041666666667}};
-        const float dz4l[6][8] = {
+        const _prec dz4l[6][8] = {
             {-1.7779989465546748, 1.3337480247900155, 0.7775013168066564,
              -0.3332503950419969, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000},
@@ -1849,7 +1949,7 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
         u3[(k) + align +                                               \
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
-        float rho1 = phz2l[k][0] * (phy2[1] * _rho(i, j + rj0, 0) +
+        _prec rho1 = phz2l[k][0] * (phy2[1] * _rho(i, j + rj0, 0) +
                                     phy2[0] * _rho(i, j + rj0 - 1, 0)) +
                      phz2l[k][1] * (phy2[1] * _rho(i, j + rj0, 1) +
                                     phy2[0] * _rho(i, j + rj0 - 1, 1)) +
@@ -1863,7 +1963,7 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
                                     phy2[0] * _rho(i, j + rj0 - 1, 5)) +
                      phz2l[k][6] * (phy2[1] * _rho(i, j + rj0, 6) +
                                     phy2[0] * _rho(i, j + rj0 - 1, 6));
-        float rho2 = phz2l[k][0] * (phx2[1] * _rho(i, j + rj0, 0) +
+        _prec rho2 = phz2l[k][0] * (phx2[1] * _rho(i, j + rj0, 0) +
                                     phx2[0] * _rho(i - 1, j + rj0, 0)) +
                      phz2l[k][1] * (phx2[1] * _rho(i, j + rj0, 1) +
                                     phx2[0] * _rho(i - 1, j + rj0, 1)) +
@@ -1877,17 +1977,17 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
                                     phx2[0] * _rho(i - 1, j + rj0, 5)) +
                      phz2l[k][6] * (phx2[1] * _rho(i, j + rj0, 6) +
                                     phx2[0] * _rho(i - 1, j + rj0, 6));
-        float rho3 = phy2[1] * (phx2[1] * _rho(i, j + rj0, k) +
+        _prec rho3 = phy2[1] * (phx2[1] * _rho(i, j + rj0, k) +
                                 phx2[0] * _rho(i - 1, j + rj0, k)) +
                      phy2[0] * (phx2[1] * _rho(i, j + rj0 - 1, k) +
                                 phx2[0] * _rho(i - 1, j + rj0 - 1, k));
-        float Ai1 = _f_1(i, j + rj0) * _g3_c(k) * rho1;
+        _prec Ai1 = _f_1(i, j + rj0) * _g3_c(k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
-        float Ai2 = _f_2(i, j + rj0) * _g3_c(k) * rho2;
+        _prec Ai2 = _f_2(i, j + rj0) * _g3_c(k) * rho2;
         Ai2 = nu * 1.0 / Ai2;
-        float Ai3 = _f_c(i, j + rj0) * _g3(k) * rho3;
+        _prec Ai3 = _f_c(i, j + rj0) * _g3(k) * rho3;
         Ai3 = nu * 1.0 / Ai3;
-        float f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(k);
+        _prec f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(k);
         _buf_u1(i, j, k) =
             (a * _u1(i, j + rj0, k) +
              Ai1 *
@@ -2273,50 +2373,50 @@ __launch_bounds__(DTOPO_BUF_VEL_110_MAX_THREADS_PER_BLOCK)
 __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
 
     __global__ void dtopo_buf_vel_111(
-        float *RSTRCT buf_u1, float *RSTRCT buf_u2,
-        float *RSTRCT buf_u3, const float *RSTRCT dcrjx,
-        const float *RSTRCT dcrjy, const float *RSTRCT dcrjz,
-        const float *RSTRCT f, const float *RSTRCT f1_1,
-        const float *RSTRCT f1_2, const float *RSTRCT f1_c,
-        const float *RSTRCT f2_1, const float *RSTRCT f2_2,
-        const float *RSTRCT f2_c, const float *RSTRCT f_1,
-        const float *RSTRCT f_2, const float *RSTRCT f_c,
-        const float *RSTRCT g, const float *RSTRCT g3,
-        const float *RSTRCT g3_c, const float *RSTRCT g_c,
-        const float *RSTRCT rho, const float *RSTRCT s11,
-        const float *RSTRCT s12, const float *RSTRCT s13,
-        const float *RSTRCT s22, const float *RSTRCT s23,
-        const float *RSTRCT s33, const float *RSTRCT u1,
-        const float *RSTRCT u2, const float *RSTRCT u3,
-        const float a, const float nu, const int nx, const int ny, const int nz,
+        _prec *RSTRCT buf_u1, _prec *RSTRCT buf_u2,
+        _prec *RSTRCT buf_u3, const _prec *RSTRCT dcrjx,
+        const _prec *RSTRCT dcrjy, const _prec *RSTRCT dcrjz,
+        const _prec *RSTRCT f, const _prec *RSTRCT f1_1,
+        const _prec *RSTRCT f1_2, const _prec *RSTRCT f1_c,
+        const _prec *RSTRCT f2_1, const _prec *RSTRCT f2_2,
+        const _prec *RSTRCT f2_c, const _prec *RSTRCT f_1,
+        const _prec *RSTRCT f_2, const _prec *RSTRCT f_c,
+        const _prec *RSTRCT g, const _prec *RSTRCT g3,
+        const _prec *RSTRCT g3_c, const _prec *RSTRCT g_c,
+        const _prec *RSTRCT rho, const _prec *RSTRCT s11,
+        const _prec *RSTRCT s12, const _prec *RSTRCT s13,
+        const _prec *RSTRCT s22, const _prec *RSTRCT s23,
+        const _prec *RSTRCT s33, const _prec *RSTRCT u1,
+        const _prec *RSTRCT u2, const _prec *RSTRCT u3,
+        const _prec a, const _prec nu, const int nx, const int ny, const int nz,
         const int bj, const int ej, const int rj0) {
-  const float dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, 0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhz4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, 0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
 
   int dm_offset = 3;
@@ -2415,19 +2515,19 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
 #define _u3(i, j, k)                                                           \
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
-  float rho1 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i, j + rj0 - 1, k - 1)) +
+  _prec rho1 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i, j + rj0 - 1, k - 1)) +
                0.25 * (_rho(i, j + rj0, k) + _rho(i, j + rj0 - 1, k));
-  float rho2 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i - 1, j + rj0, k - 1)) +
+  _prec rho2 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i - 1, j + rj0, k - 1)) +
                0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k));
-  float rho3 = 0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k)) +
+  _prec rho3 = 0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k)) +
                0.25 * (_rho(i, j + rj0 - 1, k) + _rho(i - 1, j + rj0 - 1, k));
-  float Ai1 = _f_1(i, j + rj0) * _g3_c(k) * rho1;
+  _prec Ai1 = _f_1(i, j + rj0) * _g3_c(k) * rho1;
   Ai1 = nu * 1.0 / Ai1;
-  float Ai2 = _f_2(i, j + rj0) * _g3_c(k) * rho2;
+  _prec Ai2 = _f_2(i, j + rj0) * _g3_c(k) * rho2;
   Ai2 = nu * 1.0 / Ai2;
-  float Ai3 = _f_c(i, j + rj0) * _g3(k) * rho3;
+  _prec Ai3 = _f_c(i, j + rj0) * _g3(k) * rho3;
   Ai3 = nu * 1.0 / Ai3;
-  float f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(k);
+  _prec f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(k);
   _buf_u1(i, j, k) =
       (a * _u1(i, j + rj0, k) +
        Ai1 *
@@ -2723,24 +2823,24 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
 __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
 
     __global__ void dtopo_buf_vel_112(
-        float* RSTRCT buf_u1, float* RSTRCT buf_u2,
-        float* RSTRCT buf_u3, const float* RSTRCT dcrjx,
-        const float* RSTRCT dcrjy, const float* RSTRCT dcrjz,
-        const float* RSTRCT f, const float* RSTRCT f1_1,
-        const float* RSTRCT f1_2, const float* RSTRCT f1_c,
-        const float* RSTRCT f2_1, const float* RSTRCT f2_2,
-        const float* RSTRCT f2_c, const float* RSTRCT f_1,
-        const float* RSTRCT f_2, const float* RSTRCT f_c,
-        const float* RSTRCT g, const float* RSTRCT g3,
-        const float* RSTRCT g3_c, const float* RSTRCT g_c,
-        const float* RSTRCT rho, const float* RSTRCT s11,
-        const float* RSTRCT s12, const float* RSTRCT s13,
-        const float* RSTRCT s22, const float* RSTRCT s23,
-        const float* RSTRCT s33, const float* RSTRCT u1,
-        const float* RSTRCT u2, const float* RSTRCT u3,
-        const float a, const float nu, const int nx, const int ny, const int nz,
+        _prec* RSTRCT buf_u1, _prec* RSTRCT buf_u2,
+        _prec* RSTRCT buf_u3, const _prec* RSTRCT dcrjx,
+        const _prec* RSTRCT dcrjy, const _prec* RSTRCT dcrjz,
+        const _prec* RSTRCT f, const _prec* RSTRCT f1_1,
+        const _prec* RSTRCT f1_2, const _prec* RSTRCT f1_c,
+        const _prec* RSTRCT f2_1, const _prec* RSTRCT f2_2,
+        const _prec* RSTRCT f2_c, const _prec* RSTRCT f_1,
+        const _prec* RSTRCT f_2, const _prec* RSTRCT f_c,
+        const _prec* RSTRCT g, const _prec* RSTRCT g3,
+        const _prec* RSTRCT g3_c, const _prec* RSTRCT g_c,
+        const _prec* RSTRCT rho, const _prec* RSTRCT s11,
+        const _prec* RSTRCT s12, const _prec* RSTRCT s13,
+        const _prec* RSTRCT s22, const _prec* RSTRCT s23,
+        const _prec* RSTRCT s33, const _prec* RSTRCT u1,
+        const _prec* RSTRCT u2, const _prec* RSTRCT u3,
+        const _prec a, const _prec nu, const int nx, const int ny, const int nz,
         const int bj, const int ej, const int rj0) {
-        const float dhpz4r[6][9] = {
+        const _prec dhpz4r[6][9] = {
             {-1.5373923010673118, -1.1059180740634813, -0.2134752473866528,
              -0.0352027995732726, -0.0075022330101095, -0.0027918394266035,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -2759,15 +2859,15 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
             {0.0020323834153791, 0.0002106933140862, -0.0013351454085978,
              -0.0938400881871787, 0.6816971139746001, -0.0002232904416222,
              -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
-        const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                                0.5625000000000000, -0.0625000000000000};
-        const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                                1.1250000000000000, -0.0416666666666667};
-        const float dhz4r[6][8] = {
+        const _prec dhz4r[6][8] = {
             {0.0000000000000000, -1.4511412472637157, -1.8534237417911470,
              0.3534237417911469, 0.0488587527362844, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000},
@@ -2786,15 +2886,15 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, -0.0416666666666667, 1.1250000000000000,
              -1.1250000000000000, 0.0416666666666667}};
-        const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+        const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                               0.5625000000000000, -0.0625000000000000};
-        const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+        const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                               1.1250000000000000, -0.0416666666666667};
-        const float dphz4r[6][9] = {
+        const _prec dphz4r[6][9] = {
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -2813,7 +2913,7 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
             {0.0000000000000000, -0.0040378273193044, 0.0064139372778371,
              -0.0890062133451850, 0.6749219241340761, 0.0002498459192428,
              -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
-        const float dz4r[6][7] = {
+        const _prec dz4r[6][7] = {
             {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
              0.0000000000000000},
@@ -2926,23 +3026,23 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
            (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
            (2 * align + nz) * ((j) + ngsl + 2)]
         int kb = nz - k - 2;
-        float rho1 =
+        _prec rho1 =
             0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i, j + rj0 - 1, kb + 0)) +
             0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i, j + rj0 - 1, kb + 1));
-        float rho2 =
+        _prec rho2 =
             0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i - 1, j + rj0, kb + 0)) +
             0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1));
-        float rho3 =
+        _prec rho3 =
             0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1)) +
             0.25 * (_rho(i, j + rj0 - 1, kb + 1) +
                     _rho(i - 1, j + rj0 - 1, kb + 1));
-        float Ai1 = _f_1(i, j + rj0) * _g3_c(nz - 1 - k) * rho1;
+        _prec Ai1 = _f_1(i, j + rj0) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
-        float Ai2 = _f_2(i, j + rj0) * _g3_c(nz - 1 - k) * rho2;
+        _prec Ai2 = _f_2(i, j + rj0) * _g3_c(nz - 1 - k) * rho2;
         Ai2 = nu * 1.0 / Ai2;
-        float Ai3 = _f_c(i, j + rj0) * _g3(nz - 1 - k) * rho3;
+        _prec Ai3 = _f_c(i, j + rj0) * _g3(nz - 1 - k) * rho3;
         Ai3 = nu * 1.0 / Ai3;
-        float f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(nz - 1 - k);
+        _prec f_dcrj = _dcrjx(i) * _dcrjy(j + rj0) * _dcrjz(nz - 1 - k);
         _buf_u1(i, j, nz - 1 - k) =
             (a * _u1(i, j + rj0, nz - 1 - k) +
              Ai1 * (dhx4[2] * _f_c(i, j + rj0) * _g3_c(nz - 1 - k) *

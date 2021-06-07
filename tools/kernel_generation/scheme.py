@@ -232,8 +232,8 @@ def velocity(label, buf=0, debug=0, debug_ops=0, use_cartesian=0):
         rhs_indices = lambda idx : (idx[0], idx[1] + rj0, idx[2] - 6)
         index_bounds = (0,1,0)
     else:
-        lhs_indices = lambda idx : (idx[0], idx[1], idx[2] - 6)
-        rhs_indices = lambda idx : (idx[0], idx[1], idx[2] - 6)
+        lhs_indices = lambda idx : (idx[0], idx[1], idx[2])
+        rhs_indices = lambda idx : (idx[0], idx[1], idx[2])
         index_bounds = (1,1,0)
 
     kernels = kg.make_kernel(label, 

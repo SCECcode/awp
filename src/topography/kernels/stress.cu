@@ -78,14 +78,14 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        _prec*  __restrict__ u1, 
        _prec*  __restrict__ v1,    
        _prec*  __restrict__ w1,    
-       const float *__restrict__ f,
-       const float *__restrict__ f1_1, const float *__restrict__ f1_2,
-       const float *__restrict__ f1_c, const float *__restrict__ f2_1,
-       const float *__restrict__ f2_2, const float *__restrict__ f2_c,
-       const float *__restrict__ f_1, const float *__restrict__ f_2,
-       const float *__restrict__ f_c, const float *__restrict__ g,
-       const float *__restrict__ g3, const float *__restrict__ g3_c,
-       const float *__restrict__ g_c,
+       const _prec *__restrict__ f,
+       const _prec *__restrict__ f1_1, const _prec *__restrict__ f1_2,
+       const _prec *__restrict__ f1_c, const _prec *__restrict__ f2_1,
+       const _prec *__restrict__ f2_2, const _prec *__restrict__ f2_c,
+       const _prec *__restrict__ f_1, const _prec *__restrict__ f_2,
+       const _prec *__restrict__ f_c, const _prec *__restrict__ g,
+       const _prec *__restrict__ g3, const _prec *__restrict__ g3_c,
+       const _prec *__restrict__ g_c,
        const _prec *__restrict__  lam,   
        const _prec *__restrict__  mu,     
        const _prec *__restrict__  qp,
@@ -118,31 +118,31 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   _prec f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
   int maxk, mink;
 
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float phdz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec phdz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhz4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float pdhz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec pdhz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
@@ -336,7 +336,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
 #ifdef CURVILINEAR
 
-    float Jii = _f_c(i, j) * _g3_c(k);
+    _prec Jii = _f_c(i, j) * _g3_c(k);
           Jii = 1.0 * 1.0 / Jii;
           
     vs1 =
@@ -467,7 +467,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xy
 #ifdef CURVILINEAR
-  float J12i = _f(i, j) * _g3_c(k + 6);
+  _prec J12i = _f(i, j) * _g3_c(k + 6);
   J12i = 1.0 / J12i;
 
   vs1 =
@@ -546,7 +546,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     // xz
 #ifdef CURVILINEAR
 
-  float J13i = _f_1(i, j) * _g3(k);
+  _prec J13i = _f_1(i, j) * _g3(k);
   J13i = 1.0 * 1.0 / J13i;
 
   vs1 = J13i * (dz4[1] * _u1(i, j, k) + dz4[0] * _u1(i, j, k - 1) +
@@ -596,7 +596,7 @@ dtopo_str_111(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     // yz
 
 #ifdef CURVILINEAR
-    float J23i = _f_2(i, j) * _g3(k);
+    _prec J23i = _f_2(i, j) * _g3(k);
     J23i = 1.0 * 1.0 / J23i;
     vs1 = J23i * (dz4[1] * _v1(i, j, k) + dz4[0] * _v1(i, j, k - 1) +
                         dz4[2] * _v1(i, j, k + 1) + dz4[3] * _v1(i, j, k + 2));
@@ -674,14 +674,14 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
        _prec*  __restrict__ u1, 
        _prec*  __restrict__ v1,    
        _prec*  __restrict__ w1,    
-       const float *__restrict__ f,
-       const float *__restrict__ f1_1, const float *__restrict__ f1_2,
-       const float *__restrict__ f1_c, const float *__restrict__ f2_1,
-       const float *__restrict__ f2_2, const float *__restrict__ f2_c,
-       const float *__restrict__ f_1, const float *__restrict__ f_2,
-       const float *__restrict__ f_c, const float *__restrict__ g,
-       const float *__restrict__ g3, const float *__restrict__ g3_c,
-       const float *__restrict__ g_c,
+       const _prec *__restrict__ f,
+       const _prec *__restrict__ f1_1, const _prec *__restrict__ f1_2,
+       const _prec *__restrict__ f1_c, const _prec *__restrict__ f2_1,
+       const _prec *__restrict__ f2_2, const _prec *__restrict__ f2_c,
+       const _prec *__restrict__ f_1, const _prec *__restrict__ f_2,
+       const _prec *__restrict__ f_c, const _prec *__restrict__ g,
+       const _prec *__restrict__ g3, const _prec *__restrict__ g3_c,
+       const _prec *__restrict__ g_c,
        const _prec *__restrict__  lam,   
        const _prec *__restrict__  mu,     
        const _prec *__restrict__  qp,
@@ -714,15 +714,15 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
   _prec f_xx, f_yy, f_zz, f_xy, f_xz, f_yz;
   int maxk, mink;
 
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float phdz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec phdz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float phdz4r[6][9] = {
+  const _prec phdz4r[6][9] = {
       {1.5373923010673116, -1.0330083346742178, -0.6211677623382129,
        -0.0454110758451345, 0.1680934225988761, -0.0058985508086226,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -741,7 +741,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       {0.0009619461344193, 0.0035553215968974, -0.0124936029037323,
        -0.0773639466787397, 0.6736586580761996, 0.0002232904416222,
        -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
-  const float dz4r[6][7] = {
+  const _prec dz4r[6][7] = {
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000},
@@ -760,27 +760,27 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        -0.0416666666666667, 1.1250000000000000, -1.1250000000000000,
        0.0416666666666667}};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhz4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float pdhz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec pdhz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float dhz4r[6][8] = {
+  const _prec dhz4r[6][8] = {
       {0.0000000000000000, 1.4511412472637157, -1.8534237417911470,
        0.3534237417911469, 0.0488587527362844, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000},
@@ -799,7 +799,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, -0.0416666666666667, 1.1250000000000000,
        -1.1250000000000000, 0.0416666666666667}};
-  const float pdhz4r[6][9] = {
+  const _prec pdhz4r[6][9] = {
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -1014,10 +1014,10 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 #define _g3(k) g3[(k) + align]
 
 #ifdef CURVILINEAR
-  float Jii = _f_c(i, j) * _g3_c(nz - 1 - kc - 6);
+  _prec Jii = _f_c(i, j) * _g3_c(nz - 1 - kc - 6);
   Jii = 1.0 * 1.0 / Jii;
   // xx, yy, zz
-  float vs1 = dx4[1] * _u1(i, j, nz - 1 - kc - 6) +
+  _prec vs1 = dx4[1] * _u1(i, j, nz - 1 - kc - 6) +
               dx4[0] * _u1(i - 1, j, nz - 1 - kc - 6) +
               dx4[2] * _u1(i + 1, j, nz - 1 - kc - 6) +
               dx4[3] * _u1(i + 2, j, nz - 1 - kc - 6) -
@@ -1062,7 +1062,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                         phdz4r[kb][2] * _u1(i + 2, j, nz - 3) +
                         phdz4r[kb][1] * _u1(i + 2, j, nz - 2) +
                         phdz4r[kb][0] * _u1(i + 2, j, nz - 1)));
-  float vs2 = dhy4[2] * _v1(i, j, nz - 1 - kc - 6) +
+  _prec vs2 = dhy4[2] * _v1(i, j, nz - 1 - kc - 6) +
               dhy4[0] * _v1(i, j - 2, nz - 1 - kc - 6) +
               dhy4[1] * _v1(i, j - 1, nz - 1 - kc - 6) +
               dhy4[3] * _v1(i, j + 1, nz - 1 - kc - 6) -
@@ -1107,7 +1107,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
                         phdz4r[kb][2] * _v1(i, j + 1, nz - 3) +
                         phdz4r[kb][1] * _v1(i, j + 1, nz - 2) +
                         phdz4r[kb][0] * _v1(i, j + 1, nz - 1)));
-  float vs3 =
+  _prec vs3 =
       Jii * (dhz4r[kb][7] * _w1(i, j, nz - 8) + dhz4r[kb][6] * _w1(i, j, nz - 7) +
              dhz4r[kb][5] * _w1(i, j, nz - 6) + dhz4r[kb][4] * _w1(i, j, nz - 5) +
              dhz4r[kb][3] * _w1(i, j, nz - 4) + dhz4r[kb][2] * _w1(i, j, nz - 3) +
@@ -1145,7 +1145,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xy
 #ifdef CURVILINEAR
-  float J12i = _f(i, j) * _g3_c(nz - 1 - kc - 6);
+  _prec J12i = _f(i, j) * _g3_c(nz - 1 - kc - 6);
   J12i = 1.0 * 1.0 / J12i;
   vs1 = dy4[1] * _u1(i, j, nz - 1 - kc - 6) +
               dy4[0] * _u1(i, j - 1, nz - 1 - kc - 6) +
@@ -1250,7 +1250,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
     // xz
 #ifdef CURVILINEAR
-  float J13i = _f_1(i, j) * _g3(nz - 1 - kc - 6);
+  _prec J13i = _f_1(i, j) * _g3(nz - 1 - kc - 6);
   J13i = 1.0 * 1.0 / J13i;
   vs1 =
       J13i * (dz4r[kb][6] * _u1(i, j, nz - 7) + dz4r[kb][5] * _u1(i, j, nz - 6) +
@@ -1315,7 +1315,7 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
     // yz
 
 #ifdef CURVILINEAR
-  float J23i = _f_2(i, j) * _g3(nz - 1 - kc - 6);
+  _prec J23i = _f_2(i, j) * _g3(nz - 1 - kc - 6);
   J23i = 1.0 * 1.0 / J23i;
   vs1 =
       J23i * (dz4r[kb][6] * _v1(i, j, nz - 7) + dz4r[kb][5] * _v1(i, j, nz - 6) +
@@ -1415,22 +1415,22 @@ dtopo_str_112(_prec*  __restrict__ xx, _prec*  __restrict__ yy, _prec*  __restri
 
 // Kernel functions without attenuation
 __global__ void dtopo_str_110(
-    float *__restrict__ s11, float *__restrict__ s12, float *__restrict__ s13,
-    float *__restrict__ s22, float *__restrict__ s23, float *__restrict__ s33,
-    float *__restrict__ u1, float *__restrict__ u2, float *__restrict__ u3,
-    const float *__restrict__ dcrjx, const float *__restrict__ dcrjy,
-    const float *__restrict__ dcrjz, const float *__restrict__ f,
-    const float *__restrict__ f1_1, const float *__restrict__ f1_2,
-    const float *__restrict__ f1_c, const float *__restrict__ f2_1,
-    const float *__restrict__ f2_2, const float *__restrict__ f2_c,
-    const float *__restrict__ f_1, const float *__restrict__ f_2,
-    const float *__restrict__ f_c, const float *__restrict__ g,
-    const float *__restrict__ g3, const float *__restrict__ g3_c,
-    const float *__restrict__ g_c, const float *__restrict__ lami,
-    const float *__restrict__ mui, const float a, const float nu, const int nx,
+    _prec *__restrict__ s11, _prec *__restrict__ s12, _prec *__restrict__ s13,
+    _prec *__restrict__ s22, _prec *__restrict__ s23, _prec *__restrict__ s33,
+    _prec *__restrict__ u1, _prec *__restrict__ u2, _prec *__restrict__ u3,
+    const _prec *__restrict__ dcrjx, const _prec *__restrict__ dcrjy,
+    const _prec *__restrict__ dcrjz, const _prec *__restrict__ f,
+    const _prec *__restrict__ f1_1, const _prec *__restrict__ f1_2,
+    const _prec *__restrict__ f1_c, const _prec *__restrict__ f2_1,
+    const _prec *__restrict__ f2_2, const _prec *__restrict__ f2_c,
+    const _prec *__restrict__ f_1, const _prec *__restrict__ f_2,
+    const _prec *__restrict__ f_c, const _prec *__restrict__ g,
+    const _prec *__restrict__ g3, const _prec *__restrict__ g3_c,
+    const _prec *__restrict__ g_c, const _prec *__restrict__ lami,
+    const _prec *__restrict__ mui, const _prec a, const _prec nu, const int nx,
     const int ny, const int nz, const int bi, const int bj, const int ei,
     const int ej) {
-  const float phz4l[6][7] = {
+  const _prec phz4l[6][7] = {
       {0.8338228784688313, 0.1775123316429260, 0.1435067013076542,
        -0.1548419114194114, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000},
@@ -1449,11 +1449,11 @@ __global__ void dtopo_str_110(
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        -0.0625000000000000, 0.5625000000000000, 0.5625000000000000,
        -0.0625000000000000}};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dhz4l[6][7] = {
+  const _prec dhz4l[6][7] = {
       {-1.4511412472637157, 1.8534237417911470, -0.3534237417911469,
        -0.0488587527362844, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000},
@@ -1472,7 +1472,7 @@ __global__ void dtopo_str_110(
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0416666666666667, -1.1250000000000000, 1.1250000000000000,
        -0.0416666666666667}};
-  const float phdz4l[6][9] = {
+  const _prec phdz4l[6][9] = {
       {-1.5373923010673116, 1.0330083346742178, 0.6211677623382129,
        0.0454110758451345, -0.1680934225988761, 0.0058985508086226,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -1491,19 +1491,19 @@ __global__ void dtopo_str_110(
       {-0.0009619461344193, -0.0035553215968974, 0.0124936029037323,
        0.0773639466787397, -0.6736586580761996, -0.0002232904416222,
        0.6796875000000000, -0.0937500000000000, 0.0026041666666667}};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dz4l[6][8] = {
+  const _prec dz4l[6][8] = {
       {-1.7779989465546748, 1.3337480247900155, 0.7775013168066564,
        -0.3332503950419969, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000},
@@ -1522,7 +1522,7 @@ __global__ void dtopo_str_110(
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0416666666666667, -1.1250000000000000,
        1.1250000000000000, -0.0416666666666667}};
-  const float pdhz4l[6][9] = {
+  const _prec pdhz4l[6][9] = {
       {-1.5886075042755416, 2.2801810182668110, -0.8088980291471827,
        0.1316830205960989, -0.0143585054401857, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -1627,15 +1627,15 @@ __global__ void dtopo_str_110(
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = bi; i < ei; ++i) {
-    float Jii = _f_c(i, j) * _g3_c(k);
+    _prec Jii = _f_c(i, j) * _g3_c(k);
     Jii = 1.0 * 1.0 / Jii;
-    float J12i = _f(i, j) * _g3_c(k);
+    _prec J12i = _f(i, j) * _g3_c(k);
     J12i = 1.0 * 1.0 / J12i;
-    float J13i = _f_1(i, j) * _g3(k);
+    _prec J13i = _f_1(i, j) * _g3(k);
     J13i = 1.0 * 1.0 / J13i;
-    float J23i = _f_2(i, j) * _g3(k);
+    _prec J23i = _f_2(i, j) * _g3(k);
     J23i = 1.0 * 1.0 / J23i;
-    float lam =
+    _prec lam =
         nu * 1.0 /
         (phz4l[k][0] *
              (phy4[2] *
@@ -1749,7 +1749,7 @@ __global__ void dtopo_str_110(
                          px4[0] * _lami(i - 1, j + 1, 6) +
                          px4[2] * _lami(i + 1, j + 1, 6) +
                          px4[3] * _lami(i + 2, j + 1, 6))));
-    float twomu =
+    _prec twomu =
         2 * nu * 1.0 /
         (phz4l[k][0] *
              (phy4[2] *
@@ -1863,18 +1863,18 @@ __global__ void dtopo_str_110(
                   (px4[1] * _mui(i, j + 1, 6) + px4[0] * _mui(i - 1, j + 1, 6) +
                    px4[2] * _mui(i + 1, j + 1, 6) +
                    px4[3] * _mui(i + 2, j + 1, 6))));
-    float mu12 = nu * 1.0 /
+    _prec mu12 = nu * 1.0 /
                  (phz4l[k][0] * _mui(i, j, 0) + phz4l[k][1] * _mui(i, j, 1) +
                   phz4l[k][2] * _mui(i, j, 2) + phz4l[k][3] * _mui(i, j, 3) +
                   phz4l[k][4] * _mui(i, j, 4) + phz4l[k][5] * _mui(i, j, 5) +
                   phz4l[k][6] * _mui(i, j, 6));
-    float mu13 = nu * 1.0 /
+    _prec mu13 = nu * 1.0 /
                  (phy4[2] * _mui(i, j, k) + phy4[0] * _mui(i, j - 2, k) +
                   phy4[1] * _mui(i, j - 1, k) + phy4[3] * _mui(i, j + 1, k));
-    float mu23 = nu * 1.0 /
+    _prec mu23 = nu * 1.0 /
                  (px4[1] * _mui(i, j, k) + px4[0] * _mui(i - 1, j, k) +
                   px4[2] * _mui(i + 1, j, k) + px4[3] * _mui(i + 2, j, k));
-    float div =
+    _prec div =
         dhy4[2] * _u2(i, j, k) + dhy4[0] * _u2(i, j - 2, k) +
         dhy4[1] * _u2(i, j - 1, k) + dhy4[3] * _u2(i, j + 1, k) +
         dx4[1] * _u1(i, j, k) + dx4[0] * _u1(i - 1, j, k) +
@@ -1957,7 +1957,7 @@ __global__ void dtopo_str_110(
                   phdz4l[k][6] * _u1(i + 2, j, 6) +
                   phdz4l[k][7] * _u1(i + 2, j, 7) +
                   phdz4l[k][8] * _u1(i + 2, j, 8)));
-    float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k);
+    _prec f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k);
     _s11(i, j, k) =
         (a * _s11(i, j, k) + lam * div +
          twomu * (dx4[1] * _u1(i, j, k) + dx4[0] * _u1(i - 1, j, k) +
@@ -2273,48 +2273,48 @@ __global__ void dtopo_str_110(
 }
 
 __global__ void dtopo_str_111(
-    float *__restrict__ s11, float *__restrict__ s12, float *__restrict__ s13,
-    float *__restrict__ s22, float *__restrict__ s23, float *__restrict__ s33,
-    float *__restrict__ u1, float *__restrict__ u2, float *__restrict__ u3,
-    const float *__restrict__ dcrjx, const float *__restrict__ dcrjy,
-    const float *__restrict__ dcrjz, const float *__restrict__ f,
-    const float *__restrict__ f1_1, const float *__restrict__ f1_2,
-    const float *__restrict__ f1_c, const float *__restrict__ f2_1,
-    const float *__restrict__ f2_2, const float *__restrict__ f2_c,
-    const float *__restrict__ f_1, const float *__restrict__ f_2,
-    const float *__restrict__ f_c, const float *__restrict__ g,
-    const float *__restrict__ g3, const float *__restrict__ g3_c,
-    const float *__restrict__ g_c, const float *__restrict__ lami,
-    const float *__restrict__ mui, const float a, const float nu, const int nx,
+    _prec *__restrict__ s11, _prec *__restrict__ s12, _prec *__restrict__ s13,
+    _prec *__restrict__ s22, _prec *__restrict__ s23, _prec *__restrict__ s33,
+    _prec *__restrict__ u1, _prec *__restrict__ u2, _prec *__restrict__ u3,
+    const _prec *__restrict__ dcrjx, const _prec *__restrict__ dcrjy,
+    const _prec *__restrict__ dcrjz, const _prec *__restrict__ f,
+    const _prec *__restrict__ f1_1, const _prec *__restrict__ f1_2,
+    const _prec *__restrict__ f1_c, const _prec *__restrict__ f2_1,
+    const _prec *__restrict__ f2_2, const _prec *__restrict__ f2_c,
+    const _prec *__restrict__ f_1, const _prec *__restrict__ f_2,
+    const _prec *__restrict__ f_c, const _prec *__restrict__ g,
+    const _prec *__restrict__ g3, const _prec *__restrict__ g3_c,
+    const _prec *__restrict__ g_c, const _prec *__restrict__ lami,
+    const _prec *__restrict__ mui, const _prec a, const _prec nu, const int nx,
     const int ny, const int nz, const int bi, const int bj, const int ei,
     const int ej) {
-  const float phz4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phz4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhz4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float phdz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec phdz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float pdhz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec pdhz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, -0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
@@ -2405,15 +2405,15 @@ __global__ void dtopo_str_111(
      (2 * align + nz) * ((j) + ngsl + 2)]
 
   for (int i = bi; i < ei; ++i) {
-    float Jii = _f_c(i, j) * _g3_c(k + 6);
+    _prec Jii = _f_c(i, j) * _g3_c(k + 6);
     Jii = 1.0 * 1.0 / Jii;
-    float J12i = _f(i, j) * _g3_c(k + 6);
+    _prec J12i = _f(i, j) * _g3_c(k + 6);
     J12i = 1.0 * 1.0 / J12i;
-    float J13i = _f_1(i, j) * _g3(k + 6);
+    _prec J13i = _f_1(i, j) * _g3(k + 6);
     J13i = 1.0 * 1.0 / J13i;
-    float J23i = _f_2(i, j) * _g3(k + 6);
+    _prec J23i = _f_2(i, j) * _g3(k + 6);
     J23i = 1.0 * 1.0 / J23i;
-    float lam = nu * 1.0 /
+    _prec lam = nu * 1.0 /
                 (phz4[0] * (phy4[2] * (px4[1] * _lami(i, j, k + 4) +
                                        px4[0] * _lami(i - 1, j, k + 4) +
                                        px4[2] * _lami(i + 1, j, k + 4) +
@@ -2478,7 +2478,7 @@ __global__ void dtopo_str_111(
                                        px4[0] * _lami(i - 1, j + 1, k + 7) +
                                        px4[2] * _lami(i + 1, j + 1, k + 7) +
                                        px4[3] * _lami(i + 2, j + 1, k + 7))));
-    float twomu = 2 * nu * 1.0 /
+    _prec twomu = 2 * nu * 1.0 /
                   (phz4[0] * (phy4[2] * (px4[1] * _mui(i, j, k + 4) +
                                          px4[0] * _mui(i - 1, j, k + 4) +
                                          px4[2] * _mui(i + 1, j, k + 4) +
@@ -2543,18 +2543,18 @@ __global__ void dtopo_str_111(
                                          px4[0] * _mui(i - 1, j + 1, k + 7) +
                                          px4[2] * _mui(i + 1, j + 1, k + 7) +
                                          px4[3] * _mui(i + 2, j + 1, k + 7))));
-    float mu12 = nu * 1.0 /
+    _prec mu12 = nu * 1.0 /
                  (phz4[0] * _mui(i, j, k + 4) + phz4[1] * _mui(i, j, k + 5) +
                   phz4[2] * _mui(i, j, k + 6) + phz4[3] * _mui(i, j, k + 7));
-    float mu13 =
+    _prec mu13 =
         nu * 1.0 /
         (phy4[2] * _mui(i, j, k + 6) + phy4[0] * _mui(i, j - 2, k + 6) +
          phy4[1] * _mui(i, j - 1, k + 6) + phy4[3] * _mui(i, j + 1, k + 6));
-    float mu23 =
+    _prec mu23 =
         nu * 1.0 /
         (px4[1] * _mui(i, j, k + 6) + px4[0] * _mui(i - 1, j, k + 6) +
          px4[2] * _mui(i + 1, j, k + 6) + px4[3] * _mui(i + 2, j, k + 6));
-    float div =
+    _prec div =
         dhy4[2] * _u2(i, j, k + 6) + dhy4[0] * _u2(i, j - 2, k + 6) +
         dhy4[1] * _u2(i, j - 1, k + 6) + dhy4[3] * _u2(i, j + 1, k + 6) +
         dx4[1] * _u1(i, j, k + 6) + dx4[0] * _u1(i - 1, j, k + 6) +
@@ -2621,7 +2621,7 @@ __global__ void dtopo_str_111(
                   phdz4[4] * _u1(i + 2, j, k + 7) +
                   phdz4[5] * _u1(i + 2, j, k + 8) +
                   phdz4[6] * _u1(i + 2, j, k + 9)));
-    float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k + 6);
+    _prec f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(k + 6);
     _s11(i, j, k + 6) =
         (a * _s11(i, j, k + 6) + lam * div +
          twomu *
@@ -2888,22 +2888,22 @@ __global__ void dtopo_str_111(
 }
 
 __global__ void dtopo_str_112(
-    float *__restrict__ s11, float *__restrict__ s12, float *__restrict__ s13,
-    float *__restrict__ s22, float *__restrict__ s23, float *__restrict__ s33,
-    float *__restrict__ u1, float *__restrict__ u2, float *__restrict__ u3,
-    const float *__restrict__ dcrjx, const float *__restrict__ dcrjy,
-    const float *__restrict__ dcrjz, const float *__restrict__ f,
-    const float *__restrict__ f1_1, const float *__restrict__ f1_2,
-    const float *__restrict__ f1_c, const float *__restrict__ f2_1,
-    const float *__restrict__ f2_2, const float *__restrict__ f2_c,
-    const float *__restrict__ f_1, const float *__restrict__ f_2,
-    const float *__restrict__ f_c, const float *__restrict__ g,
-    const float *__restrict__ g3, const float *__restrict__ g3_c,
-    const float *__restrict__ g_c, const float *__restrict__ lami,
-    const float *__restrict__ mui, const float a, const float nu, const int nx,
+    _prec *__restrict__ s11, _prec *__restrict__ s12, _prec *__restrict__ s13,
+    _prec *__restrict__ s22, _prec *__restrict__ s23, _prec *__restrict__ s33,
+    _prec *__restrict__ u1, _prec *__restrict__ u2, _prec *__restrict__ u3,
+    const _prec *__restrict__ dcrjx, const _prec *__restrict__ dcrjy,
+    const _prec *__restrict__ dcrjz, const _prec *__restrict__ f,
+    const _prec *__restrict__ f1_1, const _prec *__restrict__ f1_2,
+    const _prec *__restrict__ f1_c, const _prec *__restrict__ f2_1,
+    const _prec *__restrict__ f2_2, const _prec *__restrict__ f2_c,
+    const _prec *__restrict__ f_1, const _prec *__restrict__ f_2,
+    const _prec *__restrict__ f_c, const _prec *__restrict__ g,
+    const _prec *__restrict__ g3, const _prec *__restrict__ g3_c,
+    const _prec *__restrict__ g_c, const _prec *__restrict__ lami,
+    const _prec *__restrict__ mui, const _prec a, const _prec nu, const int nx,
     const int ny, const int nz, const int bi, const int bj, const int ei,
     const int ej) {
-  const float phz4r[6][8] = {
+  const _prec phz4r[6][8] = {
       {0.0000000000000000, 0.8338228784688313, 0.1775123316429260,
        0.1435067013076542, -0.1548419114194114, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000},
@@ -2922,11 +2922,11 @@ __global__ void dtopo_str_112(
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, -0.0625000000000000, 0.5625000000000000,
        0.5625000000000000, -0.0625000000000000}};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dhz4r[6][8] = {
+  const _prec dhz4r[6][8] = {
       {0.0000000000000000, 1.4511412472637157, -1.8534237417911470,
        0.3534237417911469, 0.0488587527362844, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000},
@@ -2945,7 +2945,7 @@ __global__ void dtopo_str_112(
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, -0.0416666666666667, 1.1250000000000000,
        -1.1250000000000000, 0.0416666666666667}};
-  const float phdz4r[6][9] = {
+  const _prec phdz4r[6][9] = {
       {1.5373923010673116, -1.0330083346742178, -0.6211677623382129,
        -0.0454110758451345, 0.1680934225988761, -0.0058985508086226,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -2964,19 +2964,19 @@ __global__ void dtopo_str_112(
       {0.0009619461344193, 0.0035553215968974, -0.0124936029037323,
        -0.0773639466787397, 0.6736586580761996, 0.0002232904416222,
        -0.6796875000000000, 0.0937500000000000, -0.0026041666666667}};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dz4r[6][7] = {
+  const _prec dz4r[6][7] = {
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000},
@@ -2995,7 +2995,7 @@ __global__ void dtopo_str_112(
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        -0.0416666666666667, 1.1250000000000000, -1.1250000000000000,
        0.0416666666666667}};
-  const float pdhz4r[6][9] = {
+  const _prec pdhz4r[6][9] = {
       {0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000,
        0.0000000000000000, 0.0000000000000000, 0.0000000000000000},
@@ -3100,15 +3100,15 @@ __global__ void dtopo_str_112(
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
   for (int i = bi; i < ei; ++i) {
-    float Jii = _f_c(i, j) * _g3_c(nz - 1 - k);
+    _prec Jii = _f_c(i, j) * _g3_c(nz - 1 - k);
     Jii = 1.0 * 1.0 / Jii;
-    float J12i = _f(i, j) * _g3_c(nz - 1 - k);
+    _prec J12i = _f(i, j) * _g3_c(nz - 1 - k);
     J12i = 1.0 * 1.0 / J12i;
-    float J13i = _f_1(i, j) * _g3(nz - 1 - k);
+    _prec J13i = _f_1(i, j) * _g3(nz - 1 - k);
     J13i = 1.0 * 1.0 / J13i;
-    float J23i = _f_2(i, j) * _g3(nz - 1 - k);
+    _prec J23i = _f_2(i, j) * _g3(nz - 1 - k);
     J23i = 1.0 * 1.0 / J23i;
-    float lam =
+    _prec lam =
         nu * 1.0 /
         (phz4r[k][7] * (phy4[2] * (px4[1] * _lami(i, j, nz - 8) +
                                    px4[0] * _lami(i - 1, j, nz - 8) +
@@ -3238,7 +3238,7 @@ __global__ void dtopo_str_112(
                                    px4[0] * _lami(i - 1, j + 1, nz - 1) +
                                    px4[2] * _lami(i + 1, j + 1, nz - 1) +
                                    px4[3] * _lami(i + 2, j + 1, nz - 1))));
-    float twomu =
+    _prec twomu =
         2 * nu * 1.0 /
         (phz4r[k][7] * (phy4[2] * (px4[1] * _mui(i, j, nz - 8) +
                                    px4[0] * _mui(i - 1, j, nz - 8) +
@@ -3368,23 +3368,23 @@ __global__ void dtopo_str_112(
                                    px4[0] * _mui(i - 1, j + 1, nz - 1) +
                                    px4[2] * _mui(i + 1, j + 1, nz - 1) +
                                    px4[3] * _mui(i + 2, j + 1, nz - 1))));
-    float mu12 =
+    _prec mu12 =
         nu * 1.0 /
         (phz4r[k][7] * _mui(i, j, nz - 8) + phz4r[k][6] * _mui(i, j, nz - 7) +
          phz4r[k][5] * _mui(i, j, nz - 6) + phz4r[k][4] * _mui(i, j, nz - 5) +
          phz4r[k][3] * _mui(i, j, nz - 4) + phz4r[k][2] * _mui(i, j, nz - 3) +
          phz4r[k][1] * _mui(i, j, nz - 2) + phz4r[k][0] * _mui(i, j, nz - 1));
-    float mu13 = nu * 1.0 /
+    _prec mu13 = nu * 1.0 /
                  (phy4[2] * _mui(i, j, nz - 1 - k) +
                   phy4[0] * _mui(i, j - 2, nz - 1 - k) +
                   phy4[1] * _mui(i, j - 1, nz - 1 - k) +
                   phy4[3] * _mui(i, j + 1, nz - 1 - k));
-    float mu23 =
+    _prec mu23 =
         nu * 1.0 /
         (px4[1] * _mui(i, j, nz - 1 - k) + px4[0] * _mui(i - 1, j, nz - 1 - k) +
          px4[2] * _mui(i + 1, j, nz - 1 - k) +
          px4[3] * _mui(i + 2, j, nz - 1 - k));
-    float div =
+    _prec div =
         dhy4[2] * _u2(i, j, nz - 1 - k) + dhy4[0] * _u2(i, j - 2, nz - 1 - k) +
         dhy4[1] * _u2(i, j - 1, nz - 1 - k) +
         dhy4[3] * _u2(i, j + 1, nz - 1 - k) + dx4[1] * _u1(i, j, nz - 1 - k) +
@@ -3479,7 +3479,7 @@ __global__ void dtopo_str_112(
                   phdz4r[k][2] * _u1(i + 2, j, nz - 3) +
                   phdz4r[k][1] * _u1(i + 2, j, nz - 2) +
                   phdz4r[k][0] * _u1(i + 2, j, nz - 1)));
-    float f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(nz - 1 - k);
+    _prec f_dcrj = _dcrjx(i) * _dcrjy(j) * _dcrjz(nz - 1 - k);
     _s11(i, j, nz - 1 - k) =
         (a * _s11(i, j, nz - 1 - k) + lam * div +
          twomu * (dx4[1] * _u1(i, j, nz - 1 - k) +
@@ -3821,9 +3821,9 @@ __global__ void dtopo_str_112(
 #undef _u3
 }
 
-__global__ void dtopo_init_material_111(float *__restrict__ lami,
-                                        float *__restrict__ mui,
-                                        float *__restrict__ rho, const int nx,
+__global__ void dtopo_init_material_111(_prec *__restrict__ lami,
+                                        _prec *__restrict__ mui,
+                                        _prec *__restrict__ rho, const int nx,
                                         const int ny, const int nz) {
   const int i = threadIdx.z + blockIdx.z * blockDim.z;
   if (i >= nx)
