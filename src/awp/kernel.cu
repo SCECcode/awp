@@ -1561,28 +1561,28 @@ __global__ void dstrqc(float* xx, float* yy,    float* zz,    float* xy,    floa
 
         if (d_i == 0){ /*Apply FS condition on uppermost grid only*/
 	  if(k == d_nzt[d_i]+align-1) {
-	      u1[pos_kp1] = f_u1;// - (f_w1 - w1_im1);
-	      v1[pos_kp1] = f_v1;// - (w1[pos_jp1] - f_w1);
+	      u1[pos_kp1] = f_u1 - (f_w1 - w1_im1);
+	      v1[pos_kp1] = f_v1 - (w1[pos_jp1] - f_w1);
 
 	      g_i  = d_nxt[d_i]*rankx + i - ngsl - 1;
 
 	      if(g_i<NX || NPC == 2)
-		      vs1 = u1_ip1;// - (w1_ip1 - f_w1);
+		      vs1 = u1_ip1 - (w1_ip1 - f_w1);
 	      else
 		      vs1 = 0.0;
 
 	      g_i  = d_nyt[d_i]*ranky + j - ngsl - 1;
 	      if(g_i>1 || NPC == 2) //periodic BCs
-		      vs2 = v1[pos_jm1];// - (f_w1 - w1[pos_jm1]);
+		      vs2 = v1[pos_jm1] - (f_w1 - w1[pos_jm1]);
 	      else
 		      vs2 = 0.0;
 
-	      w1[pos_kp1] = w1[pos_km1];// - lam_mu[i*(d_nyt[d_i]+4+ngsl2) + j]*((vs1 - u1[pos_kp1]) + (u1_ip1 - f_u1)
-                           //+ (v1[pos_kp1] - vs2) + (f_v1   - v1[pos_jm1]) );
+	      w1[pos_kp1] = w1[pos_km1] - lam_mu[i*(d_nyt[d_i]+4+ngsl2) + j]*((vs1 - u1[pos_kp1]) + (u1_ip1 - f_u1)
+                           + (v1[pos_kp1] - vs2) + (f_v1   - v1[pos_jm1]) );
 	  }
 	  else if(k == d_nzt[d_i]+align-2) {
-		  u1[pos_kp2] = u1[pos_kp1];// - (w1[pos_kp1]   - w1[pos_im1+1]);
-		  v1[pos_kp2] = v1[pos_kp1];// - (w1[pos_jp1+1] - w1[pos_kp1]);
+		  u1[pos_kp2] = u1[pos_kp1] - (w1[pos_kp1]   - w1[pos_im1+1]);
+		  v1[pos_kp2] = v1[pos_kp1] - (w1[pos_jp1+1] - w1[pos_kp1]);
 	  }
         }
  
