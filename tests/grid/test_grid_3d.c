@@ -108,9 +108,9 @@ int test_grid_fill(int rank, int size)
 
         grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
-        err |= mpi_assert(fabs(x[0] - (-0.5 +  rank * n)) < FLTOL, rank);
-        err |= mpi_assert(fabs(x[1] - (+0.5 +  rank * n)) < FLTOL, rank);
-        err |= mpi_assert(fabs(x[n-1] - (n - 1  - 0.5 + rank * n) ) < FLTOL, 
+        err |= mpi_assert(fabs(x[0] - (0.5 +  rank * n)) < FLTOL, rank);
+        err |= mpi_assert(fabs(x[1] - (1.5 +  rank * n)) < FLTOL, rank);
+        err |= mpi_assert(fabs(x[n-1] - (n - 1  + 0.5 + rank * n) ) < FLTOL, 
                           rank);
 
         err |= test_finalize(&test, err);
@@ -121,7 +121,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 1, .boundary2 = 0};
 
-        grid_fill1(x, grid, 1);
+        grid_fill1(x, grid, 0);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (0.5 +  rank * n)) < FLTOL, rank);
@@ -136,7 +136,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 0, .boundary2 = 1};
 
-        grid_fill1(x, grid, 1);
+        grid_fill1(x, grid, 0);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (-0.5 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (+0.5 +  rank * n)) < FLTOL, rank);
@@ -159,7 +159,7 @@ int test_grid_in_bounds(int rank, int size)
 
         x = malloc(sizeof(x) * n);
 
-        int3_t shift = grid_yz();
+        int3_t shift = {0, 0, 0};
         
         int3_t coord = {.x = 0, .y = 0, .z = 0};
         int3_t asize = {gsize[0], gsize[1], gsize[2]};
@@ -173,7 +173,7 @@ int test_grid_in_bounds(int rank, int size)
                          .alignment = 2 + ngsl,
                          .padding = 0,
                          .gridspacing = 1.0};
-        grid_fill1(x, grid1, 1);
+        grid_fill1(x, grid1, 0);
 
         test_t test = test_init(" * grid_in_bounds", rank, size);
         err |= mpi_assert(
@@ -193,7 +193,7 @@ int test_grid_in_bounds(int rank, int size)
                          .alignment = 1 + ngsl,
                          .padding = 1,
                          .gridspacing = 1.0};
-        grid_fill1(x, grid1, 1);
+        grid_fill1(x, grid1, 0);
 
         test_t test = test_init(" * grid_in_bounds", rank, size);
         err |= mpi_assert(
