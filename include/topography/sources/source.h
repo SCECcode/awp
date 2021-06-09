@@ -23,7 +23,7 @@
 // material grid point, but (0, 0, 0) defined at the shear stress xz in the
 // internal coordinate system (see shift.c)
 //#define SOURCE_OFFSET_X -0.5
-#define SOURCE_OFFSET_X -0.5
+#define SOURCE_OFFSET_X -0.0
 
 typedef struct {
         int *indices;

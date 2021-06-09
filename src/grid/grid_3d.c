@@ -268,7 +268,7 @@ int grid_fill1(prec *out, const grid1_t grid, const int isxdir)
 {
         _prec h = grid.gridspacing;
         for (int i = 0; i < grid.size; ++i) {
-                out[i] = h * (i + grid.id * (grid.size - 2 * grid.padding) - 0.5 * grid.shift - grid.padding);
+                out[i] = h * (i + grid.id * (grid.size - 2 * grid.padding) - 0.5 * grid.shift + isxdir * grid.shift - grid.padding);
         }
 
         if (grid.shift && grid.boundary1) {
