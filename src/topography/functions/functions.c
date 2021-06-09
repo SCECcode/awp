@@ -201,11 +201,12 @@ void fcn_poly(_prec *out,
         const int   ny = (int)args[10];
         const int   rx = (int)args[11];
         const int   ry = (int)args[12];
+        const _prec xshift = s0 == 1 ? 1.0 : 0.0;
         for (int i = i0; i < in; ++i) {
         for (int j = j0; j < jn; ++j) {
         for (int k = k0; k < kn; ++k) {
                 int pos = k + j*line + i*slice; 
-                out[pos] =  a0*pow(i + rx*nx - 0.5*s0, p0)
+                out[pos] =  a0*pow(i + rx*nx - 0.5*s0 + xshift, p0)
                           + a1*pow(j + ry*ny - 0.5*s1, p1)
                           + a2*pow(k         - 0.5*s2, p2);
         }
