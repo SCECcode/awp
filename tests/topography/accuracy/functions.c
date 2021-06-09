@@ -27,6 +27,7 @@ void fcn_fill_grid(_prec *out, const fcn_grid_t grid, const int3_t shift,
         }
         a[axis] = 1;
         _prec h = grid.gridspacing;
+        int xshift = (axis == 0 && shift.x) ? 1 : 0;
 
         for (int i = i1; i < i2; ++i) {
         for (int j = j1; j < j2; ++j) {
@@ -48,7 +49,7 @@ void fcn_fill_grid(_prec *out, const fcn_grid_t grid, const int3_t shift,
                 int pos = k + j*grid.line + i*grid.slice;
                 out[pos] =
                     h * a[0] * (i - i1 + grid.coordinate.x * grid.inner_size.x -
-                                0.5 * shift.x) +
+                                0.5 * shift.x + xshift) +
                     h * a[1] * (j - j1 + grid.coordinate.y * grid.inner_size.y -
                                 0.5 * shift.y) +
                     h * a[2] * (zkp - k1);
