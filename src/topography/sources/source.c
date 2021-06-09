@@ -17,7 +17,7 @@
 #include <topography/grids.h>
 
 #define OVERLAP 7.0
-#define DEBUG_SOURCE
+//#define DEBUG_SOURCE
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
@@ -172,52 +172,13 @@ void source_init_common(source_t *src, const char *filename,
                 source_find_grid_number(input, grids, grid_number, indices,
                                         input->length, ngrids);
 
-                // Determine offsets for the DM
-                _prec *dm_offset_x = malloc(sizeof dm_offset_x * ngrids);
-                _prec *dm_offset_y = malloc(sizeof dm_offset_y * ngrids);
-                _prec *dm_offset_z = malloc(sizeof dm_offset_z * ngrids);
-                grid3_t grid_top = grids_select(grid_type, &grids[0]);
-                dm_offset_x[0] = 0;
-                dm_offset_y[0] = 0;
-                dm_offset_z[0] = 0;
-                for (int j = 1; j < ngrids; ++j)
-                {
-                        grid3_t grid_pre = grids_select(grid_type, &grids[j - 1]);
-                        grid3_t grid_cur = grids_select(grid_type, &grids[j]);
-                        dm_offset_x[j] = dm_offset_x[j - 1] +
-                                         SOURCE_DM_OFFSET_X * grid_pre.gridspacing -
-                                         (grid_cur.shift.x * 0.5 * grid_cur.gridspacing - grid_pre.shift.x * 0.5 * grid_pre.gridspacing);
-                        dm_offset_y[j] = dm_offset_y[j - 1] +
-                                         SOURCE_DM_OFFSET_Y * grid_pre.gridspacing -
-                                         (grid_cur.shift.y * 0.5 * grid_cur.gridspacing - grid_pre.shift.y * 0.5 * grid_pre.gridspacing);
-                // Only add a z-offset for fields at nodal grid points in the z-direction
-                if (grid_type == SZ || grid_type == XZ || grid_type == YZ) {
-                        dm_offset_z[j] = grid_top.shift.z * 0.5 * grid_top.gridspacing -
-                                         (grid_cur.shift.z * 0.5 * grid_cur.gridspacing);
-                }
-                }
-
                 for (size_t i = 0; i < input->length; ++i)
                 {
-                        // Shift by 0.5 such that x = 0, y = 0 is
-                        // located at a material or topography grid
-                        // point.
-                        x[i] = input->x[i] +
-                               SOURCE_OFFSET_X * grid_top.gridspacing;
+                        x[i] = input->x[i];
                         y[i] = input->y[i];
                         z[i] = input->z[i];
-
-                        int grid_num = grid_number[i];
-
-                        // Apply DM-specific shift for all other blocks
-                        x[i] = x[i] + dm_offset_x[grid_num];
-                        y[i] = y[i] + dm_offset_y[grid_num];
-                        z[i] = z[i] + dm_offset_z[grid_num];
                 }
 
-                free(dm_offset_x);
-                free(dm_offset_y);
-                free(dm_offset_z);
                 free(indices);
 
                 src->length = 0;

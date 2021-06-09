@@ -19,12 +19,6 @@
 #define SOURCE_DM_OFFSET_X 0
 #define SOURCE_DM_OFFSET_Y -1
 
-// Shift due to inconsistency with the user coordinate (0, 0, 0) defined at a
-// material grid point, but (0, 0, 0) defined at the shear stress xz in the
-// internal coordinate system (see shift.c)
-//#define SOURCE_OFFSET_X -0.5
-#define SOURCE_OFFSET_X -0.0
-
 typedef struct {
         int *indices;
         int *offsets;

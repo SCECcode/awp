@@ -78,6 +78,53 @@ size_t receivers_last_step(void)
         return last_step;
 }
 
+recv_t receivers_get_receiver(enum grid_types grid_type)
+{
+        switch (grid_type)
+        {
+                case XX:
+                        fprintf(stderr, "No receiver can exist on grid XX\n");
+                        break;
+                case YY:
+                        fprintf(stderr, "No receiver can exist on grid YY\n");
+                        break;
+                case ZZ:
+                        fprintf(stderr, "No receiver can exist on grid ZZ\n");
+                        break;
+                case XY:
+                        fprintf(stderr, "No receiver can exist on grid XY\n");
+                        break;
+                case XZ:
+                        fprintf(stderr, "No receiver can exist on grid XZ\n");
+                        break;
+                case YZ:
+                        fprintf(stderr, "No receiver can exist on grid YZ\n");
+                        break;
+                case SX:
+                        fprintf(stderr, "No receiver can exist on grid SX\n");
+                        break;
+                case SY:
+                        fprintf(stderr, "No receiver can exist on grid SY\n");
+                        break;
+                case SZ:
+                        fprintf(stderr, "No receiver can exist on grid SZ\n");
+                        break;
+                case X:
+                        return rx;
+                        break;
+                case Y:
+                        return ry;
+                        break;
+                case Z:
+                        return rz;
+                        break;
+                case NODE:
+                        fprintf(stderr, "No receiver can exist on grid NODE\n");
+                        break;
+        }
+        return rx;
+}
+
 void receivers_step_format(char *out, size_t step, const char *base)
 {
         sprintf(out, "%s_%0*ld", base, leading_zeros, step);
