@@ -189,11 +189,14 @@ grid1_t grid_grid1_z(const grid3_t grid);
  *      out: Array to fill
  *      n: Array size. Must be greater than the grid size.
  *      grid: 1D grid data structure.
+ *      isxdir: Specify to `1` if the grid should be filled in the x-direction.
+ *          Adjusts for the particular internal coordinate system used by AWP, i.e., fields stored
+ *          in the (-,+,+) octant
  *
  * Return value:
  *      Number of elements written.
  */ 
-int grid_fill1(prec *out, const grid1_t grid);
+int grid_fill1(prec *out, const grid1_t grid, const int isxdir);
 
 /*
  * Check if a query point is in bounds or not. The query point is in bounds if

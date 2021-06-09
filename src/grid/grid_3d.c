@@ -264,7 +264,7 @@ grid1_t grid_grid1_z(const grid3_t grid)
         return grid1;
 }
 
-int grid_fill1(prec *out, const grid1_t grid)
+int grid_fill1(prec *out, const grid1_t grid, const int isxdir)
 {
         _prec h = grid.gridspacing;
         for (int i = 0; i < grid.size; ++i) {
@@ -361,19 +361,19 @@ int grid_in_bounds_moment_tensor(const _prec *x, const _prec q, const grid1_t gr
 int grid_fill_x(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_x(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 1);
 }
 
 int grid_fill_y(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_y(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 0);
 }
 
 int grid_fill_z(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_z(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 0);
 }
 
 int grid_fill3_x(_prec *out, const _prec *x, const grid3_t grid)

@@ -96,7 +96,7 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
         {
                 prec *z1 = malloc(sizeof z1 * grids[i].z.size.z);
                 grid1_t z_grid = grid_grid1_z(grids[i].z);
-                grid_fill1(z1, z_grid);
+                grid_fill1(z1, z_grid, 0);
 
                 upper = lower;
                 lower = lower - z1[z_grid.end];
@@ -353,9 +353,9 @@ void source_init_common(source_t *src, const char *filename,
                         prec *y1 = malloc(sizeof y1 * y_grid.size);
                         prec *z1 = malloc(sizeof z1 * z_grid.size);
 
-                        grid_fill1(x1, x_grid);
-                        grid_fill1(y1, y_grid);
-                        grid_fill1(z1, z_grid);
+                        grid_fill1(x1, x_grid, 1);
+                        grid_fill1(y1, y_grid, 0);
+                        grid_fill1(z1, z_grid, 0);
 
 
                         // Interpolate topography data to source location in
@@ -512,9 +512,9 @@ void source_init_common(source_t *src, const char *filename,
                         prec *y1 = malloc(sizeof y1 * y_grid.size);
                         prec *z1 = malloc(sizeof z1 * z_grid.size);
 
-                        grid_fill1(x1, x_grid);
-                        grid_fill1(y1, y_grid);
-                        grid_fill1(z1, z_grid);
+                        grid_fill1(x1, x_grid, 1);
+                        grid_fill1(y1, y_grid, 0);
+                        grid_fill1(z1, z_grid, 0);
 
                         for (int i = 120; i < 128; ++i) {
                                 printf("%3.2f ", z1[i]);

@@ -84,7 +84,7 @@ int test_argnearest(void)
         // Grid with closed right boundary 
         grid1_t grid = {.id = 0, .shift = 0, .size = n, .gridspacing = 1, 
                         .boundary1 = 0, .boundary2 = 1};
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         test_t test = test_init(" * grid_argnearest:bounds_except", 0, 0);
         int nearest = -1;
         err |= s_no_except(interp_grid_argnearest(&nearest, x, -1, grid) == 

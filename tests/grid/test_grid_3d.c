@@ -64,7 +64,7 @@ int test_grid_fill(int rank, int size)
                         .boundary1 = 0, .boundary2 = 0};
 
         x = malloc(sizeof(x) * grid.size);
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (1.0 +  rank * n)) < FLTOL, rank);
@@ -78,7 +78,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 0, .size = n, .gridspacing = h, 
                         .boundary1 = 1, .boundary2 = 0};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (1.0 +  rank * n)) < FLTOL, rank);
@@ -92,7 +92,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 0, .size = n, .gridspacing = h, 
                         .boundary1 = 0, .boundary2 = 1};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (1.0 +  rank * n)) < FLTOL, rank);
@@ -106,7 +106,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 0, .boundary2 = 0};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (-0.5 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (+0.5 +  rank * n)) < FLTOL, rank);
@@ -121,7 +121,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 1, .boundary2 = 0};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (0.5 +  rank * n)) < FLTOL, rank);
@@ -136,7 +136,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 0, .boundary2 = 1};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (-0.5 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (+0.5 +  rank * n)) < FLTOL, rank);
@@ -173,7 +173,7 @@ int test_grid_in_bounds(int rank, int size)
                          .alignment = 2 + ngsl,
                          .padding = 0,
                          .gridspacing = 1.0};
-        grid_fill1(x, grid1);
+        grid_fill1(x, grid1, 1);
 
         test_t test = test_init(" * grid_in_bounds", rank, size);
         err |= mpi_assert(
@@ -193,7 +193,7 @@ int test_grid_in_bounds(int rank, int size)
                          .alignment = 1 + ngsl,
                          .padding = 1,
                          .gridspacing = 1.0};
-        grid_fill1(x, grid1);
+        grid_fill1(x, grid1, 1);
 
         test_t test = test_init(" * grid_in_bounds", rank, size);
         err |= mpi_assert(
@@ -237,7 +237,7 @@ int test_grid_xyz(int rank, int size)
         test_t test = test_init(" * grid_fill_x", rank, size);
 
         grid1_t grid1 = grid_grid1_x(grid);
-        grid_fill1(ans, grid1);
+        grid_fill1(ans, grid1, 1);
         grid_fill_x(x, grid);
 
         for (int i = 0; i < n; ++i) {
@@ -251,7 +251,7 @@ int test_grid_xyz(int rank, int size)
         test_t test = test_init(" * grid_fill_y", rank, size);
 
         grid1_t grid1 = grid_grid1_y(grid);
-        grid_fill1(ans, grid1);
+        grid_fill1(ans, grid1, 0);
         grid_fill_y(x, grid);
 
         for (int i = 0; i < n; ++i) {
@@ -265,7 +265,7 @@ int test_grid_xyz(int rank, int size)
         test_t test = test_init(" * grid_fill_z", rank, size);
         grid1_t grid1 = grid_grid1_z(grid);
 
-        grid_fill1(ans, grid1);
+        grid_fill1(ans, grid1, 0);
         grid_fill_z(x, grid);
 
         for (int i = 0; i < n; ++i) {

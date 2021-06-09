@@ -99,9 +99,9 @@ int test_sources_dm(const char *inputfile, int rank, int size, const int px)
                 prec *y1 = malloc(sizeof y1 * y_grid.size);
                 prec *z1 = malloc(sizeof z1 * z_grid.size);
 
-                grid_fill1(x1, x_grid);
-                grid_fill1(y1, y_grid);
-                grid_fill1(z1, z_grid);
+                grid_fill1(x1, x_grid, 1);
+                grid_fill1(y1, y_grid, 0);
+                grid_fill1(z1, z_grid, 0);
                 // The user coordinate system (user) defines (0, 0, 0) at
                 // material grid point and is a global coordinate system (a
                 // single coordinate system defined for all blocks, irrespective

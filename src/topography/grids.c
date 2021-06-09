@@ -54,9 +54,9 @@ void grid_data_init(grid_data_t *grid_data, const grid3_t grid)
         grid_data->x = malloc(sizeof grid_data->x * xgrid.size);
         grid_data->y = malloc(sizeof grid_data->y * ygrid.size);
         grid_data->z = malloc(sizeof grid_data->z * zgrid.size);
-        grid_fill1(grid_data->x, xgrid);
-        grid_fill1(grid_data->y, ygrid);
-        grid_fill1(grid_data->z, zgrid);
+        grid_fill1(grid_data->x, xgrid, 1);
+        grid_fill1(grid_data->y, ygrid, 0);
+        grid_fill1(grid_data->z, zgrid, 0);
 }
 
 void grid_data_free(grid_data_t *grid_data)

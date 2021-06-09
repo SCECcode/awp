@@ -68,8 +68,8 @@ int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
         prec *x = malloc(sizeof(x) * grid_x.size);
         prec *y = malloc(sizeof(y) * grid_y.size);
 
-        grid_fill1(x, grid_x);
-        grid_fill1(y, grid_y);
+        grid_fill1(x, grid_x, 1);
+        grid_fill1(y, grid_y, 0);
 
         size_t j = *nidx;
         for (size_t i = 0; i < n; ++i)

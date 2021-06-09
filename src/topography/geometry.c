@@ -50,9 +50,9 @@ void topo_init_grid(topo_t *T)
         T->y1 = malloc(sizeof(T->y1) * y1_grid.size);
         T->z1 = malloc(sizeof(T->z1) * z1_grid.size);
 
-        grid_fill1(T->x1, x1_grid);
-        grid_fill1(T->y1, y1_grid);
-        grid_fill1(T->z1, z1_grid);
+        grid_fill1(T->x1, x1_grid, 1);
+        grid_fill1(T->y1, y1_grid, 0);
+        grid_fill1(T->z1, z1_grid, 0);
 }
 
 void topo_init_gaussian_hill_and_canyon_xz(topo_t *T, const _prec3_t hill_width,
