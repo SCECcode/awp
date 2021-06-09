@@ -318,6 +318,13 @@ int grid_pow3(_prec *out, const _prec p, const grid3_t grid);
  */
 double grid_reduce3(const _prec *in, const grid3_t grid);
 
+_prec grid_overlap(const _prec h);
+_prec grid_height(const int nz, const _prec h, const int istopo);
+
+void global_to_local(_prec *zloc, int *block_index, const _prec z,
+                     const _prec h, const int *nz, const int num_grids,
+                     const int istopo);
+
 
 #ifdef __cplusplus
 }

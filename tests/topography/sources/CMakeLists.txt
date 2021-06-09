@@ -25,6 +25,9 @@ target_include_directories(test_topography_sources_dm
         ${AWP_MINI_SOURCE_DIR}/include/
         )
 
+add_test(NAME test_topography_sources_dm COMMAND
+        test_topography_sources_dm)
+
 add_test(NAME test_topography_sources COMMAND
         ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 --oversubscribe
         test_topography_sources

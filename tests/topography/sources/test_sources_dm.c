@@ -17,7 +17,6 @@
 #include <awp/error.h>
 #include <utils/array.h>
 #include <grid/shift.h>
-#include <grid/grid_new.h>
 #include <topography/grids.h>
 #include <topography/sources/source.h>
 #include <topography/sources/sources.h>
@@ -83,7 +82,7 @@ int test_sources_dm(const char *sourcefile, int rank, int size, const int px, co
  
         char inputfile[STR_LEN];
         if (run_test)
-            sprintf(inputfile, "../tests/fixtures/%s", sourcefile);
+            sprintf(inputfile, "../../../../tests/fixtures/%s", sourcefile);
         else 
             sprintf(inputfile, "%s", sourcefile);
                                        
