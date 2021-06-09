@@ -303,7 +303,7 @@ int test_lagrange3(void)
         prec *x3, *y3, *z3, *fcn3;
 
         int gsize[3] = {n, n, n};
-        int3_t shift = grid_yz();
+        int3_t shift = {0, 0, 0};
         int3_t coord = {.x = 0, .y = 0, .z = 0};
         int3_t asize = {gsize[0], gsize[1], gsize[2]};
         int3_t bnd1 = {1, 1, 1};
@@ -328,11 +328,11 @@ int test_lagrange3(void)
         grid_fill_z(z1, grid);
 
         int m = 4;
-        prec qx[4] = {0.0, 0.2, 0.4, 0.9};
+        prec qx[4] = {0.0, 0.4, 0.6, 0.9};
         prec qy[4] = {0.0, 0.7, 0.4, 0.7};
         prec qz[4] = {0.0, 0.2, 0.3, 0.8};
 
-        prec ax[4] = {0.0, 0.2, 0.4, 0.9};
+        prec ax[4] = {0.0, 0.4, 0.6, 0.9};
         prec ay[4] = {0.0, 0.7, 0.4, 0.7};
         prec az[4] = {0.0, 0.2, 0.3, 0.8};
         prec out[4];
