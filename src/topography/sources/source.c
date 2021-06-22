@@ -84,10 +84,22 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
                              const int num_grids)
 {
 
+        int *nz = malloc(sizeof(int) * num_grids);
+        _prec h = grids[0].z.gridspacing;
+        for (int i = 0; i < num_grids; ++i)
+            nz[i] = grids[i].z.size.z;
+
+        int istopo = grids[0].z.bnd2[2];
+
         for (int j = 0; j < length; ++j)
         {
                 grid_number[j] = -1;
+                _prec zloc;
+                global_to_local(&zloc, &grid_number[j], input->z[indices[j]], h, nz, num_grids);
         }
+
+        free(nz);
+        return;
 
         _prec lower = 0;
         _prec upper = 0;

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
-cmake_policy(SET CMP0074 NEW)
-project(AWP_MINI VERSION 1.0 LANGUAGES C CUDA)
+project(AWP_MINI VERSION 1.0)
+enable_language(C CUDA)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+  set(CMAKE_CUDA_ARCHITECTURES 70)
+endif()
 
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 set(GCC_COMPILE_FLAGS "-std=c99 -Wall\
