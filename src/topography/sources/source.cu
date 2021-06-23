@@ -294,8 +294,8 @@ __global__ void cusource_add_force_velocity(prec *out, const prec *in, const pre
                 prec value = dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] / d1[q] * in[lidx[q]];
 #if USE_ATOMICS
-                atomicAdd(&out[pos], 1.5 * value);
-                atomicAdd(&out[pos - 1], -0.5 * value);
+                atomicAdd(&out[pos], 1.0 * value);
+                atomicAdd(&out[pos - 1], -0.0 * value);
 #else
                     out[pos] += value;
 #endif

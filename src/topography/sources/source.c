@@ -89,13 +89,13 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
         for (int i = 0; i < num_grids; ++i)
             nz[i] = grids[i].z.size.z;
 
-        int istopo = grids[0].z.bnd2[2];
+        int istopo = grids[0].z.boundary2.z;
 
         for (int j = 0; j < length; ++j)
         {
                 grid_number[j] = -1;
                 _prec zloc;
-                global_to_local(&zloc, &grid_number[j], input->z[indices[j]], h, nz, num_grids);
+                global_to_local(&zloc, &grid_number[j], input->z[indices[j]], h, nz, num_grids, istopo);
         }
 
         free(nz);
