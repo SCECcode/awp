@@ -6,48 +6,48 @@ __launch_bounds__ (256)
 __launch_bounds__ (128)
 #endif
 __global__ void dtopo_vel_111_unroll(
-        float *RSTRCT u1, float *RSTRCT u2, float *RSTRCT u3,
-        const float *RSTRCT dcrjx, const float *RSTRCT dcrjy,
-        const float *RSTRCT dcrjz, const float *RSTRCT f,
-        const float *RSTRCT f1_1, const float *RSTRCT f1_2,
-        const float *RSTRCT f1_c, const float *RSTRCT f2_1,
-        const float *RSTRCT f2_2, const float *RSTRCT f2_c,
-        const float *RSTRCT f_1, const float *RSTRCT f_2,
-        const float *RSTRCT f_c, const float *RSTRCT g,
-        const float *RSTRCT g3, const float *RSTRCT g3_c,
-        const float *RSTRCT g_c, const float *RSTRCT rho,
-        const float *RSTRCT s11, const float *RSTRCT s12,
-        const float *RSTRCT s13, const float *RSTRCT s22,
-        const float *RSTRCT s23, const float *RSTRCT s33,
-        const float a, const float nu, const int nx, const int ny, const int nz,
+        _prec *RSTRCT u1, _prec *RSTRCT u2, _prec *RSTRCT u3,
+        const _prec *RSTRCT dcrjx, const _prec *RSTRCT dcrjy,
+        const _prec *RSTRCT dcrjz, const _prec *RSTRCT f,
+        const _prec *RSTRCT f1_1, const _prec *RSTRCT f1_2,
+        const _prec *RSTRCT f1_c, const _prec *RSTRCT f2_1,
+        const _prec *RSTRCT f2_2, const _prec *RSTRCT f2_c,
+        const _prec *RSTRCT f_1, const _prec *RSTRCT f_2,
+        const _prec *RSTRCT f_c, const _prec *RSTRCT g,
+        const _prec *RSTRCT g3, const _prec *RSTRCT g3_c,
+        const _prec *RSTRCT g_c, const _prec *RSTRCT rho,
+        const _prec *RSTRCT s11, const _prec *RSTRCT s12,
+        const _prec *RSTRCT s13, const _prec *RSTRCT s22,
+        const _prec *RSTRCT s23, const _prec *RSTRCT s33,
+        const _prec a, const _prec nu, const int nx, const int ny, const int nz,
         const int bi, const int bj, const int ei, const int ej) {
-  const float dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec dhpz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, 0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float phx4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phx4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float phy4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec phy4[4] = {-0.0625000000000000, 0.5625000000000000,
                          0.5625000000000000, -0.0625000000000000};
-  const float dhy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhy4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhx4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float dhz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dhz4[4] = {0.0416666666666667, -1.1250000000000000,
                          1.1250000000000000, -0.0416666666666667};
-  const float px4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec px4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float py4[4] = {-0.0625000000000000, 0.5625000000000000,
+  const _prec py4[4] = {-0.0625000000000000, 0.5625000000000000,
                         0.5625000000000000, -0.0625000000000000};
-  const float dx4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dx4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dy4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dy4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
-  const float dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
+  const _prec dphz4[7] = {-0.0026041666666667, 0.0937500000000000,
                           -0.6796875000000000, 0.0000000000000000,
                           0.6796875000000000,  -0.0937500000000000,
                           0.0026041666666667};
-  const float dz4[4] = {0.0416666666666667, -1.1250000000000000,
+  const _prec dz4[4] = {0.0416666666666667, -1.1250000000000000,
                         1.1250000000000000, -0.0416666666666667};
   int dm_offset = 3;
   const int i = threadIdx.z + blockIdx.z * blockDim.z + bi;
@@ -138,30 +138,30 @@ __global__ void dtopo_vel_111_unroll(
   u3[(k) + align + (2 * align + nz) * ((i) + ngsl + 2) * (2 * ngsl + ny + 4) + \
      (2 * align + nz) * ((j) + ngsl + 2)]
 
-  float v1[nq][nr];
-  float v2[nq][nr];
-  float v3[nq][nr];
+  _prec v1[nq][nr];
+  _prec v2[nq][nr];
+  _prec v3[nq][nr];
 #pragma unroll
         for (int q = 0; q < nq; ++q) {
 #pragma unroll
         for (int r = 0; r < nr; ++r) {
 
 
-  float c = 0.25f;
-  float rho1 = c * (_rho(i, j + q, k + r - 1) + _rho(i, j + q - 1, k + r - 1)) +
+  _prec c = 0.25f;
+  _prec rho1 = c * (_rho(i, j + q, k + r - 1) + _rho(i, j + q - 1, k + r - 1)) +
                c * (_rho(i, j + q, k + r) + _rho(i, j + q - 1, k + r));
-  float rho2 = c * (_rho(i, j + q, k + r - 1) + _rho(i - 1, j + q, k + r - 1)) +
-               c * (_rho(i, j + q, k + r) + _rho(i - 1, j + q, k + r));
-  float rho3 = c * (_rho(i, j + q, k + r) + _rho(i - 1, j + q, k + r)) +
-               c * (_rho(i, j + q - 1, k + r) + _rho(i - 1, j + q - 1, k + r));
+  _prec rho2 = c * (_rho(i, j + q, k + r - 1) + _rho(i + 1, j + q, k + r - 1)) +
+               c * (_rho(i, j + q, k + r) + _rho(i + 1, j + q, k + r));
+  _prec rho3 = c * (_rho(i, j + q, k + r) + _rho(i + 1, j + q, k + r)) +
+               c * (_rho(i, j + q - 1, k + r) + _rho(i + 1, j + q - 1, k + r));
 
-  float Ai1 = _f_1(i, j + q) * _g3_c(k + r) * rho1;
+  _prec Ai1 = _f_1(i, j + q) * _g3_c(k + r) * rho1;
   Ai1 = nu * 1.0 / Ai1;
-  float Ai2 = _f_2(i, j + q) * _g3_c(k + r) * rho2;
+  _prec Ai2 = _f_2(i, j + q) * _g3_c(k + r) * rho2;
   Ai2 = nu * 1.0 / Ai2;
-  float Ai3 = _f_c(i, j + q) * _g3(k + r) * rho3;
+  _prec Ai3 = _f_c(i, j + q) * _g3(k + r) * rho3;
   Ai3 = nu * 1.0 / Ai3;
-  float f_dcrj = _dcrjx(i) * _dcrjy(j + q) * _dcrjz(k + r);
+  _prec f_dcrj = _dcrjx(i) * _dcrjy(j + q) * _dcrjz(k + r);
   v1[q][r] =
       (a * _u1(i, j + q, k + r) +
        Ai1 * (dhx4[2] * _f_c(i, j + q) * _g3_c(k + r) * _s11(i, j + q, k + r) +

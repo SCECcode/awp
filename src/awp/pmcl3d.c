@@ -1,4 +1,4 @@
-/*  
+ /*  
 ********************************************************************************
 * pmcl3d.c                                                                     *
 * programming in C&CUDA language                                                    *
@@ -24,12 +24,14 @@
 #include <awp/init.h>
 #include <topography/topography.h>
 #include <topography/velocity.cuh>
-#include <topography/stress_attenuation.cuh>
+#include <topography/stress.cuh>
 #include <topography/sources/sources.h>
 #include <topography/sources/forces.h>
 #include <topography/receivers/receivers.h>
 #include <topography/receivers/sgt.h>
 #include <topography/geometry/geometry.h>
+#include <topography/geometry.h>
+#include <topography/mms.cuh>
 #include <buffers/buffer.h>
 
 #define VERBOSE 1
@@ -93,6 +95,9 @@ int main(int argc, char **argv)
 
    int usesgtfile = 0;
    char SGTFILE[IN_FILE_LEN];
+
+   int usemms = 0;
+   char MMSFILE[IN_FILE_LEN];
 
    //  GPU variables
    long int num_bytes;
@@ -306,7 +311,7 @@ int main(int argc, char **argv)
            &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
-           SGTFILE, &usesgtfile);
+           SGTFILE, &usesgtfile, MMSFILE, &usemms);
 
 #ifndef SEISMIO
 #ifdef NOBGIO
@@ -980,6 +985,7 @@ int main(int argc, char **argv)
          }
       }
 
+if (!usemms) {
 #if VERBOSE
       if (rank == 0)
          printf("Before inimesh\n");
@@ -1119,6 +1125,9 @@ int main(int argc, char **argv)
          }
          fprintf(stdout, "done\n");
       }
+
+// MMS ends
+}
       MPI_Barrier(MCW);
 
       vx1 = (Grid3D *)calloc(ngrids, sizeof(Grid3D));
@@ -1685,6 +1694,14 @@ int main(int argc, char **argv)
       }
 
       f_grid_t *metrics_f = NULL;
+      g_grid_t *metrics_g = NULL;
+
+if (usemms) {
+        if (rank == 0) printf("METHOD OF MANUFACTURED SOLUTIONS ENABLED \n");
+        mms_init(MMSFILE, nxt, nyt, nzt, ngrids, 
+        d_d1, d_lam, d_mu, d_qp, d_qs, 
+        d_u1, d_v1, d_w1, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, coord[0], coord[1], rank, MCW, DH, DT);
+}
 
 #if TOPO
 
@@ -1711,6 +1728,8 @@ int main(int argc, char **argv)
          topo_init_geometry(&T);
          topo_build(&T);
          topo_set_constants(&T);
+
+        topo_write_geometry_vtk(&T, 1);
       }
 
 #endif
@@ -1724,17 +1743,18 @@ int main(int argc, char **argv)
       if (T.use)
       {
          metrics_f = &T.metrics_f;
+         metrics_g = &T.metrics_g;
       }
 
       if (usesourcefile)
-         sources_init(SOURCEFILE, grids, ngrids, metrics_f, MCW, rank,
+         sources_init(SOURCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
                       size_tot);
       if (userecvfile)
          receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
                         size_tot);
       if (useforcefile)
-         forces_init(FORCEFILE, grids, ngrids, metrics_f, MCW, rank,
-                     size_tot);
+         forces_init(FORCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
+                     size_tot, (float*)d_d1[0], usetopo);
       if (usesgtfile)
       {
          sgt_init(SGTFILE, grids, ngrids, metrics_f, MCW, rank,
@@ -2006,6 +2026,7 @@ int main(int argc, char **argv)
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 2, rank, size);
             }
 
+
             CUCHK(cudaStreamSynchronize(stream_i));
 
             for (p = 0; p < ngrids; p++)
@@ -2032,6 +2053,33 @@ int main(int argc, char **argv)
                dump_nonzeros(d_yz[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "yz", p, cur_step, 2, rank, size);
             }
 
+            //if (!usetopo)
+            //forces_add_cartesian(d_xz[0], d_yz[0], d_zz[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
+            if (!usetopo)
+            forces_add_cartesian_velocity(d_u1[0], d_v1[0], d_w1[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
+
+               if (usemms) {
+                       float t =  DT * (cur_step);
+                        for (p = 0; p < ngrids; p++) {
+                       mms_force_velocity(d_u1[p], d_v1[p], d_w1[p], nxt[p],
+                                          nyt[p], nzt[p], DH[p], coord[0],
+                                          coord[1], p, t + 0.5 * DT , DT);
+                        }
+
+                        p = ngrids - 1;
+                        //// Exact solution at bottom boundary
+                        //mms_exact_velocity(d_u1[p], d_v1[p], d_w1[p], 
+                        //nxt[p], nyt[p], nzt[p], coord[0], coord[1], p, 0, 0, 0,
+                        //4 + 2 * ngsl + nxt[p], 4 + 2 * ngsl + nyt[p], 8, DH[p], t);
+
+                        // Exact solution at top boundary
+                        //mms_exact_velocity(d_u1[p], d_v1[p], d_w1[p], 
+                        //    nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 50 , 50, 16, 4 + 2 * ngsl + nxt[p] - 50,
+                        //    4 + 2 * ngsl + nyt[p] - 50, nzt[p] - 16, DH[p], t, 0);
+            }
+
+
             for (p = 0; p < ngrids; p++)
             {
                PostRecvMsg_X(RL_vel[p], RR_vel[p], MCW, request_x[p], &count_x[p], msg_v_size_x[p], x_rank_L, x_rank_R, p);
@@ -2055,6 +2103,7 @@ int main(int argc, char **argv)
 #if TOPO
                topo_stress_interior_H(&T);
 #endif
+
             }
             else
             {
@@ -2132,6 +2181,7 @@ int main(int argc, char **argv)
             }
             CUCHK(cudaDeviceSynchronize());
 
+
             for (p = 0; p < ngrids; p++)
             {
                dump_nonzeros(d_xx[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "xx", p, cur_step, 8, rank, size);
@@ -2197,9 +2247,9 @@ int main(int argc, char **argv)
             }
 
             sources_read(cur_step);
+            forces_read(cur_step);
             if (T.use)
             {
-               forces_read(cur_step);
                sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0],
                                        d_xz[0], d_yz[0], cur_step, DH[0], DT,
                                        &T.metrics_f, &T.metrics_g, 0);
@@ -2479,6 +2529,42 @@ int main(int argc, char **argv)
             CUCHK(cudaDeviceSynchronize());
 
             fstr_H(d_zz[0], d_xz[0], d_yz[0], stream_i, xls[0], xre[0], yls[0], yre[0]);
+            
+
+               if (usemms) {
+                       float t = DT * (cur_step - 1) + 0.5 * DT;
+                       for (p = 0; p < ngrids; p++) {
+                               mms_force_stress(d_xx[p], d_yy[p], d_zz[p],
+                                                d_xy[p], d_xz[p], d_yz[p],
+                                                nxt[p], nyt[p], nzt[p], DH[p],
+                                                coord[0], coord[1], p,
+                                                t + 0.5 * DT, DT);
+                       }
+
+                        p = ngrids - 1;
+
+                        // Exact solution at bottom boundary
+                        //mms_exact_stress(
+                        //    d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p],
+                        //    d_yz[p], nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 2 + ngsl, 2 + ngsl, 8, 2 + ngsl + nxt[p],
+                        //    2 + ngsl + nyt[p], nzt[p] - 8, DH[p], t, 0);
+
+                        //// Exact solution at top boundary
+                        //mms_exact_stress(
+                        //    d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p],
+                        //    d_yz[p], nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 0 , 0, nzt[p] - 8, 4 + 2 * ngsl + nxt[p],
+                        //    4 + 2 * ngsl + nyt[p], nzt[p], DH[p], t);
+
+                        //mms_exact_stress(
+                        //    d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p],
+                        //    d_yz[p], nxt[p], nyt[p], nzt[p], coord[0], coord[1],
+                        //    p, 50 , 50, 16, 4 + 2 * ngsl + nxt[p] - 50,
+                        //    4 + 2 * ngsl + nyt[p] - 20, nzt[p] - 16, DH[p], t, 0);
+
+                        CUCHK(cudaDeviceSynchronize());
+               }
             CUCHK(cudaDeviceSynchronize());
 
             for (p = 0; p < ngrids; p++)
@@ -2487,6 +2573,10 @@ int main(int argc, char **argv)
                sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p],
                          cur_step, nt, p);
             }
+
+#define TOPO_USE_VTK 1
+            if (cur_step % 10 == 0)
+            topo_write_vtk(&T, cur_step, 1);
 
             if (cur_step % NTISKP == 0)
             {

@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <vtk/vtk.h>
 
 size_t vtk_write_grid(const char *fname, 

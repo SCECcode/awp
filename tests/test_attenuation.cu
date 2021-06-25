@@ -21,7 +21,7 @@
 #include <awp/kernel.h>
 
 #include <topography/velocity.cuh>
-#include <topography/stress_attenuation.cuh>
+#include <topography/stress.cuh>
 #include <topography/geometry.h>
 #include <topography/host.h>
  

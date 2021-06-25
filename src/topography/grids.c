@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <topography/grids.h>
 #include <test/test.h>
 #include <grid/grid_3d.h>
@@ -54,9 +54,9 @@ void grid_data_init(grid_data_t *grid_data, const grid3_t grid)
         grid_data->x = malloc(sizeof grid_data->x * xgrid.size);
         grid_data->y = malloc(sizeof grid_data->y * ygrid.size);
         grid_data->z = malloc(sizeof grid_data->z * zgrid.size);
-        grid_fill1(grid_data->x, xgrid);
-        grid_fill1(grid_data->y, ygrid);
-        grid_fill1(grid_data->z, zgrid);
+        grid_fill1(grid_data->x, xgrid, 1);
+        grid_fill1(grid_data->y, ygrid, 0);
+        grid_fill1(grid_data->z, zgrid, 0);
 }
 
 void grid_data_free(grid_data_t *grid_data)
@@ -114,5 +114,37 @@ grid3_t grids_select(const enum grid_types grid_type, const grids_t *grids)
                         break;
                 }
 
+}
+
+const char *grid_typename(const enum grid_types gt) {
+        switch(gt) {
+                case X:
+                        return "X";
+                case Y:
+                        return "Y";
+                case Z:
+                        return "Z";
+                case SX:
+                        return "SX";
+                case SY:
+                        return "SY";
+                case SZ:
+                        return "SZ";
+                case XX:
+                        return "XX";
+                case XY:
+                        return "XY";
+                case YY:
+                        return "YY";
+                case ZZ:
+                        return "ZZ";
+                case XZ:
+                        return "XZ";
+                case YZ:
+                        return "YZ";
+                case NODE:
+                        return "NODE";
+        }
+        return "";
 }
 

@@ -1,5 +1,4 @@
 set(HEADERS 
-   ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h 
    ${AWP_MINI_SOURCE_DIR}/include/awp/pmcl3d_cons.h 
    )
 
@@ -37,7 +36,7 @@ add_library(lpmcl3d
         utils.c
         ${HEADERS})
 
-target_link_libraries(lpmcl3d opt_topography_attenuation buffers mpi checksum)
+target_link_libraries(lpmcl3d topography buffers mpi checksum)
 #
 target_include_directories(lpmcl3d
         PUBLIC

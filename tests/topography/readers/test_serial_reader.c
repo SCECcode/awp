@@ -90,9 +90,9 @@ void init_geometry(prec **f, const int *gsize, const int3_t coord,
         _prec *y1 = malloc(sizeof(y1) * y1_grid.size);
         _prec *z1 = malloc(sizeof(z1) * z1_grid.size);
 
-        grid_fill1(x1, x1_grid);
-        grid_fill1(y1, y1_grid);
-        grid_fill1(z1, z1_grid);
+        grid_fill1(x1, x1_grid, 1);
+        grid_fill1(y1, y1_grid, 0);
+        grid_fill1(z1, z1_grid, 0);
 
         _prec *x = malloc(topography_grid.num_bytes);
         _prec *y = malloc(topography_grid.num_bytes);

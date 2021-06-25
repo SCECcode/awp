@@ -19,12 +19,6 @@
 #define SOURCE_DM_OFFSET_X 0
 #define SOURCE_DM_OFFSET_Y -1
 
-// Shift due to inconsistency with the user coordinate (0, 0, 0) defined at a
-// material grid point, but (0, 0, 0) defined at the shear stress xz in the
-// internal coordinate system (see shift.c)
-//#define SOURCE_OFFSET_X -0.5
-#define SOURCE_OFFSET_X -0.5
-
 typedef struct {
         int *indices;
         int *offsets;
@@ -105,7 +99,7 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
                       const prec quad_weight,
                       const prec *f, const int nx, const int ny, const int nz, 
                       const prec *dg,
-                      const int grid_num);
+                      const int grid_num, const int sourcetype, const int dir);
 
 #endif
 

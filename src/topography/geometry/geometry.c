@@ -37,7 +37,7 @@ void geom_no_grid_stretching(g_grid_t *metrics_g)
         grid1.shift = grid_node().z;
         grid1.boundary1 = 0;
         grid1.boundary2 = 1;
-        grid_fill1(&metrics_g->g[grid1.alignment], grid1);
+        grid_fill1(&metrics_g->g[grid1.alignment], grid1, 0);
 
 }
 

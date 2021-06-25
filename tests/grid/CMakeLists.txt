@@ -12,4 +12,3 @@ target_include_directories(test_grid_3d
         )
 
 add_test(NAME test_grid_3d COMMAND test_grid_3d)
-

@@ -264,11 +264,11 @@ grid1_t grid_grid1_z(const grid3_t grid)
         return grid1;
 }
 
-int grid_fill1(prec *out, const grid1_t grid)
+int grid_fill1(prec *out, const grid1_t grid, const int isxdir)
 {
         _prec h = grid.gridspacing;
         for (int i = 0; i < grid.size; ++i) {
-                out[i] = h * (i + grid.id * (grid.size - 2 * grid.padding) - 0.5 * grid.shift - grid.padding);
+                out[i] = h * (i + grid.id * (grid.size - 2 * grid.padding) - 0.5 * grid.shift + isxdir * grid.shift - grid.padding);
         }
 
         if (grid.shift && grid.boundary1) {
@@ -361,19 +361,19 @@ int grid_in_bounds_moment_tensor(const _prec *x, const _prec q, const grid1_t gr
 int grid_fill_x(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_x(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 1);
 }
 
 int grid_fill_y(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_y(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 0);
 }
 
 int grid_fill_z(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_z(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 0);
 }
 
 int grid_fill3_x(_prec *out, const _prec *x, const grid3_t grid)
@@ -442,3 +442,56 @@ double grid_reduce3(const _prec *in, const grid3_t grid)
         return out;
 }
 
+_prec grid_overlap(const _prec h) {
+    return 7.0 * h;
+}
+_prec grid_height(const int nz, const _prec h, const int istopo) {
+    return istopo == 1 ? (nz - 2) * h : (nz - 1) * h;
+}
+void global_to_local(_prec *zloc, int *block_index, const _prec z,
+                     const _prec h, const int *nz, const int num_grids,
+                     const int istopo) {
+    _prec z0 = z;
+    _prec bi = -1;
+
+    _prec hloc = h;
+    _prec H = 0.0;
+    // Go from top grid to bottom grid
+    for (int i = 0; i < num_grids; ++i ) {
+
+        if (i > 0) 
+            z0 -= grid_overlap(hloc / 3);
+
+        // Check minimum number of grid points per block
+        assert(nz[i] >= 7);
+
+        _prec overlap = grid_overlap(hloc);
+        
+        H = i == 0 ? grid_height(nz[i], hloc, istopo) : grid_height(nz[i], hloc, 0);
+
+        z0 += H;
+        hloc *= 3;
+        bi = i;
+
+        //printf("z0 + H = %g i = %d \n", z0, i);
+
+        // Check if the coordinate is in the overlap zone, if so, push it to the next grid
+        if (z0 > 0 && z0 < grid_overlap(hloc / 3) ) {
+            //printf("in overlap zone, z0 = %g i = %d overlap = %g \n", z0, i, overlap);
+            continue;
+        }
+
+        if (z0 > 0) break;
+        
+        //printf("next,  z0 = %g i = %d \n", z0, i);
+
+    }
+
+    // Check if the mapping succeeded or not
+    if (z0 < 0) {
+        printf("WARNING: Failed to map z=%g to a block.\n", z);
+    }
+
+    *zloc = z0;
+    *block_index = bi;
+}

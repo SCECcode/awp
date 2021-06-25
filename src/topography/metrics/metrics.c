@@ -3,7 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <grid/grid_3d.h>
 #include <grid/shift.h>
 #include <topography/metrics/metrics.h>
@@ -221,6 +221,66 @@ int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,
         free(ly);
         free(xloc);
         free(yloc);
+
+        return err;
+}
+
+// This function might be useful when fixing topo-DM incompatibility
+int metrics_interpolate_jacobian(const f_grid_t *fgrid, float *out, const float *f, const float *dg,
+                        const float *x, const float *y, const float *z,
+                        grid3_t grid, const float *qx,
+                        const float *qy, const float *qz, const int m, const int deg) 
+{
+        int err = 0;
+        prec *lx, *ly, *lz, *xloc, *yloc, *zloc;
+        lx = calloc(sizeof(lx), (deg + 1));
+        ly = calloc(sizeof(ly), (deg + 1));
+        lz = calloc(sizeof(lz), (deg + 1));
+        xloc = calloc(sizeof(xloc), (deg + 1));
+        yloc = calloc(sizeof(yloc), (deg + 1));
+        zloc = calloc(sizeof(zloc), (deg + 1));
+
+        //printf("grid = %d %d \n", grid.size.x, grid.size.y);
+        int ny = grid.size.y - 4 - ngsl2;
+        //printf("ny = %d \n", ny);
+        //printf("z = %g \n", qz[0]);
+        #define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+        for (int q = 0; q < m; ++q) { 
+                int ix = 0; int iy = 0; int iz = 0;
+                err = interp_lagrange1_coef(
+                    xloc, lx, &ix, x, grid.size.x, qx[q], deg);
+                err = interp_lagrange1_coef(
+                    yloc, ly, &iy, y, grid.size.y, qy[q], deg);
+                err = interp_lagrange1_coef(
+                    zloc, lz, &iz, z, grid_boundary_size(grid).z, qz[q], deg);
+                out[q] = 0.0;
+                //printf("%d %d %d: \n", ix, iy, iz);
+                for (int i = 0; i < deg + 1; ++i) {
+                for (int j = 0; j < deg + 1; ++j) {
+                for (int k = 0; k < deg + 1; ++k) {
+                        int gpos = align + iz + k;
+                        //printf("g[%d] = %g  f = %g \n", gpos, dg[gpos], _f(ix + i, iy + j));
+                        out[q] += lx[i] * ly[j] * lz[k] * _f(ix + i, iy + j) * dg[gpos];
+                }
+                }
+                }
+
+
+                // int i1 = 2 + 4 + 99;
+                // int j1 = 2 + 4 + 99;
+                // int i2 = i1 + 1;
+                // int j2 = j1 + 1;
+                // printf("%g %g %g %g \n", _f(i1, j1), _f(i1, j2), _f(i2, j1), _f(i2, j2));
+
+                //exit(-1);
+        }
+
+        free(lx);
+        free(ly);
+        free(lz);
+        free(xloc);
+        free(yloc);
+        free(zloc);
 
         return err;
 }

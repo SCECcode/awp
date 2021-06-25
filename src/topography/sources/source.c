@@ -17,6 +17,7 @@
 #include <topography/grids.h>
 
 #define OVERLAP 7.0
+//#define DEBUG_SOURCE
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
@@ -82,12 +83,6 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
                              const int length,
                              const int num_grids)
 {
-
-        for (int j = 0; j < length; ++j)
-        {
-                grid_number[j] = -1;
-        }
-
         _prec lower = 0;
         _prec upper = 0;
         _prec overlap = 0;
@@ -95,7 +90,7 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
         {
                 prec *z1 = malloc(sizeof z1 * grids[i].z.size.z);
                 grid1_t z_grid = grid_grid1_z(grids[i].z);
-                grid_fill1(z1, z_grid);
+                grid_fill1(z1, z_grid, 0);
 
                 upper = lower;
                 lower = lower - z1[z_grid.end];
@@ -171,49 +166,13 @@ void source_init_common(source_t *src, const char *filename,
                 source_find_grid_number(input, grids, grid_number, indices,
                                         input->length, ngrids);
 
-                // Determine offsets for the DM
-                _prec *dm_offset_x = malloc(sizeof dm_offset_x * ngrids);
-                _prec *dm_offset_y = malloc(sizeof dm_offset_y * ngrids);
-                _prec *dm_offset_z = malloc(sizeof dm_offset_z * ngrids);
-                grid3_t grid_top = grids_select(grid_type, &grids[0]);
-                dm_offset_x[0] = 0;
-                dm_offset_y[0] = 0;
-                dm_offset_z[0] = 0;
-                for (int j = 1; j < ngrids; ++j)
-                {
-                        grid3_t grid_pre = grids_select(grid_type, &grids[j - 1]);
-                        grid3_t grid_cur = grids_select(grid_type, &grids[j]);
-                        dm_offset_x[j] = dm_offset_x[j - 1] +
-                                         SOURCE_DM_OFFSET_X * grid_pre.gridspacing -
-                                         (grid_cur.shift.x * 0.5 * grid_cur.gridspacing - grid_pre.shift.x * 0.5 * grid_pre.gridspacing);
-                        dm_offset_y[j] = dm_offset_y[j - 1] +
-                                         SOURCE_DM_OFFSET_Y * grid_pre.gridspacing -
-                                         (grid_cur.shift.y * 0.5 * grid_cur.gridspacing - grid_pre.shift.y * 0.5 * grid_pre.gridspacing);
-                        dm_offset_z[j] = grid_top.shift.z * 0.5 * grid_top.gridspacing -
-                                         (grid_cur.shift.z * 0.5 * grid_cur.gridspacing);
-                }
-
                 for (size_t i = 0; i < input->length; ++i)
                 {
-                        // Shift by 0.5 such that x = 0, y = 0 is
-                        // located at a material or topography grid
-                        // point.
-                        x[i] = input->x[i] +
-                               SOURCE_OFFSET_X * grid_top.gridspacing;
+                        x[i] = input->x[i];
                         y[i] = input->y[i];
                         z[i] = input->z[i];
-
-                        int grid_num = grid_number[i];
-
-                        // Apply DM-specific shift for all other blocks
-                        x[i] = x[i] + dm_offset_x[grid_num];
-                        y[i] = y[i] + dm_offset_y[grid_num];
-                        z[i] = z[i] + dm_offset_z[grid_num];
                 }
 
-                free(dm_offset_x);
-                free(dm_offset_y);
-                free(dm_offset_z);
                 free(indices);
 
                 src->length = 0;
@@ -329,6 +288,7 @@ void source_init_common(source_t *src, const char *filename,
 
                 lower = lower - block_height + overlap;
 
+
                 if (src->lengths[j] == 0)
                 {
                         src->x[j] = NULL;
@@ -348,9 +308,10 @@ void source_init_common(source_t *src, const char *filename,
                         prec *y1 = malloc(sizeof y1 * y_grid.size);
                         prec *z1 = malloc(sizeof z1 * z_grid.size);
 
-                        grid_fill1(x1, x_grid);
-                        grid_fill1(y1, y_grid);
-                        grid_fill1(z1, z_grid);
+                        grid_fill1(x1, x_grid, 1);
+                        grid_fill1(y1, y_grid, 0);
+                        grid_fill1(z1, z_grid, 0);
+
 
                         // Interpolate topography data to source location in
                         // (x,y) space
@@ -411,7 +372,11 @@ void source_init_common(source_t *src, const char *filename,
                                         // block can be surface
                                         // coordinates
                                         assert(j == 0);
-                                        src->z[j][k] = block_height;
+                                        // Subtract 2h so the source location appears in the
+                                        // interior of the grid. This hack prevents the stencil from
+                                        // becoming one-sided.  The index gets correctly adjusted by
+                                        // changing the interpolation index below
+                                        src->z[j][k] = block_height - 1 * grid.gridspacing;
                                         break;
                                 }
                         }
@@ -434,6 +399,19 @@ void source_init_common(source_t *src, const char *filename,
                                      full_grid, src->x[j], src->y[j], src->z[j],
                                      src->global_indices[j],
                                      src->lengths[j], input->degree));
+
+                // Correct interpolation coefficients when the receivers appear on the free surface
+                if (f == NULL && j == 0) {
+                        for (size_t k = 0; k < src->lengths[j]; ++k) {
+                                switch (src->type[j][k]) {
+                                        case INPUT_SURFACE_COORD:
+                                                src->interpolation[j].iz[k] +=
+                                                    1;
+                                }
+                        }
+                }
+
+                cuinterp_htod(&src->interpolation[j]);
 
                 //Special treatment for sources located in the overlap zone
                 if (ngrids > 1)
@@ -475,6 +453,7 @@ void source_init_common(source_t *src, const char *filename,
                         } //k loop
                 }
 
+
 #ifdef DEBUG_SOURCE
                 {
                         grid3_t vel_grid = grid_init_stress_grid(
@@ -488,14 +467,19 @@ void source_init_common(source_t *src, const char *filename,
                         prec *y1 = malloc(sizeof y1 * y_grid.size);
                         prec *z1 = malloc(sizeof z1 * z_grid.size);
 
-                        grid_fill1(x1, x_grid);
-                        grid_fill1(y1, y_grid);
-                        grid_fill1(z1, z_grid);
+                        grid_fill1(x1, x_grid, 1);
+                        grid_fill1(y1, y_grid, 0);
+                        grid_fill1(z1, z_grid, 0);
 
-                        if (grid_type == SX || grid_type == SY || grid_type == SZ)
+                        for (int i = 120; i < 128; ++i) {
+                                printf("%3.2f ", z1[i]);
+                        }
+                        printf("\n");
+
+                        if (grid_type == X || grid_type == Y || grid_type == Z  || grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == XX || grid_type == XZ || grid_type == NODE)
                         {
-                                printf("rank = %d, grid_type = %d, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
-                                       rank, grid_type, grid.shift.x, grid.shift.y, grid.shift.z,
+                                printf("rank = %d, grid_type = %s, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
+                                       rank, grid_typename(grid_type), grid.shift.x, grid.shift.y, grid.shift.z,
                                        j,
                                        x1[ngsl / 2], y1[ngsl / 2], z1[0],
                                        grid.gridspacing);
@@ -537,6 +521,7 @@ void source_init_common(source_t *src, const char *filename,
 
                 grid_data_free(&xyz);
         } // end loop j
+
 
         free(grid_number);
         free(x);
@@ -627,7 +612,7 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
                       const prec quad_weight,
                       const prec *f, const int nx, const int ny, const int nz,
                       const prec *dg,
-                      const int grid_num)
+                      const int grid_num, const int sourcetype, const int dir)
 {
         if (!src->use || !buffer_is_device_ready(&src->buffer, step) ||
             src->lengths[grid_num] == 0)
@@ -635,5 +620,6 @@ void source_add_force(prec *out, const prec *d1, source_t *src,
 
         prec *source_data = buffer_get_device_ptr(&src->buffer, step);
         cusource_add_force_H(&src->interpolation[grid_num], out,
-                             source_data, d1, h, dt, quad_weight, f, nx, ny, nz, dg);
+                                     source_data, d1, h, dt, quad_weight, f, nx,
+                                     ny, nz, dg, sourcetype, dir);
 }

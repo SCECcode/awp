@@ -112,8 +112,8 @@ int test_indices(int rank, int size, enum eshift shifttype)
         prec *x = malloc(sizeof(x) * grid_x.size);
         prec *y = malloc(sizeof(y) * grid_y.size);
 
-        grid_fill1(x, grid_x);
-        grid_fill1(y, grid_y);
+        grid_fill1(x, grid_x, 1);
+        grid_fill1(y, grid_y, 0);
 
         grid_x = grid_grid1_x(grid);
         grid_y = grid_grid1_y(grid);
@@ -122,8 +122,8 @@ int test_indices(int rank, int size, enum eshift shifttype)
         prec *xloc = malloc(sizeof(x) * grid_x.size);
         prec *yloc = malloc(sizeof(y) * grid_y.size);
 
-        grid_fill1(xloc, grid_x);
-        grid_fill1(yloc, grid_y);
+        grid_fill1(xloc, grid_x, 1);
+        grid_fill1(yloc, grid_y, 0);
 
         h = grid.gridspacing;
 

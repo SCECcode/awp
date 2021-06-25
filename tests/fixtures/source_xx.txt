@@ -1,0 +1,18 @@
+2.1.0
+file=source
+length=3 
+steps=600
+stride=1
+degree=0
+gpu_buffer_size=2
+cpu_buffer_size=3
+num_writes=2
+# If the finest grid has grid spacing h = 1.0 (top block),
+# then:
+# * the first source should map to i=1 j=2 in block 0 (top block)
+# * the second source should map to i=0 j=0 in block 1 (bottom block)
+
+coordinates
+0 9.5 8.5 -2.0
+0 9.5 8.5 -11.0
+0 9.5 8.5 -34.0
