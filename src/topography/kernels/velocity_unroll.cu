@@ -347,6 +347,23 @@ __global__ void dtopo_vel_111_unroll(
                       py4[2] * _s22(i, j + q + 1, k + r + 3) +
                       py4[3] * _s22(i, j + q + 2, k + r + 3))))) *
       f_dcrj;
+  if (k + r < OVERLAP_ZONE_INDEX) {
+        v2[q][r] =
+      (a * _u2(i, j + q, k + r) +
+       nu / rho2 *
+           (dhz4[2] * _s23(i, j + q, k + r) + dhz4[0] * _s23(i, j + q, k + r - 2) +
+            dhz4[1] * _s23(i, j + q, k + r - 1) + dhz4[3] * _s23(i, j + q, k + r + 1) +
+            dx4[1] * _s12(i, j + q, k + r) +
+            dx4[0] *  _s12(i - 1, j + q, k + r) +
+            dx4[2] *  _s12(i + 1, j + q, k + r) +
+            dx4[3] *  _s12(i + 2, j + q, k + r) +
+            dy4[1] * _s22(i, j + q, k + r) +
+            dy4[0] * _s22(i, j + q - 1, k + r) +
+            dy4[2] * _s22(i, j + q + 1, k + r) +
+            dy4[3] * _s22(i, j + q + 2, k + r)
+           )) * f_dcrj;
+
+  }
   v3[q][r] =
       (a * _u3(i, j + q, k + r) +
        Ai3 *
