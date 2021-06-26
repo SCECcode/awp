@@ -5,6 +5,7 @@ __launch_bounds__ (256)
 #else
 __launch_bounds__ (128)
 #endif
+#define OVERLAP_ZONE_INDEX 7
 __global__ void dtopo_vel_111_unroll(
         _prec *RSTRCT u1, _prec *RSTRCT u2, _prec *RSTRCT u3,
         const _prec *RSTRCT dcrjx, const _prec *RSTRCT dcrjy,
@@ -245,6 +246,25 @@ __global__ void dtopo_vel_111_unroll(
                         phy4[1] * _s12(i, j + q - 1, k + r + 3) +
                         phy4[3] * _s12(i, j + q + 1, k + r + 3))))) *
       f_dcrj;
+  if (k + r <  OVERLAP_ZONE_INDEX) {
+      v1[q][r] = (a * _u1(i, j + q, k + r) +
+                  nu / rho1 *
+                      (dhx4[2] * _s11(i, j + q, k + r) +
+                       dhx4[0] * _s11(i - 2, j + q, k + r) +
+                       dhx4[1] * _s11(i - 1, j + q, k + r) +
+                       dhx4[3] * _s11(i + 1, j + q, k + r) +
+                       dhy4[2] * _s12(i, j + q, k + r) +
+                       dhy4[0] * _s12(i, j + q - 2, k + r) +
+                       dhy4[1] * _s12(i, j + q - 1, k + r) +
+                       dhy4[3] * _s12(i, j + q + 1, k + r) +
+                       dhz4[2] * _s13(i, j + q, k + r) +
+                       dhz4[0] * _s13(i, j + q, k + r - 2) +
+                       dhz4[1] * _s13(i, j + q, k + r - 1) +
+                       dhz4[3] * _s13(i, j + q, k + r + 1))) *
+                 f_dcrj;
+  }
+
+
   v2[q][r] =
       (a * _u2(i, j + q, k + r) +
        Ai2 *
