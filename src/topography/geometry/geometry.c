@@ -6,6 +6,7 @@
 #include <grid/shift.h>
 #include <topography/geometry/geometry.h>
 #include <topography/metrics/metrics.h>
+#include <topography/mapping.h>
 #include <grid/grid_3d.h>
 #include <functions/functions.h>
 #include <test/test.h>
@@ -38,6 +39,12 @@ void geom_no_grid_stretching(g_grid_t *metrics_g)
         grid1.boundary1 = 0;
         grid1.boundary2 = 1;
         grid_fill1(&metrics_g->g[grid1.alignment], grid1, 0);
+ 
+        // Shift grid vector so that the internal coordinate system places z = 0 at the first grid
+        // point immediately above the DM overlap zone
+        for (int i = 0; i < grid1.size; ++i) {
+                metrics_g->g[i + grid1.alignment] -= MAPPING_START_POINT * grid1.gridspacing;
+        }
 
 }
 
@@ -199,7 +206,7 @@ void geom_custom(const f_grid_t *metrics_f, const grid3_t grid, const int px,
         // 0 <= z' < =1
         // This normalization constant is used so that the user can specify
         // block dimension using physical units.
-        _prec normalize = 1.0 / grid.gridspacing / (grid.size.z - 2);
+        _prec normalize = 1.0 / grid.gridspacing / (grid.size.z - 2 - MAPPING_START_POINT);
 
         for (int i = 0; i < len_x; ++i) {
         for (int j = 0; j < len_y; ++j) {
