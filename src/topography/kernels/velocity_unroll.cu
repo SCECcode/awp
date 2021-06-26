@@ -447,6 +447,24 @@ __global__ void dtopo_vel_111_unroll(
                       phy4[1] * _s23(i, j + q - 1, k + r + 3) +
                       phy4[3] * _s23(i, j + q + 1, k + r + 3))))) *
       f_dcrj;
+
+  if (k + r < OVERLAP_ZONE_INDEX) {
+      v3[q][r] = (a * _u3(i, j + q, k + r) +
+                  nu / rho3 *
+                      (dhy4[2] * _g3(k + r) * _s23(i, j + q, k + r) +
+                       dhy4[0] * _s23(i, j + q - 2, k + r) +
+                       dhy4[1] * _s23(i, j + q - 1, k + r) +
+                       dhy4[3] * _s23(i, j + q + 1, k + r) +
+                       dx4[1] * _s13(i, j + q, k + r) +
+                       dx4[0] * _s13(i - 1, j + q, k + r) +
+                       dx4[2] * _s13(i + 1, j + q, k + r) +
+                       dx4[3] * _s13(i + 2, j + q, k + r) +
+                       dz4[1] * _s33(i, j + q, k + r) +
+                       dz4[0] * _s33(i, j + q, k + r - 1) +
+                       dz4[2] * _s33(i, j + q, k + r + 1) +
+                       dz4[3] * _s33(i, j + q, k + r + 2))) *
+                 f_dcrj;
+  }
         }
         }
 
@@ -494,5 +512,5 @@ __global__ void dtopo_vel_111_unroll(
 
 
 #undef RSTRCT
-
+#undef OVERLAP_ZONE_INDEX
 

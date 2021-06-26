@@ -15,6 +15,7 @@
 
 #define RSTRCT __restrict__
 #define LDG(x) x
+#define OVERLAP_ZONE_INDEX 7
 
 template <int tx, int ty, int tz, int na, int nb>
 __launch_bounds__ (tx*ty*tz)
@@ -363,16 +364,25 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     w1_im2   = w1[pos_im2];
 
 
+    float mapping = 1.0;
+    if (k - align < OVERLAP_ZONE_INDEX)
+        mapping = 0.0;
+
 
     // xx, yy, zz
 
     _prec Jii = _f_c(i, j) * _g3_c(k);
           Jii = 1.0 * 1.0 / Jii;
 
+    if (k - align < OVERLAP_ZONE_INDEX)
+        Jii = 1.0;
+
+
+
     vs1 =
       dx4[1] * u1[p0p0p0] + dx4[0] * u1[m1p0p0] +
       dx4[2] * u1[p1p0p0] + dx4[3] * u1[p2p0p0] -
-      Jii * _g_c(k) *
+      mapping * Jii * _g_c(k) *
           (
            px4[0] * _f1_1(i - 1, j) *
                (
@@ -419,7 +429,7 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
     vs2 =
       dhy4[2] * v1[p0p0p0] + dhy4[0] * v1[p0m2p0] +
       dhy4[1] * v1[p0m1p0] + dhy4[3] * v1[p0p1p0] -
-      Jii * _g_c(k) *
+      mapping * Jii * _g_c(k) *
            (phy4[0] * _f2_2(i, j - 2) *
                 (
                 phdz4[0] * v1[p0m2m3] +
@@ -498,7 +508,7 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   vs1 =
       dy4[1] * u1[p0p0p0] + dy4[0] * u1[p0m1p0] +
       dy4[2] * u1[p0p1p0] + dy4[3] * u1[p0p2p0] -
-      J12i * _g_c(k) *
+      mapping * J12i * _g_c(k) *
           (
            py4[0] * _f2_1(i, j - 1) *
                (
@@ -540,7 +550,7 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   vs2 =
       dhx4[2] * v1[p0p0p0] + dhx4[0] * v1[m2p0p0] +
       dhx4[1] * v1[m1p0p0] + dhx4[3] * v1[p1p0p0] -
-      J12i * _g_c(k) *
+      mapping * J12i * _g_c(k) *
           (
            phx4[0] * _f1_2(i - 2, j) *
                (
@@ -594,6 +604,8 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
 
   _prec J13i = _f_1(i, j) * _g3(k);
   J13i = 1.0 * 1.0 / J13i;
+  if (k - align  < OVERLAP_ZONE_INDEX)
+      J13i = 1.0;
 
   vs1 = J13i * (dz4[1] * u1[p0p0p0] + dz4[0] * u1[p0p0m1] +
                 dz4[2] * u1[p0p0p1] + dz4[3] * u1[p0p0p2]);
@@ -649,6 +661,8 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
 
     _prec J23i = _f_2(i, j) * _g3(k);
     J23i = 1.0 * 1.0 / J23i;
+  if (k - align  < OVERLAP_ZONE_INDEX)
+      J23i = 1.0;
     vs1 = J23i * (dz4[1] * v1[p0p0p0] + dz4[0] * v1[p0p0m1] +
                   dz4[2] * v1[p0p0p1] + dz4[3] * v1[p0p0p2]);
     vs2 =
@@ -739,3 +753,4 @@ __global__ void dtopo_str_111_index_unroll(_prec*  RSTRCT xx, _prec*  RSTRCT yy,
   
 
 }
+#undef OVERLAP_ZONE_INDEX
