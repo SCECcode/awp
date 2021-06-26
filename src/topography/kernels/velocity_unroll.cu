@@ -5,7 +5,7 @@ __launch_bounds__ (256)
 #else
 __launch_bounds__ (128)
 #endif
-#define OVERLAP_ZONE_INDEX 7
+#define OVERLAP_ZONE_INDEX 8
 __global__ void dtopo_vel_111_unroll(
         _prec *RSTRCT u1, _prec *RSTRCT u2, _prec *RSTRCT u3,
         const _prec *RSTRCT dcrjx, const _prec *RSTRCT dcrjy,

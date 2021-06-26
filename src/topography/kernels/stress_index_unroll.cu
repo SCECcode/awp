@@ -15,7 +15,7 @@
 
 #define RSTRCT __restrict__
 #define LDG(x) x
-#define OVERLAP_ZONE_INDEX 7
+#define OVERLAP_ZONE_INDEX 8
 
 template <int tx, int ty, int tz, int na, int nb>
 __launch_bounds__ (tx*ty*tz)
