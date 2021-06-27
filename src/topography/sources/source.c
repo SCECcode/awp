@@ -13,6 +13,7 @@
 #include <interpolation/interpolation.h>
 #include <interpolation/interpolation.cuh>
 #include <topography/sources/source.h>
+#include <topography/mapping.h>
 #include <topography/sources/source.cuh>
 #include <topography/grids.h>
 
@@ -328,9 +329,30 @@ void source_init_common(source_t *src, const char *filename,
                                 {
                                 // Map to parameter space
                                 case INPUT_VOLUME_COORD:
-                                        src->z[j][k] =
-                                            (block_height + src->z[j][k]) /
-                                            f_interp[k];
+                                    //src->z[j][k] =
+                                    //    (block_height + src->z[j][k]) /
+                                    //    f_interp[k];
+                                    if (block_height + src->z[j][k] <
+                                        MAPPING_START_POINT) {
+                                        // Source / receiver is in the overlap
+                                        // zone. Output error
+                                        fprintf(stderr,
+                                                "Source/Receiver cannot exist "
+                                                "in the overlap zone on the "
+                                                "fine grid\n");
+                                    } else {
+                                        // Source / receiver is in the top part
+                                        // of the block that experiences the
+                                        // curvilinear grid transform
+                                        src->z[j][k] = (block_height -
+                                                        MAPPING_START_POINT *
+                                                            grid.gridspacing +
+                                                        src->z[j][k]) /
+                                                           f_interp[k]
+                                        +
+                                                       MAPPING_START_POINT *
+                                                           grid.gridspacing;
+                                    }
                                         break;
                                 case INPUT_SURFACE_COORD:
                                         src->z[j][k] = z1[z_grid.size - 2];

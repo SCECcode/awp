@@ -1,20 +1,19 @@
-#ifndef _TOPOGRAPHY_MAPPING_H
-#define _TOPOGRAPHY_MAPPING_H
-
+#ifndef _TOPOGRAPHY_MAPPING_CUH
+#define _TOPOGRAPHY_MAPPING_CUH
+#include <topography/mapping.h>
 #define TOL 1e-4
-#define MAPPING_START_POINT 7
+
 
 __device__ __host__ __inline__ float topo_mapping0(const float f, const float r,
                                                   const float h, const int n) {
         float l = (n - 2) * h;
         float d1 = h * 6.0;
 
-        //printf("f = %g \n", f); 
-        if (r < h * MAPPING_START_POINT) return (r - h * MAPPING_START_POINT);
+        if (r < h * MAPPING_START_POINT) return r;
         else 
-                return f * (r - h * MAPPING_START_POINT);
-        //return (r*(-l + r) - r*(-d1 + r)*f)/(d1 - l);
-}
+                return f * (r - h * MAPPING_START_POINT) + h * MAPPING_START_POINT;
+}                             
+
 
 // Differentiate mapping with respect to r1, r2  
 __device__ __host__ __inline__ float topo_mapping(const float f_1, const float r,

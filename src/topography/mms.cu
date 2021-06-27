@@ -19,7 +19,8 @@ float svx0, svy0, svz0, sxx0, syy0, szz0, sxy0, sxz0, syz0;
 float sdvx, sdvy, sdvz, sdxx, sdyy, sdzz, sdxy, sdxz, sdyz;
 
 // Plane wave position
-float szc;
+float src;
+
 
 // Grid stretching ratio
 float stretch_ratio;
@@ -164,7 +165,8 @@ __global__ void exact_velocity(
 
                 float z = topo_mapping0(f, zk(k, pz, Lz, h), h, nz);
                 float zh = topo_mapping0(f, zk(k, pz, Lz, h, 1), h, nz);
-                float zc = rc;//topo_mapping0(f, rc, h, nz);
+                float zc = topo_mapping0(f, rc, h, nz);
+
 
                 int line = 2 * align + nz;
                 int slice = line * (4 + 2 * ngsl + ny);
@@ -223,7 +225,7 @@ __global__ void exact_stress(
                 float y = yj(j, py, Ly, h);
                 float z = topo_mapping0(f, zk(k, pz, Lz, h), h, nz);
                 float zh = topo_mapping0(f, zk(k, pz, Lz, h, 1), h, nz);
-                float zc = rc;//topo_mapping0(f, rc, h, nz);
+                float zc = topo_mapping0(f, rc, h, nz);
 
                 int line = 2 * align + nz;
                 int slice = line * (4 + 2 * ngsl + ny);
@@ -365,7 +367,8 @@ void mms_init(const char *MMSFILE, const int *nxt,
                             &scp0, &scs0, &srho0, &sdcp, &sdcs, &sdrho, &kx, &ky, &kz,
                             &svx0, &svy0, &svz0, &sxx0, &syy0, &szz0, &sxy0,
                             &sxz0, &syz0, &sdvx, &sdvy, &sdvz, &sdxx, &sdyy,
-                            &sdzz, &sdxy, &sdxz, &sdyz, &szc, &stretch_ratio);
+                            &sdzz, &sdxy, &sdxz, &sdyz, &src, &stretch_ratio);
+
         if (parsed != 31 && px == 0 && py == 0)
                  fprintf(stderr, "Failed to parse: %s \n", MMSFILE);
 
@@ -382,7 +385,7 @@ void mms_init(const char *MMSFILE, const int *nxt,
                 printf("        dvx = %g dvy = %g dvz = %g \n", sdvx, sdvy, sdvz);
                 printf("        dxx = %g dyy = %g dzz = %g \n", sdxx, sdyy, sdzz);
                 printf("        dxy = %g dxz = %g dyz = %g \n", sdxy, sdxz, sdyz);
-                printf("        zc = %g \n", szc);
+                printf("        rc = %g \n", src);
                 printf("        stretch_ratio = %g \n", stretch_ratio);
         }
 
@@ -463,7 +466,7 @@ void mms_exact_velocity(
                                 sdxy, sdxz, sdyz,
                                 scp0, scs0, srho0,
                                 sdcp, sdcs, sdrho, 
-                                szc, 
+                                src, 
                                 kx, ky, kz,
                                 nx, ny, nz, 
                                 px, py, pz, 
@@ -499,7 +502,7 @@ void mms_exact_stress(
                                 sdxy, sdxz, sdyz,
                                 scp0, scs0, srho0,
                                 sdcp, sdcs, sdrho, 
-                                szc, 
+                                src, 
                                 kx, ky, kz,
                                 nx, ny, nz, 
                                 px, py, pz, 
