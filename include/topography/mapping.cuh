@@ -3,6 +3,7 @@
 #include <topography/mapping.h>
 #define TOL 1e-4
 
+
 __device__ __host__ __inline__ float topo_mapping0(const float f, const float r,
                                                   const float h, const int n) {
         float l = (n - 2) * h;
@@ -12,6 +13,7 @@ __device__ __host__ __inline__ float topo_mapping0(const float f, const float r,
         else 
                 return f * (r - h * MAPPING_START_POINT) + h * MAPPING_START_POINT;
 }                             
+
 
 // Differentiate mapping with respect to r1, r2  
 __device__ __host__ __inline__ float topo_mapping(const float f_1, const float r,

@@ -21,6 +21,7 @@ float sdvx, sdvy, sdvz, sdxx, sdyy, sdzz, sdxy, sdxz, sdyz;
 // Plane wave position
 float src;
 
+
 // Grid stretching ratio
 float stretch_ratio;
 
@@ -165,6 +166,7 @@ __global__ void exact_velocity(
                 float z = topo_mapping0(f, zk(k, pz, Lz, h), h, nz);
                 float zh = topo_mapping0(f, zk(k, pz, Lz, h, 1), h, nz);
                 float zc = topo_mapping0(f, rc, h, nz);
+
 
                 int line = 2 * align + nz;
                 int slice = line * (4 + 2 * ngsl + ny);
@@ -366,6 +368,7 @@ void mms_init(const char *MMSFILE, const int *nxt,
                             &svx0, &svy0, &svz0, &sxx0, &syy0, &szz0, &sxy0,
                             &sxz0, &syz0, &sdvx, &sdvy, &sdvz, &sdxx, &sdyy,
                             &sdzz, &sdxy, &sdxz, &sdyz, &src, &stretch_ratio);
+
         if (parsed != 31 && px == 0 && py == 0)
                  fprintf(stderr, "Failed to parse: %s \n", MMSFILE);
 

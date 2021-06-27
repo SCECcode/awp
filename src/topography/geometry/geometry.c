@@ -39,13 +39,11 @@ void geom_no_grid_stretching(g_grid_t *metrics_g)
         grid1.boundary1 = 0;
         grid1.boundary2 = 1;
         grid_fill1(&metrics_g->g[grid1.alignment], grid1, 0);
- 
         // Shift grid vector so that the internal coordinate system places z = 0 at the first grid
         // point immediately above the DM overlap zone
         for (int i = 0; i < grid1.size; ++i) {
                 metrics_g->g[i + grid1.alignment] -= MAPPING_START_POINT * grid1.gridspacing;
         }
-
 }
 
 void geom_gaussian(f_grid_t *metrics_f, const _prec *x, const _prec *y,

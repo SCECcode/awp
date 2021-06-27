@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <test/test.h>
 
+
 #define OVERLAP_ZONE_INDEX 8
 #ifndef APPLY_BC
 #define APPLY_BC 1
@@ -2523,7 +2524,6 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
   _prec rho3 = 0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k)) +
                0.25 * (_rho(i, j + rj0 - 1, k) + _rho(i - 1, j + rj0 - 1, k));
 
-  
   _prec Ai1 = _f_1(i, j + rj0) * _g3_c(k) * rho1;
   Ai1 = nu * 1.0 / Ai1;
   _prec Ai2 = _f_2(i, j + rj0) * _g3_c(k) * rho2;
@@ -2620,6 +2620,7 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
                       phy4[1] * _s12(i, j + rj0 - 1, k + 3) +
                       phy4[3] * _s12(i, j + rj0 + 1, k + 3))))) *
       f_dcrj;
+
  if (k <  OVERLAP_ZONE_INDEX) {
   _buf_u1(i, j, k) =
       (a * _u1(i, j + rj0, k) +
@@ -2638,6 +2639,7 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
             dhz4[3] * _s13(i, j + rj0, k + 1)
             )) * f_dcrj;
   }
+
   _buf_u2(i, j, k) =
       (a * _u2(i, j + rj0, k) +
        Ai2 *
@@ -2723,6 +2725,7 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
                                       py4[2] * _s22(i, j + rj0 + 1, k + 3) +
                                       py4[3] * _s22(i, j + rj0 + 2, k + 3))))) *
       f_dcrj;
+
  if ( k  < OVERLAP_ZONE_INDEX) {
   _buf_u2(i, j, k) =
       (a * _u2(i, j + rj0, k) +
@@ -2741,6 +2744,7 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
             dy4[3] * _s22(i, j + rj0 + 2, k))
       ) * f_dcrj;
  }
+
   _buf_u3(i, j, k) =
       (a * _u3(i, j + rj0, k) +
        Ai3 *
@@ -2827,6 +2831,7 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
                       phy4[1] * _s23(i, j + rj0 - 1, k + 3) +
                       phy4[3] * _s23(i, j + rj0 + 1, k + 3))))) *
       f_dcrj;
+
  if ( k  < OVERLAP_ZONE_INDEX) {
   _buf_u3(i, j, k) =
       (a * _u3(i, j + rj0, k) +
@@ -2845,6 +2850,7 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
             dz4[3] * _s33(i, j + rj0, k + 2)
            ) ) * f_dcrj;
  }
+
 #undef _buf_u1
 #undef _buf_u2
 #undef _buf_u3
@@ -3489,3 +3495,4 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
 }
 
 #undef OVERLAP_ZONE_INDEX
+
