@@ -41,12 +41,12 @@ set(LIBRARIES
 
 add_library(topography
         topography.c velocity.cu stress.cu
-        geometry.c host.c grids.c mms.cu
+        geometry.c host.c grids.c mms.cu mapping.c
         )
 
 add_library(topography_no_bc
         topography.c velocity.cu stress.cu
-        geometry.c host.c grids.c mms.cu
+        geometry.c host.c grids.c mms.cu mapping.c
         )
 
 target_link_libraries(topography ${LIBRARIES})
