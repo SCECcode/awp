@@ -205,6 +205,7 @@ typedef struct
         _prec dth;
         _prec timestep;
         _prec gridspacing;
+        _prec block_height;
         _prec gridspacing_bot;
         _prec gridspacing_top;
         // Material properties

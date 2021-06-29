@@ -47,6 +47,7 @@ topo_t topo_init(const int USETOPO,
         int slice = myt * mzt;
         int line = mzt;
         int slice_gl = ngsl * mzt;
+        _prec block_height = h * (nzt - 1 - MAPPING_START_POINT);
 
         topo_t T = {.use = USETOPO, .dbg = TOPO_DBG, 
                     .verbose = TOPO_VERBOSE,
@@ -73,10 +74,11 @@ topo_t topo_init(const int USETOPO,
                     .dth = dt/h,
                     .timestep = 1,
                     .gridspacing = h,
+                    .block_height = block_height,
                     .stream_1 = stream_1,
                     .stream_2 = stream_2,
                     .stream_i = stream_i,
-                    .map = init_mapping(hb, ht, h) 
+                    .map = init_mapping(hb / block_height, ht / block_height, h / block_height) 
                    };
 
         if (rank == 0 && T.verbose && T.use) printf("Topography:: enabled\n");
@@ -219,7 +221,7 @@ void topo_init_geometry(topo_t *T)
 
         err |= topo_read_serial(T->topography_file, T->rank, T->px, T->py,
                                 T->coord, T->nx, T->ny, alloc, &T->metrics_f_init.f);
-        geom_no_grid_stretching(&T->metrics_g);
+        geom_grid_stretching(&T->metrics_g, &T->map, T->block_height);
         geom_custom(&T->metrics_f_init, T->topography_grid, T->px, T->py,
                     T->metrics_f_init.f);
 

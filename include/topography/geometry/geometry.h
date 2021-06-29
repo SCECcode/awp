@@ -6,10 +6,12 @@
 #define GEOMETRY_H
 
 #include <topography/metrics/metrics.h>
+#include <topography/mapping.h>
 #include <grid/grid_3d.h>
 
 void geom_cartesian_topography(f_grid_t *metrics_f);
 void geom_no_grid_stretching(g_grid_t *metrics_g);
+void geom_grid_stretching(g_grid_t *metrics_g, const struct mapping *map, const _prec block_height);
 
 void geom_gaussian(f_grid_t *metrics_f, const _prec *x, const _prec *y,
                    const fcn_grid_t grid, const _prec amplitude,
