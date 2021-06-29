@@ -13,11 +13,11 @@ void test_convergence(const double dzb, const double dzt, const int n, const dou
 
     printf("Testing dzb=%f, dzt=%f n=%d eps=%f \n", dzb, dzt, n, eps);
     double h = 1.0 / (n - 1);
-    struct mapping map = init_mapping(dzb, dzt, h);
+    struct mapping map = map_init(dzb, dzt, h);
     for (int i = 0; i < n; ++i) {
         double z = i * h;
-        double r = invert(z, &map, 0.5 * eps, 10000);
-        double zeval = eval(r, &map);
+        double r = map_invert(z, &map, 0.5 * eps, 10000);
+        double zeval = map_eval(r, &map);
         assert(fabs(zeval - z) < eps);
     }
 }
@@ -31,20 +31,20 @@ int main(int argc, char **argv) {
     double h = 1.0 / (n - 1);
     double dzb = h;
     double dzt = h;
-    struct mapping map = init_mapping(dzb, dzt, h);
+    struct mapping map = map_init(dzb, dzt, h);
 
-    assert(find_cell_r(0.2 * h, &map) == 0);
-    assert(find_cell_r(1.1 * h, &map) == 1);
-    assert(find_cell_r(1.0 - 0.5 * h, &map) == 2);
+    assert(map_find_cell_r(0.2 * h, &map) == 0);
+    assert(map_find_cell_r(1.1 * h, &map) == 1);
+    assert(map_find_cell_r(1.0 - 0.5 * h, &map) == 2);
 
     for (int i = 0; i <  n; ++i) {
         double r = i * h;
-        assert(fabs(r - eval(r, &map)) < eps * h);
+        assert(fabs(r - map_eval(r, &map)) < eps * h);
     }
     
     for (int i = 0; i < n; ++i) {
         double r = i * h;
-        assert(fabs(r - invert(r, &map, 0.5 * eps, 1000)) < eps);
+        assert(fabs(r - map_invert(r, &map, 0.5 * eps, 1000)) < eps);
     }
 
     test_convergence(0.1, 0.01, 11, eps);

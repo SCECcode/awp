@@ -78,7 +78,7 @@ topo_t topo_init(const int USETOPO,
                     .stream_1 = stream_1,
                     .stream_2 = stream_2,
                     .stream_i = stream_i,
-                    .map = init_mapping(hb / block_height, ht / block_height, h / block_height) 
+                    .map = map_init(hb / block_height, ht / block_height, h / block_height) 
                    };
 
         if (rank == 0 && T.verbose && T.use) printf("Topography:: enabled\n");

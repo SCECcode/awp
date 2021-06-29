@@ -6,6 +6,11 @@
 
 const int VERBOSE = 0;
 
+void hermite_cubic_basis(double b[4], const double t);
+void hermite_cubic_basis_derivative(double db[4], const double t);
+void adjust(double *m0, double *m1, const double s);
+void grid_stretch(struct mapping *map);
+
 void hermite_cubic_basis(double b[4], const double t) {
     b[0] = (1.0 + 2.0 * t) * (1.0 - t) * (1.0 - t);
     b[1] = t * (1.0 - t) * (1.0 - t);
@@ -61,7 +66,7 @@ void grid_stretch(struct mapping *map) {
 }
 
 
-struct mapping init_mapping(const double dzb, const double dzt, const double h) {
+struct mapping map_init(const double dzb, const double dzt, const double h) {
 
     struct mapping map;
     map.dzb = dzb;
@@ -81,7 +86,7 @@ struct mapping init_mapping(const double dzb, const double dzt, const double h) 
     return map;
 }
 
-int find_cell_r(const double r, const struct mapping *map) {
+int map_find_cell_r(const double r, const struct mapping *map) {
     if (r < 0.0) 
         fprintf(stderr, "%s:%s():%d Outside interval (r = %f, r < 0)!\n", 
                 __FILE__, __func__, __LINE__, r);
@@ -95,7 +100,7 @@ int find_cell_r(const double r, const struct mapping *map) {
     return -1;
 }
 
-int find_cell_z(const double z, const struct mapping *map) {
+int map_find_cell_z(const double z, const struct mapping *map) {
     if (z < 0.0) 
         fprintf(stderr, "%s:%s():%d Outside interval (z = %f, z < 0)!\n",
                 __FILE__, __func__, __LINE__, z);
@@ -109,16 +114,16 @@ int find_cell_z(const double z, const struct mapping *map) {
 
 }
 
-double eval(const double r, const struct mapping *map) {
-    int c = find_cell_r(r, map);
+double map_eval(const double r, const struct mapping *map) {
+    int c = map_find_cell_r(r, map);
     double b[4];
     double dr = map->r[c+1] - map->r[c];
     hermite_cubic_basis(b, (r - map->r[c]) / dr);
     return b[0] * map->z[c] + dr * map->m[c] * b[1] + b[2] * map->z[c+1] + dr * b[3] * map->m[c+1];
 }
 
-double eval_derivative(const double r, const struct mapping *map) {
-    int c = find_cell_r(r, map);
+double map_eval_derivative(const double r, const struct mapping *map) {
+    int c = map_find_cell_r(r, map);
     double b[4];
     double dr = map->r[c+1] - map->r[c];
     hermite_cubic_basis_derivative(b, (r - map->r[c]) / dr);
@@ -126,11 +131,11 @@ double eval_derivative(const double r, const struct mapping *map) {
     return d / dr;
 }
 
-double invert(const double z, const struct mapping *map, const double eps, const int maxiter) {
+double map_invert(const double z, const struct mapping *map, const double eps, const int maxiter) {
 
     double rk = 0;
-    double fk = eval(rk, map);
-    double dfk = eval_derivative(z, map);
+    double fk = map_eval(rk, map);
+    double dfk = map_eval_derivative(z, map);
     double h = map->h;
 
     int k = 0;
@@ -142,8 +147,8 @@ double invert(const double z, const struct mapping *map, const double eps, const
         rk = rk - (fk - z) / dfk;
         rk = rk < 0 ? 0 : rk;
         rk = rk > 1 ? 1 : rk;
-        fk = eval(rk, map);
-        dfk = eval_derivative(rk, map);
+        fk = map_eval(rk, map);
+        dfk = map_eval_derivative(rk, map);
         k = k + 1;
     }
     if (VERBOSE)
