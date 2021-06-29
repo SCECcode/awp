@@ -21,7 +21,7 @@ static recv_t rz;
 
 static input_t input;
 
-void receivers_init(const char *filename, const grids_t *grids, int ngrids,
+void receivers_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                     const f_grid_t *f,
                   const MPI_Comm comm, const int rank, const int size)
 {
@@ -35,9 +35,9 @@ void receivers_init(const char *filename, const grids_t *grids, int ngrids,
         AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-        rx = receiver_init("x", X, RECEIVER, &input, grids, ngrids, f, rank, comm);
-        ry = receiver_init("y", Y, RECEIVER, &input, grids, ngrids, f, rank, comm);
-        rz = receiver_init("z", Z, RECEIVER, &input, grids, ngrids, f, rank, comm);
+        rx = receiver_init("x", X, RECEIVER, &input, grids, map, ngrids, f, rank, comm);
+        ry = receiver_init("y", Y, RECEIVER, &input, grids, map, ngrids, f, rank, comm);
+        rz = receiver_init("z", Z, RECEIVER, &input, grids, map, ngrids, f, rank, comm);
 }
 
 void receivers_finalize(void)

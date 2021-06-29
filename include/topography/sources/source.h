@@ -14,6 +14,7 @@
 #include <topography/metrics/metrics.h>
 #include <mpi/io.h>
 #include <interpolation/interpolation.cuh>
+#include <topography/mapping.h>
 
 // Offsets in grid spacings factor with respect to the previous grid
 #define SOURCE_DM_OFFSET_X 0
@@ -60,6 +61,7 @@ source_t source_init(const char *file_end,
                      const enum grid_types grid_type,
                      const input_t *input,
                      const grids_t *grids, 
+                     const struct mapping *map, 
                      const int ngrids,
                      const f_grid_t *f, 
                      const int rank,
@@ -77,6 +79,7 @@ void source_init_common(source_t *src, const char *filename,
                         const enum grid_types grid_type, 
                         const input_t *input, 
                         const grids_t *grids, 
+                        const struct mapping *map,
                         const int ngrids,
                         const f_grid_t *f,
                         const int rank, 

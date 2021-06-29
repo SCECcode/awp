@@ -9,7 +9,7 @@
 #include <topography/metrics/metrics.h>
 #include <topography/receivers/receiver.h>
 
-void receivers_init(const char *filename, const grids_t *grids, int ngrids,
+void receivers_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                     const f_grid_t *f, const MPI_Comm comm, const int rank,
                     const int size);
 void receivers_finalize(void);

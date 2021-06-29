@@ -1702,6 +1702,7 @@ if (!usemms) {
 
       f_grid_t *metrics_f = NULL;
       g_grid_t *metrics_g = NULL;
+      struct mapping *map = NULL;
 
 if (usemms) {
         if (rank == 0) printf("METHOD OF MANUFACTURED SOLUTIONS ENABLED \n");
@@ -1728,6 +1729,7 @@ if (usemms) {
                 d_f_u1[0], d_f_v1[0], d_f_w1[0], d_b_u1[0], d_b_v1[0],
                 d_b_w1[0], d_dcrjx[0], d_dcrjy[0], d_dcrjz[0]);
       topo_init_metrics(&T);
+      map = &T.map;
 
       if (T.use)
       {
@@ -1754,17 +1756,17 @@ if (usemms) {
       }
 
       if (usesourcefile)
-         sources_init(SOURCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
+         sources_init(SOURCEFILE, grids, map, ngrids, metrics_f, metrics_g, MCW, rank,
                       size_tot);
       if (userecvfile)
-         receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
+         receivers_init(RECVFILE, grids, map, ngrids, metrics_f, MCW, rank,
                         size_tot);
       if (useforcefile)
-         forces_init(FORCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
+         forces_init(FORCEFILE, grids, map, ngrids, metrics_f, metrics_g, MCW, rank,
                      size_tot, (float*)d_d1[0], usetopo);
       if (usesgtfile)
       {
-         sgt_init(SGTFILE, grids, ngrids, metrics_f, MCW, rank,
+         sgt_init(SGTFILE, grids, map, ngrids, metrics_f, MCW, rank,
                   size_tot);
          for (p = 0; p < ngrids; p++)
          {

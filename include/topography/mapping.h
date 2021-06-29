@@ -1,6 +1,8 @@
 #ifndef _TOPOGRAPHY_MAPPING_H
 #define _TOPOGRAPHY_MAPPING_H
 #define MAPPING_START_POINT 7
+#define MAPPING_INVERSION_TOL 1e-2
+#define MAPPING_MAX_ITER 1000
 
 struct mapping {
     double dzb;

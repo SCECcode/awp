@@ -76,7 +76,7 @@ int test_sources(const char *inputfile, int rank, int size, const int px)
         test_t test;
 
         test = test_init(" * sources_init", rank, size);
-        sources_init(inputfile, grids, ngrids, NULL, NULL, MPI_COMM_WORLD, rank, size);
+        sources_init(inputfile, grids, NULL, ngrids, NULL, NULL, MPI_COMM_WORLD, rank, size);
         err = test_finalize(&test, err);
 
         input_t input;

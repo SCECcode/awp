@@ -26,6 +26,7 @@ source_t source_init(const char *file_end,
                      const enum grid_types grid_type,
                      const input_t *input,
                      const grids_t *grids,
+                     const struct mapping *map,
                      const int ngrids,
                      const f_grid_t *f,
                      const int rank,
@@ -34,7 +35,7 @@ source_t source_init(const char *file_end,
 {
         source_t src;
 
-        source_init_common(&src, file_end, grid_type, input, grids, ngrids, f,
+        source_init_common(&src, file_end, grid_type, input, grids, map, ngrids, f,
                            rank, comm, st);
 
         if (!src.use)
@@ -145,6 +146,7 @@ void source_init_common(source_t *src, const char *filename,
                         const enum grid_types grid_type,
                         const input_t *input,
                         const grids_t *grids,
+                        const struct mapping *map,
                         const int ngrids,
                         const f_grid_t *f,
                         const int rank, const MPI_Comm comm, const enum source_type st)
@@ -329,29 +331,23 @@ void source_init_common(source_t *src, const char *filename,
                                 {
                                 // Map to parameter space
                                 case INPUT_VOLUME_COORD:
-                                    //src->z[j][k] =
-                                    //    (block_height + src->z[j][k]) /
-                                    //    f_interp[k];
                                     if (block_height + src->z[j][k] <
                                         MAPPING_START_POINT) {
-                                        // Source / receiver is in the overlap
-                                        // zone. Output error
                                         fprintf(stderr,
                                                 "Source/Receiver cannot exist "
                                                 "in the overlap zone on the "
-                                                "fine grid\n");
+                                                "fine grid, id = %ld \n", k);
                                     } else {
                                         // Source / receiver is in the top part
                                         // of the block that experiences the
                                         // curvilinear grid transform
-                                        src->z[j][k] = (block_height -
-                                                        MAPPING_START_POINT *
-                                                            grid.gridspacing +
-                                                        src->z[j][k]) /
-                                                           f_interp[k]
-                                        +
-                                                       MAPPING_START_POINT *
-                                                           grid.gridspacing;
+
+                                        double h = grid.gridspacing;
+                                        double H = block_height - h * OVERLAP;
+                                        double Hf = f_interp[k] * H;
+                                        double x = (H + src->z[j][k]) / Hf;
+                                        double r = H * map_invert(x, map, MAPPING_INVERSION_TOL, MAPPING_MAX_ITER) + OVERLAP * h;
+                                        src->z[j][k] = r;
                                     }
                                         break;
                                 case INPUT_SURFACE_COORD:

@@ -113,11 +113,11 @@ int test_sources_dm(const char *sourcefile, int rank, int size, const int px, co
         if (run_test) test = test_init(testname, rank, size);
         source_t M;
         if (grid2 == GRID_U1 || grid2 == GRID_U2 || grid2 == GRID_U3) {
-            receivers_init(inputfile, grids, ngrids, NULL, MPI_COMM_WORLD, rank, size);
+            receivers_init(inputfile, grids, NULL, ngrids, NULL, MPI_COMM_WORLD, rank, size);
             M = receivers_get_receiver(grid);
         }
         else {
-            sources_init(inputfile, grids, ngrids, NULL, NULL, MPI_COMM_WORLD, rank, size);
+            sources_init(inputfile, grids, NULL, ngrids, NULL, NULL, MPI_COMM_WORLD, rank, size);
             M = sources_get_source(grid);
         }
 
