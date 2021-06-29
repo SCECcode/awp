@@ -99,6 +99,9 @@ int main(int argc, char **argv)
    int usemms = 0;
    char MMSFILE[IN_FILE_LEN];
 
+   float DHB = -1.0;
+   float DHT = -1.0;
+
    //  GPU variables
    long int num_bytes;
    float **d_d1;
@@ -311,7 +314,11 @@ int main(int argc, char **argv)
            &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
-           SGTFILE, &usesgtfile, MMSFILE, &usemms);
+           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT);
+   DHB = DHB == -1.0 ? DH[0] : DHB;
+   DHT = DHT == -1.0 ? DH[0] : DHT;
+
+
 
 #ifndef SEISMIO
 #ifdef NOBGIO
@@ -1711,7 +1718,7 @@ if (usemms) {
                            y_rank_F, y_rank_B, coord,
                            dim[0], dim[1],
                            nxt[0], nyt[0], nzt[0],
-                           DT, *DH,
+                           DT, *DH, DHB, DHT,
                            stream_1, stream_2, stream_i);
       topo_bind(&T, d_d1[0], d_lam[0], d_mu[0],
                 d_qp[0], d_coeff, d_qs[0], d_vx1[0], d_vx2[0], d_ww[0],
