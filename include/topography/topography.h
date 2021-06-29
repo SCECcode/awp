@@ -11,6 +11,7 @@
 #include <awp/definitions.h>
 #include <vtk/vtk.h>
 #include <test/test.h>
+#include <topography/mapping.h>
 
 
 // TOPO: Enable topography calls. If disabled, then no topography function calls
@@ -272,6 +273,8 @@ typedef struct
         cudaStream_t stream_1;
         cudaStream_t stream_2;
         cudaStream_t stream_i;
+
+        struct mapping map;
 
 } topo_t;                 
                    

@@ -11,6 +11,7 @@
 #include <grid/grid_3d.h>
 #include <topography/geometry/geometry.h>
 #include <topography/topography.h>
+#include <topography/mapping.h>
 #include <topography/readers/serial_reader.h>
 #include <topography/topography.cuh>
 #include <test/test.h>
@@ -72,11 +73,10 @@ topo_t topo_init(const int USETOPO,
                     .dth = dt/h,
                     .timestep = 1,
                     .gridspacing = h,
-                    .gridspacing_bot = hb,
-                    .gridspacing_top = ht,
                     .stream_1 = stream_1,
                     .stream_2 = stream_2,
-                    .stream_i = stream_i
+                    .stream_i = stream_i,
+                    .map = init_mapping(hb, ht, h) 
                    };
 
         if (rank == 0 && T.verbose && T.use) printf("Topography:: enabled\n");

@@ -214,24 +214,6 @@ void geom_custom(const f_grid_t *metrics_f, const grid3_t grid, const int px,
         }
 }
 
-void geom_ramp(_prec *out, const fcn_grid_t grid, const f_grid_t *metrics_f,
-                   const _prec *x, const _prec *y, const _prec3_t ramp) {
-        int len_x = metrics_f->bounds_x[1] - metrics_f->bounds_x[0];
-        int len_y = metrics_f->bounds_y[1] - metrics_f->bounds_y[0];
-
-        int off_x = metrics_f->offset[0] + metrics_f->bounds_x[0];
-        int off_y = metrics_f->offset[1] + metrics_f->bounds_y[0];
-        for (int i = 0; i < len_x; ++i) {
-        for (int j = 0; j < len_y; ++j) {
-                int f_pos = (off_y + j) + (off_x + i) * metrics_f->slice;
-                int pos = grid.offset1.z + (grid.offset1.y + j) * grid.line +
-                          (grid.offset1.x + i) * grid.slice;
-                metrics_f->f[f_pos] = ramp.x * x[pos] + ramp.y * y[pos];
-        }
-        }
-
-}
-
 void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,
                     const f_grid_t *metrics_f,
                     const g_grid_t *metrics_g) {
