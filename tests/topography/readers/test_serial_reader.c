@@ -30,14 +30,14 @@ int main(int argc, char **argv)
         MPI_Init(&argc, &argv);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-        int px = 2; 
-        int py = 3; 
+        int px = 1; 
+        int py = 1; 
         assert(mpi_size == px * py);
 
         int3_t coord = { .x = rank % px, .y = rank / px, .z = 0};
 
         int err = 0;
-        int local_grid[3] = {4, 8, 10};
+        int local_grid[3] = {2, 2, 4};
         int global_grid[3] = {local_grid[0] * px, local_grid[1] * py,
                               local_grid[2]};
         prec * global_f;
@@ -192,8 +192,15 @@ int test_read_grid(int rank, const _prec *local_f, const int *local_size, const
         for (int i = 0; i < (lnx + 2 * metrics_padding); ++i) {
         for (int j = 0; j < (lny + 2 * metrics_padding); ++j) {
                 size_t local_pos = 2 + align + j + (i + 2) * lmy;
-                sum += fabs(read_f[local_pos] - local_f[local_pos]); 
+                double val =fabs(read_f[local_pos] - local_f[local_pos]);
+                sum += val; 
+                if (rank == 0)
+                    printf(" %2.2f", local_f[local_pos]);
+                //if (val > 1e-3)
+                //printf("rank = %d %d %d read = %g local = %g \n", rank, i, j, read_f[local_pos], local_f[local_pos]);
         }
+        if (rank == 0)
+            printf("\n");
         }
 
         free(read_f);
