@@ -99,6 +99,9 @@ int main(int argc, char **argv)
    int usemms = 0;
    char MMSFILE[IN_FILE_LEN];
 
+   float DHB = -1.0;
+   float DHT = -1.0;
+
    //  GPU variables
    long int num_bytes;
    float **d_d1;
@@ -311,7 +314,9 @@ int main(int argc, char **argv)
            &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
-           SGTFILE, &usesgtfile, MMSFILE, &usemms);
+           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT);
+
+
 
 #ifndef SEISMIO
 #ifdef NOBGIO
@@ -412,6 +417,9 @@ int main(int argc, char **argv)
          nxt[p] = NX / PX * grdfct[p];
          nyt[p] = NY / PY * grdfct[p];
       }
+
+      DHB = DHB == -1.0 ? DH[0] : DHB;
+      DHT = DHT == -1.0 ? DH[0] : DHT;
 
       for (p = 0; p < ngrids; p++)
       {
@@ -1695,6 +1703,7 @@ if (!usemms) {
 
       f_grid_t *metrics_f = NULL;
       g_grid_t *metrics_g = NULL;
+      struct mapping *map = NULL;
 
 if (usemms) {
         if (rank == 0) printf("METHOD OF MANUFACTURED SOLUTIONS ENABLED \n");
@@ -1711,7 +1720,7 @@ if (usemms) {
                            y_rank_F, y_rank_B, coord,
                            dim[0], dim[1],
                            nxt[0], nyt[0], nzt[0],
-                           DT, *DH,
+                           DT, *DH, DHB, DHT,
                            stream_1, stream_2, stream_i);
       topo_bind(&T, d_d1[0], d_lam[0], d_mu[0],
                 d_qp[0], d_coeff, d_qs[0], d_vx1[0], d_vx2[0], d_ww[0],
@@ -1721,6 +1730,7 @@ if (usemms) {
                 d_f_u1[0], d_f_v1[0], d_f_w1[0], d_b_u1[0], d_b_v1[0],
                 d_b_w1[0], d_dcrjx[0], d_dcrjy[0], d_dcrjz[0]);
       topo_init_metrics(&T);
+      map = &T.map;
 
       if (T.use)
       {
@@ -1747,17 +1757,17 @@ if (usemms) {
       }
 
       if (usesourcefile)
-         sources_init(SOURCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
+         sources_init(SOURCEFILE, grids, map, ngrids, metrics_f, metrics_g, MCW, rank,
                       size_tot);
       if (userecvfile)
-         receivers_init(RECVFILE, grids, ngrids, metrics_f, MCW, rank,
+         receivers_init(RECVFILE, grids, map, ngrids, metrics_f, MCW, rank,
                         size_tot);
       if (useforcefile)
-         forces_init(FORCEFILE, grids, ngrids, metrics_f, metrics_g, MCW, rank,
+         forces_init(FORCEFILE, grids, map, ngrids, metrics_f, metrics_g, MCW, rank,
                      size_tot, (float*)d_d1[0], usetopo);
       if (usesgtfile)
       {
-         sgt_init(SGTFILE, grids, ngrids, metrics_f, MCW, rank,
+         sgt_init(SGTFILE, grids, map, ngrids, metrics_f, MCW, rank,
                   size_tot);
          for (p = 0; p < ngrids; p++)
          {

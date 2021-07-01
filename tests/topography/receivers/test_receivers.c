@@ -96,7 +96,7 @@ int test_receivers(const char *inputfile, int rank, int size, const int px)
         test_t test;
 
         test = test_init(" * receivers_init", rank, size);
-        receivers_init(inputfile, grids, ngrids, NULL, MPI_COMM_WORLD, rank, size);
+        receivers_init(inputfile, grids, NULL, ngrids, NULL, MPI_COMM_WORLD, rank, size);
         err = test_finalize(&test, err);
         
         test = test_init(" * receivers_write", rank, size);

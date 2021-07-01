@@ -6,10 +6,11 @@
 #include <mpi.h>
 
 #include <topography/grids.h>
+#include <topography/mapping.h>
 #include <topography/sources/source.h>
 #include <topography/metrics/metrics.h>
 
-void forces_init(const char *filename, const grids_t *grids, int ngrids,
+void forces_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                   const f_grid_t *f, const g_grid_t *g, const MPI_Comm comm, const int rank,
                   const int size, const float *d_rho, const int istopo);
 int forces_boundary_check(const source_t *Fx);

@@ -454,7 +454,7 @@ void test_initialize(testdata_t *test, const int grid, const char *topography_di
         sprintf(gridname, "%s/topography_%d.bin", topography_dir, grid);
         test->T = topo_init(1, gridname, rank, x_rank_l, x_rank_r, y_rank_f,
                             y_rank_b, coord, px, py, test->size.x, test->size.y,
-                            test->size.z, dt, h, stream_1, stream_2, stream_i);
+                            test->size.z, dt, h, h, h, stream_1, stream_2, stream_i);
         test->T.timestep = 0;
         topo_d_malloc(&test->T);
         test->coord3.x = coord[0];

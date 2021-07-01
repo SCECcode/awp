@@ -8,6 +8,7 @@
 #include <test/test.h>
 #include <topography/sources/source.h>
 #include <topography/sources/forces.h>
+#include <topography/mapping.h>
 #include <grid/shift.h>
 #include <readers/input.h>
 #include "interpolation/interpolation.h"
@@ -51,7 +52,7 @@ void interpolate_density(float **d_rho_interp, const float *d_rho,
 
 }
 
-void forces_init(const char *filename, const grids_t *grids, int ngrids,
+void forces_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                   const f_grid_t *f, const g_grid_t *g, const MPI_Comm comm, const int rank,
                   const int size, const float *rho, const int istopo) 
 {
@@ -67,9 +68,9 @@ void forces_init(const char *filename, const grids_t *grids, int ngrids,
        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-       Fx = source_init("fx", SX, &input, grids, ngrids, f, rank, comm, FORCE);
-       Fy = source_init("fy", SY, &input, grids, ngrids, f, rank, comm, FORCE);
-       Fz = source_init("fz", SZ, &input, grids, ngrids, f, rank, comm, FORCE);
+       Fx = source_init("fx", SX, &input, grids, map, ngrids, f, rank, comm, FORCE);
+       Fy = source_init("fy", SY, &input, grids, map, ngrids, f, rank, comm, FORCE);
+       Fz = source_init("fz", SZ, &input, grids, map, ngrids, f, rank, comm, FORCE);
 
        if (Fx.use) AWPCHK(forces_boundary_check(&Fx));
        if (Fy.use) AWPCHK(forces_boundary_check(&Fy));

@@ -11,6 +11,7 @@
 #include <awp/definitions.h>
 #include <vtk/vtk.h>
 #include <test/test.h>
+#include <topography/mapping.h>
 
 
 // TOPO: Enable topography calls. If disabled, then no topography function calls
@@ -204,6 +205,9 @@ typedef struct
         _prec dth;
         _prec timestep;
         _prec gridspacing;
+        _prec block_height;
+        _prec gridspacing_bot;
+        _prec gridspacing_top;
         // Material properties
         _prec*  __restrict__ rho;
         _prec*  __restrict__ lami;
@@ -271,6 +275,8 @@ typedef struct
         cudaStream_t stream_2;
         cudaStream_t stream_i;
 
+        struct mapping map;
+
 } topo_t;                 
                    
 topo_t topo_init(const int USETOPO, 
@@ -288,6 +294,8 @@ topo_t topo_init(const int USETOPO,
                  int nzt,
                  const _prec dt,
                  const _prec h,
+                 const _prec hb,
+                 const _prec ht,
                  cudaStream_t stream_1,
                  cudaStream_t stream_2,
                  cudaStream_t stream_i

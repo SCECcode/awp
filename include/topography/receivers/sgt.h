@@ -6,9 +6,10 @@
 #include <mpi.h>
 
 #include <topography/grids.h>
+#include <topography/mapping.h>
 #include <topography/metrics/metrics.h>
 
-void sgt_init(const char *filename, const grids_t *grids, int ngrids,
+void sgt_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                     const f_grid_t *f, const MPI_Comm comm, const int rank,
                     const int size);
 void sgt_finalize(void);

@@ -22,6 +22,8 @@ set(HEADERS
     ${AWP_MINI_SOURCE_DIR}/include/topography/host.h
     )
 
+add_library(mapping mapping.c)
+
 set(LIBRARIES
     ${MPI_C_LIBRARIES} 
     grid 
@@ -37,7 +39,6 @@ set(LIBRARIES
     nvToolsExt
     functions
     )
-
 
 add_library(topography
         topography.c velocity.cu stress.cu
@@ -55,6 +56,11 @@ target_compile_definitions(topography_no_bc PUBLIC -DAPPLY_BC=0)
 target_link_libraries(topography_no_bc ${LIBRARIES})
 
 target_include_directories(topography
+        PUBLIC
+        ${AWP_MINI_SOURCE_DIR}/include/
+       )
+
+target_include_directories(mapping
         PUBLIC
         ${AWP_MINI_SOURCE_DIR}/include/
        )

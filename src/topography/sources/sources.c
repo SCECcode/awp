@@ -29,7 +29,7 @@ static int myrank;
 static float *F_interp;
 static float *d_F_interp;
 
-void sources_init(const char *filename, const grids_t *grids, int ngrids,
+void sources_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                   const f_grid_t *f, const g_grid_t *g, const MPI_Comm comm, const int rank,
                   const int size) 
 {
@@ -45,12 +45,12 @@ void sources_init(const char *filename, const grids_t *grids, int ngrids,
        AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-       Mxx = source_init("xx", XX, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
-       Myy = source_init("yy", YY, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
-       Mzz = source_init("zz", ZZ, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
-       Mxy = source_init("xy", XY, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
-       Mxz = source_init("xz", XZ, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
-       Myz = source_init("yz", YZ, &input, grids, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Mxx = source_init("xx", XX, &input, grids, map, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Myy = source_init("yy", YY, &input, grids, map, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Mzz = source_init("zz", ZZ, &input, grids, map, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Mxy = source_init("xy", XY, &input, grids, map, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Mxz = source_init("xz", XZ, &input, grids, map, ngrids, f, rank, comm, MOMENT_TENSOR);
+       Myz = source_init("yz", YZ, &input, grids, map, ngrids, f, rank, comm, MOMENT_TENSOR);
 
        // Interpolate mapping to the source location
        // Work in progress. This idea simplifies the source application

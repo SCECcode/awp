@@ -26,7 +26,7 @@ static input_t input;
 static size_t last_step = 0;
 static int leading_zeros;
 
-void sgt_init(const char *filename, const grids_t *grids, int ngrids,
+void sgt_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                     const f_grid_t *f,
                   const MPI_Comm comm, const int rank, const int size)
 {
@@ -40,12 +40,12 @@ void sgt_init(const char *filename, const grids_t *grids, int ngrids,
         AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-        Gxx = receiver_init("Gxx", XX, SGT, &input, grids, ngrids, f, rank, comm);
-        Gyy = receiver_init("Gyy", YY, SGT, &input, grids, ngrids, f, rank, comm);
-        Gzz = receiver_init("Gzz", ZZ, SGT, &input, grids, ngrids, f, rank, comm);
-        Gxy = receiver_init("Gxy", XY, SGT, &input, grids, ngrids, f, rank, comm);
-        Gxz = receiver_init("Gxz", XZ, SGT, &input, grids, ngrids, f, rank, comm);
-        Gyz = receiver_init("Gyz", YZ, SGT, &input, grids, ngrids, f, rank, comm);
+        Gxx = receiver_init("Gxx", XX, SGT, &input, grids, map, ngrids, f, rank, comm);
+        Gyy = receiver_init("Gyy", YY, SGT, &input, grids, map, ngrids, f, rank, comm);
+        Gzz = receiver_init("Gzz", ZZ, SGT, &input, grids, map, ngrids, f, rank, comm);
+        Gxy = receiver_init("Gxy", XY, SGT, &input, grids, map, ngrids, f, rank, comm);
+        Gxz = receiver_init("Gxz", XZ, SGT, &input, grids, map, ngrids, f, rank, comm);
+        Gyz = receiver_init("Gyz", YZ, SGT, &input, grids, map, ngrids, f, rank, comm);
         
         // Configure material input file so that it outputs without buffering
         input_t material_input = input;
@@ -53,7 +53,7 @@ void sgt_init(const char *filename, const grids_t *grids, int ngrids,
         material_input.cpu_buffer_size = 1;
         material_input.steps = 1;
         material_input.num_writes = 1;
-        mat = receiver_init("", NODE, RECEIVER, &material_input, grids, ngrids, f, rank,
+        mat = receiver_init("", NODE, RECEIVER, &material_input, grids, map, ngrids, f, rank,
                            comm);
 }
 
