@@ -315,8 +315,6 @@ int main(int argc, char **argv)
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
            SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT);
-   DHB = DHB == -1.0 ? DH[0] : DHB;
-   DHT = DHT == -1.0 ? DH[0] : DHT;
 
 
 
@@ -419,6 +417,9 @@ int main(int argc, char **argv)
          nxt[p] = NX / PX * grdfct[p];
          nyt[p] = NY / PY * grdfct[p];
       }
+
+      DHB = DHB == -1.0 ? DH[0] : DHB;
+      DHT = DHT == -1.0 ? DH[0] : DHT;
 
       for (p = 0; p < ngrids; p++)
       {
