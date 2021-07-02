@@ -15,6 +15,9 @@
 
 void init_geometry(prec **f, const int *gsize, const int3_t coord,
                    const int rank, int px, int py);
+
+void init_global_grid(prec **f, const int *gsize);
+void init_local_grid(prec **f, const int *lsize, const int3_t coord, const int gmy);
 void write_geometry(const _prec *f, const int *gsize, int rank);
 int test_read_grid(int rank, const _prec *local_f, const int *local_size,
                    const int px, const int py, const int3_t coord);
@@ -30,14 +33,14 @@ int main(int argc, char **argv)
         MPI_Init(&argc, &argv);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-        int px = 1; 
-        int py = 1; 
+        int px = 2; 
+        int py = 2; 
         assert(mpi_size == px * py);
 
         int3_t coord = { .x = rank % px, .y = rank / px, .z = 0};
 
         int err = 0;
-        int local_grid[3] = {2, 2, 4};
+        int local_grid[3] = {3, 2, 4};
         int global_grid[3] = {local_grid[0] * px, local_grid[1] * py,
                               local_grid[2]};
         prec * global_f;
@@ -50,25 +53,153 @@ int main(int argc, char **argv)
                 printf("===========================\n");
         }
         if (rank == 0) {
-                init_geometry(&global_f, global_grid, coord, rank, 1, 1);
+                //init_geometry(&global_f, global_grid, coord, rank, 1, 1);
+                init_global_grid(&global_f, global_grid);
         }
-        init_geometry(&local_f, local_grid, coord, rank, px, py);
+            
+        int gmy = global_grid[1] + 4 + 2 * align + 2 * metrics_padding;
+
+        init_local_grid(&local_f, local_grid, coord, gmy);
+        if (rank == 0) {
+            printf("%d %d %d \n", rank, coord.x, coord.y);
+        init_local_grid(&local_f, local_grid, coord, gmy);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (rank == 1) {
+            printf("%d %d %d \n", rank, coord.x, coord.y);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        //init_geometry(&local_f, local_grid, coord, rank, px, py);
         write_geometry(global_f, global_grid, rank);
 
+
+        if (rank == 0) {
+        printf("global grid\n\n");
+        for (int i = 0; i < global_grid[0]; ++i) {
+        for (int j = 0; j < global_grid[1]; ++j) {
+                size_t pos = align + 2 + j + metrics_padding + (2 *align + global_grid[1] + 4 + 2 * metrics_padding) * ( 2 + i + metrics_padding);
+                    printf(" %-4.f", global_f[pos]);
+        }
+            printf("\n");
+        }
+
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        for (int d = 0; d < 2; ++d) {
+        if (rank == d) {
+            printf("local_f, rank = %d\n", d);
+            printf("\n");
+            printf("\n");
+        for (int i = 0; i < local_grid[0]; ++i) {
+        for (int j = 0; j < local_grid[1]; ++j) {
+                size_t pos = align + 2 + j + metrics_padding + (2 *align + local_grid[1] + 4 + 2 * metrics_padding) * ( 2 + i + metrics_padding);
+                    printf(" %-4.f", local_f[pos]);
+        }
+            printf("\n");
+        }
+            printf("\n");
+            printf("\n");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
         err = test_read_grid(rank, local_f, local_grid, px, py, coord);
         if (rank == 0) {
                 free(global_f);
         }
+        MPI_Barrier(MPI_COMM_WORLD);
         free(local_f);
         MPI_Finalize();
         return err;
+}
+
+void init_global_grid(prec **f, const int *gsize) {
+
+        int nx = gsize[0];
+        int ny = gsize[1];
+
+        int mxp = nx + 2 * metrics_padding;
+        int myp = ny + 2 * metrics_padding;
+        int mx = 4 + mxp;
+        int my = 4 + myp + 2 * align;
+        *f = malloc(mx * my * sizeof(prec)); 
+
+        prec *global_f = *f;
+
+        for (int i = 0; i < mxp; ++i) {
+        for (int j = 0; j < myp; ++j) {
+            size_t pos = align + 2 + j + my * (2 + i);
+            //global_f[pos] = 0;
+            global_f[pos] = j + my * i;
+        }
+        }
+
+        for (int i = 0; i < nx; ++i) {
+        for (int j = 0; j < ny; ++j) {
+                size_t pos = align + 2 + metrics_padding + j + my * (2 + i + metrics_padding);
+        }
+        }
+
+        for (int i = 0; i < mxp; ++i) {
+        for (int j = 0; j < myp; ++j) {
+            size_t pos = align + 2 + j + my * (2 + i);
+            printf(" %-4.f", global_f[pos]);
+        }
+            printf("\n");
+        }
+}
+
+void init_local_grid(prec **f, const int *lsize, const int3_t coord, const int gmy) {
+
+        int nx = lsize[0];
+        int ny = lsize[1];
+        int mxp = nx + 2 * metrics_padding;
+        int myp = ny + 2 * metrics_padding;
+        int mx = 4 + mxp;
+        int my = 4 + myp + 2 * align;
+        size_t num_bytes = mx * my * sizeof(prec);
+        *f = malloc(num_bytes); 
+
+        prec *local_f = *f;
+        memset(local_f, 0, num_bytes);
+
+
+        for (int i = 0; i < mxp; ++i) {
+        for (int j = 0; j < myp; ++j) {
+                size_t pos = align + 2 + j + my * (2 + i);
+                local_f[pos] = (j + ny * coord.y) + gmy * (i + nx * coord.x);
+                //printf(" %-4.f", local_f[pos]);
+        }
+            //printf("\n");
+        }
+
+        //for (int i = 0; i < nx; ++i) {
+        //for (int j = 0; j < ny; ++j) {
+        //        size_t pos = align + 2 + metrics_padding + j + my * (2 + i + metrics_padding);
+        //        //global_f[pos] = j + my * i;
+        //        local_f[pos] = (j + ny * coord.y) + gmy * (i + nx * coord.x);
+        //}
+        //}
+
+        for (int i = 0; i < mxp; ++i) {
+        for (int j = 0; j < myp; ++j) {
+            size_t pos = align + 2 + j + my * (2 + i);
+            printf(" %-4.f", local_f[pos]);
+        }
+            printf("\n");
+        }
+
+
 }
 
 void init_geometry(prec **f, const int *gsize, const int3_t coord,
                    const int rank, int px, int py) {
         _prec gridspacing = 0.1; 
 
-        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing, 8);
+        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing, metrics_padding);
         g_grid_t metrics_g = metrics_init_g(gsize, gridspacing);
 
         int3_t shift = grid_u3();
@@ -114,13 +245,18 @@ void init_geometry(prec **f, const int *gsize, const int3_t coord,
                         canyon_width, canyon_height, canyon_center,
                         px, py);
 
+        int mxy = metrics_f.mem[0] * metrics_f.mem[1];
         *f = malloc(metrics_sizeof_f(&metrics_f)); 
         for (int i = 0; i < metrics_f.mem[0]; ++i) {
         for (int j = 0; j < metrics_f.mem[1]; ++j) {
                 size_t pos = j + metrics_f.mem[1] * i;
-                (*f)[pos] = metrics_f.f[pos];
+                (*f)[pos] = y1[i];// + mxy * coord.x + mxy * px * coord.y;
+                //(*f)[pos] = metrics_f.f[pos];
         }
         }
+
+        //geom_custom(&metrics_f, topography_grid, px,
+        //         py, *f); 
 
         metrics_build_f(&metrics_f);
         metrics_build_g(&metrics_g);
@@ -158,6 +294,7 @@ void write_geometry(const prec *f, const int *gsize, int rank) {
 
         fwrite(data, sizeof(float), mx * my, fh);
         fclose(fh);
+
 }
 
 int test_read_grid(int rank, const _prec *local_f, const int *local_size, const
@@ -189,18 +326,13 @@ int test_read_grid(int rank, const _prec *local_f, const int *local_size, const
 
         // Compare data read from file with locally computed data
         float sum = 0;
+            
         for (int i = 0; i < (lnx + 2 * metrics_padding); ++i) {
         for (int j = 0; j < (lny + 2 * metrics_padding); ++j) {
                 size_t local_pos = 2 + align + j + (i + 2) * lmy;
-                double val =fabs(read_f[local_pos] - local_f[local_pos]);
+                double val = fabs(read_f[local_pos] - local_f[local_pos]);
                 sum += val; 
-                if (rank == 0)
-                    printf(" %2.2f", local_f[local_pos]);
-                //if (val > 1e-3)
-                //printf("rank = %d %d %d read = %g local = %g \n", rank, i, j, read_f[local_pos], local_f[local_pos]);
         }
-        if (rank == 0)
-            printf("\n");
         }
 
         free(read_f);
