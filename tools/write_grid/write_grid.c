@@ -3,9 +3,13 @@
  * that contains the grid coordinates (x_i, y_j, z_k) for each grid point in the
  * curvilinear grid.
  *
+ *
+ * Changelog:
+ *  v.3.0.0  Add DM and nonlinear grid stretching compatibility 
+ *
  */ 
-#define VERSION_MAJOR 2
-#define VERSION_MINOR 1
+#define VERSION_MAJOR 3
+#define VERSION_MINOR 0
 #define VERSION_PATCH 0
 
 #include <stdio.h>
@@ -17,6 +21,7 @@
 #include <test/test.h>
 #include <topography/readers/serial_reader.h>
 #include <topography/metrics/metrics.h>
+#include <topography/mapping.h>
 #include <awp/definitions.h>
 
 // Command line arguments
@@ -99,6 +104,7 @@ int main(int argc, char **argv)
                 return -1;
         }
 
+
         input = argv[1];
         output = argv[2];
         property = argv[3];
@@ -112,6 +118,7 @@ int main(int argc, char **argv)
         py = atoi(argv[11]);
         mesh_out = atoi(argv[12]);
         rpt = argc < 14 ? 1 : atoi(argv[13]);
+
 
         if (m.rank == 0) {
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
@@ -224,26 +231,43 @@ int main(int argc, char **argv)
 
         int show_info = (int) (nz / 10);
         show_info = show_info == 0 ? 1 : show_info;
-        double H = (nz - 1 - rpt) * h;
 
         int len = buffer_size * nz;
         if (m.rank == 0) printf("Processing...\n");
+
+        prec H = map_height(nz, h);
+        struct mapping map = map_init(h / H, h / H, h / H);
 
         for (int k = 0; k < nz; ++k) {
             // If k > 0 and we need repeat (rpt == 1), 
             // we shift the domain up by 1
             k0 = k == 0 ? k : k - rpt;  
-            double rk = (double) k0 / (double) (nz - 1 - rpt);
+
+            // Define index that is kuniform = 0 at the start of the overlapping zone
+            int kuniform = k - (nz - 1) + MAPPING_START_POINT;
+            double rk;
+            if (kuniform >= 0)
+                rk = 1.0;
+            else {
+                rk = map_eval(h * k0 / H, &map);
+            }
+
+            MPI_Barrier(MPI_COMM_WORLD);
             for (int i = 0; i < m.nxt; ++i) {
                 for (int j = 0; j < m.nyt; ++j) {
                     size_t lmy = 4 + m.nyt + 2 * metrics_padding + 2 * align;
                     size_t local_pos = 2 + align + (j + metrics_padding) +
                                        (2 + i + metrics_padding) * lmy;
-                    // Depth, k=0 is the surface
-                    double mapping =
-                        (H + f[local_pos]) * (1 - rk) - H;
-                    buffer[2 + nvars * i + j * nvars * m.nxt] =
+                    // Use uniform grid spacing in the DM overlap zone
+                    double mapping;
+                    if (kuniform >= 0) 
+                        mapping = -H - h * kuniform;
+                    else
+                    mapping =
+                        (H + (double)f[local_pos]) * (1.0 - rk) - H;
+                    buffer[2 + nvars * i + j * nvars * m.nxt] = 
                             (prec)mapping;
+
                     if (mesh_out == 1) {           
                         // For reading and mesh writing, we start from the
                         // the surface, to keep compatible with the queried

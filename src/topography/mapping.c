@@ -66,6 +66,10 @@ void grid_stretch(struct mapping *map) {
     map->m[3] = m3;
 }
 
+double map_height(const int nz, const double dz) {
+        return dz * (nz - 2 - MAPPING_START_POINT);
+}
+
 
 struct mapping map_init(const double dzb, const double dzt, const double h) {
 

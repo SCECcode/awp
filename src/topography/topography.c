@@ -47,7 +47,7 @@ topo_t topo_init(const int USETOPO,
         int slice = myt * mzt;
         int line = mzt;
         int slice_gl = ngsl * mzt;
-        _prec block_height = h * (nzt - 1 - MAPPING_START_POINT);
+        _prec block_height = h * (nzt - 2 - MAPPING_START_POINT);
 
         topo_t T = {.use = USETOPO, .dbg = TOPO_DBG, 
                     .verbose = TOPO_VERBOSE,

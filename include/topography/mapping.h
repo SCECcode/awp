@@ -15,6 +15,7 @@ struct mapping {
 
 
 
+double map_height(const int nz, const double dz);
 struct mapping map_init(const double dzb, const double dzt, const double h);
 int map_find_cell_r(const double r, const struct mapping *map);
 int map_find_cell_z(const double z, const struct mapping *map);
