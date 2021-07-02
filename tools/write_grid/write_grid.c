@@ -16,6 +16,7 @@
 
 #include <test/test.h>
 #include <topography/readers/serial_reader.h>
+#include <topography/metrics/metrics.h>
 #include <awp/definitions.h>
 
 // Command line arguments
@@ -235,9 +236,9 @@ int main(int argc, char **argv)
             double rk = (double) k0 / (double) (nz - 1 - rpt);
             for (int i = 0; i < m.nxt; ++i) {
                 for (int j = 0; j < m.nyt; ++j) {
-                    size_t lmy = 4 + m.nyt + 2 * ngsl + 2 * align;
-                    size_t local_pos = 2 + align + (j + ngsl) +
-                                       (2 + i + ngsl) * lmy;
+                    size_t lmy = 4 + m.nyt + 2 * metrics_padding + 2 * align;
+                    size_t local_pos = 2 + align + (j + metrics_padding) +
+                                       (2 + i + metrics_padding) * lmy;
                     // Depth, k=0 is the surface
                     double mapping =
                         (H + f[local_pos]) * (1 - rk) - H;
