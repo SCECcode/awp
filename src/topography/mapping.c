@@ -161,7 +161,7 @@ double map_invert(const double z, const struct mapping *map, const double eps, c
     if (k >= maxiter)
         printf(
             "WARNING: Mapping inversion failed to converge. Either increase "
-            "the double of maximum iterations or decrease the tolerance. r = %g, |z - f(r)| = %g \n",
+            "the number of maximum iterations or decrease the tolerance. r = %g, |z - f(r)| = %g \n",
             rk, fabs(z - fk));
 
     return rk;

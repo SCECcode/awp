@@ -17,7 +17,6 @@
 #include <topography/sources/source.cuh>
 #include <topography/grids.h>
 
-#define OVERLAP 7.0
 //#define DEBUG_SOURCE
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
@@ -269,9 +268,9 @@ void source_init_common(source_t *src, const char *filename,
                 }
         }
 
-        _prec overlap = 0.0;
-        _prec lower = 0.0;
-        _prec block_height = 0.0;
+        double overlap = 0.0;
+        double lower = 0.0;
+        double block_height = 0.0;
         for (int j = 0; j < ngrids; ++j)
         {
                 grid3_t grid = grids_select(grid_type, &grids[j]);

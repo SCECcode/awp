@@ -59,11 +59,15 @@ void geom_grid_stretching(g_grid_t *metrics_g, const struct mapping *map, const 
         for (int i = 0; i < MAPPING_START_POINT; ++i) {
                 metrics_g->g[i + grid1.alignment] -= MAPPING_START_POINT * grid1.gridspacing;
         }
-        for (int i = MAPPING_START_POINT; i < grid1.size; ++i) {
-                double h = 1.0 / (grid1.size - MAPPING_START_POINT - 1);
+                
+        for (int i = MAPPING_START_POINT; i < grid1.size - 1; ++i) {
+                double h = (double)grid1.gridspacing / (double)block_height;
                 double r = (i - MAPPING_START_POINT) * h;
                 metrics_g->g[i + grid1.alignment] = block_height * map_eval(r, map);
         }
+        // assign ghost point
+        metrics_g->g[grid1.size - 1 + grid1.alignment] =
+            metrics_g->g[grid1.size - 2 + grid1.alignment];
 }
 
 void geom_gaussian(f_grid_t *metrics_f, const _prec *x, const _prec *y,
@@ -81,7 +85,7 @@ void geom_gaussian(f_grid_t *metrics_f, const _prec *x, const _prec *y,
         prec xm = x[last];
         prec ym = y[last];
 
-        // Grid spacing in vertical direction for a grid satsifying:
+        // Grid spacing in vertical direction for a grid satisfying:
         // 0 <= z' < =1
         // This normalization constant is used so that the user can specify
         // block dimension using physical units.
