@@ -13,6 +13,7 @@
 #include <topography/velocity.cuh>
 #include <topography/stress.cuh>
 #include <topography/geometry.h>
+#include <topography/mapping.h>
 #include <grid/shift.h>
 #include "functions.c"
 #include "grid_check.c"
@@ -64,7 +65,11 @@ void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,
                 int pos_g = k + metrics_g->offset;
                 int pos_f = f_offset_y + j +
                             (i + f_offset_x) * metrics_f->slice;
+                if (k >= MAPPING_START_POINT)
                 out[pos] = g[pos_g] * f[pos_f];
+                else
+                out[pos] = g[pos_g];
+
         }
         }
         }
@@ -448,7 +453,7 @@ void test_initialize(testdata_t *test, const int grid, const char *topography_di
         cudaStreamCreate(&stream_i);
         test->tol = 1e-6;
         _prec dt = 1.0;
-        _prec h  = 1.0/(test->size.x - 1);
+        _prec h  = 1.0/(test->size.x - 2 - OVERLAP);
         printf("Test size: %d %d %d \n", test->size.x, test->size.y, test->size.z);
         char gridname[2048];
         sprintf(gridname, "%s/topography_%d.bin", topography_dir, grid);

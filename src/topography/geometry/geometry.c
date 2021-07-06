@@ -61,7 +61,7 @@ void geom_grid_stretching(g_grid_t *metrics_g, const struct mapping *map, const 
         }
                 
         for (int i = MAPPING_START_POINT; i < grid1.size - 1; ++i) {
-                double h = (double)grid1.gridspacing / (double)block_height;
+                double h = 1.0 / (grid1.size - 2 - MAPPING_START_POINT);
                 double r = (i - MAPPING_START_POINT) * h;
                 metrics_g->g[i + grid1.alignment] = block_height * map_eval(r, map);
         }
