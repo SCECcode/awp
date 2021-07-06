@@ -70,9 +70,9 @@ void sgt_finalize(void)
 }
 
 void sgt_write_material_properties(const prec *d_d1, const prec *d_lami,
-                                   const prec *d_mui, const int grid_num) {
+                                   const prec *d_mui, const int grid_num, const int rank) {
         if (!use) return;
-        printf("Writing material properties\n");
+        if (rank == 0) printf("Writing material properties\n");
         int len = strlen(mat.filename) + 4; 
         char *filename;
         filename = malloc(sizeof filename * len);

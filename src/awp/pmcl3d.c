@@ -1772,7 +1772,7 @@ if (usemms) {
          for (p = 0; p < ngrids; p++)
          {
             sgt_write_material_properties(d_d1[p], d_lam[p],
-                                          d_mu[p], p);
+                                          d_mu[p], p, rank);
          }
       }
 #if VERBOSE
