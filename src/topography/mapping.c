@@ -66,6 +66,10 @@ void grid_stretch(struct mapping *map) {
     map->m[3] = m3;
 }
 
+double map_height(const int nz, const double dz) {
+        return dz * (nz - 2 - MAPPING_START_POINT);
+}
+
 
 struct mapping map_init(const double dzb, const double dzt, const double h) {
 
@@ -157,7 +161,7 @@ double map_invert(const double z, const struct mapping *map, const double eps, c
     if (k >= maxiter)
         printf(
             "WARNING: Mapping inversion failed to converge. Either increase "
-            "the double of maximum iterations or decrease the tolerance. r = %g, |z - f(r)| = %g \n",
+            "the number of maximum iterations or decrease the tolerance. r = %g, |z - f(r)| = %g \n",
             rk, fabs(z - fk));
 
     return rk;
