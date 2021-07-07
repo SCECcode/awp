@@ -49,7 +49,6 @@ topo_t topo_init(const int USETOPO,
         int slice_gl = ngsl * mzt;
         _prec block_height = h * (nzt - 2 - OVERLAP);
 
-        printf("hb = %g ht = %g h = %g \n", hb, ht, h);
         topo_t T = {.use = USETOPO, .dbg = TOPO_DBG, 
                     .verbose = TOPO_VERBOSE,
                     .rank = rank, 

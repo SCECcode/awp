@@ -13,7 +13,7 @@ import numpy as np
 import sys
 import pyawp
 
-plot = 1
+plot = 0
 
 filename = sys.argv[1]
 nx = int(sys.argv[2])

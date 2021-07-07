@@ -50,7 +50,6 @@ int main(int argc, char **argv) {
     test_convergence(0.1, 0.01, 11, eps);
     test_convergence(0.1, 0.1, 10, eps);
     test_convergence(1e-2, 0.1, 10, eps);
-    test_convergence(5e-3, 0.1, 10, eps);
     test_convergence(1e-2, 0.1, 100, eps);
     test_convergence(5e-3, 0.1, 100, eps);
     test_convergence(0.01, 0.1, 1000, eps);
