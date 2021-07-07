@@ -52,10 +52,6 @@ void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,
         int f_offset_x = metrics_f->offset[0] + metrics_f->bounds_stress_x[0];
         int f_offset_y = metrics_f->offset[1] + metrics_f->bounds_stress_y[0];
 
-        // Error: `grid` cannot be larger than the stress grid.
-        //assert(f_offset_x + grid.size.x <= metrics_f->mem[0]);
-        //assert(f_offset_y + grid.size.y <= metrics_f->mem[1]);
-
         for (int i = 0; i < grid.size.x; ++i) {
         for (int j = 0; j < grid.size.y; ++j) {
         for (int k = 0; k < grid.size.z; ++k) {
@@ -173,7 +169,7 @@ int main(int argc, char **argv)
         int num_refinements = 4;
 
         testdata_t test;
-        int3_t initial_size = {16, 16, 16};
+        int3_t initial_size = {16, 16, 24};
 
         vars_err_t err[num_refinements];
         int grid_sizes[num_refinements];
@@ -453,7 +449,7 @@ void test_initialize(testdata_t *test, const int grid, const char *topography_di
         cudaStreamCreate(&stream_i);
         test->tol = 1e-6;
         _prec dt = 1.0;
-        _prec h  = 1.0/(test->size.x - 2 - OVERLAP);
+        _prec h  = 1.0/(test->size.x - 2);
         printf("Test size: %d %d %d \n", test->size.x, test->size.y, test->size.z);
         char gridname[2048];
         sprintf(gridname, "%s/topography_%d.bin", topography_dir, grid);
@@ -467,10 +463,6 @@ void test_initialize(testdata_t *test, const int grid, const char *topography_di
         test->grid_spacing = h;
         test->write_vtk = 0;
         test->mms_wavenumber = 2 * M_PI * 4;
-
-        _prec amplitude = 0.0;
-        _prec3_t width = {.x = 0.1, .y = 0.1, .z = 0};
-        _prec3_t center = {.x = 0.5, .y = 0.5, .z = 0};
 
         topo_init_metrics(&test->T);
         topo_init_geometry(&test->T);
@@ -879,7 +871,7 @@ err_t check_answer(const _prec *u, const _prec *v, const fcn_grid_t grid)
         out.interior = check_flinferr(u, v, 
                   grid.offset1.x + nb, grid.offset2.x - nb,
                   grid.offset1.y + nb, grid.offset2.y - nb,
-                  grid.offset1.z + nb, 
+                  grid.offset1.z + OVERLAP + nb, 
                   grid.offset2.z - nb - grid.exclude_top_row,
                   grid.line,
                   grid.slice);
