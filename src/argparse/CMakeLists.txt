@@ -1,5 +1,5 @@
 set(HEADERS
-    ${AWP_MINI_SOURCE_DIR}/include/argparse/argparse.h
+    ${AWP_SOURCE_DIR}/include/argparse/argparse.h
     )
 
 add_library(argparse
@@ -8,6 +8,6 @@ add_library(argparse
 
 target_include_directories(argparse
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 

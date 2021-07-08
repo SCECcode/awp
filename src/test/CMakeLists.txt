@@ -1,7 +1,7 @@
 set(HEADERS
-    ${AWP_MINI_SOURCE_DIR}/include/test/grid_check.h
-    ${AWP_MINI_SOURCE_DIR}/include/test/test.h
-    ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h
+    ${AWP_SOURCE_DIR}/include/test/grid_check.h
+    ${AWP_SOURCE_DIR}/include/test/test.h
+    ${AWP_SOURCE_DIR}/include/awp/definitions.h
     )
 
 add_library(testing
@@ -17,7 +17,7 @@ target_link_libraries(testing
 
 target_include_directories(testing
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 

@@ -17,12 +17,12 @@ target_link_libraries(test_topography_sources_dm
 
 target_include_directories(test_topography_sources
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 target_include_directories(test_topography_sources_dm
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_topography_sources_dm COMMAND
@@ -31,6 +31,6 @@ add_test(NAME test_topography_sources_dm COMMAND
 add_test(NAME test_topography_sources COMMAND
         ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 --oversubscribe
         test_topography_sources
-        ${AWP_MINI_SOURCE_DIR}/tests/fixtures/source.txt)
+        ${AWP_SOURCE_DIR}/tests/fixtures/source.txt)
 
 

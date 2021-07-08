@@ -35,6 +35,6 @@ target_link_libraries(test_attenuation
 
 target_include_directories(test_attenuation
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 

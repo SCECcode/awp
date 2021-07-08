@@ -9,6 +9,6 @@ target_link_libraries(write_grid
 
 target_include_directories(write_grid
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 

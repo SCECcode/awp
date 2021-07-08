@@ -8,7 +8,7 @@ target_link_libraries(test_indexed
 
 target_include_directories(test_indexed
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_indexed COMMAND test_indexed)
@@ -26,7 +26,7 @@ target_link_libraries(test_mpi_io
 
 target_include_directories(test_mpi_io
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_mpi_io COMMAND 
