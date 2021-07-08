@@ -1,7 +1,7 @@
 set(HEADERS
-    ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h
-    ${AWP_MINI_SOURCE_DIR}/include/readers/input.h
-    ${AWP_MINI_SOURCE_DIR}/include/readers/version.h
+    ${AWP_SOURCE_DIR}/include/awp/definitions.h
+    ${AWP_SOURCE_DIR}/include/readers/input.h
+    ${AWP_SOURCE_DIR}/include/readers/version.h
     )
 
 add_library(readers
@@ -10,7 +10,7 @@ add_library(readers
 
 target_include_directories(readers
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 target_link_libraries(readers 

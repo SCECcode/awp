@@ -1,6 +1,6 @@
 set(HEADERS
-    ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h
-    ${AWP_MINI_SOURCE_DIR}/include/vtk/vtk.h
+    ${AWP_SOURCE_DIR}/include/awp/definitions.h
+    ${AWP_SOURCE_DIR}/include/vtk/vtk.h
     )
 
 add_library(vtk
@@ -9,5 +9,5 @@ add_library(vtk
 
 target_include_directories(vtk
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )

@@ -4,7 +4,7 @@ add_library(topography_receivers
 
 target_include_directories(topography_receivers
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 target_link_libraries(topography_receivers topography_sources)

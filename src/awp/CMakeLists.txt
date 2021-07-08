@@ -1,5 +1,5 @@
 set(HEADERS 
-   ${AWP_MINI_SOURCE_DIR}/include/awp/pmcl3d_cons.h 
+   ${AWP_SOURCE_DIR}/include/awp/pmcl3d_cons.h 
    )
 
 add_library(awp
@@ -8,7 +8,7 @@ add_library(awp
 
 target_include_directories(awp
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 
@@ -18,7 +18,7 @@ add_library(error
 
 target_include_directories(error
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_library(lpmcl3d
@@ -40,7 +40,7 @@ target_link_libraries(lpmcl3d topography buffers mpi checksum)
 #
 target_include_directories(lpmcl3d
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_executable(pmcl3d pmcl3d.c)
