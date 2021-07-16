@@ -322,7 +322,6 @@ int main(int argc, char **argv)
            SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT, ENERGYFILE, &useenergy);
 
 
-
 #ifndef SEISMIO
 #ifdef NOBGIO
    sprintf(filenamebasex, "%s/SX", OUT);
@@ -1719,6 +1718,7 @@ if (usemms) {
 
 #if TOPO
 
+      energy_t energy = energy_init(useenergy, rank, nt, nxt[0], nyt[0], nzt[0]);
       topo_t T = topo_init(usetopo, INTOPO,
                            rank,
                            x_rank_L, x_rank_R,
@@ -1859,6 +1859,10 @@ if (usemms) {
                dump_nonzeros(d_v1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "v1", p, cur_step, 6, rank, size);
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 6, rank, size);
             }
+
+#if TOPO
+            energy_kinetic_rate(&energy, cur_step);
+#endif
 
             if (cerr != cudaSuccess)
                printf("CUDA ERROR! rank=%d before timestep: %s\n", rank, cudaGetErrorString(cerr));
@@ -3011,6 +3015,8 @@ if (usemms) {
       topo_free(&T);
       receivers_finalize();
       sources_finalize();
+      energy_output(&energy, ENERGYFILE);
+      energy_free(&energy);
 #endif
       cudaStreamDestroy(stream_1);
       //cudaStreamDestroy(stream_1b);
