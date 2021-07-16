@@ -32,6 +32,7 @@
 #include <topography/geometry/geometry.h>
 #include <topography/geometry.h>
 #include <topography/mms.cuh>
+#include <topography/energy.cuh>
 #include <buffers/buffer.h>
 
 #define VERBOSE 1
@@ -42,6 +43,7 @@
 
 int main(int argc, char **argv)
 {
+    testit();
    //  variable definition begins
    float TMAX, DH[MAXGRIDS], DT, ARBC, PHT;
    int NPC, ND, NSRC[MAXGRIDS], NST;
@@ -98,6 +100,9 @@ int main(int argc, char **argv)
 
    int usemms = 0;
    char MMSFILE[IN_FILE_LEN];
+
+   int useenergy = 0;
+   char ENERGYFILE[IN_FILE_LEN];
 
    float DHB = -1.0;
    float DHT = -1.0;
@@ -314,7 +319,7 @@ int main(int argc, char **argv)
            &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
-           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT);
+           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT, ENERGYFILE, &useenergy);
 
 
 
