@@ -1833,7 +1833,7 @@ if (usemms) {
          //This loop has no loverlapping because there is source input
          for (cur_step = 1; cur_step <= nt; cur_step++)
          {
-             energy_update_previous_solutions(&energy, d_u1[0], d_xy[0]);
+             energy_update_previous_solutions(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0]);
             //CUCHK(cudaDeviceSynchronize());
             CUCHK(cudaStreamSynchronize(stream_i));
             CUCHK(cudaStreamSynchronize(stream_1));
@@ -2590,7 +2590,7 @@ if (usemms) {
             }
 
 #if TOPO
-   energy_rate(&energy, cur_step, d_u1[0], d_xy[0], d_d1[0], d_mu[0], nxt[0], nyt[0], nzt[0]);
+   energy_rate(&energy, cur_step, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], d_d1[0], d_mu[0], d_lam[0], nxt[0], nyt[0], nzt[0]);
 #endif
 
 //#define TOPO_USE_VTK 1
