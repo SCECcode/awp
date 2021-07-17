@@ -10,7 +10,8 @@ typedef struct {
     int rank;
     double *kinetic_energy_rate;
     double *strain_energy_rate;
-    double *rate;
+    double *kinetic_rate;
+    double *strain_rate;
     int num_steps;
     size_t num_bytes;
     // Copies of velocity components at previous time step
@@ -62,7 +63,8 @@ energy_t energy_init(int useenergy, const int rank, const int num_steps, const i
     CUCHK(cudaMalloc((void**)&energy.d_xyp, num_bytes));
     CUCHK(cudaMalloc((void**)&energy.d_xzp, num_bytes));
     CUCHK(cudaMalloc((void**)&energy.d_yzp, num_bytes));
-    CUCHK(cudaMalloc((void**)&energy.rate, sizeof(double)));
+    CUCHK(cudaMalloc((void**)&energy.kinetic_rate, sizeof(double)));
+    CUCHK(cudaMalloc((void**)&energy.strain_rate, sizeof(double)));
 
     return energy;
 
@@ -117,7 +119,8 @@ void energy_free(energy_t *e) {
     CUCHK(cudaFree(e->d_xyp));
     CUCHK(cudaFree(e->d_xzp));
     CUCHK(cudaFree(e->d_yzp));
-    CUCHK(cudaFree(e->rate));
+    CUCHK(cudaFree(e->strain_rate));
+    CUCHK(cudaFree(e->kinetic_rate));
 }
 
 #endif
