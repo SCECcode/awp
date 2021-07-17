@@ -43,7 +43,6 @@
 
 int main(int argc, char **argv)
 {
-    testit();
    //  variable definition begins
    float TMAX, DH[MAXGRIDS], DT, ARBC, PHT;
    int NPC, ND, NSRC[MAXGRIDS], NST;
@@ -1834,6 +1833,7 @@ if (usemms) {
          //This loop has no loverlapping because there is source input
          for (cur_step = 1; cur_step <= nt; cur_step++)
          {
+             energy_update_previous_solutions(&energy, d_u1[0], d_xy[0]);
             //CUCHK(cudaDeviceSynchronize());
             CUCHK(cudaStreamSynchronize(stream_i));
             CUCHK(cudaStreamSynchronize(stream_1));
@@ -1859,10 +1859,6 @@ if (usemms) {
                dump_nonzeros(d_v1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "v1", p, cur_step, 6, rank, size);
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 6, rank, size);
             }
-
-#if TOPO
-            energy_kinetic_rate(&energy, cur_step);
-#endif
 
             if (cerr != cudaSuccess)
                printf("CUDA ERROR! rank=%d before timestep: %s\n", rank, cudaGetErrorString(cerr));
@@ -2593,9 +2589,13 @@ if (usemms) {
                          cur_step, nt, p);
             }
 
-#define TOPO_USE_VTK 1
-            if (cur_step % 10 == 0)
-            topo_write_vtk(&T, cur_step, 1);
+#if TOPO
+   energy_rate(&energy, cur_step, d_u1[0], d_xy[0], d_d1[0], d_mu[0], nxt[0], nyt[0], nzt[0]);
+#endif
+
+//#define TOPO_USE_VTK 1
+//            if (cur_step % 10 == 0)
+//            topo_write_vtk(&T, cur_step, 1);
 
             if (cur_step % NTISKP == 0)
             {
