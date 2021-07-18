@@ -16,11 +16,12 @@ __global__ void energy_kernel(
     int my = ny + 4 + 2 * ngsl;
     int mz = nz + 2 * align;
 
-    int block = my * mz;
-    int offset = idz + align + mz * (2 + ngsl + idy) + block * (2 + ngsl);
+    int line = mz;
+    int slice = my * mz;
+    int offset = idz + align + line * (2 + ngsl + idy) + slice * (2 + ngsl);
 
-    int line = 2 * align + 4 + ny + 2 * ngsl;
-    int f_offset = 2 + ngsl + idy + align + line * (2 + ngsl);
+    int fline = 2 * align + 4 + ny + 2 * ngsl;
+    int f_offset = 2 + ngsl + idy + align + fline * (2 + ngsl);
     int g_offset = align + idz;
 
     double kinetic_E = 0.0;
@@ -54,8 +55,6 @@ __global__ void energy_kernel(
     }
 
     for (int i = 0; i < nx; ++i) {
-        pos += block;
-        fpos += line;
 
 
         float Jx = f_1[fpos] * g3_c[gpos];
@@ -66,10 +65,10 @@ __global__ void energy_kernel(
         float Jxz = f_1[fpos] * g3[gpos];
         float Jyz = f_2[fpos] * g3[gpos];
 
+        float rhox = 0.25f * (rho[pos - 1] + rho[pos - line - 1] + rho[pos] + rho[pos - line]);
+        float rhoy = 0.25f * (rho[pos - 1] + rho[pos + slice - 1] + rho[pos] + rho[pos + slice]);
+        float rhoz = 0.25f * (rho[pos] + rho[pos + slice] + rho[pos - line] + rho[pos + slice - line]);
 
-        float rhox = rho[pos];
-        float rhoy = rho[pos];
-        float rhoz = rho[pos];
         float muxy = mui[pos];
         float muxz = mui[pos];
         float muyz = mui[pos];
@@ -79,16 +78,16 @@ __global__ void energy_kernel(
         float trace =
             (xx[pos] - xxp[pos]) + (yy[pos] - yyp[pos]) + (zz[pos] - zzp[pos]);
 
-        float exx = 0.5f * mui[pos] * (xx[pos] - xxp[pos]) - lam_mu * trace;
-        float eyy = 0.5f * mui[pos] * (yy[pos] - yyp[pos]) - lam_mu * trace;
-        float ezz = 0.5f * mui[pos] * (zz[pos] - zzp[pos]) - lam_mu * trace;
-        float exy = 0.5f * mui[pos] * (xy[pos] - xyp[pos]);
-        float exz = 0.5f * mui[pos] * (xz[pos] - xzp[pos]);
-        float eyz = 0.5f * mui[pos] * (yz[pos] - yzp[pos]);
+        double exx = 0.5f * mui[pos] * ((double)xx[pos] - (double)xxp[pos]) - lam_mu * trace;
+        double eyy = 0.5f * mui[pos] * ((double)yy[pos] - (double)yyp[pos]) - lam_mu * trace;
+        double ezz = 0.5f * mui[pos] * ((double)zz[pos] - (double)zzp[pos]) - lam_mu * trace;
+        double exy = 0.5f * mui[pos] * ((double)xy[pos] - (double)xyp[pos]);
+        double exz = 0.5f * mui[pos] * ((double)xz[pos] - (double)xzp[pos]);
+        double eyz = 0.5f * mui[pos] * ((double)yz[pos] - (double)yzp[pos]);
 
-        kinetic_E += 0.5f * Jx * Hz_hat * vx[pos] * rhox * (vx[pos] - vxp[pos]) +
-                     0.5f * Jy * Hz_hat * vy[pos] * rhoy * (vy[pos] - vyp[pos]) +
-                     0.5f * Jz * Hz * vz[pos] * rhoz * (vz[pos] - vzp[pos]);
+        kinetic_E += 0.5f * Jx * Hz_hat * vx[pos] * rhox * ((double)vx[pos] - (double)vxp[pos]) +
+                     0.5f * Jy * Hz_hat * vy[pos] * rhoy * ((double)vy[pos] - (double)vyp[pos]) +
+                     0.5f * Jz * Hz * vz[pos] * rhoz * ((double)vz[pos] - (double)vzp[pos]);
         strain_E +=
             0.5f * xxp[pos] * Jxx * Hz_hat * exx +
             0.5f * yyp[pos] * Jxx * Hz_hat * eyy +
@@ -96,20 +95,15 @@ __global__ void energy_kernel(
             1.0f * xyp[pos] * Jxy * Hz_hat * exy +
             1.0f * xzp[pos] * Jxz * Hz * exz + 
             1.0f * yzp[pos] * Jyz * Hz * eyz;
+
+        pos += slice;
+        fpos += fline;
     }
 
     if (idz > nz - 1 || idz < 0) {
         kinetic_E = 0;
         strain_E = 0;
     }
-
-    // if (idz < 8 || idz > nz - 8) { // || idy < 100 || idy > ny - 100) {
-    //    kinetic_E = 0;
-    //    strain_E = 0;
-    //}
-
-    // if (idz < 21 || idz > nz - 21 || idy < 101 || idy > ny - 101) {
-    //}
 
     __shared__ double spartial_kinetic[1024];
     __shared__ double spartial_strain[1024];
@@ -157,9 +151,7 @@ void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
     CUCHK(cudaMemset(e->strain_rate, 0, sizeof(double)));
     
     dim3 threads (32, 4, 1);
-    //printf("n = %d %d %d \n", nz, ny, nx);
     dim3 blocks ( (nz - 4) / threads.x  + 1 , (ny - 1) / threads.y + 1, 1);
-    //printf("blocks = %d %d %d \n", blocks.x, blocks.y, blocks.z);
     energy_kernel<<<blocks, threads>>>(e->kinetic_rate, e->strain_rate, e->d_vxp, e->d_vyp, e->d_vzp, e->d_xxp, e->d_yyp, e->d_zzp, e->d_xyp, e->d_xzp, e->d_yzp, d_vx, d_vy, d_vz, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, metrics_f->d_f, metrics_f->d_f_1, metrics_f->d_f_2, metrics_f->d_f_c, metrics_g->d_g3, metrics_g->d_g3_c, d_rho, d_mui, d_lami, nx, ny, nz);
     CUCHK(cudaGetLastError());
     cudaMemcpy(out_kinetic, e->kinetic_rate, sizeof(double), cudaMemcpyDeviceToHost);
