@@ -13,6 +13,11 @@ __global__ void energy_kernel(
     int idz = threadIdx.x + blockDim.x * blockIdx.x;
     int idy = threadIdx.y + blockDim.y * blockIdx.y;
 
+    if (idz >= nz || idy >= ny) {
+        idz = 0;
+        idy = 0;
+    }
+
     int my = ny + 4 + 2 * ngsl;
     int mz = nz + 2 * align;
 
@@ -48,11 +53,6 @@ __global__ void energy_kernel(
     int fpos = f_offset;
     int gpos = g_offset;
 
-    if (idz >= nz) {
-        pos = 0;
-        fpos = 0;
-        gpos = 0;
-    }
 
     for (int i = 0; i < nx; ++i) {
 
@@ -109,7 +109,7 @@ __global__ void energy_kernel(
         fpos += fline;
     }
 
-    if (idz > nz - 1 || idz < 0) {
+    if (idz > nz - 1 || idy > ny - 1) {
         kinetic_E = 0;
         strain_E = 0;
     }

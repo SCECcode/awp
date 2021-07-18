@@ -2519,10 +2519,10 @@ __launch_bounds__(DTOPO_BUF_VEL_111_MAX_THREADS_PER_BLOCK)
      (2 * align + nz) * ((j) + ngsl + 2)]
   _prec rho1 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i, j + rj0 - 1, k - 1)) +
                0.25 * (_rho(i, j + rj0, k) + _rho(i, j + rj0 - 1, k));
-  _prec rho2 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i - 1, j + rj0, k - 1)) +
-               0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k));
-  _prec rho3 = 0.25 * (_rho(i, j + rj0, k) + _rho(i - 1, j + rj0, k)) +
-               0.25 * (_rho(i, j + rj0 - 1, k) + _rho(i - 1, j + rj0 - 1, k));
+  _prec rho2 = 0.25 * (_rho(i, j + rj0, k - 1) + _rho(i + 1, j + rj0, k - 1)) +
+               0.25 * (_rho(i, j + rj0, k) + _rho(i + 1, j + rj0, k));
+  _prec rho3 = 0.25 * (_rho(i, j + rj0, k) + _rho(i + 1, j + rj0, k)) +
+               0.25 * (_rho(i, j + rj0 - 1, k) + _rho(i + 1, j + rj0 - 1, k));
 
   _prec Ai1 = _f_1(i, j + rj0) * _g3_c(k) * rho1;
   Ai1 = nu * 1.0 / Ai1;
@@ -3093,12 +3093,12 @@ __launch_bounds__(DTOPO_BUF_VEL_112_MAX_THREADS_PER_BLOCK)
             0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i, j + rj0 - 1, kb + 0)) +
             0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i, j + rj0 - 1, kb + 1));
         _prec rho2 =
-            0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i - 1, j + rj0, kb + 0)) +
-            0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1));
+            0.25 * (_rho(i, j + rj0, kb + 0) + _rho(i + 1, j + rj0, kb + 0)) +
+            0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i + 1, j + rj0, kb + 1));
         _prec rho3 =
-            0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i - 1, j + rj0, kb + 1)) +
+            0.25 * (_rho(i, j + rj0, kb + 1) + _rho(i + 1, j + rj0, kb + 1)) +
             0.25 * (_rho(i, j + rj0 - 1, kb + 1) +
-                    _rho(i - 1, j + rj0 - 1, kb + 1));
+                    _rho(i + 1, j + rj0 - 1, kb + 1));
         _prec Ai1 = _f_1(i, j + rj0) * _g3_c(nz - 1 - k) * rho1;
         Ai1 = nu * 1.0 / Ai1;
         _prec Ai2 = _f_2(i, j + rj0) * _g3_c(nz - 1 - k) * rho2;
