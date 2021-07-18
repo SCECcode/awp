@@ -70,15 +70,14 @@ __global__ void energy_kernel(
         float rhoz = 0.25f * (rho[pos] + rho[pos + slice] + rho[pos - line] + rho[pos + slice - line]);
 
 
-    //xmu1     = 2.0f/(  LDG(mu[pos])       + LDG(mu[pos_km1]) );
-    //xmu2     = 2.0/(  LDG(mu[pos])       + LDG(mu[pos_jm1]) );
-    //xmu3     = 2.0/(  LDG(mu[pos])       + LDG(mu[pos_ip1]) );
-
-
         float muixy = 0.5f * (mui[pos] + mui[pos-1]);
         float muixz = 0.5f * (mui[pos] + mui[pos-line]);
         float muiyz = 0.5f * (mui[pos] + mui[pos+slice]);
-        float lam = 1.0f / lami[pos];
+        float lamixx = 
+            (lami[pos - 1] + lami[pos - 1 + slice] + lami[pos - 1 + slice - line] +
+             lami[pos - line - 1] + lami[pos] + lami[pos + slice] +
+             lami[pos + slice - line] + lami[pos - line]) / 8.f;
+        float lam = 1.0f / lamixx;
         float muixx =
             (mui[pos - 1] + mui[pos - 1 + slice] + mui[pos - 1 + slice - line] +
              mui[pos - line - 1] + mui[pos] + mui[pos + slice] +
