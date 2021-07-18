@@ -2,6 +2,7 @@
 #define ENERGY_CUH
 
 
+#include <mpi.h>
 #include <stdio.h>
 #include <awp/pmcl3d_cons.h>
 #include <topography/metrics/metrics.h>
@@ -9,6 +10,7 @@
 typedef struct {
     int use;
     int rank;
+    MPI_Comm comm;
     double *kinetic_energy_rate;
     double *strain_energy_rate;
     double *kinetic_rate;
@@ -43,7 +45,7 @@ void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
 }
 #endif
 
-energy_t energy_init(int useenergy, const int rank, const int num_steps, const int nx, const int ny, const int nz) {
+energy_t energy_init(int useenergy, const int rank, const MPI_Comm comm, const int num_steps, const int nx, const int ny, const int nz) {
     energy_t energy;
     energy.use = 0;
     energy.rank = -1;
@@ -54,7 +56,9 @@ energy_t energy_init(int useenergy, const int rank, const int num_steps, const i
     if (rank == 0)
     printf("Energy output:: enabled\n");
 
+
     energy.rank = rank;
+    energy.comm = comm;
     energy.num_steps = num_steps;
     energy.kinetic_energy_rate = (double*)malloc(sizeof (double) * num_steps);
     energy.strain_energy_rate = (double*)malloc(sizeof (double) * num_steps);
@@ -133,7 +137,7 @@ void energy_kinetic_rate(energy_t *e, int step) {
 }
 
 void energy_output(energy_t *e, const char *filename) {
-    if (!e->use) return;
+    if (!e->use || e->rank != 0) return;
         
     FILE *fh = fopen(filename, "w");
     printf("Writing energy output\n");

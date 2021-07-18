@@ -87,16 +87,16 @@ __global__ void energy_kernel(
         float trace =
             (xx[pos] - xxp[pos]) + (yy[pos] - yyp[pos]) + (zz[pos] - zzp[pos]);
 
-        double exx = 0.5f * muixx * ((double)xx[pos] - (double)xxp[pos]) - lam_mu * trace;
-        double eyy = 0.5f * muixx * ((double)yy[pos] - (double)yyp[pos]) - lam_mu * trace;
-        double ezz = 0.5f * muixx * ((double)zz[pos] - (double)zzp[pos]) - lam_mu * trace;
-        double exy = 0.5f * muixy * ((double)xy[pos] - (double)xyp[pos]);
-        double exz = 0.5f * muixz * ((double)xz[pos] - (double)xzp[pos]);
-        double eyz = 0.5f * muiyz * ((double)yz[pos] - (double)yzp[pos]);
+        double exx = 0.5f * muixx * (xx[pos] - xxp[pos]) - lam_mu * trace;
+        double eyy = 0.5f * muixx * (yy[pos] - yyp[pos]) - lam_mu * trace;
+        double ezz = 0.5f * muixx * (zz[pos] - zzp[pos]) - lam_mu * trace;
+        double exy = 0.5f * muixy * (xy[pos] - xyp[pos]);
+        double exz = 0.5f * muixz * (xz[pos] - xzp[pos]);
+        double eyz = 0.5f * muiyz * (yz[pos] - yzp[pos]);
 
-        kinetic_E += 0.5f * Jx * Hz_hat * vx[pos] * rhox * ((double)vx[pos] - (double)vxp[pos]) +
-                     0.5f * Jy * Hz_hat * vy[pos] * rhoy * ((double)vy[pos] - (double)vyp[pos]) +
-                     0.5f * Jz * Hz * vz[pos] * rhoz * ((double)vz[pos] - (double)vzp[pos]);
+        kinetic_E += 0.5f * Jx * Hz_hat * vx[pos] * rhox * (vx[pos] - vxp[pos]) +
+                     0.5f * Jy * Hz_hat * vy[pos] * rhoy * (vy[pos] - vyp[pos]) +
+                     0.5f * Jz * Hz * vz[pos] * rhoz * (vz[pos] - vzp[pos]);
         strain_E +=
             0.5f * xxp[pos] * Jxx * Hz_hat * exx +
             0.5f * yyp[pos] * Jxx * Hz_hat * eyy +
@@ -166,8 +166,13 @@ void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
     cudaMemcpy(out_kinetic, e->kinetic_rate, sizeof(double), cudaMemcpyDeviceToHost);
     cudaMemcpy(out_strain, e->strain_rate, sizeof(double), cudaMemcpyDeviceToHost);
     CUCHK(cudaGetLastError());
-    e->kinetic_energy_rate[step] = out_kinetic[0];
-    e->strain_energy_rate[step] = out_strain[0];
-    printf("kinetic = %g strain = %g , sum = %g \n", out_kinetic[0], out_strain[0], out_kinetic[0] + out_strain[0]);
+
+    double sum_kinetic, sum_strain;
+    MPICHK(MPI_Reduce(out_kinetic, &sum_kinetic, 1, MPI_DOUBLE, MPI_SUM, 0, e->comm));
+    MPICHK(MPI_Reduce(out_strain, &sum_strain, 1, MPI_DOUBLE, MPI_SUM, 0, e->comm));
+    if (e->rank != 0) return;
+    e->kinetic_energy_rate[step] = sum_kinetic;
+    e->strain_energy_rate[step] = sum_strain;
+    printf("kinetic = %g strain = %g , sum = %g \n", sum_kinetic, sum_strain, sum_kinetic + sum_strain);
 
 }

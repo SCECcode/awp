@@ -1717,7 +1717,7 @@ if (usemms) {
 
 #if TOPO
 
-      energy_t energy = energy_init(useenergy, rank, nt, nxt[0], nyt[0], nzt[0]);
+      energy_t energy = energy_init(useenergy, rank, MCW, nt, nxt[0], nyt[0], nzt[0]);
       topo_t T = topo_init(usetopo, INTOPO,
                            rank,
                            x_rank_L, x_rank_R,
@@ -2596,7 +2596,7 @@ if (usemms) {
             }
 
 #if TOPO
-   energy_rate(&energy, cur_step, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], d_d1[0], d_mu[0], d_lam[0], &T.metrics_f, &T.metrics_g, nxt[0], nyt[0], nzt[0]);
+   energy_rate(&energy, cur_step, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], d_d1[0], d_mu[0], d_lam[0], &T.metrics_f, &T.metrics_g, nxt[0], nyt[0], nzt[0], rank, MCW);
 #endif
 
 //#define TOPO_USE_VTK 1
