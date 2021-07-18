@@ -18,6 +18,22 @@ __global__ void energy_kernel(double *kinetic_rate, double *strain_rate, const f
                 double kinetic_E = 0.0;
                 double strain_E = 0.0;
 
+                float Hz_hat = 1.0f;
+                float Hz = 1.0f;
+
+                const float hhzr[5] = {0.3445563972099920, 0.4372900885645984,
+                                       1.3056954965124901, 0.9124580177129197,
+                                       1.0000000000000000};
+                const float hzr[5] = {
+                    0.0000000000000000, 0.2812150147607664, 1.4480216223843674,
+                    0.6769783776156325, 1.0937849852392336};
+
+                int k = nz - idz - 1;
+                if (k < 5 && k >= 0) {
+                    Hz_hat = hhzr[k];
+                    Hz = hzr[k];
+                }
+
 
                 int pos = offset;
                 for (int i = 0; i < nx; ++i) {
@@ -41,15 +57,20 @@ __global__ void energy_kernel(double *kinetic_rate, double *strain_rate, const f
                     float eyz = 0.5f * mui[pos] * (yz[pos] - yzp[pos]);
 
                     kinetic_E += 
-                        0.5f * vx[pos] * rhox * (vx[pos] - vxp[pos]) +
-                        0.5f * vy[pos] * rhoy * (vy[pos] - vyp[pos]) +
-                        0.5f * vz[pos] * rhoz * (vz[pos] - vzp[pos]);
-                    strain_E += 0.5f * xxp[pos] * exx + 
-                                0.5f * yyp[pos] * eyy +
-                                0.5f * zzp[pos] * ezz + 
-                                0.5f * xyp[pos] * exy +
-                                0.5f * xzp[pos] * exz + 
-                                0.5f * yzp[pos] * eyz;
+                        0.5f * Hz_hat * vx[pos] * rhox * (vx[pos] - vxp[pos]) +
+                        0.5f * Hz_hat * vy[pos] * rhoy * (vy[pos] - vyp[pos]) +
+                        0.5f * Hz * vz[pos] * rhoz * (vz[pos] - vzp[pos]);
+                    strain_E += 0.5f * xxp[pos] * Hz_hat * exx + 
+                                0.5f * yyp[pos] * Hz_hat * eyy +
+                                0.5f * zzp[pos] * Hz_hat * ezz + 
+                                1.0f * xyp[pos] * Hz_hat * exy +
+                                1.0f * xzp[pos] * Hz * exz + 
+                                1.0f * yzp[pos] * Hz * eyz;
+                }
+
+                if (idz > nz - 1 || idz < 0) {
+                    kinetic_E = 0;
+                    strain_E = 0;
                 }
 
                 //if (idz < 8 || idz > nz - 8) { // || idy < 100 || idy > ny - 100) {
@@ -100,7 +121,7 @@ void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy, co
     
     dim3 threads (32, 4, 1);
     //printf("n = %d %d %d \n", nz, ny, nx);
-    dim3 blocks ( (nz - 1) / threads.x  + 1 , (ny - 1) / threads.y + 1, 1);
+    dim3 blocks ( (nz - 4) / threads.x  + 1 , (ny - 1) / threads.y + 1, 1);
     //printf("blocks = %d %d %d \n", blocks.x, blocks.y, blocks.z);
     energy_kernel<<<blocks, threads>>>(e->kinetic_rate, e->strain_rate, e->d_vxp, e->d_vyp, e->d_vzp, e->d_xxp, e->d_yyp, e->d_zzp, e->d_xyp, e->d_xzp, e->d_yzp, d_vx, d_vy, d_vz, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, d_rho, d_mui, d_lami, nx, ny, nz);
     CUCHK(cudaGetLastError());

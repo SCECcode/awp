@@ -84,6 +84,40 @@ void energy_update_previous_solutions(energy_t *e, float *d_vx, float *d_vy, flo
 
 }
 
+void energy_zero(energy_t *e, float *d_vx, float *d_vy, float *d_vz, float *d_xx, float *d_yy, float *d_zz, float *d_xy, float *d_xz, float *d_yz, int mode) {
+        //cudaMemset(d_vx, 0, e->num_bytes);
+        //cudaMemset(d_vy, 0, e->num_bytes);
+        //cudaMemset(d_vz, 0, e->num_bytes);
+        //cudaMemset(d_xx, 0, e->num_bytes);
+        //cudaMemset(d_yy, 0, e->num_bytes);
+        //cudaMemset(d_zz, 0, e->num_bytes);
+        //cudaMemset(d_xy, 0, e->num_bytes);
+        //cudaMemset(d_xz, 0, e->num_bytes);
+        //cudaMemset(d_yz, 0, e->num_bytes);
+
+    //if (mode == 0) {
+    //    cudaMemset(d_vx, 0, e->num_bytes);
+    //    cudaMemset(d_vy, 0, e->num_bytes);
+    //    cudaMemset(d_vz, 0, e->num_bytes);
+    //    cudaMemset(d_xx, 0, e->num_bytes);
+    //    cudaMemset(d_yy, 0, e->num_bytes);
+    //    cudaMemset(d_zz, 0, e->num_bytes);
+    //    cudaMemset(d_xy, 0, e->num_bytes);
+    //    cudaMemset(d_xz, 0, e->num_bytes);
+    //    cudaMemset(d_yz, 0, e->num_bytes);
+    //}
+
+    //if (mode == 1) {
+    //    cudaMemset(d_xx, 0, e->num_bytes);
+    //    cudaMemset(d_yy, 0, e->num_bytes);
+    //    cudaMemset(d_zz, 0, e->num_bytes);
+    //    cudaMemset(d_xy, 0, e->num_bytes);
+    //    cudaMemset(d_xz, 0, e->num_bytes);
+    //    cudaMemset(d_yz, 0, e->num_bytes);
+    //}
+
+}
+
 void energy_kinetic_rate(energy_t *e, int step) {
     if (!e->use || step >= e->num_steps) return;
 
@@ -101,7 +135,10 @@ void energy_output(energy_t *e, const char *filename) {
     if (e->rank == 0)
     printf("Energy output written to: %s number of steps written: %d \n", filename, e->num_steps);
     for (int i = 0; i < e->num_steps; ++i)
-        fprintf(fh, "%g %g \n", e->kinetic_energy_rate[i], e->strain_energy_rate[i]);
+        fprintf(fh, "%g %g %g \n", 
+                e->kinetic_energy_rate[i], e->strain_energy_rate[i],
+                e->kinetic_energy_rate[i] + e->strain_energy_rate[i]
+                );
 
     fclose(fh);
 }

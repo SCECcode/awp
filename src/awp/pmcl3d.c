@@ -1833,7 +1833,9 @@ if (usemms) {
          //This loop has no loverlapping because there is source input
          for (cur_step = 1; cur_step <= nt; cur_step++)
          {
+             energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
              energy_update_previous_solutions(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0]);
+
             //CUCHK(cudaDeviceSynchronize());
             CUCHK(cudaStreamSynchronize(stream_i));
             CUCHK(cudaStreamSynchronize(stream_1));
@@ -1923,6 +1925,7 @@ if (usemms) {
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 7, rank, size);
             }
 
+             energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
             //MPI overlapping velocity computation
 
             //velocity communication in y direction
@@ -2041,6 +2044,7 @@ if (usemms) {
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 2, rank, size);
             }
 
+             energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
 
             CUCHK(cudaStreamSynchronize(stream_i));
 
@@ -2094,6 +2098,8 @@ if (usemms) {
                         //    4 + 2 * ngsl + nyt[p] - 50, nzt[p] - 16, DH[p], t, 0);
             }
 
+             
+            energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
 
             for (p = 0; p < ngrids; p++)
             {
