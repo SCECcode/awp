@@ -69,21 +69,31 @@ __global__ void energy_kernel(
         float rhoy = 0.25f * (rho[pos - 1] + rho[pos + slice - 1] + rho[pos] + rho[pos + slice]);
         float rhoz = 0.25f * (rho[pos] + rho[pos + slice] + rho[pos - line] + rho[pos + slice - line]);
 
-        float muxy = mui[pos];
-        float muxz = mui[pos];
-        float muyz = mui[pos];
+
+    //xmu1     = 2.0f/(  LDG(mu[pos])       + LDG(mu[pos_km1]) );
+    //xmu2     = 2.0/(  LDG(mu[pos])       + LDG(mu[pos_jm1]) );
+    //xmu3     = 2.0/(  LDG(mu[pos])       + LDG(mu[pos_ip1]) );
+
+
+        float muixy = 0.5f * (mui[pos] + mui[pos-1]);
+        float muixz = 0.5f * (mui[pos] + mui[pos-line]);
+        float muiyz = 0.5f * (mui[pos] + mui[pos+slice]);
         float lam = 1.0f / lami[pos];
-        float mu = 1.0f / mui[pos];
+        float muixx =
+            (mui[pos - 1] + mui[pos - 1 + slice] + mui[pos - 1 + slice - line] +
+             mui[pos - line - 1] + mui[pos] + mui[pos + slice] +
+             mui[pos + slice - line] + mui[pos - line]) / 8.f;
+        float mu = 1.0f / muixx;
         float lam_mu = 0.5f * lam / (mu * (3.0f * lam + 2.0f * mu));
         float trace =
             (xx[pos] - xxp[pos]) + (yy[pos] - yyp[pos]) + (zz[pos] - zzp[pos]);
 
-        double exx = 0.5f * mui[pos] * ((double)xx[pos] - (double)xxp[pos]) - lam_mu * trace;
-        double eyy = 0.5f * mui[pos] * ((double)yy[pos] - (double)yyp[pos]) - lam_mu * trace;
-        double ezz = 0.5f * mui[pos] * ((double)zz[pos] - (double)zzp[pos]) - lam_mu * trace;
-        double exy = 0.5f * mui[pos] * ((double)xy[pos] - (double)xyp[pos]);
-        double exz = 0.5f * mui[pos] * ((double)xz[pos] - (double)xzp[pos]);
-        double eyz = 0.5f * mui[pos] * ((double)yz[pos] - (double)yzp[pos]);
+        double exx = 0.5f * muixx * ((double)xx[pos] - (double)xxp[pos]) - lam_mu * trace;
+        double eyy = 0.5f * muixx * ((double)yy[pos] - (double)yyp[pos]) - lam_mu * trace;
+        double ezz = 0.5f * muixx * ((double)zz[pos] - (double)zzp[pos]) - lam_mu * trace;
+        double exy = 0.5f * muixy * ((double)xy[pos] - (double)xyp[pos]);
+        double exz = 0.5f * muixz * ((double)xz[pos] - (double)xzp[pos]);
+        double eyz = 0.5f * muiyz * ((double)yz[pos] - (double)yzp[pos]);
 
         kinetic_E += 0.5f * Jx * Hz_hat * vx[pos] * rhox * ((double)vx[pos] - (double)vxp[pos]) +
                      0.5f * Jy * Hz_hat * vy[pos] * rhoy * ((double)vy[pos] - (double)vyp[pos]) +
