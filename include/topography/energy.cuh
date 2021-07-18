@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <awp/pmcl3d_cons.h>
+#include <topography/metrics/metrics.h>
 
 typedef struct {
     int use;
@@ -31,7 +32,12 @@ typedef struct {
 
 #ifdef __cplusplus
 extern "C" {
-void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy, const float *d_vz, const float *d_xx, const float *d_yy, const float *d_zz, const float *d_xy, const float *d_xz, const float *d_yz, const float *d_rho, const float *d_mui, const float *d_lami, const int nx, const int ny, const int nz);
+void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
+                 const float *d_vz, const float *d_xx, const float *d_yy,
+                 const float *d_zz, const float *d_xy, const float *d_xz,
+                 const float *d_yz, const float *d_rho, const float *d_mui,
+                 const float *d_lami, const f_grid_t *metrics_f, const g_grid_t *metrics_g,
+                 const int nx, const int ny, const int nz);
 #endif
 #ifdef __cplusplus
 }
