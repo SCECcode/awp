@@ -1717,7 +1717,7 @@ if (usemms) {
 
 #if TOPO
 
-      energy_t energy = energy_init(useenergy, rank, MCW, nt, nxt[0], nyt[0], nzt[0]);
+      energy_t energy = energy_init(useenergy, rank, MCW, nt, DT, nxt[0], nyt[0], nzt[0], NTISKP);
       topo_t T = topo_init(usetopo, INTOPO,
                            rank,
                            x_rank_L, x_rank_R,

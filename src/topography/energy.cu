@@ -143,7 +143,7 @@ __global__ void energy_kernel(
     }
 }
 
-void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
+void energy_rate(energy_t *e, const int step, const float *d_vx, const float *d_vy,
                  const float *d_vz, const float *d_xx, const float *d_yy,
                  const float *d_zz, const float *d_xy, const float *d_xz,
                  const float *d_yz, const float *d_rho, const float *d_mui,
@@ -152,13 +152,14 @@ void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
                  const g_grid_t *metrics_g,
                  const int nx, const int ny, const int nz)
 {
-    if (!e->use || step >= e->num_steps) return;
+    if (!e->use || e->index >= e->num_steps || step % e->stride != 0) return;
 
         double out_kinetic[1] = {0.0};
         double out_strain[1] = {0.0};
     CUCHK(cudaMemset(e->kinetic_rate, 0, sizeof(double)));
     CUCHK(cudaMemset(e->strain_rate, 0, sizeof(double)));
     
+
     dim3 threads (32, 4, 1);
     dim3 blocks ( (nz - 4) / threads.x  + 1 , (ny - 1) / threads.y + 1, 1);
     energy_kernel<<<blocks, threads>>>(e->kinetic_rate, e->strain_rate, e->d_vxp, e->d_vyp, e->d_vzp, e->d_xxp, e->d_yyp, e->d_zzp, e->d_xyp, e->d_xzp, e->d_yzp, d_vx, d_vy, d_vz, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz, metrics_f->d_f, metrics_f->d_f_1, metrics_f->d_f_2, metrics_f->d_f_c, metrics_g->d_g3, metrics_g->d_g3_c, d_rho, d_mui, d_lami, nx, ny, nz);
@@ -171,8 +172,10 @@ void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
     MPICHK(MPI_Reduce(out_kinetic, &sum_kinetic, 1, MPI_DOUBLE, MPI_SUM, 0, e->comm));
     MPICHK(MPI_Reduce(out_strain, &sum_strain, 1, MPI_DOUBLE, MPI_SUM, 0, e->comm));
     if (e->rank != 0) return;
-    e->kinetic_energy_rate[step] = sum_kinetic;
-    e->strain_energy_rate[step] = sum_strain;
-    printf("kinetic = %g strain = %g , sum = %g \n", sum_kinetic, sum_strain, sum_kinetic + sum_strain);
+    e->kinetic_energy_rate[e->index] = sum_kinetic;
+    e->strain_energy_rate[e->index] = sum_strain;
+    e->time[e->index] = (double)step * e->dt;
+    printf("step = %d t = %g, kinetic energy rate = %g strain energy rate = %g , sum = %g \n", step, e->time[e->index], sum_kinetic, sum_strain, sum_kinetic + sum_strain);
+    e->index++;
 
 }

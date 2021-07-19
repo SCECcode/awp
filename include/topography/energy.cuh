@@ -11,11 +11,13 @@ typedef struct {
     int use;
     int rank;
     MPI_Comm comm;
+    double *time;
     double *kinetic_energy_rate;
     double *strain_energy_rate;
     double *kinetic_rate;
     double *strain_rate;
     int num_steps;
+    double dt;
     size_t num_bytes;
     // Copies of velocity components at previous time step
     float *d_vxp;
@@ -30,11 +32,16 @@ typedef struct {
     float *d_xzp;
     float *d_yzp;
 
+    // current output index
+    int index;
+    // How often to write to buffer
+    int stride;
+
 } energy_t;
 
 #ifdef __cplusplus
 extern "C" {
-void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
+void energy_rate(energy_t *e, const int step, const float *d_vx, const float *d_vy,
                  const float *d_vz, const float *d_xx, const float *d_yy,
                  const float *d_zz, const float *d_xy, const float *d_xz,
                  const float *d_yz, const float *d_rho, const float *d_mui,
@@ -45,7 +52,7 @@ void energy_rate(energy_t *e, int step, const float *d_vx, const float *d_vy,
 }
 #endif
 
-energy_t energy_init(int useenergy, const int rank, const MPI_Comm comm, const int num_steps, const int nx, const int ny, const int nz) {
+energy_t energy_init(int useenergy, const int rank, const MPI_Comm comm, const int num_steps, const float dt, const int nx, const int ny, const int nz, const int stride) {
     energy_t energy;
     energy.use = 0;
     energy.rank = -1;
@@ -59,7 +66,11 @@ energy_t energy_init(int useenergy, const int rank, const MPI_Comm comm, const i
 
     energy.rank = rank;
     energy.comm = comm;
-    energy.num_steps = num_steps;
+    energy.num_steps = (num_steps - 1) / stride + 1;
+    energy.index = 0;
+    energy.stride = stride;
+    energy.dt = dt;
+    energy.time = (double*)malloc(sizeof (double) * num_steps);
     energy.kinetic_energy_rate = (double*)malloc(sizeof (double) * num_steps);
     energy.strain_energy_rate = (double*)malloc(sizeof (double) * num_steps);
     size_t num_bytes = (nx + 2 * ngsl + 4) * (ny + 2 * ngsl + 4) * (nz + 2 * align) * sizeof(float);
@@ -144,8 +155,9 @@ void energy_output(energy_t *e, const char *filename) {
 
     if (e->rank == 0)
     printf("Energy output written to: %s number of steps written: %d \n", filename, e->num_steps);
-    for (int i = 0; i < e->num_steps; ++i)
-        fprintf(fh, "%g %g %g \n", 
+    for (int i = 0; i < e->index; ++i)
+        fprintf(fh, "%g %g %g %g \n", 
+                e->time[i], 
                 e->kinetic_energy_rate[i], e->strain_energy_rate[i],
                 e->kinetic_energy_rate[i] + e->strain_energy_rate[i]
                 );
@@ -155,6 +167,7 @@ void energy_output(energy_t *e, const char *filename) {
 
 void energy_free(energy_t *e) {
     if (!e->use) return;
+    free(e->time);
     free(e->kinetic_energy_rate);
     free(e->strain_energy_rate);
     CUCHK(cudaFree(e->d_vxp));
