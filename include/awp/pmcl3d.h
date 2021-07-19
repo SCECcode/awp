@@ -36,7 +36,8 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              int *USETOPO, char *SOURCEFILE,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE,
              char *FORCEFILE, int *USEFORCEFILE,
-             char *SGTFILE, int *USESGTFILE, char *MMSFILE, int *USEMMSFILE, float *DHB, float *DHT);
+             char *SGTFILE, int *USESGTFILE, char *MMSFILE, int *USEMMSFILE, float *DHB, float *DHT,
+             char *ENERGYFILE, int *USEENERGYFILE);
 
 int read_src_ifault_2(int rank, int READ_STEP, 
     char *INSRC, char *INSRC_I2, 

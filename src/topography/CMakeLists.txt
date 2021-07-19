@@ -40,15 +40,14 @@ set(LIBRARIES
     functions
     )
 
-add_library(topography
-        topography.c velocity.cu stress.cu
-        geometry.c host.c grids.c mms.cu
-        )
+set(TOPOGRAPHY_LIBRARIES
+    topography.c velocity.cu stress.cu
+    geometry.c host.c grids.c mms.cu energy.cu
+    )
 
-add_library(topography_no_bc
-        topography.c velocity.cu stress.cu
-        geometry.c host.c grids.c mms.cu
-        )
+add_library(topography ${TOPOGRAPHY_LIBRARIES})
+
+add_library(topography_no_bc ${TOPOGRAPHY_LIBRARIES})
 
 target_link_libraries(topography ${LIBRARIES})
 

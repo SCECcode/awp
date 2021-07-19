@@ -32,6 +32,7 @@
 #include <topography/geometry/geometry.h>
 #include <topography/geometry.h>
 #include <topography/mms.cuh>
+#include <topography/energy.cuh>
 #include <buffers/buffer.h>
 
 #define VERBOSE 1
@@ -98,6 +99,9 @@ int main(int argc, char **argv)
 
    int usemms = 0;
    char MMSFILE[IN_FILE_LEN];
+
+   int useenergy = 0;
+   char ENERGYFILE[IN_FILE_LEN];
 
    float DHB = -1.0;
    float DHT = -1.0;
@@ -314,8 +318,7 @@ int main(int argc, char **argv)
            &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
-           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT);
-
+           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT, ENERGYFILE, &useenergy);
 
 
 #ifndef SEISMIO
@@ -1714,6 +1717,7 @@ if (usemms) {
 
 #if TOPO
 
+      energy_t energy = energy_init(useenergy, rank, MCW, nt, DT, nxt[0], nyt[0], nzt[0], NTISKP);
       topo_t T = topo_init(usetopo, INTOPO,
                            rank,
                            x_rank_L, x_rank_R,
@@ -1829,6 +1833,9 @@ if (usemms) {
          //This loop has no loverlapping because there is source input
          for (cur_step = 1; cur_step <= nt; cur_step++)
          {
+             energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
+             energy_update_previous_solutions(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0]);
+
             //CUCHK(cudaDeviceSynchronize());
             CUCHK(cudaStreamSynchronize(stream_i));
             CUCHK(cudaStreamSynchronize(stream_1));
@@ -1918,6 +1925,7 @@ if (usemms) {
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 7, rank, size);
             }
 
+             energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
             //MPI overlapping velocity computation
 
             //velocity communication in y direction
@@ -2036,6 +2044,7 @@ if (usemms) {
                dump_nonzeros(d_w1[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "w1", p, cur_step, 2, rank, size);
             }
 
+             energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
 
             CUCHK(cudaStreamSynchronize(stream_i));
 
@@ -2089,6 +2098,8 @@ if (usemms) {
                         //    4 + 2 * ngsl + nyt[p] - 50, nzt[p] - 16, DH[p], t, 0);
             }
 
+             
+            energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
 
             for (p = 0; p < ngrids; p++)
             {
@@ -2584,9 +2595,13 @@ if (usemms) {
                          cur_step, nt, p);
             }
 
-#define TOPO_USE_VTK 1
-            if (cur_step % 10 == 0)
-            topo_write_vtk(&T, cur_step, 1);
+#if TOPO
+   energy_rate(&energy, cur_step, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], d_d1[0], d_mu[0], d_lam[0], &T.metrics_f, &T.metrics_g, nxt[0], nyt[0], nzt[0], rank, MCW);
+#endif
+
+//#define TOPO_USE_VTK 1
+//            if (cur_step % 10 == 0)
+//            topo_write_vtk(&T, cur_step, 1);
 
             if (cur_step % NTISKP == 0)
             {
@@ -3006,6 +3021,8 @@ if (usemms) {
       topo_free(&T);
       receivers_finalize();
       sources_finalize();
+      energy_output(&energy, ENERGYFILE);
+      energy_free(&energy);
 #endif
       cudaStreamDestroy(stream_1);
       //cudaStreamDestroy(stream_1b);

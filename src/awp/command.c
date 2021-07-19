@@ -58,6 +58,7 @@
 *  MMSFILE      <STRING>                      MMS input file
 *  DHB          <FLOAT>                       Grid spacing at the bottom of the curvilinear block  
 *  DHT          <FLOAT>                       Grid spacing at the top of the curvilinear block  
+*  ENERGYFILE  <STRING>                       File to write energy information at each time step to  
 ****************************************************************************************************************
 */
 
@@ -138,6 +139,7 @@ const char def_RECVFILE[IN_FILE_LEN] = "";
 const char def_FORCEFILE[IN_FILE_LEN] = "";
 const char def_SGTFILE[IN_FILE_LEN] = "";
 const char def_MMSFILE[IN_FILE_LEN] = "";
+const char def_ENERGYFILE[IN_FILE_LEN] = "";
 
 const _prec def_DHB = -1.0;
 const _prec def_DHT = -1.0;
@@ -168,7 +170,8 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              int *USETOPO, char *SOURCEFILE,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE,
              char *FORCEFILE, int *USEFORCEFILE,
-             char *SGTFILE, int *USESGTFILE, char *MMSFILE, int *USEMMSFILE, float *DHB, float *DHT)
+             char *SGTFILE, int *USESGTFILE, char *MMSFILE, int *USEMMSFILE, float *DHB, float *DHT,
+             char *ENERGYFILE, int *USEENERGYFILE)
 {
         int p;
 
@@ -235,7 +238,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
         extern char *optarg;
         static const char *optstring =
             "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:G:z:i:l:h:30:p:s:r:W:1:2:"
-            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:9:14:o:c:15:16:";
+            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:9:14:o:c:15:16:17:";
         static struct option long_options[] = {
             {"TMAX", required_argument, NULL, 'T'},
             {"DH", required_argument, NULL, 'H'},
@@ -289,6 +292,7 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
             {"MMSFILE", required_argument, NULL, 14},
             {"DHB", required_argument, NULL, 15},
             {"DHT", required_argument, NULL, 16},
+            {"ENERGYFILE", required_argument, NULL, 17},
         };
 
 
@@ -467,6 +471,10 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                         case 16:
                                 *DHT = atof(optarg);
                                 break;
+                        case 17:
+                                strcpy(ENERGYFILE, optarg);
+                                *USEENERGYFILE = 1;
+                                break;
                         default:
                                 printf(
                                     "Usage: %s \nOptions:\n\t[(-T | --TMAX) "
@@ -548,6 +556,8 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                     "\n\t[(-15 | --DHB) <Bottom grid spacing> ]\n\n");
                                 printf(
                                     "\n\t[(-16 | --DHT) <Top grid spacing> ]\n\n");
+                                printf(
+                                    "\n\t[(-17 | --ENERGYFILE) <File to output energy information to> ]\n\n");
                                 exit(-1);
                 }
         }
