@@ -93,6 +93,7 @@ energy_t energy_init(int useenergy, const int rank, const MPI_Comm comm, const i
 
 void energy_update_previous_solutions(energy_t *e, float *d_vx, float *d_vy, float *d_vz, float *d_xx, float *d_yy, float *d_zz, float *d_xy, float *d_xz, float *d_yz) {
 
+    if (!e->use) return;
     CUCHK(cudaMemcpy(e->d_vxp, d_vx, e->num_bytes, cudaMemcpyDeviceToDevice));
     CUCHK(cudaMemcpy(e->d_vyp, d_vy, e->num_bytes, cudaMemcpyDeviceToDevice));
     CUCHK(cudaMemcpy(e->d_vzp, d_vz, e->num_bytes, cudaMemcpyDeviceToDevice));
