@@ -445,51 +445,6 @@ void source_init_common(source_t *src, const char *filename,
 
                 cuinterp_htod(&src->interpolation[j]);
 
-                //FIXME: Te-Yang, this code doesn't do anything meaningful because it only modifies
-                //the interpolation indices on the host, not the device. 
-                // need to call cuinterp_htod(&src->interpolation[j]) afterwards.
-                
-                //Special treatment for sources located in the overlap zone
-                if (ngrids > 1)
-                {
-                        for (size_t k = 0; k < src->lengths[j]; ++k)
-                        {
-                                //top block
-                                if (j == 0)
-                                {
-                                        //bottom two grids will not be used
-                                        if (src->interpolation[j].iz[k] < 2)
-                                        {
-                                                src->interpolation[j].iz[k] = 2;
-                                        }
-                                }
-                                //blocks in between
-                                else if (j > 0 && j != ngrids - 1)
-                                {
-                                        //bottom two grids will not be used
-                                        if (src->interpolation[j].iz[k] < 2)
-                                        {
-                                                src->interpolation[j].iz[k] = 2;
-                                        }
-                                        else if (src->interpolation[j].iz[k] > grid.size.z - 3)
-                                        {
-                                                //the top two grids in the coarse grid will not be used
-                                                src->interpolation[j].iz[k] = grid.size.z - 3;
-                                        }
-                                }
-                                //bottom block
-                                else if (j > 0 && j == ngrids - 1)
-                                {
-                                        if (src->interpolation[j].iz[k] > grid.size.z - 3)
-                                        {
-                                                //the top two grids in the coarse grid will not be used
-                                                src->interpolation[j].iz[k] = grid.size.z - 3;
-                                        }
-                                }
-                        } //k loop
-                }
-
-
 #ifdef DEBUG_SOURCE
                 {
                         grid3_t vel_grid = grid_init_stress_grid(
