@@ -197,6 +197,21 @@ grid1_t grid_grid1_z(const grid3_t grid);
  *      Number of elements written.
  */ 
 int grid_fill1(prec *out, const grid1_t grid, const int isxdir);
+/*
+ *
+ * Fill the array `out` with the grid point values in the y-direction for a given DM block
+ * ('blocknum') in one dimension.
+ *
+ * Arguments:
+ *      out: Array to fill
+ *      n: Array size. Must be greater than the grid size.
+ *      grid: 1D grid data structure.
+ *      blocknum: Block number. Must be a non-negative integer.
+ *
+ * Return value:
+ *      Number of elements written.
+ */ 
+int grid_fill_y_dm(prec *out, const grid1_t grid, const int blocknum);
 
 /*
  * Check if a query point is in bounds or not. The query point is in bounds if

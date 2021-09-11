@@ -399,21 +399,6 @@ void source_init_common(source_t *src, const char *filename,
                         }
                 }
 
-                // Correct source/receiver placement in the coarsened grids due to treating Vx as a
-                // nodal grid point in the compute kernels. The coordinate system used to place
-                // source and receivers coincides with a material grid point (shift = (0,0,0)), and
-                // not Vx (shift = (1,0,0)). 
-                if (j > 0 ) {
-                        for (size_t k = 0; k < src->lengths[j]; ++k)  {
-                            // Formula:
-                            // y^{(l+1)}_j  = hp * (1  + 3 * j), hp = h^{(l)} 
-                            // Instead of adding hp to y coordinates, we remove hp from the
-                            // source/receiver coordinate
-                            double hp = grid.gridspacing / 3.0;
-                            src->y[j][k] -= hp;
-                        }
-                }
-
                 overlap = grid.gridspacing * OVERLAP;
 
                 if (src->lengths[j] == 0)
@@ -425,6 +410,9 @@ void source_init_common(source_t *src, const char *filename,
                     grid.boundary1, grid.boundary2, grid.gridspacing);
                 grid_data_t xyz;
                 grid_data_init(&xyz, full_grid);
+                // Adjust y-axis for DM blocks
+                grid1_t ygrid = grid_grid1_y(full_grid);
+                grid_fill_y_dm(xyz.y, ygrid, j);
 
                 // Compute interpolation coefficients on the full grid
                 AWPCHK(cuinterp_init(&src->interpolation[j], xyz.x, xyz.y, xyz.z,

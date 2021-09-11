@@ -286,6 +286,17 @@ int grid_fill1(prec *out, const grid1_t grid, const int isxdir)
         return grid.size;
 }
 
+int grid_fill_y_dm(prec *out, const grid1_t grid, const int blocknum) {
+    int count = grid_fill1(out, grid, 0);
+    if (blocknum > 0) {
+        _prec h = grid.gridspacing / 3.0;
+        for (int i = 0; i < grid.size; ++i) {
+            out[i] += h;
+        }
+    }
+    return count;
+}
+
 
 int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid)
 {
