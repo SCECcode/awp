@@ -28,12 +28,12 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
         grids.z = grid_init(size, grid_z(), coord, bnd1, bnd2, 2 + ngsl, h);
 
         // stress grids
-        grids.xx = grid_init(size, grid_xx(), coord, bnd1, bnd2, ngsl / 2, h);
-        grids.yy = grid_init(size, grid_yy(), coord, bnd1, bnd2, ngsl / 2, h);
-        grids.zz = grid_init(size, grid_zz(), coord, bnd1, bnd2, ngsl / 2, h);
-        grids.xy = grid_init(size, grid_xy(), coord, bnd1, bnd2, ngsl / 2, h);
-        grids.xz = grid_init(size, grid_xz(), coord, bnd1, bnd2, ngsl / 2, h);
-        grids.yz = grid_init(size, grid_yz(), coord, bnd1, bnd2, ngsl / 2, h);
+        grids.xx = grid_init(size, grid_xx(), coord, bnd1, bnd2, 2 + ngsl, h);
+        grids.yy = grid_init(size, grid_yy(), coord, bnd1, bnd2, 2 + ngsl, h);
+        grids.zz = grid_init(size, grid_zz(), coord, bnd1, bnd2, 2 + ngsl, h);
+        grids.xy = grid_init(size, grid_xy(), coord, bnd1, bnd2, 2 + ngsl, h);
+        grids.xz = grid_init(size, grid_xz(), coord, bnd1, bnd2, 2 + ngsl, h);
+        grids.yz = grid_init(size, grid_yz(), coord, bnd1, bnd2, 2 + ngsl, h);
 
         // Material and topography grid
         grids.node = grid_init(size, grid_node(), coord, bnd1, bnd2, 2 + ngsl, h);
