@@ -15,7 +15,6 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
         int3_t size = {.x = nx, .y = ny, .z = nz};
         int3_t coord = {.x = coord_x, .y = coord_y, .z = 0};
 
-        //FIXME: Adjust depending on grid type: DM, topography, free surface.
         int3_t bnd1 = {0, 0, 0};
         int3_t bnd2 = {0, 0, topography};
 
@@ -24,9 +23,9 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
         prec h = gridspacing;
 
         // velocity grids
-        grids.x = grid_init(size, grid_x(), coord, bnd1, bnd2, 0, h);
-        grids.y = grid_init(size, grid_y(), coord, bnd1, bnd2, 0, h);
-        grids.z = grid_init(size, grid_z(), coord, bnd1, bnd2, 0, h);
+        grids.x = grid_init(size, grid_x(), coord, bnd1, bnd2, 2 + ngsl, h);
+        grids.y = grid_init(size, grid_y(), coord, bnd1, bnd2, 2 + ngsl, h);
+        grids.z = grid_init(size, grid_z(), coord, bnd1, bnd2, 2 + ngsl, h);
 
         // stress grids
         grids.xx = grid_init(size, grid_xx(), coord, bnd1, bnd2, ngsl / 2, h);
@@ -37,7 +36,7 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
         grids.yz = grid_init(size, grid_yz(), coord, bnd1, bnd2, ngsl / 2, h);
 
         // Material and topography grid
-        grids.node = grid_init(size, grid_node(), coord, bnd1, bnd2, 0, h);
+        grids.node = grid_init(size, grid_node(), coord, bnd1, bnd2, 2 + ngsl, h);
 
         return grids;
 }

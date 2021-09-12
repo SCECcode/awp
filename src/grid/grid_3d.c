@@ -321,10 +321,13 @@ int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid)
 int grid_in_bounds_receiver(const _prec *x, const _prec q, const grid1_t grid)
 {
         _prec h = grid.gridspacing;
-        if ( q - (x[0] - h / 2) < 0 ) {
+        int nx = grid.size - 4 - 2 * ngsl;
+        float x_left = x[2 + ngsl] - h / 2;
+        float x_right = x[2 + ngsl + nx - 1] + h / 2;
+        if ( q - x_left < 0 ) {
                 return ERR_OUT_OF_BOUNDS_LOWER;
         }
-        if ( q - (x[grid.size - 1] + h / 2) >= 0) {
+        if ( q - x_right > 0) {
                 return ERR_OUT_OF_BOUNDS_UPPER;
         }
         return SUCCESS;
@@ -484,8 +487,6 @@ void global_to_local(_prec *zloc, int *block_index, const _prec z,
         hloc *= 3;
         bi = i;
 
-        //printf("z0 + H = %g i = %d \n", z0, i);
-
         // Check if the coordinate is in the overlap zone, if so, push it to the next grid
         if (z0 > 0 && z0 < grid_overlap(hloc / 3) ) {
             //printf("in overlap zone, z0 = %g i = %d overlap = %g \n", z0, i, overlap);
@@ -493,8 +494,6 @@ void global_to_local(_prec *zloc, int *block_index, const _prec z,
         }
 
         if (z0 > 0) break;
-        
-        //printf("next,  z0 = %g i = %d \n", z0, i);
 
     }
 
