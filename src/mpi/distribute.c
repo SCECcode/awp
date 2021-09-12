@@ -7,7 +7,62 @@
 #include <grid/grid_3d.h>
 #include <topography/grids.h>
 #include <topography/sources/source.h>
+#include <interpolation/interpolation.h>
 #include <test/test.h>
+
+
+int in_bounds_receiver(const _prec *x, const int mx, const _prec q)
+{
+        int nearest;
+        int bounds_err = interp_argnearest(&nearest, x, mx, q);
+        if (bounds_err != SUCCESS) return bounds_err; 
+        if (nearest < 2 + ngsl) return ERR_OUT_OF_BOUNDS_LOWER;
+        if (nearest >= mx - 2 - ngsl) return ERR_OUT_OF_BOUNDS_UPPER;
+        return SUCCESS;
+}
+
+int in_bounds_source(const _prec *x, const int mx, const _prec q)
+{
+        int nearest;
+        int bounds_err = interp_argnearest(&nearest, x, mx, q);
+        if (bounds_err != SUCCESS) return bounds_err;
+        
+        if (nearest < 2) return ERR_OUT_OF_BOUNDS_LOWER;
+        if (nearest >= mx - 2) return ERR_OUT_OF_BOUNDS_UPPER;
+        return SUCCESS;
+}
+
+
+__inline__ int dist_indices_in_bounds(const prec qx, const prec qy,
+                                      const prec *x, const prec *y,
+                                      grid1_t grid_x, grid1_t grid_y,
+                                      const enum source_type st) {
+        int inbounds_x = 0;
+        int inbounds_y = 0;
+        int mx = grid_x.size;
+        int my = grid_x.size;
+        switch (st) {
+                case MOMENT_TENSOR:
+                        inbounds_x = in_bounds_source(x, mx, qx);
+                        inbounds_y = in_bounds_source(y, my, qy);
+                        break;
+                case FORCE:
+                        inbounds_x = in_bounds_source(x, mx, qx);
+                        inbounds_y = in_bounds_source(y, my, qy);
+                        break;
+                case RECEIVER:
+                        inbounds_x = in_bounds_receiver(x, mx, qx);
+                        inbounds_y = in_bounds_receiver(y, my, qy);
+                        break;
+                case SGT:
+                        inbounds_x = in_bounds_receiver(x, mx, qx);
+                        inbounds_y = in_bounds_receiver(y, my, qy);
+                        break;
+        }
+        if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)
+                return 1;
+        return 0;
+}
 
 /* Distributes indices based on which part of space they belong to. 
 
@@ -25,36 +80,6 @@
               index array (DIST_INSERT_INDICES)
 
 */
-
-__inline__ int dist_indices_in_bounds(const prec qx, const prec qy,
-                                      const prec *x, const prec *y,
-                                      grid1_t grid_x, grid1_t grid_y,
-                                      const enum source_type st) {
-        int inbounds_x = 0;
-        int inbounds_y = 0;
-        switch (st) {
-                case MOMENT_TENSOR:
-                        inbounds_x = grid_in_bounds_moment_tensor(x, qx, grid_x);
-                        inbounds_y = grid_in_bounds_moment_tensor(y, qy, grid_y);
-                        break;
-                case FORCE:
-                        inbounds_x = grid_in_bounds_force(x, qx, grid_x);
-                        inbounds_y = grid_in_bounds_force(y, qy, grid_y);
-                        break;
-                case RECEIVER:
-                        inbounds_x = grid_in_bounds_receiver(x, qx, grid_x);
-                        inbounds_y = grid_in_bounds_receiver(y, qy, grid_y);
-                        break;
-                case SGT:
-                        inbounds_x = grid_in_bounds_sgt(x, qx, grid_x);
-                        inbounds_y = grid_in_bounds_sgt(y, qy, grid_y);
-                        break;
-        }
-        if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)
-                return 1;
-        return 0;
-}
-
 int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
                  const size_t n, const grid3_t grid, const int *grid_numbers,
                  const int grid_number, const enum source_type st, const enum dist_options mode)

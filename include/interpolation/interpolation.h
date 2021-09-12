@@ -55,9 +55,8 @@ int interp_grid_argnearest(int *nearest, const prec *x, const prec q,
  *       last: and last index + 1 of grid points in stencil. (output)
  *       lower: Number of points to the left.
  *       upper: Number of points to the right.
- *       nearest: Index of grid point nearest to query point. (output)
+ *       nearest: Index of grid point nearest to query point. 
  *       n: Number of grid points.
- *       q: Query point.
  *
  *   Returns:
  *       Error code (SUCCESS, ERR_OUT_OF_BOUNDS_LOWER, ERR_OUT_OF_BOUNDS_UPPER)
@@ -66,7 +65,7 @@ int interp_grid_argnearest(int *nearest, const prec *x, const prec q,
 int interp_argnearest_range(int *first, int *last,
                             const int lower, const int upper,
                             const int nearest,
-                            const int n, const prec query);
+                            const int n);
 
 /* Perform 1D Lagrange interpolation by interpolating in the neighborhood of
  * each query point. 

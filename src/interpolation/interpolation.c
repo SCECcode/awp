@@ -49,7 +49,7 @@ int interp_grid_argnearest(int *nearest, const prec *x, const prec q, grid1_t
 int interp_argnearest_range(int *first, int *last,
                             const int lower, const int upper,
                             const int nearest,
-                            const int n, const prec query)
+                            const int n)
 {
         int err = 0;
         int inearest = nearest;
@@ -117,8 +117,8 @@ int interp_lagrange1_coef(prec *xloc, prec *l, int *first, const prec *x,
 
 
         }
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       q);
+        err |=
+            interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         for (int j = 0; j < deg + 1; ++j) {
                 xloc[j] = x[lower + j];
         }
