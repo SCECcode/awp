@@ -45,7 +45,7 @@ void grids_finalize(grids_t *grids)
 {
 }
 
-void grid_data_init(grid_data_t *grid_data, const grid3_t grid)
+void grid_data_init(grid_data_t *grid_data, const grid3_t grid, const int block_number)
 {
         grid1_t xgrid = grid_grid1_x(grid);
         grid1_t ygrid = grid_grid1_y(grid);
@@ -54,7 +54,7 @@ void grid_data_init(grid_data_t *grid_data, const grid3_t grid)
         grid_data->y = malloc(sizeof grid_data->y * ygrid.size);
         grid_data->z = malloc(sizeof grid_data->z * zgrid.size);
         grid_fill1(grid_data->x, xgrid, 1);
-        grid_fill1(grid_data->y, ygrid, 0);
+        grid_fill_y_dm(grid_data->y, ygrid, block_number);
         grid_fill1(grid_data->z, zgrid, 0);
 }
 

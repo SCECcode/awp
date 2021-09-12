@@ -356,21 +356,9 @@ void source_init_common(source_t *src, const char *filename,
                                 case INPUT_SURFACE_COORD:
                                         src->z[j][k] = z1[z_grid.size - 2];
                                         break;
-                                        // FIXME: INPUT_BATHYMETRY_COORD
-                                        // Implement treatment for ocean
-                                        // bathymetry.
-                                        // Recommendation: Add a
-                                        // function to "receivers.c" and
-                                        // a function to to "receiver.c"
-                                        // Place the implementation in
-                                        // "receiver.c" but call this
-                                        // function for each receiver
-                                        // component in "receivers.c"
                                 }
                         }
 
-                        // TODO: Add inversion step if grid stretching function
-                        // is used
 
                         free(f_interp);
                         free(x1);
@@ -413,10 +401,7 @@ void source_init_common(source_t *src, const char *filename,
                     grid.inner_size, grid.shift, grid.coordinate,
                     grid.boundary1, grid.boundary2, grid.gridspacing);
                 grid_data_t xyz;
-                grid_data_init(&xyz, full_grid);
-                // Adjust y-axis for DM blocks
-                grid1_t ygrid = grid_grid1_y(full_grid);
-                grid_fill_y_dm(xyz.y, ygrid, j);
+                grid_data_init(&xyz, grid, j);
 
                 // Compute interpolation coefficients on the full grid
                 AWPCHK(cuinterp_init(&src->interpolation[j], xyz.x, xyz.y, xyz.z,

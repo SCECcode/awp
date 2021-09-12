@@ -42,7 +42,7 @@ void interpolate_density(float **d_rho_interp, const float *d_rho,
                                           grid_node(), grids->z.coordinate, grids->z.boundary1,
                                           grids->z.boundary2, grids->z.gridspacing);
         grid_data_t xyz;
-        grid_data_init(&xyz, grid);
+        grid_data_init(&xyz, grid, 0);
         AWPCHK(cuinterp_init(&d_interp, xyz.x, xyz.y, xyz.z,
                                      grid, F->x[0], F->y[0], F->z[0],
                                      F->global_indices[0],
