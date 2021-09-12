@@ -11,52 +11,33 @@
 #include <test/test.h>
 
 
-int in_bounds_receiver(const _prec *x, const int mx, const _prec q)
-{
-        int nearest;
-        int bounds_err = interp_argnearest(&nearest, x, mx, q);
-        if (bounds_err != SUCCESS) return bounds_err; 
-        if (nearest < 2 + ngsl) return ERR_OUT_OF_BOUNDS_LOWER;
-        if (nearest >= mx - 2 - ngsl) return ERR_OUT_OF_BOUNDS_UPPER;
-        return SUCCESS;
-}
-
-int in_bounds_source(const _prec *x, const int mx, const _prec q)
+int is_in_bounds(const _prec *x, const int mx, const _prec q, const int overlap)
 {
         int nearest;
         int bounds_err = interp_argnearest(&nearest, x, mx, q);
         if (bounds_err != SUCCESS) return bounds_err;
         
-        if (nearest < 2) return ERR_OUT_OF_BOUNDS_LOWER;
-        if (nearest >= mx - 2) return ERR_OUT_OF_BOUNDS_UPPER;
+        if (nearest < 2 + ngsl - overlap) return ERR_OUT_OF_BOUNDS_LOWER;
+        if (nearest >= mx - 2 - ngsl + overlap) return ERR_OUT_OF_BOUNDS_UPPER;
         return SUCCESS;
 }
 
-
 __inline__ int dist_indices_in_bounds(const prec qx, const prec qy,
-                                      const prec *x, const prec *y,
-                                      grid1_t grid_x, grid1_t grid_y,
+                                      const prec *x, const int mx, 
+                                      const prec *y, const int my,
                                       const enum source_type st) {
         int inbounds_x = 0;
         int inbounds_y = 0;
-        int mx = grid_x.size;
-        int my = grid_x.size;
         switch (st) {
-                case MOMENT_TENSOR:
-                        inbounds_x = in_bounds_source(x, mx, qx);
-                        inbounds_y = in_bounds_source(y, my, qy);
+            case MOMENT_TENSOR:
+            case FORCE:
+                        inbounds_x = is_in_bounds(x, mx, qx, ngsl);
+                        inbounds_y = is_in_bounds(y, my, qy, ngsl);
                         break;
-                case FORCE:
-                        inbounds_x = in_bounds_source(x, mx, qx);
-                        inbounds_y = in_bounds_source(y, my, qy);
-                        break;
-                case RECEIVER:
-                        inbounds_x = in_bounds_receiver(x, mx, qx);
-                        inbounds_y = in_bounds_receiver(y, my, qy);
-                        break;
-                case SGT:
-                        inbounds_x = in_bounds_receiver(x, mx, qx);
-                        inbounds_y = in_bounds_receiver(y, my, qy);
+            case RECEIVER:
+            case SGT:
+                        inbounds_x = is_in_bounds(x, mx, qx, 0);
+                        inbounds_y = is_in_bounds(y, my, qy, 0);
                         break;
         }
         if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)
@@ -81,7 +62,8 @@ __inline__ int dist_indices_in_bounds(const prec qx, const prec qy,
 
 */
 int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
-                 const size_t n, const grid3_t grid, const int *grid_numbers,
+                 const size_t n, 
+                 const grid3_t grid, const int *grid_numbers,
                  const int grid_number, const enum source_type st, const enum dist_options mode)
 {
 
@@ -89,6 +71,8 @@ int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
 
         grid1_t grid_x = grid_grid1_x(grid);
         grid1_t grid_y = grid_grid1_y(grid);
+        int mx = grid_x.size;
+        int my = grid_y.size;
 
         prec *x = malloc(sizeof(x) * grid_x.size);
         prec *y = malloc(sizeof(y) * grid_y.size);
@@ -99,7 +83,7 @@ int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
         size_t j = *nidx;
         for (size_t i = 0; i < n; ++i)
         {
-                if (dist_indices_in_bounds(qx[i], qy[i], x, y, grid_x, grid_y, st) &&
+                if (dist_indices_in_bounds(qx[i], qy[i], x, mx, y, my, st) &&
                     grid_numbers[i] == grid_number)
                 {
                         switch (mode)

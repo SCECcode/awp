@@ -187,7 +187,7 @@ void source_init_common(source_t *src, const char *filename,
                         size_t num_sources_in_block = 0;
                         grid3_t grid = grids_select(grid_type, &grids[j]);
                         grid1_t grid_x = grid_grid1_x(grid);
-                        printf("rank = %d grid.x%d.size = %d \n", rank, j, grid_x.size);
+                        
                         AWPCHK(dist_indices(&src->indices, &num_sources_in_block, x, y,
                                             input->length, grid, grid_number, j,
                                             st, DIST_COUNT));
