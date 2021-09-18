@@ -30,9 +30,10 @@ int grid_in_bounds_output(const prec *x, const size_t mx, const prec q, const pr
 int grid_in_bounds_input(const prec *x, const int mx, const prec q, const prec h)
 {
     // Split the input (moment tensor / force) based on the subdomain it belongs to. Inputs that
-    // fall in the overlap zone belongs to both processes. The source/force kernels have guard
-    // statements that make sure that no sources/forces are applied outside the actual compute
-    // region.
+    // fall in the overlap zone belongs to both processes. The force kernels have guard
+    // statements that make sure that no forces are applied outside the actual compute
+    // region. For the moment tensor source, it doesn't matter that points outside the compute
+    // region are modified.
         if ( q - x[0] < h / 2 ) {
                 return ERR_OUT_OF_BOUNDS_LOWER;
         }
