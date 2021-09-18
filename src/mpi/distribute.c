@@ -60,6 +60,10 @@ int dist_indices_in_bounds(const prec qx, const prec qy,
                         inbounds_x = grid_in_bounds_output(x, mx, qx, hx);
                         inbounds_y = grid_in_bounds_output(y, my, qy, hy);
                         break;
+            default:
+                fprintf(stderr, "Unknown source type passed to %s:%s!\n",
+                        __FILE__, __func__);
+                break;
         }
         if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)
                 return 1;
