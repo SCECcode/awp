@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
 
 #include <mpi/distribute.h>
 #include <awp/error.h>
@@ -10,34 +11,54 @@
 #include <interpolation/interpolation.h>
 #include <test/test.h>
 
-
-int is_in_bounds(const _prec *x, const int mx, const _prec q, const int overlap)
+int grid_in_bounds_output(const prec *x, const size_t mx, const prec q, const prec h)
 {
-        int nearest;
-        int bounds_err = interp_argnearest(&nearest, x, mx, q);
-        if (bounds_err != SUCCESS) return bounds_err;
-        
-        if (nearest < 2 + ngsl - overlap) return ERR_OUT_OF_BOUNDS_LOWER;
-        if (nearest >= mx - 2 - ngsl + overlap) return ERR_OUT_OF_BOUNDS_UPPER;
+        prec x_left = x[2 + ngsl] - h / 2.0;
+        prec x_right = x[mx - 3 - ngsl] + h / 2.0;
+
+        if ( q - x_left < 0 ) {
+                return ERR_OUT_OF_BOUNDS_LOWER;
+        }
+        if ( q - x_right >= 0) {
+                return ERR_OUT_OF_BOUNDS_UPPER;
+        }
+
+        return SUCCESS;
+
+}
+
+int grid_in_bounds_input(const prec *x, const int mx, const prec q, const prec h)
+{
+    // Split the input (moment tensor / force) based on the subdomain it belongs to. Inputs that
+    // fall in the overlap zone belongs to both processes. The source/force kernels have guard
+    // statements that make sure that no sources/forces are applied outside the actual compute
+    // region.
+        if ( q - x[0] < h / 2 ) {
+                return ERR_OUT_OF_BOUNDS_LOWER;
+        }
+        if ( q - x[mx - 1] >=  h / 2) {
+                return ERR_OUT_OF_BOUNDS_UPPER;
+        }
         return SUCCESS;
 }
 
-__inline__ int dist_indices_in_bounds(const prec qx, const prec qy,
-                                      const prec *x, const int mx, 
-                                      const prec *y, const int my,
-                                      const enum source_type st) {
+int dist_indices_in_bounds(const prec qx, const prec qy,
+                           const prec *x, const size_t mx, 
+                           const prec *y, const size_t my,
+                           const prec hx, const prec hy,
+                           const enum source_type st) {
         int inbounds_x = 0;
         int inbounds_y = 0;
         switch (st) {
             case MOMENT_TENSOR:
             case FORCE:
-                        inbounds_x = is_in_bounds(x, mx, qx, ngsl);
-                        inbounds_y = is_in_bounds(y, my, qy, ngsl);
+                        inbounds_x = grid_in_bounds_input(x, mx, qx, hx);
+                        inbounds_y = grid_in_bounds_input(y, my, qy, hy);
                         break;
             case RECEIVER:
             case SGT:
-                        inbounds_x = is_in_bounds(x, mx, qx, 0);
-                        inbounds_y = is_in_bounds(y, my, qy, 0);
+                        inbounds_x = grid_in_bounds_output(x, mx, qx, hx);
+                        inbounds_y = grid_in_bounds_output(y, my, qy, hy);
                         break;
         }
         if (inbounds_x == SUCCESS && inbounds_y == SUCCESS)
@@ -71,8 +92,10 @@ int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
 
         grid1_t grid_x = grid_grid1_x(grid);
         grid1_t grid_y = grid_grid1_y(grid);
-        int mx = grid_x.size;
-        int my = grid_y.size;
+        size_t mx = grid_x.size;
+        size_t my = grid_y.size;
+        prec hx = grid_x.gridspacing;
+        prec hy = grid_y.gridspacing;
 
         prec *x = malloc(sizeof(x) * grid_x.size);
         prec *y = malloc(sizeof(y) * grid_y.size);
@@ -83,7 +106,7 @@ int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
         size_t j = *nidx;
         for (size_t i = 0; i < n; ++i)
         {
-                if (dist_indices_in_bounds(qx[i], qy[i], x, mx, y, my, st) &&
+                if (dist_indices_in_bounds(qx[i], qy[i], x, mx, y, my, hx, hy, st) &&
                     grid_numbers[i] == grid_number)
                 {
                         switch (mode)

@@ -106,17 +106,9 @@ int interp_lagrange1_coef(prec *xloc, prec *l, int *first, const prec *x,
                 q = x[n-1];
         }
 
-        if (deg % 2 == 1) {
-                if (x[nearest] - query > 0) {
-                        lower = (int)ceil((double)deg * 0.5);
-                        upper = (int)floor((double)deg * 0.5);
-                } else {
-                        lower = (int)floor((double)deg * 0.5);
-                        upper = (int)ceil((double)deg * 0.5);
-                }
+        lower = interp_get_lower(x[nearest], query, deg);
+        upper = interp_get_upper(x[nearest], query, deg);
 
-
-        }
         err |=
             interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         for (int j = 0; j < deg + 1; ++j) {
@@ -169,4 +161,31 @@ int interp_lagrange3(prec *out, const prec *in, const prec *x, const prec *y,
 
         return err;
 }
+
+int interp_get_lower(const prec xnearest, const prec query, const int deg) {
+        int lower = (int)ceil((double)deg * 0.5);
+        if (deg % 2 == 1) {
+                if (xnearest - query > 0) {
+                        lower = (int)ceil((double)deg * 0.5);
+                } else {
+                        lower = (int)floor((double)deg * 0.5);
+                }
+        }
+        return lower;
+}
+
+int interp_get_upper(const prec xnearest, const prec query, const int deg) {
+        int upper = (int)ceil((double)deg * 0.5);
+        if (deg % 2 == 1) {
+                if (xnearest - query > 0) {
+                        upper = (int)floor((double)deg * 0.5);
+                } else {
+                        upper = (int)ceil((double)deg * 0.5);
+                }
+
+
+        }
+        return upper;
+}
+
 

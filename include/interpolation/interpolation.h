@@ -113,6 +113,11 @@ int interp_lagrange3(prec *out, const prec *in, const prec *x, const prec *y,
                      const int deg);
 
 
+// Get number of points to the left (see interp_argnearest_range) 
+int interp_get_lower(const prec xnearest, const prec query, const int deg);
+// Get number of points to the right (see interp_argnearest_range) 
+int interp_get_upper(const prec xnearest, const prec query, const int deg);
+
 #ifdef __cplusplus
 }
 #endif

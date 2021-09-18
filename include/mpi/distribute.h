@@ -16,7 +16,11 @@ int dist_indices(int **indices, size_t *nidx, const prec *qx, const prec *qy,
                  const size_t n, const grid3_t grid, const int *grid_numbers,
                  const int grid_number, const enum source_type st, const enum dist_options mode);
 
-int dist_indices_in_bounds(const prec qx, const prec qy, const prec *x, const int mx, const prec *y, const int my, const enum source_type st);
+int dist_indices_in_bounds(const prec qx, const prec qy,
+                           const prec *x, const size_t mx, 
+                           const prec *y, const size_t my,
+                           const prec hx, const prec hy,
+                           const enum source_type st);
 #ifdef __cplusplus
 }
 #endif
