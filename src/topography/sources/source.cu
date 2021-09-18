@@ -46,9 +46,6 @@ __global__ void cusource_add_cartesian(prec *out, const prec *in,
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
-                // Do not apply stencil at halo points
-                if ( ix[q] + i >= 2 + nx + 3 * ngsl / 2 || ix[q] + i < 2 + ngsl / 2 ||
-                     iy[q] + j >= 2 + ny + 3 * ngsl / 2 || iy[q] + j < 2 + ngsl / 2 ) continue;
                 size_t pos = grid_index(grid, ix[q] + i, iy[q] + j, iz[q] + k);
                 prec value = - dth * lx[q * num_basis + i] *
                             ly[q * num_basis + j] * lz[q * num_basis + k] *
@@ -115,11 +112,6 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                prec Ji =
                    1.0 / (_f(i + ix[q], j + iy[q]) *
                           _dg(iz[q] + k));
-
-                // Do not apply stencil at halo points
-                if ( ix[q] + i >= 2 + nx + 3 * ngsl / 2 || ix[q] + i < 2 + ngsl / 2 ||
-                     iy[q] + j >= 2 + ny + 3 * ngsl / 2 || iy[q] + j < 2 + ngsl / 2 ) continue;
-
                 int pos =
                     (iz[q] + k) + align +
                     (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
