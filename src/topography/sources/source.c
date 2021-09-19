@@ -180,10 +180,14 @@ void source_init_common(source_t *src, const char *filename,
                 src->length = 0;
                 size_t *src_count = malloc(sizeof src_count * ngrids);
 
+
+
                 for (int j = 0; j < ngrids; ++j)
                 {
                         size_t num_sources_in_block = 0;
                         grid3_t grid = grids_select(grid_type, &grids[j]);
+                        grid1_t grid_x = grid_grid1_x(grid);
+                        
                         AWPCHK(dist_indices(&src->indices, &num_sources_in_block, x, y,
                                             input->length, grid, grid_number, j,
                                             st, DIST_COUNT));
@@ -352,21 +356,9 @@ void source_init_common(source_t *src, const char *filename,
                                 case INPUT_SURFACE_COORD:
                                         src->z[j][k] = z1[z_grid.size - 2];
                                         break;
-                                        // FIXME: INPUT_BATHYMETRY_COORD
-                                        // Implement treatment for ocean
-                                        // bathymetry.
-                                        // Recommendation: Add a
-                                        // function to "receivers.c" and
-                                        // a function to to "receiver.c"
-                                        // Place the implementation in
-                                        // "receiver.c" but call this
-                                        // function for each receiver
-                                        // component in "receivers.c"
                                 }
                         }
 
-                        // TODO: Add inversion step if grid stretching function
-                        // is used
 
                         free(f_interp);
                         free(x1);
@@ -399,21 +391,6 @@ void source_init_common(source_t *src, const char *filename,
                         }
                 }
 
-                // Correct source/receiver placement in the coarsened grids due to treating Vx as a
-                // nodal grid point in the compute kernels. The coordinate system used to place
-                // source and receivers coincides with a material grid point (shift = (0,0,0)), and
-                // not Vx (shift = (1,0,0)). 
-                if (j > 0 ) {
-                        for (size_t k = 0; k < src->lengths[j]; ++k)  {
-                            // Formula:
-                            // y^{(l+1)}_j  = hp * (1  + 3 * j), hp = h^{(l)} 
-                            // Instead of adding hp to y coordinates, we remove hp from the
-                            // source/receiver coordinate
-                            double hp = grid.gridspacing / 3.0;
-                            src->y[j][k] -= hp;
-                        }
-                }
-
                 overlap = grid.gridspacing * OVERLAP;
 
                 if (src->lengths[j] == 0)
@@ -424,7 +401,7 @@ void source_init_common(source_t *src, const char *filename,
                     grid.inner_size, grid.shift, grid.coordinate,
                     grid.boundary1, grid.boundary2, grid.gridspacing);
                 grid_data_t xyz;
-                grid_data_init(&xyz, full_grid);
+                grid_data_init(&xyz, grid, j);
 
                 // Compute interpolation coefficients on the full grid
                 AWPCHK(cuinterp_init(&src->interpolation[j], xyz.x, xyz.y, xyz.z,

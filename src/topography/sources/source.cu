@@ -104,6 +104,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
         const prec hhatweights[4] = {2.9022824945274315, 2.28681149230364,
                                      0.7658753535345706, 1.0959408329892313};
 
+        int nx = grid.size.x - 4 - 2 * ngsl;
         int nz = grid.size.z;
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
@@ -111,7 +112,6 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                prec Ji =
                    1.0 / (_f(i + ix[q], j + iy[q]) *
                           _dg(iz[q] + k));
-
                 int pos =
                     (iz[q] + k) + align +
                     (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
