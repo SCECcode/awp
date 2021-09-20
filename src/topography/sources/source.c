@@ -17,7 +17,7 @@
 #include <topography/sources/source.cuh>
 #include <topography/grids.h>
 
-//#define DEBUG_SOURCE
+#define DEBUG_SOURCE
 
 void source_init_indexed(source_t *src, const input_t *input, size_t num_reads);
 
@@ -95,6 +95,8 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
 
                 upper = lower;
                 lower = lower - z1[z_grid.end];
+ 
+                _prec h = z_grid.gridspacing;
 
                 for (int j = 0; j < length; ++j)
                 {
@@ -118,7 +120,7 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
 
                 if (i + 1 != num_grids)
                 {
-                        overlap = z_grid.gridspacing * OVERLAP;
+                        overlap = h * OVERLAP;
                 }
                 else
                 {
@@ -335,7 +337,7 @@ void source_init_common(source_t *src, const char *filename,
                                 // Map to parameter space
                                 case INPUT_VOLUME_COORD:
                                     if (block_height + src->z[j][k] <
-                                        MAPPING_START_POINT) {
+                                        OVERLAP * grid.gridspacing) {
                                         fprintf(stderr,
                                                 "Source/Receiver cannot exist "
                                                 "in the overlap zone on the "
@@ -346,6 +348,8 @@ void source_init_common(source_t *src, const char *filename,
                                         // curvilinear grid transform
 
                                         double h = grid.gridspacing;
+                                        //fprintf(stderr, "block_height + src = %g, overlap = %g \n",
+                                        //        block_height + src->z[j][k], h * OVERLAP);
                                         double H = block_height - h * OVERLAP;
                                         double Hf = f_interp[k] * H;
                                         double x = (H + src->z[j][k]) / Hf;
@@ -420,6 +424,11 @@ void source_init_common(source_t *src, const char *filename,
                         }
                 }
 
+                //if (grid_type == XY && rank == 1) {
+                //  src->interpolation[j].iy[0] += 1;
+                //  src->interpolation[j].iy[1] += 1;
+                //}
+
                 cuinterp_htod(&src->interpolation[j]);
 
 #ifdef DEBUG_SOURCE
@@ -444,9 +453,10 @@ void source_init_common(source_t *src, const char *filename,
                         }
                         printf("\n");
 
-                        if (grid_type == X || grid_type == Y || grid_type == Z  || grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == XX || grid_type == XZ || grid_type == NODE)
+                        if (grid_type == XY )
+                        //if (grid_type == X || grid_type == Y || grid_type == Z  || grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == XX || grid_type == XZ || grid_type == NODE)
                         {
-                                printf("rank = %d, grid_type = %s, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
+                                fprintf(stderr, "rank = %d, grid_type = %s, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
                                        rank, grid_typename(grid_type), grid.shift.x, grid.shift.y, grid.shift.z,
                                        j,
                                        x1[ngsl / 2], y1[ngsl / 2], z1[0],
@@ -454,7 +464,7 @@ void source_init_common(source_t *src, const char *filename,
 
                                 for (size_t k = 0; k < src->lengths[j]; ++k)
                                 {
-                                        printf("query int x y z = %f %f %f | nearest x y z = %f %f %f | index = %d %d %d\n",
+                                        fprintf(stderr, "query int x y z = %f %f %f | nearest x y z = %f %f %f | index = %d %d %d\n",
                                                src->x[j][k], src->y[j][k], src->z[j][k],
                                                x1[ngsl / 2 + src->interpolation[j].ix[k] - ngsl],
                                                y1[ngsl / 2 + src->interpolation[j].iy[k] - ngsl],
@@ -462,24 +472,26 @@ void source_init_common(source_t *src, const char *filename,
                                                src->interpolation[j].ix[k],
                                                src->interpolation[j].iy[k],
                                                src->interpolation[j].iz[k]);
-                                        printf("index-x: %d \n",
+                                        fprintf(stderr, "index-x: %d \n",
                                                src->interpolation[j].ix[0]);
-                                        print("weights-x: %f %f %f %f \n",
+                                        fprintf(stderr, "index-y: %d \n",
+                                               src->interpolation[j].iy[0]);
+                                        fprintf(stderr, "weights-x: %f %f %f %f \n",
                                               src->interpolation[j].lx[0],
                                               src->interpolation[j].lx[1],
                                               src->interpolation[j].lx[2],
                                               src->interpolation[j].lx[3]);
-                                        print("weights-y: %f %f %f %f \n",
+                                        fprintf(stderr, "weights-y: %f %f %f %f \n",
                                               src->interpolation[j].ly[0],
                                               src->interpolation[j].ly[1],
                                               src->interpolation[j].ly[2],
                                               src->interpolation[j].ly[3]);
-                                        print("weights-z: %f %f %f %f \n",
+                                        fprintf(stderr, "weights-z: %f %f %f %f \n",
                                               src->interpolation[j].lz[0],
                                               src->interpolation[j].lz[1],
                                               src->interpolation[j].lz[2],
                                               src->interpolation[j].lz[3]);
-                                        printf("---------------------------------------\n\n");
+                                        fprintf(stderr, "---------------------------------------\n\n");
                                 }
                         }
                         fflush(stdout);
