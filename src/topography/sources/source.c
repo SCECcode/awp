@@ -424,10 +424,6 @@ void source_init_common(source_t *src, const char *filename,
                         }
                 }
 
-                //if (grid_type == XY && rank == 1) {
-                //  src->interpolation[j].iy[0] += 1;
-                //  src->interpolation[j].iy[1] += 1;
-                //}
 
                 cuinterp_htod(&src->interpolation[j]);
 
@@ -453,7 +449,7 @@ void source_init_common(source_t *src, const char *filename,
                         }
                         printf("\n");
 
-                        if (grid_type == XY )
+                        if (grid_type == SX )
                         //if (grid_type == X || grid_type == Y || grid_type == Z  || grid_type == SX || grid_type == SY || grid_type == SZ || grid_type == XX || grid_type == XZ || grid_type == NODE)
                         {
                                 fprintf(stderr, "rank = %d, grid_type = %s, shift = %d %d %d id = %d origin = %f %f %f h = %f\n",
