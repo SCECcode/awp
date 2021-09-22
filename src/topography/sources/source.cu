@@ -284,8 +284,8 @@ __global__ void cusource_add_force_velocity(prec *out, const prec *in, const pre
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
                 // Do not apply stencil at halo points
-                if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
-                     iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
+                if ( ix[q] + i >= 2 + nx + ngsl / 2 || ix[q] + i < 2 + ngsl / 2 ||
+                     iy[q] + j >= 2 + ny + ngsl / 2 || iy[q] + j < 2 + ngsl / 2 ) continue;
 
                 int pos =
                     (k) + align +
