@@ -7,6 +7,8 @@
 const int VERBOSE = 0;
 #define EPSILON 1e-4
 
+int map_error = 0;
+
 void hermite_cubic_basis(double b[4], const double t);
 void hermite_cubic_basis_derivative(double db[4], const double t);
 void adjust(double *m0, double *m1, const double s);
@@ -31,9 +33,11 @@ void adjust(double *m0, double *m1, const double s) {
     double a = *m0 / s;
     double b = *m1 / s;
 
-    if (a < 0 || b < 0)
+    if (a < 0 || b < 0) {
         fprintf(stderr, "%s:%s():%d Non-monotonic mapping function data!\n",
                 __FILE__, __func__, __LINE__);
+        map_error = MAP_NON_MONOTONIC;
+    }
 
     if (a * a + b * b > 9) {
         double v = 3.0 / sqrt(a * a + b * b);
@@ -92,29 +96,37 @@ struct mapping map_init(const double dzb, const double dzt, const double h) {
 }
 
 int map_find_cell_r(const double r, const struct mapping *map) {
-    if (r < -EPSILON) 
+    if (r < -EPSILON) {
         fprintf(stderr, "%s:%s():%d Outside interval (r = %f, r < 0)!\n", 
                 __FILE__, __func__, __LINE__, r);
+        map_error = MAP_OUTSIDE;
+    }
     else if (r <= map->h) return 0;
     else if (r > map->h && r <= 1.0 - map->h) return 1;
     else if (r <= 1.0) return 2;
-    if (r > 1.0 + EPSILON) 
+    if (r > 1.0 + EPSILON) {
         fprintf(stderr, "%s:%s():%d Outside interval (r = %f, r > 1)!\n",
                 __FILE__, __func__, __LINE__, r);
+        map_error = MAP_OUTSIDE;
+    }
 
     return -1;
 }
 
 int map_find_cell_z(const double z, const struct mapping *map) {
-    if (z < -EPSILON) 
+    if (z < -EPSILON) {
         fprintf(stderr, "%s:%s():%d Outside interval (z = %f, z < 0)!\n",
                 __FILE__, __func__, __LINE__, z);
+        map_error = MAP_OUTSIDE;
+    }
     else if (z <= map->dzb) return 0;
     else if (z > map->dzb && z <= 1.0 - map->dzt) return 1.0;
     else if (z <= 1.0) return 2;
-    if (z > 1.0 + EPSILON) 
+    if (z > 1.0 + EPSILON) {
         fprintf(stderr, "%s:%s():%d Outside interval (z = %f, z > 1)!\n",
                 __FILE__, __func__, __LINE__, z);
+        map_error = MAP_OUTSIDE;
+    }
     return -1;
 
 }
@@ -165,4 +177,24 @@ double map_invert(const double z, const struct mapping *map, const double eps, c
             rk, fabs(z - fk));
 
     return rk;
+}
+
+const char* map_error_string(const enum map_err_codes err_code) {
+    switch (err_code) {
+        case MAP_SUCCESS:
+            return "All mapping operations completed successfully";
+            break;
+        case MAP_NON_MONOTONIC:
+            return "The mapping function is non-monotonic\n";
+            break;
+        case MAP_OUTSIDE:
+            return "The query point is outside the domain of definition of the mapping function\n";
+            break;
+        default:
+            return "Unknown error code\n";
+        }
+}
+
+enum map_err_codes map_get_last_error(void) {
+    return map_error;
 }
