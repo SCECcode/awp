@@ -8,24 +8,6 @@ const int VERBOSE = 0;
 #define EPSILON 1e-4
 
 int map_error = 0;
-const enum map_err_codes {MAP_SUCCESS, MAP_NON_MONOTONIC, MAP_OUTSIDE};
-const char* map_error_string(const enum map_err_codes err_code) {
-    switch (err_code) {
-        case MAP_SUCCESS:
-            return "All mapping operations completed successfully";
-            break;
-        case MAP_NON_MONOTONIC:
-            return "The mapping function is non-monotonic\n";
-            break;
-        case MAP_OUTSIDE:
-            return "The query point is outside the domain of definition of the mapping function\n";
-            break;
-        }
-}
-
-enum map_err_codes map_get_last_error() {
-    return map_error;
-}
 
 void hermite_cubic_basis(double b[4], const double t);
 void hermite_cubic_basis_derivative(double db[4], const double t);
@@ -195,4 +177,24 @@ double map_invert(const double z, const struct mapping *map, const double eps, c
             rk, fabs(z - fk));
 
     return rk;
+}
+
+const char* map_error_string(const enum map_err_codes err_code) {
+    switch (err_code) {
+        case MAP_SUCCESS:
+            return "All mapping operations completed successfully";
+            break;
+        case MAP_NON_MONOTONIC:
+            return "The mapping function is non-monotonic\n";
+            break;
+        case MAP_OUTSIDE:
+            return "The query point is outside the domain of definition of the mapping function\n";
+            break;
+        default:
+            return "Unknown error code\n";
+        }
+}
+
+enum map_err_codes map_get_last_error(void) {
+    return map_error;
 }
