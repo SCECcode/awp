@@ -36,9 +36,9 @@ int main(int argc, char **argv)
         int px = 2;
 
 
-        int3_t src1 = {11, 11, 0};
-        int3_t src2 = {5, 5, 0};
-        int3_t src3 = {3, 3, 0};
+        int3_t src1 = {9, 9, 0};
+        int3_t src2 = {3, 3, 0};
+        int3_t src3 = {1, 1, 0};
 
         if (argc == 2) {
             printf("Source input file: %s \n", argv[1]);
@@ -141,7 +141,7 @@ int test_sources_dm(const char *sourcefile, int rank, int size, const int px, co
                 prec *z1 = malloc(sizeof z1 * z_grid.size);
 
                 grid_fill1(x1, x_grid, 1);
-                grid_fill1(y1, y_grid, 0);
+                grid_fill_y_dm(y1, y_grid, i);
                 grid_fill1(z1, z_grid, 0);
                 // The user coordinate system (user) defines (0, 0, 0) at
                 // material grid point and is a global coordinate system (a
@@ -157,8 +157,8 @@ int test_sources_dm(const char *sourcefile, int rank, int size, const int px, co
                 // (see shift.c, xx = [1, 1, 1]), 
                 //
                 //
-                int ix = M.interpolation[i].ix[j] - ngsl;
-                int iy = M.interpolation[i].iy[j] - ngsl;
+                int ix = M.interpolation[i].ix[j] - ngsl - 2;
+                int iy = M.interpolation[i].iy[j] - ngsl - 2;
                 int iz = M.interpolation[i].iz[j];
                 
                 // Once setup has been confirmed, we can add some test cases to

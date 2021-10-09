@@ -286,6 +286,17 @@ int grid_fill1(prec *out, const grid1_t grid, const int isxdir)
         return grid.size;
 }
 
+int grid_fill_y_dm(prec *out, const grid1_t grid, const int blocknum) {
+    int count = grid_fill1(out, grid, 0);
+    if (blocknum > 0) {
+        _prec h = grid.gridspacing / 3.0;
+        for (int i = 0; i < grid.size; ++i) {
+            out[i] += h;
+        }
+    }
+    return count;
+}
+
 
 int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid)
 {
@@ -302,57 +313,6 @@ int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid)
         // grid point array.
         if (q > x[grid.size - 2 - idx] && grid.shift == 0 &&
             grid.boundary2 == CLOSED_BOUNDARY) {
-                return ERR_OUT_OF_BOUNDS_UPPER;
-        }
-        return SUCCESS;
-}
-
-int grid_in_bounds_receiver(const _prec *x, const _prec q, const grid1_t grid)
-{
-        _prec h = grid.gridspacing;
-        if ( q - (x[0] - h / 2) < 0 ) {
-                return ERR_OUT_OF_BOUNDS_LOWER;
-        }
-        if ( q - (x[grid.size - 1] + h / 2) >= 0) {
-                return ERR_OUT_OF_BOUNDS_UPPER;
-        }
-        return SUCCESS;
-
-}
-
-int grid_in_bounds_sgt(const _prec *x, const _prec q, const grid1_t grid)
-{
-        _prec h = grid.gridspacing;
-        if ( q - (x[0] - h / 2 + h * ngsl / 2) < 0 ) {
-                return ERR_OUT_OF_BOUNDS_LOWER;
-        }
-        if ( q - (x[grid.size - 1] + h / 2 - h * ngsl / 2) >= 0) {
-                return ERR_OUT_OF_BOUNDS_UPPER;
-        }
-
-        return SUCCESS;
-
-}
-
-int grid_in_bounds_force(const _prec *x, const _prec q, const grid1_t grid)
-{
-        _prec h = grid.gridspacing;
-        if ( q - (x[0] - 2 * h) < 0 ) {
-                return ERR_OUT_OF_BOUNDS_LOWER;
-        }
-        if ( q - (x[grid.size - 1] + 2 * h) >= 0) {
-                return ERR_OUT_OF_BOUNDS_UPPER;
-        }
-        return SUCCESS;
-}
-
-int grid_in_bounds_moment_tensor(const _prec *x, const _prec q, const grid1_t grid)
-{
-        _prec h = grid.gridspacing;
-        if ( q - (x[0] - ngsl / 2 * h) < 0 ) {
-                return ERR_OUT_OF_BOUNDS_LOWER;
-        }
-        if ( q - (x[grid.size - 1] + ngsl / 2 * h) >= 0) {
                 return ERR_OUT_OF_BOUNDS_UPPER;
         }
         return SUCCESS;
@@ -473,17 +433,12 @@ void global_to_local(_prec *zloc, int *block_index, const _prec z,
         hloc *= 3;
         bi = i;
 
-        //printf("z0 + H = %g i = %d \n", z0, i);
-
         // Check if the coordinate is in the overlap zone, if so, push it to the next grid
         if (z0 > 0 && z0 < grid_overlap(hloc / 3) ) {
-            //printf("in overlap zone, z0 = %g i = %d overlap = %g \n", z0, i, overlap);
             continue;
         }
 
         if (z0 > 0) break;
-        
-        //printf("next,  z0 = %g i = %d \n", z0, i);
 
     }
 

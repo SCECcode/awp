@@ -1809,7 +1809,6 @@ if (usemms) {
          sgt_write(d_xx[p], d_yy[p], d_zz[p], d_xy[p], d_xz[p], d_yz[p], 0, nt, p);
       }
       sources_read(0);
-      forces_read(0);
 
       if (rank == 0)
          fchk = fopen(CHKFILE, "a+");
@@ -1833,10 +1832,17 @@ if (usemms) {
          //This loop has no loverlapping because there is source input
          for (cur_step = 1; cur_step <= nt; cur_step++)
          {
+
+            forces_read(cur_step - 1);
+            if (T.use)
+               forces_add(d_u1[0], d_v1[0], d_w1[0], d_d1[0], cur_step - 1, DH[0], DT,
+                          &T.metrics_f, &T.metrics_g, 0);
+            else
+                forces_add_cartesian_velocity(d_u1[0], d_v1[0], d_w1[0], cur_step - 1, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
+
              energy_zero(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0], 0);
              energy_update_previous_solutions(&energy, d_u1[0], d_v1[0], d_w1[0], d_xx[0], d_yy[0], d_zz[0], d_xy[0], d_xz[0], d_yz[0]);
 
-            //CUCHK(cudaDeviceSynchronize());
             CUCHK(cudaStreamSynchronize(stream_i));
             CUCHK(cudaStreamSynchronize(stream_1));
             CUCHK(cudaStreamSynchronize(stream_2));
@@ -1854,6 +1860,7 @@ if (usemms) {
             }
             CUCHK(cudaGetLastError());
             //cerr=cudaGetLastError();
+            //
 
             for (p = 0; p < ngrids; p++)
             {
@@ -1903,6 +1910,7 @@ if (usemms) {
 
                CUCHK(cudaStreamSynchronize(stream_1)); /*these fix sync issues, but not sure why*/
                CUCHK(cudaStreamSynchronize(stream_2));
+
                //usleep(1);
 
                if (!usetopo || p > 0)
@@ -2072,10 +2080,6 @@ if (usemms) {
                dump_nonzeros(d_yz[p], nxt[p] + 4 + 8 * loop, nyt[p] + 4 + 8 * loop, nzt[p] + 2 * align, "yz", p, cur_step, 2, rank, size);
             }
 
-            //if (!usetopo)
-            //forces_add_cartesian(d_xz[0], d_yz[0], d_zz[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
-            if (!usetopo)
-            forces_add_cartesian_velocity(d_u1[0], d_v1[0], d_w1[0], cur_step, nxt[0], nyt[0], nzt[0], DH[0], DT, 0);
 
                if (usemms) {
                        float t =  DT * (cur_step);
@@ -2268,14 +2272,14 @@ if (usemms) {
             }
 
             sources_read(cur_step);
-            forces_read(cur_step);
+            //forces_read(cur_step);
             if (T.use)
             {
                sources_add_curvilinear(d_xx[0], d_yy[0], d_zz[0], d_xy[0],
                                        d_xz[0], d_yz[0], cur_step, DH[0], DT,
                                        &T.metrics_f, &T.metrics_g, 0);
-               forces_add(d_u1[0], d_v1[0], d_w1[0], d_d1[0], cur_step, DH[0], DT,
-                          &T.metrics_f, &T.metrics_g, 0);
+               //forces_add(d_u1[0], d_v1[0], d_w1[0], d_d1[0], cur_step, DH[0], DT,
+               //           &T.metrics_f, &T.metrics_g, 0);
                for (p = 1; p < ngrids; p++)
                {
                   sources_add_cartesian(d_xx[p], d_yy[p], d_zz[p],

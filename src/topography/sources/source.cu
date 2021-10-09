@@ -104,6 +104,7 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
         const prec hhatweights[4] = {2.9022824945274315, 2.28681149230364,
                                      0.7658753535345706, 1.0959408329892313};
 
+        int nx = grid.size.x - 4 - 2 * ngsl;
         int nz = grid.size.z;
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
@@ -111,7 +112,6 @@ __global__ void cusource_add_curvilinear(prec *out, const prec *in,
                prec Ji =
                    1.0 / (_f(i + ix[q], j + iy[q]) *
                           _dg(iz[q] + k));
-
                 int pos =
                     (iz[q] + k) + align +
                     (2 * align + nz) * (ix[q] + i) * (2 * ngsl + ny + 4) +
@@ -197,8 +197,8 @@ __global__ void cusource_add_force(prec *out, const prec *in, const prec *d1,
         for (int j = 0; j < num_basis; ++j) {
         for (int k = 0; k < num_basis; ++k) {
                 // Do not apply stencil at halo points
-                if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
-                     iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
+                if ( ix[q] + i >= 2 + nx + ngsl / 2 || ix[q] + i < 2 + ngsl / 2 ||
+                     iy[q] + j >= 2 + ny + ngsl / 2 || iy[q] + j < 2 + ngsl / 2 ) continue;
 
                 prec J =  _f(i + ix[q], j + iy[q]) * _dg(iz[q] + k);
                 prec Ji = - quad_weight /(J * d1[q]);
@@ -284,8 +284,8 @@ __global__ void cusource_add_force_velocity(prec *out, const prec *in, const pre
         for (int i = 0; i < num_basis; ++i) {
         for (int j = 0; j < num_basis; ++j) {
                 // Do not apply stencil at halo points
-                if ( ix[q] + i >= 2 + nx + ngsl || ix[q] + i < 2 + ngsl ||
-                     iy[q] + j >= 2 + ny + ngsl || iy[q] + j < 2 + ngsl ) continue;
+                if ( ix[q] + i >= 2 + nx + ngsl / 2 || ix[q] + i < 2 + ngsl / 2 ||
+                     iy[q] + j >= 2 + ny + ngsl / 2 || iy[q] + j < 2 + ngsl / 2 ) continue;
 
                 int pos =
                     (k) + align +

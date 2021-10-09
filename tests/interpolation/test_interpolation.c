@@ -130,8 +130,7 @@ int test_argnearest_range(void)
         xs = 4.3;
 
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         err |= s_assert(nearest == 4);
         err |= s_assert(lower == 4);
         err |= s_assert(upper == 5);
@@ -141,8 +140,7 @@ int test_argnearest_range(void)
         lower = 1;
         upper = 1;
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
 
         err |= test_finalize(&test, err);
         err |= s_assert(nearest == 4);
@@ -158,8 +156,7 @@ int test_argnearest_range(void)
         int nearest = -1, lower = 2, upper = 2;
         xs = 0.1;
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         err |= s_assert(nearest == 0);
         err |= s_assert(lower == 0);
         err |= s_assert(upper == 5);
@@ -175,8 +172,7 @@ int test_argnearest_range(void)
         int nearest = -1, lower = 2, upper = 2;
         xs = 8.9;
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         err |= s_assert(nearest == 9);
         err |= s_assert(lower == 5);
         err |= s_assert(upper == 10);
