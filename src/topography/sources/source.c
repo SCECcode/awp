@@ -87,48 +87,84 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
         _prec lower = 0;
         _prec upper = 0;
         _prec overlap = 0;
-        for (int i = 0; i < num_grids; ++i)
-        {
-                prec *z1 = malloc(sizeof z1 * grids[i].z.size.z);
+        //FIXME: hard-coded
+        int is_topo = 1;
+        int *nz = malloc(sizeof nz * num_grids);
+        for (int i = 0; i < num_grids; ++i) {
+            nz[i] = grids[i].z.size.z;
+        }
+        for (int i = 0; i < num_grids; ++i) {
+                for (int j = 0; j < length; ++j)
+                    grid_number[j] = -1;
+        }
+
+        for (int i = 0; i < num_grids; ++i) {
+                float *z1 = malloc(sizeof z1 * nz[i]);
                 grid1_t z_grid = grid_grid1_z(grids[i].z);
                 grid_fill1(z1, z_grid, 0);
-
-                upper = lower;
-                lower = lower - z1[z_grid.end];
- 
                 _prec h = z_grid.gridspacing;
-
+                _prec zloc = 0.0;
+                _prec hw = 0.5 * (input->degree + 1) * h; 
                 for (int j = 0; j < length; ++j)
                 {
-                        _prec z = input->z[indices[j]];
-                        // Take into account that topography can yield positive
-                        // z-values
-                        if (input->type[indices[j]] == INPUT_SURFACE_COORD)
-                        {
-                                grid_number[j] = 0;
-                                continue;
-                        }
-                        else if (z > 0)
-                        {
-                                grid_number[j] = 0;
-                        }
-                        else if (z > lower && z <= upper - overlap)
-                        {
-                                grid_number[j] = i;
-                        }
+                    if (grid_number[j] != -1) continue;
+                    _prec z = input->z[indices[j]];
+                    global_to_local(&zloc, &grid_number[j], z - hw, h, nz, num_grids, is_topo); 
+                    printf("zloc = %g, z = %g grid = %d \n", zloc, z - hw, grid_number[j]);
+
                 }
 
-                if (i + 1 != num_grids)
-                {
-                        overlap = h * OVERLAP;
-                }
-                else
-                {
-                        overlap = 0.0f;
-                }
-                lower = lower + overlap;
                 free(z1);
+
         }
+
+        free(nz);
+
+        //for (int i = 0; i < num_grids; ++i)
+        //{
+        //        prec *z1 = malloc(sizeof z1 * grids[i].z.size.z);
+        //        grid1_t z_grid = grid_grid1_z(grids[i].z);
+        //        grid_fill1(z1, z_grid, 0);
+
+        //        upper = lower;
+        //        lower = lower - z1[z_grid.end];
+        //
+ 
+        //        _prec h = z_grid.gridspacing;
+        //        // Half-width of the source stencil
+        //        double half_width = (input->degree + 1) / 2; 
+
+        //        for (int j = 0; j < length; ++j)
+        //        {
+        //                _prec z = input->z[indices[j]];
+        //                // Take into account that topography can yield positive
+        //                // z-values
+        //                if (input->type[indices[j]] == INPUT_SURFACE_COORD)
+        //                {
+        //                        grid_number[j] = 0;
+        //                        continue;
+        //                }
+        //                else if (z > 0)
+        //                {
+        //                        grid_number[j] = 0;
+        //                }
+        //                else if ( (z - half_width * h) > lower && z <= upper)
+        //                {
+        //                        grid_number[j] = i;
+        //                }
+        //        }
+
+        //        if (i + 1 != num_grids)
+        //        {
+        //                overlap = h * OVERLAP;
+        //        }
+        //        else
+        //        {
+        //                overlap = 0.0f;
+        //        }
+        //        lower = lower + overlap;
+        //        free(z1);
+        //}
 
         for (int j = 0; j < length; ++j)
         {
@@ -330,18 +366,23 @@ void source_init_common(source_t *src, const char *filename,
                                                     metric_grid, src->x[j], src->y[j],
                                                     src->lengths[j], input->degree);
 
+                        _prec h = grid.gridspacing;
+                        _prec hw = 0.5 * (input->degree + 1) * h; 
                         for (size_t k = 0; k < src->lengths[j]; ++k)
                         {
                                 switch (src->type[j][k])
                                 {
                                 // Map to parameter space
                                 case INPUT_VOLUME_COORD:
-                                    if (block_height + src->z[j][k] <
-                                        OVERLAP * grid.gridspacing) {
+                                    if (block_height + (src->z[j][k] - hw) <
+                                        overlap * h && grid_number[j] == 0) {
                                         fprintf(stderr,
                                                 "Source/Receiver cannot exist "
-                                                "in the overlap zone on the "
+                                                "at the first two grid points on the "
                                                 "fine grid, id = %ld \n", k);
+                                        fprintf(stderr, "z = %g \n", src->z[j][k]);
+                                        fprintf(stderr, "This is a bug, please report it.\n");
+                                        exit(-1);
                                     } else {
                                         // Source / receiver is in the top part
                                         // of the block that experiences the
