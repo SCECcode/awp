@@ -82,18 +82,12 @@ void source_finalize(source_t *src)
 void source_find_grid_number(const input_t *input, const grids_t *grids, int *grid_number,
                              const int *indices,
                              const int length,
-                             const int num_grids)
+                             const int num_grids,
+                             const int is_topo)
 {
-        _prec lower = 0;
-        _prec upper = 0;
-        _prec overlap = 0;
-        //FIXME: hard-coded
-        int is_topo = 1;
         int *nz = malloc(sizeof nz * num_grids);
         for (int i = 0; i < num_grids; ++i) {
             nz[i] = grids[i].z.size.z;
-        }
-        for (int i = 0; i < num_grids; ++i) {
                 for (int j = 0; j < length; ++j)
                     grid_number[j] = -1;
         }
@@ -107,10 +101,10 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
                 _prec hw = 0.5 * (input->degree + 1) * h; 
                 for (int j = 0; j < length; ++j)
                 {
+                    // Skip assignment if this source/recv has already been assigned a grid number
                     if (grid_number[j] != -1) continue;
                     _prec z = input->z[indices[j]];
                     global_to_local(&zloc, &grid_number[j], z - hw, h, nz, num_grids, is_topo); 
-                    printf("zloc = %g, z = %g grid = %d \n", zloc, z - hw, grid_number[j]);
 
                 }
 
@@ -119,52 +113,6 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
         }
 
         free(nz);
-
-        //for (int i = 0; i < num_grids; ++i)
-        //{
-        //        prec *z1 = malloc(sizeof z1 * grids[i].z.size.z);
-        //        grid1_t z_grid = grid_grid1_z(grids[i].z);
-        //        grid_fill1(z1, z_grid, 0);
-
-        //        upper = lower;
-        //        lower = lower - z1[z_grid.end];
-        //
- 
-        //        _prec h = z_grid.gridspacing;
-        //        // Half-width of the source stencil
-        //        double half_width = (input->degree + 1) / 2; 
-
-        //        for (int j = 0; j < length; ++j)
-        //        {
-        //                _prec z = input->z[indices[j]];
-        //                // Take into account that topography can yield positive
-        //                // z-values
-        //                if (input->type[indices[j]] == INPUT_SURFACE_COORD)
-        //                {
-        //                        grid_number[j] = 0;
-        //                        continue;
-        //                }
-        //                else if (z > 0)
-        //                {
-        //                        grid_number[j] = 0;
-        //                }
-        //                else if ( (z - half_width * h) > lower && z <= upper)
-        //                {
-        //                        grid_number[j] = i;
-        //                }
-        //        }
-
-        //        if (i + 1 != num_grids)
-        //        {
-        //                overlap = h * OVERLAP;
-        //        }
-        //        else
-        //        {
-        //                overlap = 0.0f;
-        //        }
-        //        lower = lower + overlap;
-        //        free(z1);
-        //}
 
         for (int j = 0; j < length; ++j)
         {
@@ -194,6 +142,8 @@ void source_init_common(source_t *src, const char *filename,
         _prec *y = malloc(sizeof y * input->length);
         _prec *z = malloc(sizeof z * input->length);
 
+        int is_topo = f == NULL ? 0 : 1;
+
         {
                 int *grid_number = malloc(sizeof grid_number * input->length);
                 int *indices = malloc(sizeof indices * input->length);
@@ -204,7 +154,7 @@ void source_init_common(source_t *src, const char *filename,
                 }
 
                 source_find_grid_number(input, grids, grid_number, indices,
-                                        input->length, ngrids);
+                                        input->length, ngrids, is_topo);
 
                 for (size_t i = 0; i < input->length; ++i)
                 {
@@ -224,7 +174,6 @@ void source_init_common(source_t *src, const char *filename,
                 {
                         size_t num_sources_in_block = 0;
                         grid3_t grid = grids_select(grid_type, &grids[j]);
-                        grid1_t grid_x = grid_grid1_x(grid);
                         
                         AWPCHK(dist_indices(&src->indices, &num_sources_in_block, x, y,
                                             input->length, grid, grid_number, j,
@@ -264,7 +213,7 @@ void source_init_common(source_t *src, const char *filename,
         // identify grid number for each local source
         int *grid_number = malloc(sizeof grid_number * src->length);
         source_find_grid_number(input, grids, grid_number, src->indices,
-                                src->length, ngrids);
+                                src->length, ngrids, is_topo);
 
         // count number of local sources for each grid
         for (size_t i = 0; i < src->length; ++i)
@@ -389,8 +338,6 @@ void source_init_common(source_t *src, const char *filename,
                                         // curvilinear grid transform
 
                                         double h = grid.gridspacing;
-                                        //fprintf(stderr, "block_height + src = %g, overlap = %g \n",
-                                        //        block_height + src->z[j][k], h * OVERLAP);
                                         double H = block_height - h * OVERLAP;
                                         double Hf = f_interp[k] * H;
                                         double x = (H + src->z[j][k]) / Hf;
