@@ -103,6 +103,12 @@ void source_find_grid_number(const input_t *input, const grids_t *grids, int *gr
                 {
                     // Skip assignment if this source/recv has already been assigned a grid number
                     if (grid_number[j] != -1) continue;
+
+                    // Surface coordinates map to the top block (block 0)
+                    if (input->type[indices[j]] == INPUT_SURFACE_COORD) {
+                        grid_number[j] = 0; 
+                        continue;
+                    }
                     _prec z = input->z[indices[j]];
                     global_to_local(&zloc, &grid_number[j], z - hw, h, nz, num_grids, is_topo); 
 
