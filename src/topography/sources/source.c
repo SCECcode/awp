@@ -82,53 +82,43 @@ void source_finalize(source_t *src)
 void source_find_grid_number(const input_t *input, const grids_t *grids, int *grid_number,
                              const int *indices,
                              const int length,
-                             const int num_grids)
+                             const int num_grids,
+                             const int is_topo)
 {
-        _prec lower = 0;
-        _prec upper = 0;
-        _prec overlap = 0;
-        for (int i = 0; i < num_grids; ++i)
-        {
-                prec *z1 = malloc(sizeof z1 * grids[i].z.size.z);
+        int *nz = malloc(sizeof nz * num_grids);
+        for (int i = 0; i < num_grids; ++i) {
+            nz[i] = grids[i].z.size.z;
+                for (int j = 0; j < length; ++j)
+                    grid_number[j] = -1;
+        }
+
+        for (int i = 0; i < num_grids; ++i) {
+                float *z1 = malloc(sizeof z1 * nz[i]);
                 grid1_t z_grid = grid_grid1_z(grids[i].z);
                 grid_fill1(z1, z_grid, 0);
-
-                upper = lower;
-                lower = lower - z1[z_grid.end];
- 
                 _prec h = z_grid.gridspacing;
-
+                _prec zloc = 0.0;
+                _prec hw = 0.5 * (input->degree + 1) * h; 
                 for (int j = 0; j < length; ++j)
                 {
-                        _prec z = input->z[indices[j]];
-                        // Take into account that topography can yield positive
-                        // z-values
-                        if (input->type[indices[j]] == INPUT_SURFACE_COORD)
-                        {
-                                grid_number[j] = 0;
-                                continue;
-                        }
-                        else if (z > 0)
-                        {
-                                grid_number[j] = 0;
-                        }
-                        else if (z > lower && z <= upper - overlap)
-                        {
-                                grid_number[j] = i;
-                        }
+                    // Skip assignment if this source/recv has already been assigned a grid number
+                    if (grid_number[j] != -1) continue;
+
+                    // Surface coordinates map to the top block (block 0)
+                    if (input->type[indices[j]] == INPUT_SURFACE_COORD) {
+                        grid_number[j] = 0; 
+                        continue;
+                    }
+                    _prec z = input->z[indices[j]];
+                    global_to_local(&zloc, &grid_number[j], z - hw, h, nz, num_grids, is_topo); 
+
                 }
 
-                if (i + 1 != num_grids)
-                {
-                        overlap = h * OVERLAP;
-                }
-                else
-                {
-                        overlap = 0.0f;
-                }
-                lower = lower + overlap;
                 free(z1);
+
         }
+
+        free(nz);
 
         for (int j = 0; j < length; ++j)
         {
@@ -158,6 +148,8 @@ void source_init_common(source_t *src, const char *filename,
         _prec *y = malloc(sizeof y * input->length);
         _prec *z = malloc(sizeof z * input->length);
 
+        int is_topo = f == NULL ? 0 : 1;
+
         {
                 int *grid_number = malloc(sizeof grid_number * input->length);
                 int *indices = malloc(sizeof indices * input->length);
@@ -168,7 +160,7 @@ void source_init_common(source_t *src, const char *filename,
                 }
 
                 source_find_grid_number(input, grids, grid_number, indices,
-                                        input->length, ngrids);
+                                        input->length, ngrids, is_topo);
 
                 for (size_t i = 0; i < input->length; ++i)
                 {
@@ -188,7 +180,6 @@ void source_init_common(source_t *src, const char *filename,
                 {
                         size_t num_sources_in_block = 0;
                         grid3_t grid = grids_select(grid_type, &grids[j]);
-                        grid1_t grid_x = grid_grid1_x(grid);
                         
                         AWPCHK(dist_indices(&src->indices, &num_sources_in_block, x, y,
                                             input->length, grid, grid_number, j,
@@ -228,7 +219,7 @@ void source_init_common(source_t *src, const char *filename,
         // identify grid number for each local source
         int *grid_number = malloc(sizeof grid_number * src->length);
         source_find_grid_number(input, grids, grid_number, src->indices,
-                                src->length, ngrids);
+                                src->length, ngrids, is_topo);
 
         // count number of local sources for each grid
         for (size_t i = 0; i < src->length; ++i)
@@ -330,26 +321,29 @@ void source_init_common(source_t *src, const char *filename,
                                                     metric_grid, src->x[j], src->y[j],
                                                     src->lengths[j], input->degree);
 
+                        _prec h = grid.gridspacing;
+                        _prec hw = 0.5 * (input->degree + 1) * h; 
                         for (size_t k = 0; k < src->lengths[j]; ++k)
                         {
                                 switch (src->type[j][k])
                                 {
                                 // Map to parameter space
                                 case INPUT_VOLUME_COORD:
-                                    if (block_height + src->z[j][k] <
-                                        OVERLAP * grid.gridspacing) {
+                                    if (block_height + (src->z[j][k] - hw) <
+                                        overlap * h && grid_number[j] == 0) {
                                         fprintf(stderr,
                                                 "Source/Receiver cannot exist "
-                                                "in the overlap zone on the "
+                                                "at the first two grid points on the "
                                                 "fine grid, id = %ld \n", k);
+                                        fprintf(stderr, "z = %g \n", src->z[j][k]);
+                                        fprintf(stderr, "This is a bug, please report it.\n");
+                                        exit(-1);
                                     } else {
                                         // Source / receiver is in the top part
                                         // of the block that experiences the
                                         // curvilinear grid transform
 
                                         double h = grid.gridspacing;
-                                        //fprintf(stderr, "block_height + src = %g, overlap = %g \n",
-                                        //        block_height + src->z[j][k], h * OVERLAP);
                                         double H = block_height - h * OVERLAP;
                                         double Hf = f_interp[k] * H;
                                         double x = (H + src->z[j][k]) / Hf;

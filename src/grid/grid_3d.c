@@ -433,7 +433,7 @@ void global_to_local(_prec *zloc, int *block_index, const _prec z,
         hloc *= 3;
         bi = i;
 
-        // Check if the coordinate is in the overlap zone, if so, push it to the next grid
+        // Check if the coordinate touches the last two grid points, if so, push it to the next grid
         if (z0 > 0 && z0 < grid_overlap(hloc / 3) ) {
             continue;
         }
