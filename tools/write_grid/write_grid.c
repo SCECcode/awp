@@ -55,11 +55,9 @@ struct Mpi
   int coord[2];
   MPI_Comm MCW, MC1;
 };
-
 void mpi_init(struct Mpi *m, int argc, char **argv);
 void mpi_cart(struct Mpi *m, const int *size, const int *part);
 MPI_Datatype data_type(const struct Mpi *mpi, int nz);
-
 int main(int argc, char **argv)
 {
         struct Mpi m;
@@ -154,6 +152,7 @@ int main(int argc, char **argv)
                 }
         }
 
+        fflush(stdout);
 
         int size[3] = {nx, ny, nz};
         int part[2] = {px, py};
@@ -183,7 +182,6 @@ int main(int argc, char **argv)
         err |= topo_read_serial(input, m.rank, px, py, m.coord, m.nxt, m.nyt,
                                 alloc, &f);
 
-
         MPI_Datatype readtype = data_type(&m, nz);
         MPI_Datatype readtype_m = data_type(&m, mz);
         MPI_File     fh, fm, fp;
@@ -194,19 +192,20 @@ int main(int argc, char **argv)
         MPICHK(MPI_File_set_view(fh, 0, MPI_FLOAT, readtype, "native", 
                           MPI_INFO_NULL));
         
-
         int buffer_size = m.nxt * m.nyt * nvars;
-        float *buffer = (float*) calloc(buffer_size * nz, sizeof(float));
+        float *buffer = (float*) calloc(buffer_size, sizeof(float));
         float *prop = (float*) calloc(buffer_size * mz, sizeof(float));
         float *buffer_m = (float*) calloc(buffer_size * nz, sizeof(float));
 
         for (int j = 0; j < m.nyt; ++j) {
         for (int i = 0; i < m.nxt; ++i) {
-                buffer[0 + nvars * i + j * nvars * m.nxt] = i * h;
-                buffer[1 + nvars * i + j * nvars * m.nxt] = j * h;
+                buffer[0 + nvars * i + j * nvars * m.nxt] = (m.coord[0]*m.nxt + i) * h;
+                buffer[1 + nvars * i + j * nvars * m.nxt] = (m.coord[1]*m.nyt + j) * h;
+                //buffer[0 + nvars * i + j * nvars * m.nxt] = i * h;
+                //buffer[1 + nvars * i + j * nvars * m.nxt] = j * h;
         }
         }
-
+        
         if (mesh_out == 1) {
             MPICHK(MPI_File_open(m.MCW, mesh, MPI_MODE_WRONLY | MPI_MODE_CREATE,
                                 MPI_INFO_NULL, &fm));
@@ -223,6 +222,7 @@ int main(int argc, char **argv)
                 printf("%d) ERROR! MPI-IO reading property file set view: %s\n",
                             m.rank, mpiErrStr); 
             }
+
             err = MPI_File_read_all(fp, prop, buffer_size * mz, 
                             MPI_FLOAT, &filestatus);
             if (err != MPI_SUCCESS) {
@@ -231,6 +231,8 @@ int main(int argc, char **argv)
                             m.rank, mpiErrStr);
             }
         }
+
+
 
         int show_info = (int) (nz / 10);
         show_info = show_info == 0 ? 1 : show_info;
@@ -245,7 +247,6 @@ int main(int argc, char **argv)
             // If k > 0 and we need repeat (rpt == 1), 
             // we shift the domain up by 1
             k0 = k == 0 ? k : k - rpt;  
-
             // Define index that is kuniform = 0 at the start of the overlapping zone
             int kuniform = k - (nz - 1) + MAPPING_START_POINT;
             double rk;
@@ -258,6 +259,7 @@ int main(int argc, char **argv)
             MPI_Barrier(MPI_COMM_WORLD);
             for (int i = 0; i < m.nxt; ++i) {
                 for (int j = 0; j < m.nyt; ++j) {
+
                     size_t lmy = 4 + m.nyt + 2 * metrics_padding + 2 * align;
                     size_t local_pos = 2 + align + (j + metrics_padding) +
                                        (2 + i + metrics_padding) * lmy;
@@ -284,6 +286,7 @@ int main(int argc, char **argv)
                             MPI_Finalize();
                             return(-1);
                         }
+
                         size_t pos = nvars * (idx_z * m.nxt * m.nyt +
                                             j * m.nxt + i);
                         memcpy(buffer_m + nvars * (k * m.nxt * m.nyt +  

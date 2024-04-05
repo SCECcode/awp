@@ -24,6 +24,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 	     Grid3D tau, Grid3D weights,Grid1D coeff, 
 	     int nvar, _prec FP,  _prec FAC, _prec Q0, _prec EX, int nxt, int nyt, int nzt, int PX, int PY, int NX, int NY, 
              int NZ, int *coords, MPI_Comm MCW, int IDYNA, int NVE, int SoCalQ, char *INVEL, 
+            _prec qsi, _prec qpqsr, _prec maxvpvsr, _prec vmin, _prec vmax, _prec dmin, 
              _prec *vse, _prec *vpe, _prec *dde)
 {
   int i,j,k,err;
@@ -276,40 +277,83 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
         for(j=0;j<nyt;j++)
           for(k=0;k<nzt;k++)
           {
-	    //             tmpvs[i][j][k] = tmpvs[i][j][k]*(1+ ( log(w2/w0) )/(pi*tmpsq[i][j][k]) );
-            // tmpvp[i][j][k] = tmpvp[i][j][k]*(1+ ( log(w2/w0) )/(pi*tmppq[i][j][k]) );
-        //    tmpsq[i][j][k] = 10000.;
-        //    tmppq[i][j][k] = 10000.;
-        //      tmpsq[i][j][k] = 200;
-        //      tmppq[i][j][k] = 200;
-        //   if(tmpvs[i][j][k]>0.0){
-        //   if(tmpvs[i][j][k]<2500.0){
-        //      vpvs=tmpvp[i][j][k]/tmpvs[i][j][k];
-        //      tmpvs[i][j][k]=2500.0;
-        //      tmpvp[i][j][k]=tmpvs[i][j][k]*vpvs;
-        //      }
-        //      }
-             /*if(tmpvs[i][j][k]>0.0){
-             if(tmpvs[i][j][k]<800.0){
-                vpvs=tmpvp[i][j][k]/tmpvs[i][j][k];
-                tmpvs[i][j][k]=800.0;
-                tmpvp[i][j][k]=tmpvs[i][j][k]*vpvs;
-                }
-                }*/
-	    /*if(tmpvs[i][j][k]<333.33)
-	      {
-		//		tmpvs[i][j][k]=200.0;
-                //tmpvp[i][j][k]=600.0;
-		//                 tmpsq[i][j][k] = 20;                                                                                                                             
-                // tmppq[i][j][k] = 20;                                                                                                                             
-                tmpvp[i][j][k] = 1500.;
-                tmpvs[i][j][k] = 0.;
-                tmpdd[i][j][k] = 1025.;
-                tmpsq[i][j][k] = 50.;
-                tmppq[i][j][k] = 100.;
-	      }*/
-	    /*tmpsq[i][j][k] = 0.05  * tmpvs[i][j][k];
-	    tmppq[i][j][k] = 2.0   * tmpsq[i][j][k];*/
+
+
+    //for solid materials
+    if(tmpvs[i][j][k] > 1.f && tmpvp[i][j][k] > 1.f)
+    {
+        if(nvar == 3)
+        {
+            //assigning Q value
+            if(qsi <= 1.)
+            {
+            tmpsq[i][j][k]=tmpvs[i][j][k]*qsi;
+            }
+            else if(qsi > 1.)
+            {
+            tmpsq[i][j][k]=qsi;
+            }
+            tmppq[i][j][k]=tmpsq[i][j][k]*qpqsr;
+        }
+
+        //capping max vp/vs ratio
+        vpvs=tmpvp[i][j][k]/tmpvs[i][j][k];
+        if(vpvs > maxvpvsr)
+        {
+        tmpvs[i][j][k]=tmpvp[i][j][k]/maxvpvsr;
+        }
+
+        //constraining min vp/vs ratio if lower than 1.5 to avoid negative lambda
+        //Here vp/vs ratio will be set to 1.5
+        vpvs=tmpvp[i][j][k]/tmpvs[i][j][k];
+        if(vpvs <= 1.5)
+        {
+        tmpvs[i][j][k]=tmpvp[i][j][k]/1.5;
+        }
+
+        //capping vmin, vmax
+        if(tmpvs[i][j][k] < vmin)
+        {
+        vpvs=tmpvp[i][j][k]/tmpvs[i][j][k];
+        tmpvs[i][j][k]=vmin;
+        tmpvp[i][j][k]=tmpvs[i][j][k]*vpvs;
+        }
+
+        if(tmpvp[i][j][k]>vmax)
+        {
+        vpvs=tmpvp[i][j][k]/tmpvs[i][j][k];
+        tmpvp[i][j][k]=vmax;
+        tmpvs[i][j][k]=tmpvp[i][j][k]/vpvs;
+        }
+
+
+        //constrain minimum density 
+        if(tmpdd[i][j][k]<dmin) tmpdd[i][j][k]=dmin;
+
+    }
+
+
+
+    //special treatment for water
+    if (tmpvs[i][j][k] < 1.f && tmpvp[i][j][k] > 1.f)
+    {
+    tmpvs[i][j][k] = 0.00001;
+    tmpvp[i][j][k] = 1492.;
+    tmpdd[i][j][k] = 1050.;
+    tmpsq[i][j][k] = 25.;
+    tmppq[i][j][k] = 10000.;
+    }
+
+    //capping minimum Q value
+    if (tmppq[i][j][k] <= 25.)
+    {
+    tmppq[i][j][k] = 25.;
+    }
+    if (tmpsq[i][j][k] <= 25.)
+    {
+    tmpsq[i][j][k] = 25.;
+    }
+
 
 	    if(tmppq[i][j][k]>200.0)
 	      {
@@ -402,46 +446,12 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
             #endif
 	    // QF - end  
 
-            if (tmpvs[i][j][k] == 0.f) {
-                //tmpvs[i][j][k] = 1.000;
-                tmpsq[i][j][k] = 50.;
-                tmppq[i][j][k] = 100.;
-            }
-
              if (SoCalQ==1)
              {
                 vpvs=tmpvp[i][j][k]/tmpvs[i][j][k];
                 if (vpvs<1.45)  tmpvs[i][j][k]=tmpvp[i][j][k]/1.45;
              }
-             /*if(tmpvp[i][j][k]>9000.0){
-                tmpvs[i][j][k]=5196.0;
-                tmpvp[i][j][k]=9000.0;
-                }*/
 
-             /*if(tmpvp[i][j][k]>7600.0){
-	       tmpvs[i][j][k]=4387.0;
-	       tmpvp[i][j][k]=7600.0;
-             }*/
-           /*if(tmpvs[i][j][k]<500.0){
-	      tmpvs[i][j][k]=500.0;
-	      if (tmpvp[i][j][k] < 725.0) tmpvp[i][j][k] = 725.0;
-           }*/
-               //if(tmpdd[i][j][k]<1700.0) tmpdd[i][j][k]=1700.0;
-
-
-             //if(tmpvs[i][j][k]<400.0)
-             /*if(tmpvs[i][j][k]<200.0)
-             {
-                //tmpvs[i][j][k]=400.0;
-                //tmpvp[i][j][k]=1200.0;
-                tmpvs[i][j][k]=200.0;
-                tmpvp[i][j][k]=600.0;
-             }*/
-             /*if(tmpvp[i][j][k]>6500.0){
-                tmpvs[i][j][k]=3752.0;
-                tmpvp[i][j][k]=6500.0;
-             }*/
-//             if(tmpdd[i][j][k]<1700.0) tmpdd[i][j][k]=1700.0;   
              mu[i+2+ngsl][j+2+ngsl][(nzt+align-1) - k]  = 1./(tmpdd[i][j][k]*tmpvs[i][j][k]*tmpvs[i][j][k]);
              lam[i+2+ngsl][j+2+ngsl][(nzt+align-1) - k] = 1./(tmpdd[i][j][k]*(tmpvp[i][j][k]*tmpvp[i][j][k]
                                                                               -2.*tmpvs[i][j][k]*tmpvs[i][j][k]));

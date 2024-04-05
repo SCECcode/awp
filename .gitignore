@@ -2,6 +2,6 @@ build/*
 profile/*.[0-9]*
 profile/*/
 .*/*
-
+release*
 pmcl3d*
 !pmcl3d*h
