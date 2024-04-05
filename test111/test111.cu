@@ -45,6 +45,10 @@
 #ifndef USE_STRESS_MACRO_PLANES
 #define USE_STRESS_MACRO_PLANES 1
 #endif
+
+#ifndef USE_STRESS_CARTESIAN
+#define USE_STRESS_CARTESIAN 1
+#endif
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
@@ -52,11 +56,11 @@
 
 // Threads in x, y, z
 #ifndef STR_TX
-#define STR_TX 64
+#define STR_TX 32
 #endif
 
 #ifndef STR_TY
-#define STR_TY 8
+#define STR_TY 2
 #endif
 
 #ifndef STR_TZ
@@ -1780,6 +1784,7 @@ __global__ void chknan(const float *RSTRCT u1,
 #include "stress_macro_planes.cu"
 #include "stress_index.cu"
 #include "stress_index_unroll.cu"
+//#include "stress_cartesian.cu"
 
 #undef RSTRCT
 // *****************************************************************************
@@ -2338,6 +2343,7 @@ int main (int argc, char **argv) {
         dim3 blocks ((nz-4)/(threads.x)+1, 
                      (ny-1)/(threads.y)+1,
                      1);
+        cudaFuncSetCacheConfig(dtopo_str_111<STR_TX,STR_TY,STR_TZ>, cudaFuncCachePreferL1);
         dtopo_str_111<STR_TX, STR_TY, STR_TZ><<<blocks, threads>>>(
             s11, s22, s33, s12, s13, s23, r1, r2, r3, r4, r5, r6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
@@ -2595,6 +2601,8 @@ int main (int argc, char **argv) {
         dim3 blocks((nz - 4) / (na * threads.x) + 1,
                     (ny - 1) / (nb * threads.y) + 1,
                     (nx - 1) / (threads.z) + 1);
+
+        cudaFuncSetCacheConfig(dtopo_str_111_index_unroll<STRIU_TX,STRIU_TY,STRIU_TZ, na, nb>, cudaFuncCachePreferL1);
         dtopo_str_111_index_unroll<STRIU_TX, STRIU_TY, STRIU_TZ, na, nb><<<blocks, threads>>>(
             t11, t22, t33, t12, t13, t23, p1, p2, p3, p4, p5, p6, u1, u2, u3, f,
             f1_1, f1_2, f1_c, f2_1, f2_2, f2_c, f_1, f_2, f_c, g, g3, g3_c, g_c,
@@ -2650,6 +2658,7 @@ int main (int argc, char **argv) {
         }
 }
 #endif
+
 
 
   }

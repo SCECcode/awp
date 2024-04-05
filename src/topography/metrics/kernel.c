@@ -1,14 +1,18 @@
 #include <topography/metrics/kernel.h>
+#
+// This parameter pads the compute region. Its needed for the computation of
+// derivative and interpolation stencils. Do not change its value.
+#define padding 8
 
 void metrics_f_interp_1_111(float *df1, const float *f, const int nx, const int ny, const int nz)
 {
      const float phy[4] = {-0.0625000000000000, 0.5625000000000000, 0.5625000000000000, -0.0625000000000000};
      for (int k = 0; k < 1; ++k) {
-         for (int j = 0; j < 2*ngsl + ny - 4; ++j) {
-             for (int i = 0; i < 2*ngsl + nx - 4; ++i) {
-                  #define _f(i,j) f[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  #define _df1(i,j) df1[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  _df1(-ngsl + i + 2,-ngsl + j + 2) = phy[0]*_f(-ngsl + i + 2,-ngsl + j) + phy[1]*_f(-ngsl + i + 2,-ngsl + j + 1) + phy[2]*_f(-ngsl + i + 2,-ngsl + j + 2) + phy[3]*_f(-ngsl + i + 2,-ngsl + j + 3);
+         for (int j = 0; j < 2*padding + ny - 4; ++j) {
+             for (int i = 0; i < 2*padding + nx - 4; ++i) {
+                  #define _f(i,j) f[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  #define _df1(i,j) df1[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  _df1(-padding + i + 2,-padding + j + 2) = phy[0]*_f(-padding + i + 2,-padding + j) + phy[1]*_f(-padding + i + 2,-padding + j + 1) + phy[2]*_f(-padding + i + 2,-padding + j + 2) + phy[3]*_f(-padding + i + 2,-padding + j + 3);
                   #undef _f
                   #undef _df1
                   
@@ -22,11 +26,11 @@ void metrics_f_interp_2_111(float *df1, const float *f, const int nx, const int 
 {
      const float px[4] = {-0.0625000000000000, 0.5625000000000000, 0.5625000000000000, -0.0625000000000000};
      for (int k = 0; k < 1; ++k) {
-         for (int j = 0; j < 2*ngsl + ny - 4; ++j) {
-             for (int i = 0; i < 2*ngsl + nx - 4; ++i) {
-                  #define _f(i,j) f[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  #define _df1(i,j) df1[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  _df1(-ngsl + i + 2,-ngsl + j + 2) = px[0]*_f(-ngsl + i + 1,-ngsl + j + 2) + px[1]*_f(-ngsl + i + 2,-ngsl + j + 2) + px[2]*_f(-ngsl + i + 3,-ngsl + j + 2) + px[3]*_f(-ngsl + i + 4,-ngsl + j + 2);
+         for (int j = 0; j < 2*padding + ny - 4; ++j) {
+             for (int i = 0; i < 2*padding + nx - 4; ++i) {
+                  #define _f(i,j) f[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  #define _df1(i,j) df1[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  _df1(-padding + i + 2,-padding + j + 2) = px[0]*_f(-padding + i + 1,-padding + j + 2) + px[1]*_f(-padding + i + 2,-padding + j + 2) + px[2]*_f(-padding + i + 3,-padding + j + 2) + px[3]*_f(-padding + i + 4,-padding + j + 2);
                   #undef _f
                   #undef _df1
                   
@@ -41,11 +45,11 @@ void metrics_f_interp_c_111(float *df1, const float *f, const int nx, const int 
      const float phy[4] = {-0.0625000000000000, 0.5625000000000000, 0.5625000000000000, -0.0625000000000000};
      const float px[4] = {-0.0625000000000000, 0.5625000000000000, 0.5625000000000000, -0.0625000000000000};
      for (int k = 0; k < 1; ++k) {
-         for (int j = 0; j < 2*ngsl + ny - 4; ++j) {
-             for (int i = 0; i < 2*ngsl + nx - 4; ++i) {
-                  #define _f(i,j) f[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  #define _df1(i,j) df1[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  _df1(-ngsl + i + 2,-ngsl + j + 2) = phy[0]*(px[0]*_f(-ngsl + i + 1,-ngsl + j) + px[1]*_f(-ngsl + i + 2,-ngsl + j) + px[2]*_f(-ngsl + i + 3,-ngsl + j) + px[3]*_f(-ngsl + i + 4,-ngsl + j)) + phy[1]*(px[0]*_f(-ngsl + i + 1,-ngsl + j + 1) + px[1]*_f(-ngsl + i + 2,-ngsl + j + 1) + px[2]*_f(-ngsl + i + 3,-ngsl + j + 1) + px[3]*_f(-ngsl + i + 4,-ngsl + j + 1)) + phy[2]*(px[0]*_f(-ngsl + i + 1,-ngsl + j + 2) + px[1]*_f(-ngsl + i + 2,-ngsl + j + 2) + px[2]*_f(-ngsl + i + 3,-ngsl + j + 2) + px[3]*_f(-ngsl + i + 4,-ngsl + j + 2)) + phy[3]*(px[0]*_f(-ngsl + i + 1,-ngsl + j + 3) + px[1]*_f(-ngsl + i + 2,-ngsl + j + 3) + px[2]*_f(-ngsl + i + 3,-ngsl + j + 3) + px[3]*_f(-ngsl + i + 4,-ngsl + j + 3));
+         for (int j = 0; j < 2*padding + ny - 4; ++j) {
+             for (int i = 0; i < 2*padding + nx - 4; ++i) {
+                  #define _f(i,j) f[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  #define _df1(i,j) df1[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  _df1(-padding + i + 2,-padding + j + 2) = phy[0]*(px[0]*_f(-padding + i + 1,-padding + j) + px[1]*_f(-padding + i + 2,-padding + j) + px[2]*_f(-padding + i + 3,-padding + j) + px[3]*_f(-padding + i + 4,-padding + j)) + phy[1]*(px[0]*_f(-padding + i + 1,-padding + j + 1) + px[1]*_f(-padding + i + 2,-padding + j + 1) + px[2]*_f(-padding + i + 3,-padding + j + 1) + px[3]*_f(-padding + i + 4,-padding + j + 1)) + phy[2]*(px[0]*_f(-padding + i + 1,-padding + j + 2) + px[1]*_f(-padding + i + 2,-padding + j + 2) + px[2]*_f(-padding + i + 3,-padding + j + 2) + px[3]*_f(-padding + i + 4,-padding + j + 2)) + phy[3]*(px[0]*_f(-padding + i + 1,-padding + j + 3) + px[1]*_f(-padding + i + 2,-padding + j + 3) + px[2]*_f(-padding + i + 3,-padding + j + 3) + px[3]*_f(-padding + i + 4,-padding + j + 3));
                   #undef _f
                   #undef _df1
                   
@@ -59,11 +63,11 @@ void metrics_f_diff_1_1_111(float *df1, const float *f, const float hi, const in
 {
      const float dhx[4] = {0.0416666666666667, -1.1250000000000000, 1.1250000000000000, -0.0416666666666667};
      for (int k = 0; k < 1; ++k) {
-         for (int j = 0; j < 2*ngsl + ny - 4; ++j) {
-             for (int i = 0; i < 2*ngsl + nx - 4; ++i) {
-                  #define _f(i,j) f[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  #define _df1(i,j) df1[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  _df1(-ngsl + i + 2,-ngsl + j + 2) = hi*(dhx[0]*_f(-ngsl + i,-ngsl + j + 2) + dhx[1]*_f(-ngsl + i + 1,-ngsl + j + 2) + dhx[2]*_f(-ngsl + i + 2,-ngsl + j + 2) + dhx[3]*_f(-ngsl + i + 3,-ngsl + j + 2));
+         for (int j = 0; j < 2*padding + ny - 4; ++j) {
+             for (int i = 0; i < 2*padding + nx - 4; ++i) {
+                  #define _f(i,j) f[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  #define _df1(i,j) df1[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  _df1(-padding + i + 2,-padding + j + 2) = hi*(dhx[0]*_f(-padding + i,-padding + j + 2) + dhx[1]*_f(-padding + i + 1,-padding + j + 2) + dhx[2]*_f(-padding + i + 2,-padding + j + 2) + dhx[3]*_f(-padding + i + 3,-padding + j + 2));
                   #undef _f
                   #undef _df1
                   
@@ -77,11 +81,11 @@ void metrics_f_diff_1_2_111(float *df1, const float *f, const float hi, const in
 {
      const float dx[4] = {0.0416666666666667, -1.1250000000000000, 1.1250000000000000, -0.0416666666666667};
      for (int k = 0; k < 1; ++k) {
-         for (int j = 0; j < 2*ngsl + ny - 4; ++j) {
-             for (int i = 0; i < 2*ngsl + nx - 4; ++i) {
-                  #define _f(i,j) f[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  #define _df1(i,j) df1[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  _df1(-ngsl + i + 2,-ngsl + j + 2) = hi*(dx[0]*_f(-ngsl + i + 1,-ngsl + j + 2) + dx[1]*_f(-ngsl + i + 2,-ngsl + j + 2) + dx[2]*_f(-ngsl + i + 3,-ngsl + j + 2) + dx[3]*_f(-ngsl + i + 4,-ngsl + j + 2));
+         for (int j = 0; j < 2*padding + ny - 4; ++j) {
+             for (int i = 0; i < 2*padding + nx - 4; ++i) {
+                  #define _f(i,j) f[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  #define _df1(i,j) df1[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  _df1(-padding + i + 2,-padding + j + 2) = hi*(dx[0]*_f(-padding + i + 1,-padding + j + 2) + dx[1]*_f(-padding + i + 2,-padding + j + 2) + dx[2]*_f(-padding + i + 3,-padding + j + 2) + dx[3]*_f(-padding + i + 4,-padding + j + 2));
                   #undef _f
                   #undef _df1
                   
@@ -95,11 +99,11 @@ void metrics_f_diff_2_1_111(float *df1, const float *f, const float hi, const in
 {
      const float dhy[4] = {0.0416666666666667, -1.1250000000000000, 1.1250000000000000, -0.0416666666666667};
      for (int k = 0; k < 1; ++k) {
-         for (int j = 0; j < 2*ngsl + ny - 4; ++j) {
-             for (int i = 0; i < 2*ngsl + nx - 4; ++i) {
-                  #define _f(i,j) f[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  #define _df1(i,j) df1[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  _df1(-ngsl + i + 2,-ngsl + j + 2) = hi*(dhy[0]*_f(-ngsl + i + 2,-ngsl + j) + dhy[1]*_f(-ngsl + i + 2,-ngsl + j + 1) + dhy[2]*_f(-ngsl + i + 2,-ngsl + j + 2) + dhy[3]*_f(-ngsl + i + 2,-ngsl + j + 3));
+         for (int j = 0; j < 2*padding + ny - 4; ++j) {
+             for (int i = 0; i < 2*padding + nx - 4; ++i) {
+                  #define _f(i,j) f[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  #define _df1(i,j) df1[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  _df1(-padding + i + 2,-padding + j + 2) = hi*(dhy[0]*_f(-padding + i + 2,-padding + j) + dhy[1]*_f(-padding + i + 2,-padding + j + 1) + dhy[2]*_f(-padding + i + 2,-padding + j + 2) + dhy[3]*_f(-padding + i + 2,-padding + j + 3));
                   #undef _f
                   #undef _df1
                   
@@ -113,11 +117,11 @@ void metrics_f_diff_2_2_111(float *df1, const float *f, const float hi, const in
 {
      const float dy[4] = {0.0416666666666667, -1.1250000000000000, 1.1250000000000000, -0.0416666666666667};
      for (int k = 0; k < 1; ++k) {
-         for (int j = 0; j < 2*ngsl + ny - 4; ++j) {
-             for (int i = 0; i < 2*ngsl + nx - 4; ++i) {
-                  #define _f(i,j) f[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  #define _df1(i,j) df1[(j) + align + ngsl + ((i) + ngsl + 2)*(2*align + 2*ngsl + ny + 4) + 2]
-                  _df1(-ngsl + i + 2,-ngsl + j + 2) = hi*(dy[0]*_f(-ngsl + i + 2,-ngsl + j + 1) + dy[1]*_f(-ngsl + i + 2,-ngsl + j + 2) + dy[2]*_f(-ngsl + i + 2,-ngsl + j + 3) + dy[3]*_f(-ngsl + i + 2,-ngsl + j + 4));
+         for (int j = 0; j < 2*padding + ny - 4; ++j) {
+             for (int i = 0; i < 2*padding + nx - 4; ++i) {
+                  #define _f(i,j) f[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  #define _df1(i,j) df1[(j) + align + padding + ((i) + padding + 2)*(2*align + 2*padding + ny + 4) + 2]
+                  _df1(-padding + i + 2,-padding + j + 2) = hi*(dy[0]*_f(-padding + i + 2,-padding + j + 1) + dy[1]*_f(-padding + i + 2,-padding + j + 2) + dy[2]*_f(-padding + i + 2,-padding + j + 3) + dy[3]*_f(-padding + i + 2,-padding + j + 4));
                   #undef _f
                   #undef _df1
                   
@@ -289,4 +293,4 @@ void metrics_g_diff_c_112(float *g3, const float *g, const float hi, const int n
      
 }
 
-
+#undef padding

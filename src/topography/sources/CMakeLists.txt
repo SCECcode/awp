@@ -4,7 +4,7 @@ add_library(topography_sources
 
 target_include_directories(topography_sources
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
-target_link_libraries(topography_sources readers buffers mpi metrics)
+target_link_libraries(topography_sources readers buffers mpi metrics mapping)

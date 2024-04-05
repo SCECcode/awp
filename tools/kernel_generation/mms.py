@@ -8,16 +8,27 @@ k = sp.symbols('k')
 x = sp.symbols('x y z')
 t = sp.symbols('t')
 
-vx = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2]) 
-vy = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2]) 
-vz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2])
+# shifts to remove exact solutions from axis of symmetry
+phi_1 = 1.2
+phi_2 = 0.25
+phi_3 = 0.4
+phi_4 = 0.7
+phi_5 = 0.3
+phi_6 = 0.12
+phi_7 = 0.02
+phi_8 = 0.47
+phi_9 = 0.33
 
-sxx = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2])   
-syy = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2])   
-szz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2])   
-sxy = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2])   
-sxz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2])   
-syz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2])   
+vx = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_1) / k 
+vy = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_2) / k 
+vz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_3) / k
+
+sxx = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_4) / k   
+syy = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_5) / k   
+szz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_6) / k   
+sxy = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_7) / k   
+sxz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_8) / k   
+syz = sp.sin(k*x[0])*sp.sin(k*x[1])*sp.sin(k*x[2] + phi_9) / k   
                       
 v = [vx, vy, vz]
 s = sp.zeros(3)
@@ -36,7 +47,7 @@ def mms(state, field, value):
           "const _prec *properties)"%(state, field))
     print("{")
     print("     _prec k = properties[0];");
-    print("     return %s;" % value)
+    print("     return %s;" % sp.ccode(value))
     print("}")
     print("")
 

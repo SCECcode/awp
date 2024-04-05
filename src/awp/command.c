@@ -55,6 +55,16 @@
 *  RECVFILE     <STRING>                      Receiver output file
 *  FORCEFILE    <STRING>                      Boundary point force input file
 *  SGTFILE      <STRING>                      Strain Green's tensor output file
+*  MMSFILE      <STRING>                      MMS input file
+*  DHB          <FLOAT>                       Grid spacing at the bottom of the curvilinear block  
+*  DHT          <FLOAT>                       Grid spacing at the top of the curvilinear block  
+*  ENERGYFILE  <STRING>                       File to write energy information at each time step to  
+*  QSI          <FLOAT>                         Qs setting, when QSI>=1, Qs is constant with Qs=QSI, when QSI<1, Qs depends on local Vs where Qs=QSI*Vs
+*  QPQSR        <FLOAT>                         Qp/Qs ratio
+*  MAXVPVSR     <FLOAT>                         Cap of Vp/Vs ratio
+*  VMIN         <FLOAT>                         Minimum allowable Vs
+*  VMAX         <FLOAT>                         Maximum allowable Vp
+*  DMIN         <FLOAT>                         Minimum allowable density
 ****************************************************************************************************************
 */
 
@@ -134,6 +144,18 @@ const char def_SOURCEFILE[IN_FILE_LEN] = "";
 const char def_RECVFILE[IN_FILE_LEN] = "";
 const char def_FORCEFILE[IN_FILE_LEN] = "";
 const char def_SGTFILE[IN_FILE_LEN] = "";
+const char def_MMSFILE[IN_FILE_LEN] = "";
+const char def_ENERGYFILE[IN_FILE_LEN] = "";
+
+const _prec def_QSI = 0.1;
+const _prec def_QPQSR = 2.;
+const _prec def_MAXVPVSR = 10.;
+const _prec def_VMIN = 0.;
+const _prec def_VMAX = 9900.;
+const _prec def_DMIN = 1500.;
+
+const _prec def_DHB = -1.0;
+const _prec def_DHT = -1.0;
 
 void parsemultiple(char *optarg, int *val);
 
@@ -161,7 +183,9 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              int *USETOPO, char *SOURCEFILE,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE,
              char *FORCEFILE, int *USEFORCEFILE,
-             char *SGTFILE, int *USESGTFILE)
+             char *SGTFILE, int *USESGTFILE, char *MMSFILE, int *USEMMSFILE, float *DHB, float *DHT,
+             char *ENERGYFILE, int *USEENERGYFILE, 
+             _prec *QSI, _prec *QPQSR, _prec *MAXVPVSR, _prec *VMIN, _prec *VMAX, _prec *DMIN)
 {
         int p;
 
@@ -222,12 +246,21 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
         strcpy(INTOPO, def_INTOPO);
         strcpy(SOURCEFILE, def_SOURCEFILE);
         strcpy(RECVFILE, def_RECVFILE);
+        strcpy(MMSFILE, def_MMSFILE);
+
+
+        *QSI = def_QSI;
+        *QPQSR = def_QPQSR;
+        *MAXVPVSR = def_MAXVPVSR;
+        *VMIN = def_VMIN;
+        *VMAX = def_VMAX;
+        *DMIN = def_DMIN;
 
 
         extern char *optarg;
         static const char *optstring =
             "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:G:z:i:l:h:30:p:s:r:W:1:2:"
-            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:9:o:c:";
+            "3:11:12:13:21:22:23:100:101:102:103:106:107:109:9:14:o:c:15:16:17:40:41:42:43:44:45:";
         static struct option long_options[] = {
             {"TMAX", required_argument, NULL, 'T'},
             {"DH", required_argument, NULL, 'H'},
@@ -278,6 +311,16 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
             {"RECVFILE", required_argument, NULL, 109},
             {"FORCEFILE", required_argument, NULL, 9},
             {"SGTFILE", required_argument, NULL, 10},
+            {"MMSFILE", required_argument, NULL, 14},
+            {"DHB", required_argument, NULL, 15},
+            {"DHT", required_argument, NULL, 16},
+            {"ENERGYFILE", required_argument, NULL, 17},
+            {"QSI", required_argument, NULL, 40},
+            {"QPQSR", required_argument, NULL, 41},
+            {"MAXVPVSR", required_argument, NULL, 42},
+            {"VMIN", required_argument, NULL, 43},
+            {"VMAX", required_argument, NULL, 44},
+            {"DMIN", required_argument, NULL, 45},
         };
 
 
@@ -446,6 +489,38 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                 strcpy(SGTFILE, optarg);
                                 *USESGTFILE = 1;
                                 break;
+                        case 14:
+                                strcpy(MMSFILE, optarg);
+                                *USEMMSFILE = 1;
+                                break;
+                        case 15:
+                                *DHB = atof(optarg);
+                                break;
+                        case 16:
+                                *DHT = atof(optarg);
+                                break;
+                        case 17:
+                                strcpy(ENERGYFILE, optarg);
+                                *USEENERGYFILE = 1;
+                                break;
+                        case 40:
+                                *QSI = atof(optarg);
+                                break;
+                        case 41:
+                                *QPQSR = atof(optarg);
+                                break;
+                        case 42:
+                                *MAXVPVSR = atof(optarg);
+                                break;
+                        case 43:
+                                *VMIN = atof(optarg);
+                                break;
+                        case 44:
+                                *VMAX = atof(optarg);
+                                break;
+                        case 45:
+                                *DMIN = atof(optarg);
+                                break;
                         default:
                                 printf(
                                     "Usage: %s \nOptions:\n\t[(-T | --TMAX) "
@@ -520,6 +595,15 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
                                 printf(
                                     "\n\t[(-10 | --SGTFILE) <SGT "
                                     "file>]\n\n");
+                                printf(
+                                    "\n\t[(-14 | --MMSFILE) <MMS "
+                                    "file>]\n\n");
+                                printf(
+                                    "\n\t[(-15 | --DHB) <Bottom grid spacing> ]\n\n");
+                                printf(
+                                    "\n\t[(-16 | --DHT) <Top grid spacing> ]\n\n");
+                                printf(
+                                    "\n\t[(-17 | --ENERGYFILE) <File to output energy information to> ]\n\n");
                                 exit(-1);
                 }
         }

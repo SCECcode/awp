@@ -1,4 +1,4 @@
-#define CURVILINEAR
+//#define CURVILINEAR
 #define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_1(i, j) f_1[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
 #define _f_2(i, j) f_2[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
@@ -676,3 +676,4 @@ __global__ void dtopo_str_111(_prec*  RSTRCT xx, _prec*  RSTRCT yy, _prec*  RSTR
 #undef _g_c
 #undef _g
 #undef _g3
+

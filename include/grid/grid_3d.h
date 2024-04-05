@@ -131,6 +131,11 @@ grid3_t grid_init_metric_grid(const int3_t size, const int3_t shift,
                          const int3_t boundary2,
                          const _prec gridspacing);
 
+grid3_t grid_init_full_grid(const int3_t size, const int3_t shift,
+                         const int3_t coordinate, const int3_t boundary1,
+                         const int3_t boundary2,
+                         const _prec gridspacing);
+
 /* Initialize grid
  * 
  * Input arguments:
@@ -184,11 +189,29 @@ grid1_t grid_grid1_z(const grid3_t grid);
  *      out: Array to fill
  *      n: Array size. Must be greater than the grid size.
  *      grid: 1D grid data structure.
+ *      isxdir: Specify to `1` if the grid should be filled in the x-direction.
+ *          Adjusts for the particular internal coordinate system used by AWP, i.e., fields stored
+ *          in the (-,+,+) octant
  *
  * Return value:
  *      Number of elements written.
  */ 
-int grid_fill1(prec *out, const grid1_t grid);
+int grid_fill1(prec *out, const grid1_t grid, const int isxdir);
+/*
+ *
+ * Fill the array `out` with the grid point values in the y-direction for a given DM block
+ * ('blocknum') in one dimension.
+ *
+ * Arguments:
+ *      out: Array to fill
+ *      n: Array size. Must be greater than the grid size.
+ *      grid: 1D grid data structure.
+ *      blocknum: Block number. Must be a non-negative integer.
+ *
+ * Return value:
+ *      Number of elements written.
+ */ 
+int grid_fill_y_dm(prec *out, const grid1_t grid, const int blocknum);
 
 /*
  * Check if a query point is in bounds or not. The query point is in bounds if
@@ -204,8 +227,8 @@ int grid_fill1(prec *out, const grid1_t grid);
  */
 int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid);
 
-int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid);
-
+int grid_in_bounds_sgt(const _prec *x, const _prec q, const grid1_t grid);
+int grid_in_bounds_moment_tensor(const _prec *x, const _prec q, const grid1_t grid);
 
 /*
  * Fill the array `out` with the grid point values in the x-direction of a grid
@@ -307,6 +330,13 @@ int grid_pow3(_prec *out, const _prec p, const grid3_t grid);
  *
  */
 double grid_reduce3(const _prec *in, const grid3_t grid);
+
+_prec grid_overlap(const _prec h);
+_prec grid_height(const int nz, const _prec h, const int istopo);
+
+void global_to_local(_prec *zloc, int *block_index, const _prec z,
+                     const _prec h, const int *nz, const int num_grids,
+                     const int istopo);
 
 
 #ifdef __cplusplus

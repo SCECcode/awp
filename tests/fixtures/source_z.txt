@@ -1,0 +1,14 @@
+2.1.0
+file=source
+length=3 
+steps=600
+stride=1
+degree=0
+gpu_buffer_size=2
+cpu_buffer_size=3
+num_writes=2
+
+coordinates
+0 9.5 8.5 -2.0
+0 10.5 9.5 -11.0
+0 13.5 7.5 -34.0

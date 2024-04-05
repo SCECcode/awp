@@ -16,8 +16,10 @@ void receiver_init_indexed(recv_t *recv, const input_t *input,
 
 recv_t receiver_init(const char *filename, 
                      const enum grid_types grid_type,
+                     const enum source_type st,
                      const input_t *input,
                      const grids_t *grids, 
+                     const struct mapping *map, 
                      const int ngrids,
                      const f_grid_t *f, 
                      const int rank,
@@ -27,8 +29,8 @@ recv_t receiver_init(const char *filename,
 
         strcpy(recv.filename, filename);
 
-        source_init_common(&recv, filename, grid_type, input, grids, ngrids, f,
-                           rank, comm);
+        source_init_common(&recv, filename, grid_type, input, grids, map, ngrids, f,
+                           rank, comm, st);
 
         if (!recv.use) {
                 return recv;

@@ -84,7 +84,7 @@ int test_argnearest(void)
         // Grid with closed right boundary 
         grid1_t grid = {.id = 0, .shift = 0, .size = n, .gridspacing = 1, 
                         .boundary1 = 0, .boundary2 = 1};
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         test_t test = test_init(" * grid_argnearest:bounds_except", 0, 0);
         int nearest = -1;
         err |= s_no_except(interp_grid_argnearest(&nearest, x, -1, grid) == 
@@ -130,8 +130,7 @@ int test_argnearest_range(void)
         xs = 4.3;
 
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         err |= s_assert(nearest == 4);
         err |= s_assert(lower == 4);
         err |= s_assert(upper == 5);
@@ -141,8 +140,7 @@ int test_argnearest_range(void)
         lower = 1;
         upper = 1;
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
 
         err |= test_finalize(&test, err);
         err |= s_assert(nearest == 4);
@@ -158,8 +156,7 @@ int test_argnearest_range(void)
         int nearest = -1, lower = 2, upper = 2;
         xs = 0.1;
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         err |= s_assert(nearest == 0);
         err |= s_assert(lower == 0);
         err |= s_assert(upper == 5);
@@ -175,8 +172,7 @@ int test_argnearest_range(void)
         int nearest = -1, lower = 2, upper = 2;
         xs = 8.9;
         err |= interp_argnearest(&nearest, x, n, xs);
-        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n,
-                                       xs);
+        err |= interp_argnearest_range(&lower, &upper, lower, upper, nearest, n);
         err |= s_assert(nearest == 9);
         err |= s_assert(lower == 5);
         err |= s_assert(upper == 10);
@@ -303,7 +299,7 @@ int test_lagrange3(void)
         prec *x3, *y3, *z3, *fcn3;
 
         int gsize[3] = {n, n, n};
-        int3_t shift = grid_yz();
+        int3_t shift = {0, 0, 0};
         int3_t coord = {.x = 0, .y = 0, .z = 0};
         int3_t asize = {gsize[0], gsize[1], gsize[2]};
         int3_t bnd1 = {1, 1, 1};
@@ -328,11 +324,11 @@ int test_lagrange3(void)
         grid_fill_z(z1, grid);
 
         int m = 4;
-        prec qx[4] = {0.0, 0.2, 0.4, 0.9};
+        prec qx[4] = {0.0, 0.4, 0.6, 0.9};
         prec qy[4] = {0.0, 0.7, 0.4, 0.7};
         prec qz[4] = {0.0, 0.2, 0.3, 0.8};
 
-        prec ax[4] = {0.0, 0.2, 0.4, 0.9};
+        prec ax[4] = {0.0, 0.4, 0.6, 0.9};
         prec ay[4] = {0.0, 0.7, 0.4, 0.7};
         prec az[4] = {0.0, 0.2, 0.3, 0.8};
         prec out[4];

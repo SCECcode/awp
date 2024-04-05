@@ -6,6 +6,7 @@
 #include <grid/shift.h>
 #include <topography/geometry/geometry.h>
 #include <topography/metrics/metrics.h>
+#include <topography/mapping.h>
 #include <grid/grid_3d.h>
 #include <functions/functions.h>
 #include <test/test.h>
@@ -37,8 +38,36 @@ void geom_no_grid_stretching(g_grid_t *metrics_g)
         grid1.shift = grid_node().z;
         grid1.boundary1 = 0;
         grid1.boundary2 = 1;
-        grid_fill1(&metrics_g->g[grid1.alignment], grid1);
+        grid_fill1(&metrics_g->g[grid1.alignment], grid1, 0);
+        // Shift grid vector so that the internal coordinate system places z = 0 at the first grid
+        // point immediately above the DM overlap zone
+        for (int i = 0; i < grid1.size; ++i) {
+                metrics_g->g[i + grid1.alignment] -= MAPPING_START_POINT * grid1.gridspacing;
+        }
+}
 
+void geom_grid_stretching(g_grid_t *metrics_g, const struct mapping *map, const _prec block_height)
+{
+        fcn_grid_t grid = metrics_grid_g(metrics_g);
+        grid1_t grid1 = grid_grid1_z(grid);
+        grid1.shift = grid_node().z;
+        grid1.boundary1 = 0;
+        grid1.boundary2 = 1;
+        grid_fill1(&metrics_g->g[grid1.alignment], grid1, 0);
+        // Shift grid vector so that the internal coordinate system places z = 0 at the first grid
+        // point immediately above the DM overlap zone
+        for (int i = 0; i < MAPPING_START_POINT; ++i) {
+                metrics_g->g[i + grid1.alignment] -= MAPPING_START_POINT * grid1.gridspacing;
+        }
+                
+        for (int i = MAPPING_START_POINT; i < grid1.size - 1; ++i) {
+                double h = 1.0 / (grid1.size - 2 - MAPPING_START_POINT);
+                double r = (i - MAPPING_START_POINT) * h;
+                metrics_g->g[i + grid1.alignment] = block_height * map_eval(r, map);
+        }
+        // assign ghost point
+        metrics_g->g[grid1.size - 1 + grid1.alignment] =
+            metrics_g->g[grid1.size - 2 + grid1.alignment];
 }
 
 void geom_gaussian(f_grid_t *metrics_f, const _prec *x, const _prec *y,
@@ -56,7 +85,7 @@ void geom_gaussian(f_grid_t *metrics_f, const _prec *x, const _prec *y,
         prec xm = x[last];
         prec ym = y[last];
 
-        // Grid spacing in vertical direction for a grid satsifying:
+        // Grid spacing in vertical direction for a grid satisfying:
         // 0 <= z' < =1
         // This normalization constant is used so that the user can specify
         // block dimension using physical units.
@@ -199,7 +228,7 @@ void geom_custom(const f_grid_t *metrics_f, const grid3_t grid, const int px,
         // 0 <= z' < =1
         // This normalization constant is used so that the user can specify
         // block dimension using physical units.
-        _prec normalize = 1.0 / grid.gridspacing / (grid.size.z - 2);
+        _prec normalize = 1.0 / grid.gridspacing / (grid.size.z - 2 - MAPPING_START_POINT);
 
         for (int i = 0; i < len_x; ++i) {
         for (int j = 0; j < len_y; ++j) {
@@ -207,24 +236,6 @@ void geom_custom(const f_grid_t *metrics_f, const grid3_t grid, const int px,
                 f[pos_f] = 1.0 + f[pos_f] * normalize;
         }
         }
-}
-
-void geom_ramp(_prec *out, const fcn_grid_t grid, const f_grid_t *metrics_f,
-                   const _prec *x, const _prec *y, const _prec3_t ramp) {
-        int len_x = metrics_f->bounds_x[1] - metrics_f->bounds_x[0];
-        int len_y = metrics_f->bounds_y[1] - metrics_f->bounds_y[0];
-
-        int off_x = metrics_f->offset[0] + metrics_f->bounds_x[0];
-        int off_y = metrics_f->offset[1] + metrics_f->bounds_y[0];
-        for (int i = 0; i < len_x; ++i) {
-        for (int j = 0; j < len_y; ++j) {
-                int f_pos = (off_y + j) + (off_x + i) * metrics_f->slice;
-                int pos = grid.offset1.z + (grid.offset1.y + j) * grid.line +
-                          (grid.offset1.x + i) * grid.slice;
-                metrics_f->f[f_pos] = ramp.x * x[pos] + ramp.y * y[pos];
-        }
-        }
-
 }
 
 void geom_mapping_z(_prec *out, const fcn_grid_t grid, const int3_t shift,

@@ -6,11 +6,12 @@
 #include <mpi.h>
 
 #include <topography/grids.h>
+#include <topography/mapping.h>
 #include <topography/metrics/metrics.h>
 #include <topography/sources/source.h>
 
-void sources_init(const char *filename, const grids_t *grids, int ngrids,
-                  const f_grid_t *f, const MPI_Comm comm, const int rank,
+void sources_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
+                  const f_grid_t *f, const g_grid_t *g, const MPI_Comm comm, const int rank,
                   const int size);
 void sources_read(const size_t step);
 void sources_add_cartesian(prec *d_xx, prec *d_yy, prec *d_zz, prec *d_xy,
