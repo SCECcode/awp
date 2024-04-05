@@ -4040,27 +4040,35 @@ __global__ void velbuffer(const _prec *u1, const _prec *v1, const _prec *w1, con
     if (i > 2+ngsl+nedx) return;
     if (j > 2+ngsl+nedy) return;
     if (k > nedz) return;
-   
-    if (FOLLOWBATHY && d_i == 0){
-       bpos=j*(d_nxt[0]+4+ngsl2)+i;
-       ko=bathy[bpos] - k;
+    //This implementation assumes topography is turned on.
+    //Vx and Vy at k=d_nzt[0]+align-1 can be used.
+    //Since Vz at k=d_nzt[0]+align-1 is always zero and shoud be avoided. The Vz right below will be output instead.
+    register int koxy, koz, posxy, posz, sfcidx;
+    if (FOLLOWBATHY && d_i == 0)
+    {
+    bpos=j*(d_nxt[0]+4+ngsl2)+i;
+    sfcidx=bathy[bpos];
     }
-    else ko=d_nzt[d_i]+align-1-k;
-                      
-    pos = i*d_slice_1[d_i]+j*d_yline_1[d_i]+ko;
+    else
+    {
+    sfcidx=d_nzt[d_i]+align-1;
+    }
 
-    tmpInd =  (k - nbgz)/nskpz*rec_nxt*rec_nyt + 
-	       (j-2-ngsl-nbgy)/nskpy*rec_nxt + 
-	       (i-2-ngsl-nbgx)/nskpx;
+    koxy = sfcidx - k;
+    koz = sfcidx - k - 1;
 
-    /*if (i==48 && j==48 && k==1) 
-        cuPrintf("velbuffer: i=%d,j=%d,k=%d,pos=%d,tmpInd=%d,u1=%e\n", i,j,k,pos,tmpInd,u1[pos]);*/
+    posxy = i*d_slice_1[d_i]+j*d_yline_1[d_i]+koxy;
+    posz = i*d_slice_1[d_i]+j*d_yline_1[d_i]+koz;
 
-    Bufx[tmpInd] = u1[pos];
-    Bufy[tmpInd] = v1[pos];
-    Bufz[tmpInd] = w1[pos];
+    tmpInd =  (k - nbgz)/nskpz*rec_nxt*rec_nyt +
+           (j-2-ngsl-nbgy)/nskpy*rec_nxt +
+           (i-2-ngsl-nbgx)/nskpx;
+    Bufx[tmpInd] = u1[posxy];
+    Bufy[tmpInd] = v1[posxy];
+    Bufz[tmpInd] = w1[posz];
 
-    if (NVE == 3) Bufeta[tmpInd] = neta[pos];
+    if (NVE == 3) Bufeta[tmpInd] = neta[posz];
+   
 }
 
 
