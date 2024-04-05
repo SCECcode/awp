@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmapping.a CMakeFiles/mapping.dir/mapping.c.o
+/usr/bin/ranlib libmapping.a

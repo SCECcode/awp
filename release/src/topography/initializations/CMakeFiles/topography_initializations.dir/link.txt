@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtopography_initializations.a CMakeFiles/topography_initializations.dir/constant.c.o CMakeFiles/topography_initializations.dir/random.c.o CMakeFiles/topography_initializations.dir/cerjan.c.o CMakeFiles/topography_initializations.dir/linear.c.o CMakeFiles/topography_initializations.dir/quadratic.c.o
+/usr/bin/ranlib libtopography_initializations.a

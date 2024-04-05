@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtopography_sources.a CMakeFiles/topography_sources.dir/source.c.o CMakeFiles/topography_sources.dir/sources.c.o CMakeFiles/topography_sources.dir/source.cu.o CMakeFiles/topography_sources.dir/forces.c.o
+/usr/bin/ranlib libtopography_sources.a

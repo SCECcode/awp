@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtopography_receivers.a CMakeFiles/topography_receivers.dir/receiver.c.o CMakeFiles/topography_receivers.dir/receivers.c.o CMakeFiles/topography_receivers.dir/sgt.c.o
+/usr/bin/ranlib libtopography_receivers.a

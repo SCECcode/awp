@@ -54,6 +54,7 @@ int main(int argc, char **argv)
    int nxt[MAXGRIDS], nyt[MAXGRIDS], nzt[MAXGRIDS];
    MPI_Offset displacement[MAXGRIDS];
    float FAC, Q0, EX, FP;
+   float QSI, QPQSR, MAXVPVSR, VMIN, VMAX, DMIN;
    char INSRC[50], INVEL[50], OUT[50], INSRC_I2[50], CHKFILE[50];
    char insrcgrid[52], insrc_i2_grid[50];
    double GFLOPS = 1.0;
@@ -318,7 +319,9 @@ int main(int argc, char **argv)
            &SoCalQ, INSRC, INVEL, OUT, INSRC_I2, CHKFILE, &ngrids,
            &FOLLOWBATHY, INTOPO, &usetopo, SOURCEFILE,
            &usesourcefile, RECVFILE, &userecvfile, FORCEFILE, &useforcefile,
-           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT, ENERGYFILE, &useenergy);
+           SGTFILE, &usesgtfile, MMSFILE, &usemms, &DHB, &DHT, ENERGYFILE, &useenergy, 
+           &QSI, &QPQSR, &MAXVPVSR, &VMIN, &VMAX, &DMIN);
+
 
 
 #ifndef SEISMIO
@@ -1002,6 +1005,17 @@ if (!usemms) {
          printf("Before inimesh\n");
 #endif
       fflush(stdout);
+
+    if(rank == 0){
+        printf("QSI=%f\n", QSI);
+        printf("QPQSR=%f\n", QPQSR);
+        printf("MAXVPVSR=%f\n", MAXVPVSR);
+        printf("VMIN=%f\n", VMIN);
+        printf("VMAX=%f\n", VMAX);
+        printf("DMIN=%f\n", DMIN);
+        fflush(stdout);
+    }
+
       vpe = (float **)calloc(ngrids, sizeof(float *));
       vse = (float **)calloc(ngrids, sizeof(float *));
       dde = (float **)calloc(ngrids, sizeof(float *));
@@ -1017,7 +1031,7 @@ if (!usemms) {
          inimesh(rank, MEDIASTART, d1[p], mu[p], lam[p], qp[p], qs[p], &taumax, &taumin, tau,
                  weights, coeff, NVAR, FP, FAC, Q0, EX,
                  nxt[p], nyt[p], nzt[p], PX, PY, NX * grdfct[p], NY * grdfct[p], nzt[p], coord, MCW, IDYNA, NVE,
-                 SoCalQ, INVEL2, vse[p], vpe[p], dde[p]);
+                 SoCalQ, INVEL2, QSI, QPQSR, MAXVPVSR, VMIN, VMAX, DMIN,  vse[p], vpe[p], dde[p]);
          if (p > 0)
          {
             corrected = checkmesh(nxt[p], nyt[p], nzt[p], nxt[p - 1], nyt[p - 1], nzt[p - 1], d1[p], d1[p - 1], p, p - 1, "d1");

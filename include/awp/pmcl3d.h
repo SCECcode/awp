@@ -37,7 +37,8 @@ void command(int argc, char **argv, _prec *TMAX, _prec *DH, _prec *DT,
              int *USESOURCEFILE, char *RECVFILE, int *USERECVFILE,
              char *FORCEFILE, int *USEFORCEFILE,
              char *SGTFILE, int *USESGTFILE, char *MMSFILE, int *USEMMSFILE, float *DHB, float *DHT,
-             char *ENERGYFILE, int *USEENERGYFILE);
+             char *ENERGYFILE, int *USEENERGYFILE, 
+             _prec *QSI, _prec *QPQSR, _prec *MAXVPVSR, _prec *VMIN, _prec *VMAX, _prec *DMIN);
 
 int read_src_ifault_2(int rank, int READ_STEP, 
     char *INSRC, char *INSRC_I2, 
@@ -73,6 +74,7 @@ void inimesh(int rank, int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D 
 	     Grid3D tau, Grid3D weights,Grid1D coeff,
 	     int nvar, _prec FP,  _prec FAC, _prec Q0, _prec EX, int nxt, int nyt, int nzt, int PX, int PY, int NX, int NY,
              int NZ, int *coords, MPI_Comm MCW, int IDYNA, int NVE, int SoCalQ, char *INVEL,
+            _prec qsi, _prec qpqsr, _prec maxvpvsr, _prec vmin, _prec vmax, _prec dmin,
              _prec *vse, _prec *vpe, _prec *dde);
 
 int checkmesh(int nxtl, int nytl, int nztl, int nxth, int nyth, int nzth, Grid3D varl, Grid3D varh,

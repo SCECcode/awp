@@ -1,0 +1,2 @@
+/usr/bin/ar qc libawp.a CMakeFiles/awp.dir/kernel.cu.o
+/usr/bin/ranlib libawp.a

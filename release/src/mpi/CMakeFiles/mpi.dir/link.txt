@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmpi.a CMakeFiles/mpi.dir/partition.c.o CMakeFiles/mpi.dir/distribute.c.o CMakeFiles/mpi.dir/io.c.o
+/usr/bin/ranlib libmpi.a

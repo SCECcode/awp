@@ -1,0 +1,863 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineSystem.cmake:211 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Linux - 4.18.0-372.52.1.el8_6.ppc64le - ppc64le
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /usr/bin/cc 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is GNU, found in:
+        /ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdC/a.out
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:1104 (message)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCUDACompiler.cmake:75 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Checking whether the CUDA compiler is NVIDIA using "" matched "nvcc: NVIDIA \\(R\\) Cuda compiler driver":
+      nvcc: NVIDIA (R) Cuda compiler driver
+      Copyright (c) 2005-2022 NVIDIA Corporation
+      Built on Wed_Jun__8_16:51:06_PDT_2022
+      Cuda compilation tools, release 11.7, V11.7.99
+      Build cuda_11.7.r11.7/compiler.31442593_0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:53 (__determine_compiler_id_test)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCUDACompiler.cmake:307 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CUDA compiler identification source file "CMakeCUDACompilerId.cu" succeeded.
+      Compiler: /sw/summit/cuda/11.7.1/bin/nvcc 
+      Build flags: 
+      Id flags: --keep;--keep-dir;tmp -v
+      
+      The output was:
+      0
+      #$ _NVVM_BRANCH_=nvvm
+      #$ _SPACE_= 
+      #$ _CUDART_=cudart
+      #$ _HERE_=/sw/summit/cuda/11.7.1/bin
+      #$ _THERE_=/sw/summit/cuda/11.7.1/bin
+      #$ _TARGET_SIZE_=
+      #$ _TARGET_DIR_=
+      #$ _TARGET_DIR_=targets/ppc64le-linux
+      #$ TOP=/sw/summit/cuda/11.7.1/bin/..
+      #$ NVVMIR_LIBRARY_DIR=/sw/summit/cuda/11.7.1/bin/../nvvm/libdevice
+      #$ LD_LIBRARY_PATH=/sw/summit/cuda/11.7.1/bin/../lib:/sw/summit/cuda/11.7.1/lib64:/sw/summit/gcc/9.3.0-2/lib64:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib:/opt/ibm/spectrumcomputing/lsf/10.1.0.13/linux3.10-glibc2.17-ppc64le-csm/lib:/opt/ibm/jsm/lib:/usr/local/lib:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/lib/euclid3/lib:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/lib/proj-5/lib:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/model/cvmh/lib:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/model/cvmsi/lib:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/model/cencal/lib
+      #$ PATH=/sw/summit/cuda/11.7.1/bin/../nvvm/bin:/sw/summit/cuda/11.7.1/bin:/sw/summit/nsight-compute/2023.2.2:/sw/summit/xalt/1.2.1/bin:/sw/sources/lsf-tools/2.0/summit/bin:/sw/summit/cuda/11.7.1/bin:/sw/summit/gcc/9.3.0-2/bin:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin:/ccs/home/dean316/alpine/bbp/bbp-19.8.0-python3/bbp/comps:/ccs/home/dean316/alpine/bbp/bbp-19.8.0-python3/bbp/utils/batch:/autofs/nccs-svm1_home1/dean316/opt/TauP-2.1.2/bin:/usr/local/bin:/sbin:/usr/sbin:/ccs/home/dean316/bin:.:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/bin:/sw/sources/hpss/bin:/opt/ibm/spectrumcomputing/lsf/10.1.0.13/linux3.10-glibc2.17-ppc64le-csm/etc:/opt/ibm/spectrumcomputing/lsf/10.1.0.13/linux3.10-glibc2.17-ppc64le-csm/bin:/usr/bin:/usr/local/sbin:/opt/ibm/flightlog/bin:/opt/ibm/jsm/bin:/sw/sources/cgroup_tool/bin:/opt/puppetlabs/bin:/usr/lpp/mmfs/bin:/autofs/nccs-svm1_home1/dean316/opt/sac/bin:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/bin:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/utilities
+      #$ INCLUDES="-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"  
+      #$ LIBRARIES=  "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"
+      #$ CUDAFE_FLAGS=
+      #$ PTXAS_FLAGS=
+      #$ rm tmp/a_dlink.reg.c
+      #$ gcc -D__CUDA_ARCH__=520 -D__CUDA_ARCH_LIST__=520 -E -x c++  -DCUDA_DOUBLE_MATH_FUNCTIONS -D__CUDACC__ -D__NVCC__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 -include "cuda_runtime.h" "CMakeCUDACompilerId.cu" -o "tmp/CMakeCUDACompilerId.cpp1.ii" 
+      #$ cicc --c++14 --builtin-ieee128-type --gnu_version=90300 --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdCUDA/CMakeCUDACompilerId.cu" --allow_managed --unsigned_chars   -arch compute_52 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"
+      #$ ptxas -arch=sm_52 -m64  "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_52.cubin" 
+      #$ fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=elf,sm=52,file=tmp/CMakeCUDACompilerId.sm_52.cubin" "--image3=kind=ptx,sm=52,file=tmp/CMakeCUDACompilerId.ptx" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" 
+      #$ gcc -D__CUDA_ARCH_LIST__=520 -E -x c++ -D__CUDACC__ -D__NVCC__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 -include "cuda_runtime.h" "CMakeCUDACompilerId.cu" -o "tmp/CMakeCUDACompilerId.cpp4.ii" 
+      #$ cudafe++ --c++14 --builtin-ieee128-type --gnu_version=90300 --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdCUDA/CMakeCUDACompilerId.cu" --allow_managed --unsigned_chars  --m64 --parse_templates --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.cpp" --stub_file_name "CMakeCUDACompilerId.cudafe1.stub.c" --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" "tmp/CMakeCUDACompilerId.cpp4.ii" 
+      #$ gcc -D__CUDA_ARCH__=520 -D__CUDA_ARCH_LIST__=520 -c -x c++  -DCUDA_DOUBLE_MATH_FUNCTIONS "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"   "tmp/CMakeCUDACompilerId.cudafe1.cpp" -o "tmp/CMakeCUDACompilerId.o" 
+      #$ nvlink -m64 --arch=sm_52 --register-link-binaries="tmp/a_dlink.reg.c"    "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib" -cpu-arch=PPC64LE "tmp/CMakeCUDACompilerId.o"  -lcudadevrt  -o "tmp/a_dlink.sm_52.cubin" --host-ccbin "gcc"
+      #$ fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=52,file=tmp/a_dlink.sm_52.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" 
+      #$ gcc -D__CUDA_ARCH_LIST__=520 -c -x c++ -DFATBINFILE="\\"tmp/a_dlink.fatbin.c\\"" -DREGISTERLINKBINARYFILE="\\"tmp/a_dlink.reg.c\\"" -I. -D__NV_EXTRA_INITIALIZATION= -D__NV_EXTRA_FINALIZATION= -D__CUDA_INCLUDE_COMPILER_INTERNAL_HEADERS__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 "/sw/summit/cuda/11.7.1/bin/crt/link.stub" -o "tmp/a_dlink.o" 
+      #$ g++ -D__CUDA_ARCH_LIST__=520 -Wl,--start-group "tmp/a_dlink.o" "tmp/CMakeCUDACompilerId.o"   "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"  -lcudadevrt  -lcudart_static  -lrt -lpthread  -ldl  -Wl,--end-group -o "a.out" 
+      
+      
+      Compilation of the CUDA compiler identification source "CMakeCUDACompilerId.cu" produced "a.out"
+      
+      The CUDA compiler identification is NVIDIA, found in:
+        /ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdCUDA/a.out
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCUDACompiler.cmake:523 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CUDA nvcc implicit link information:
+        found 'PATH=' string: [/sw/summit/cuda/11.7.1/bin/../nvvm/bin:/sw/summit/cuda/11.7.1/bin:/sw/summit/nsight-compute/2023.2.2:/sw/summit/xalt/1.2.1/bin:/sw/sources/lsf-tools/2.0/summit/bin:/sw/summit/cuda/11.7.1/bin:/sw/summit/gcc/9.3.0-2/bin:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin:/ccs/home/dean316/alpine/bbp/bbp-19.8.0-python3/bbp/comps:/ccs/home/dean316/alpine/bbp/bbp-19.8.0-python3/bbp/utils/batch:/autofs/nccs-svm1_home1/dean316/opt/TauP-2.1.2/bin:/usr/local/bin:/sbin:/usr/sbin:/ccs/home/dean316/bin:.:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/bin:/sw/sources/hpss/bin:/opt/ibm/spectrumcomputing/lsf/10.1.0.13/linux3.10-glibc2.17-ppc64le-csm/etc:/opt/ibm/spectrumcomputing/lsf/10.1.0.13/linux3.10-glibc2.17-ppc64le-csm/bin:/usr/bin:/usr/local/sbin:/opt/ibm/flightlog/bin:/opt/ibm/jsm/bin:/sw/sources/cgroup_tool/bin:/opt/puppetlabs/bin:/usr/lpp/mmfs/bin:/autofs/nccs-svm1_home1/dean316/opt/sac/bin:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/bin:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/utilities]
+        found 'LIBRARIES=' string: ["-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"]
+        considering line: [#$ rm tmp/a_dlink.reg.c]
+        considering line: [gcc -D__CUDA_ARCH__=520 -D__CUDA_ARCH_LIST__=520 -E -x c++  -DCUDA_DOUBLE_MATH_FUNCTIONS -D__CUDACC__ -D__NVCC__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 -include "cuda_runtime.h" "CMakeCUDACompilerId.cu" -o "tmp/CMakeCUDACompilerId.cpp1.ii" ]
+        considering line: [cicc --c++14 --builtin-ieee128-type --gnu_version=90300 --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdCUDA/CMakeCUDACompilerId.cu" --allow_managed --unsigned_chars   -arch compute_52 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"]
+        considering line: [ptxas -arch=sm_52 -m64  "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_52.cubin" ]
+        considering line: [fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=elf,sm=52,file=tmp/CMakeCUDACompilerId.sm_52.cubin" "--image3=kind=ptx,sm=52,file=tmp/CMakeCUDACompilerId.ptx" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" ]
+        considering line: [gcc -D__CUDA_ARCH_LIST__=520 -E -x c++ -D__CUDACC__ -D__NVCC__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 -include "cuda_runtime.h" "CMakeCUDACompilerId.cu" -o "tmp/CMakeCUDACompilerId.cpp4.ii" ]
+        considering line: [cudafe++ --c++14 --builtin-ieee128-type --gnu_version=90300 --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdCUDA/CMakeCUDACompilerId.cu" --allow_managed --unsigned_chars  --m64 --parse_templates --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.cpp" --stub_file_name "CMakeCUDACompilerId.cudafe1.stub.c" --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" "tmp/CMakeCUDACompilerId.cpp4.ii" ]
+        considering line: [gcc -D__CUDA_ARCH__=520 -D__CUDA_ARCH_LIST__=520 -c -x c++  -DCUDA_DOUBLE_MATH_FUNCTIONS "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"   "tmp/CMakeCUDACompilerId.cudafe1.cpp" -o "tmp/CMakeCUDACompilerId.o" ]
+        considering line: [nvlink -m64 --arch=sm_52 --register-link-binaries="tmp/a_dlink.reg.c"    "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib" -cpu-arch=PPC64LE "tmp/CMakeCUDACompilerId.o"  -lcudadevrt  -o "tmp/a_dlink.sm_52.cubin" --host-ccbin "gcc"]
+          ignoring nvlink line
+        considering line: [fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=52,file=tmp/a_dlink.sm_52.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" ]
+        considering line: [gcc -D__CUDA_ARCH_LIST__=520 -c -x c++ -DFATBINFILE="\\"tmp/a_dlink.fatbin.c\\"" -DREGISTERLINKBINARYFILE="\\"tmp/a_dlink.reg.c\\"" -I. -D__NV_EXTRA_INITIALIZATION= -D__NV_EXTRA_FINALIZATION= -D__CUDA_INCLUDE_COMPILER_INTERNAL_HEADERS__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 "/sw/summit/cuda/11.7.1/bin/crt/link.stub" -o "tmp/a_dlink.o" ]
+        considering line: [g++ -D__CUDA_ARCH_LIST__=520 -Wl,--start-group "tmp/a_dlink.o" "tmp/CMakeCUDACompilerId.o"   "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"  -lcudadevrt  -lcudart_static  -lrt -lpthread  -ldl  -Wl,--end-group -o "a.out" ]
+          extracted link line: [g++ -D__CUDA_ARCH_LIST__=520 -Wl,--start-group "tmp/a_dlink.o" "tmp/CMakeCUDACompilerId.o"   "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"  -lcudadevrt  -lcudart_static  -lrt -lpthread  -ldl  -Wl,--end-group -o "a.out" ]
+        considering line: []
+        extracted link launcher name: [g++]
+        found link launcher absolute path: [/sw/summit/gcc/9.3.0-2/bin/g++]
+      
+        link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        link line: [cuda-fake-ld g++ -D__CUDA_ARCH_LIST__=520 -Wl,--start-group "tmp/a_dlink.o" "tmp/CMakeCUDACompilerId.o"   "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"  -lcudadevrt  -lcudart_static  -lrt -lpthread  -ldl  -Wl,--end-group -o "a.out" ]
+          arg [cuda-fake-ld] ==> ignore
+          arg [g++] ==> ignore
+          arg [-D__CUDA_ARCH_LIST__=520] ==> ignore
+          arg [-Wl,--start-group] ==> ignore
+          arg [tmp/a_dlink.o] ==> ignore
+          arg [tmp/CMakeCUDACompilerId.o] ==> ignore
+          arg [-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs] ==> dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs]
+          arg [-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib] ==> dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib]
+          arg [-lcudadevrt] ==> lib [cudadevrt]
+          arg [-lcudart_static] ==> lib [cudart_static]
+          arg [-lrt] ==> lib [rt]
+          arg [-lpthread] ==> lib [pthread]
+          arg [-ldl] ==> lib [dl]
+          arg [-Wl,--end-group] ==> ignore
+          arg [-o] ==> ignore
+          arg [a.out] ==> ignore
+        collapse library dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs] ==> [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs]
+        collapse library dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib] ==> [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib]
+        implicit libs: [cudadevrt;cudart_static;rt;pthread;dl]
+        implicit objs: []
+        implicit dirs: [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs;/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCUDACompiler.cmake:579 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CUDA nvcc include information:
+        found 'PATH=' string: [/sw/summit/cuda/11.7.1/bin/../nvvm/bin:/sw/summit/cuda/11.7.1/bin:/sw/summit/nsight-compute/2023.2.2:/sw/summit/xalt/1.2.1/bin:/sw/sources/lsf-tools/2.0/summit/bin:/sw/summit/cuda/11.7.1/bin:/sw/summit/gcc/9.3.0-2/bin:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin:/ccs/home/dean316/alpine/bbp/bbp-19.8.0-python3/bbp/comps:/ccs/home/dean316/alpine/bbp/bbp-19.8.0-python3/bbp/utils/batch:/autofs/nccs-svm1_home1/dean316/opt/TauP-2.1.2/bin:/usr/local/bin:/sbin:/usr/sbin:/ccs/home/dean316/bin:.:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/bin:/sw/sources/hpss/bin:/opt/ibm/spectrumcomputing/lsf/10.1.0.13/linux3.10-glibc2.17-ppc64le-csm/etc:/opt/ibm/spectrumcomputing/lsf/10.1.0.13/linux3.10-glibc2.17-ppc64le-csm/bin:/usr/bin:/usr/local/sbin:/opt/ibm/flightlog/bin:/opt/ibm/jsm/bin:/sw/sources/cgroup_tool/bin:/opt/puppetlabs/bin:/usr/lpp/mmfs/bin:/autofs/nccs-svm1_home1/dean316/opt/sac/bin:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/bin:/gpfs/alpine/geo112/scratch/dean316/UCVM/release-22.7/utilities]
+        found 'LIBRARIES=' string: ["-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"]
+        considering line: [#$ rm tmp/a_dlink.reg.c]
+        considering line: [gcc -D__CUDA_ARCH__=520 -D__CUDA_ARCH_LIST__=520 -E -x c++  -DCUDA_DOUBLE_MATH_FUNCTIONS -D__CUDACC__ -D__NVCC__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 -include "cuda_runtime.h" "CMakeCUDACompilerId.cu" -o "tmp/CMakeCUDACompilerId.cpp1.ii" ]
+        considering line: [cicc --c++14 --builtin-ieee128-type --gnu_version=90300 --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdCUDA/CMakeCUDACompilerId.cu" --allow_managed --unsigned_chars   -arch compute_52 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"]
+        considering line: [ptxas -arch=sm_52 -m64  "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_52.cubin" ]
+        considering line: [fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=elf,sm=52,file=tmp/CMakeCUDACompilerId.sm_52.cubin" "--image3=kind=ptx,sm=52,file=tmp/CMakeCUDACompilerId.ptx" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" ]
+        considering line: [gcc -D__CUDA_ARCH_LIST__=520 -E -x c++ -D__CUDACC__ -D__NVCC__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 -include "cuda_runtime.h" "CMakeCUDACompilerId.cu" -o "tmp/CMakeCUDACompilerId.cpp4.ii" ]
+        considering line: [cudafe++ --c++14 --builtin-ieee128-type --gnu_version=90300 --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/3.27.7/CompilerIdCUDA/CMakeCUDACompilerId.cu" --allow_managed --unsigned_chars  --m64 --parse_templates --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.cpp" --stub_file_name "CMakeCUDACompilerId.cudafe1.stub.c" --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" "tmp/CMakeCUDACompilerId.cpp4.ii" ]
+        considering line: [gcc -D__CUDA_ARCH__=520 -D__CUDA_ARCH_LIST__=520 -c -x c++  -DCUDA_DOUBLE_MATH_FUNCTIONS "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"   "tmp/CMakeCUDACompilerId.cudafe1.cpp" -o "tmp/CMakeCUDACompilerId.o" ]
+        considering line: [nvlink -m64 --arch=sm_52 --register-link-binaries="tmp/a_dlink.reg.c"    "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib" -cpu-arch=PPC64LE "tmp/CMakeCUDACompilerId.o"  -lcudadevrt  -o "tmp/a_dlink.sm_52.cubin" --host-ccbin "gcc"]
+          ignoring nvlink line
+        considering line: [fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=52,file=tmp/a_dlink.sm_52.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" ]
+        considering line: [gcc -D__CUDA_ARCH_LIST__=520 -c -x c++ -DFATBINFILE="\\"tmp/a_dlink.fatbin.c\\"" -DREGISTERLINKBINARYFILE="\\"tmp/a_dlink.reg.c\\"" -I. -D__NV_EXTRA_INITIALIZATION= -D__NV_EXTRA_FINALIZATION= -D__CUDA_INCLUDE_COMPILER_INTERNAL_HEADERS__  "-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"    -D__CUDACC_VER_MAJOR__=11 -D__CUDACC_VER_MINOR__=7 -D__CUDACC_VER_BUILD__=99 -D__CUDA_API_VER_MAJOR__=11 -D__CUDA_API_VER_MINOR__=7 -D__NVCC_DIAG_PRAGMA_SUPPORT__=1 "/sw/summit/cuda/11.7.1/bin/crt/link.stub" -o "tmp/a_dlink.o" ]
+        considering line: [g++ -D__CUDA_ARCH_LIST__=520 -Wl,--start-group "tmp/a_dlink.o" "tmp/CMakeCUDACompilerId.o"   "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"  -lcudadevrt  -lcudart_static  -lrt -lpthread  -ldl  -Wl,--end-group -o "a.out" ]
+          extracted link line: [g++ -D__CUDA_ARCH_LIST__=520 -Wl,--start-group "tmp/a_dlink.o" "tmp/CMakeCUDACompilerId.o"   "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"  -lcudadevrt  -lcudart_static  -lrt -lpthread  -ldl  -Wl,--end-group -o "a.out" ]
+        considering line: []
+        extracted link launcher name: [g++]
+        found link launcher absolute path: [/sw/summit/gcc/9.3.0-2/bin/g++]
+        found 'INCLUDES=' string: ["-I/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include"  ]
+      
+        link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        link line: [cuda-fake-ld g++ -D__CUDA_ARCH_LIST__=520 -Wl,--start-group "tmp/a_dlink.o" "tmp/CMakeCUDACompilerId.o"   "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs" "-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib"  -lcudadevrt  -lcudart_static  -lrt -lpthread  -ldl  -Wl,--end-group -o "a.out" ]
+          arg [cuda-fake-ld] ==> ignore
+          arg [g++] ==> ignore
+          arg [-D__CUDA_ARCH_LIST__=520] ==> ignore
+          arg [-Wl,--start-group] ==> ignore
+          arg [tmp/a_dlink.o] ==> ignore
+          arg [tmp/CMakeCUDACompilerId.o] ==> ignore
+          arg [-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs] ==> dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs]
+          arg [-L/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib] ==> dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib]
+          arg [-lcudadevrt] ==> lib [cudadevrt]
+          arg [-lcudart_static] ==> lib [cudart_static]
+          arg [-lrt] ==> lib [rt]
+          arg [-lpthread] ==> lib [pthread]
+          arg [-ldl] ==> lib [dl]
+          arg [-Wl,--end-group] ==> ignore
+          arg [-o] ==> ignore
+          arg [a.out] ==> ignore
+        collapse library dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib/stubs] ==> [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs]
+        collapse library dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/lib] ==> [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib]
+        implicit libs: [cudadevrt;cudart_static;rt;pthread;dl]
+        implicit objs: []
+        implicit dirs: [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs;/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-a4su1y"
+      binary: "/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-a4su1y"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-a4su1y'
+        
+        Run Build Command(s): /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9452e/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_9452e.dir/build.make CMakeFiles/cmTC_9452e.dir/build
+        gmake[1]: Entering directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-a4su1y'
+        Building C object CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o
+        /usr/bin/cc   -v -o CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -c /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCCompilerABI.c
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/cc
+        OFFLOAD_TARGET_NAMES=nvptx-none
+        OFFLOAD_TARGET_DEFAULT=1
+        Target: ppc64le-redhat-linux
+        Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,lto --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-targets=powerpcle-linux --disable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl --disable-libmpx --enable-offload-targets=nvptx-none --without-cuda-driver --enable-gnu-indirect-function --enable-secureplt --with-long-double-128 --with-cpu-32=power8 --with-tune-32=power8 --with-cpu-64=power8 --with-tune-64=power8 --build=ppc64le-redhat-linux
+        Thread model: posix
+        gcc version 8.5.0 20210514 (Red Hat 8.5.0-10) (GCC) 
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=power8' '-mcpu=power8'
+         /usr/libexec/gcc/ppc64le-redhat-linux/8/cc1 -quiet -v -D__unix__ -D__gnu_linux__ -D__linux__ -Dunix -D__unix -Dlinux -D__linux -Asystem=linux -Asystem=unix -Asystem=posix /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCCompilerABI.c -msecure-plt -quiet -dumpbase CMakeCCompilerABI.c -mtune=power8 -mcpu=power8 -auxbase-strip CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -version -o /tmp/ccXwj3Fz.s
+        GNU C17 (GCC) version 8.5.0 20210514 (Red Hat 8.5.0-10) (ppc64le-redhat-linux)
+        	compiled by GNU C version 8.5.0 20210514 (Red Hat 8.5.0-10), GMP version 6.1.2, MPFR version 3.1.6-p2, MPC version 1.1.0, isl version isl-0.16.1-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/usr/lib/gcc/ppc64le-redhat-linux/8/include-fixed"
+        ignoring nonexistent directory "/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../ppc64le-redhat-linux/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /sw/summit/cuda/11.7.1/include
+         /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include
+         /usr/lib/gcc/ppc64le-redhat-linux/8/include
+         /usr/local/include
+         /usr/include
+        End of search list.
+        GNU C17 (GCC) version 8.5.0 20210514 (Red Hat 8.5.0-10) (ppc64le-redhat-linux)
+        	compiled by GNU C version 8.5.0 20210514 (Red Hat 8.5.0-10), GMP version 6.1.2, MPFR version 3.1.6-p2, MPC version 1.1.0, isl version isl-0.16.1-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: b77697c30dd6bb94a36a8985a10a46a8
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=power8' '-mcpu=power8'
+         as -v -a64 -mpower8 -many -mlittle -o CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o /tmp/ccXwj3Fz.s
+        GNU assembler version 2.30 (ppc64le-redhat-linux) using BFD version version 2.30-113.el8
+        COMPILER_PATH=/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/:/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/
+        LIBRARY_PATH=/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=power8' '-mcpu=power8'
+        Linking C executable cmTC_9452e
+        /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9452e.dir/link.txt --verbose=1
+        /usr/bin/cc  -v CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -o cmTC_9452e 
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/cc
+        COLLECT_LTO_WRAPPER=/usr/libexec/gcc/ppc64le-redhat-linux/8/lto-wrapper
+        OFFLOAD_TARGET_NAMES=nvptx-none
+        OFFLOAD_TARGET_DEFAULT=1
+        Target: ppc64le-redhat-linux
+        Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,lto --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-targets=powerpcle-linux --disable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl --disable-libmpx --enable-offload-targets=nvptx-none --without-cuda-driver --enable-gnu-indirect-function --enable-secureplt --with-long-double-128 --with-cpu-32=power8 --with-tune-32=power8 --with-cpu-64=power8 --with-tune-64=power8 --build=ppc64le-redhat-linux
+        Thread model: posix
+        gcc version 8.5.0 20210514 (Red Hat 8.5.0-10) (GCC) 
+        COMPILER_PATH=/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/:/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/
+        LIBRARY_PATH=/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9452e' '-mtune=power8' '-mcpu=power8'
+         /usr/libexec/gcc/ppc64le-redhat-linux/8/collect2 -plugin /usr/libexec/gcc/ppc64le-redhat-linux/8/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/ppc64le-redhat-linux/8/lto-wrapper -plugin-opt=-fresolution=/tmp/ccH1cgBT.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -V -m elf64lppc -dynamic-linker /lib64/ld64.so.2 -o cmTC_9452e /usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crt1.o /usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crti.o /usr/lib/gcc/ppc64le-redhat-linux/8/crtbegin.o -L/usr/lib/gcc/ppc64le-redhat-linux/8 -L/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib -L/usr/lib/gcc/ppc64le-redhat-linux/8/../../.. CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/ppc64le-redhat-linux/8/crtend.o /usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9452e' '-mtune=power8' '-mcpu=power8'
+        gmake[1]: Leaving directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-a4su1y'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:127 (message)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed C implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/sw/summit/cuda/11.7.1/include]
+          add: [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+          add: [/usr/lib/gcc/ppc64le-redhat-linux/8/include]
+          add: [/usr/local/include]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/sw/summit/cuda/11.7.1/include] ==> [/sw/summit/cuda/11.7.1/include]
+        collapse include dir [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include] ==> [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+        collapse include dir [/usr/lib/gcc/ppc64le-redhat-linux/8/include] ==> [/usr/lib/gcc/ppc64le-redhat-linux/8/include]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/sw/summit/cuda/11.7.1/include;/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include;/usr/lib/gcc/ppc64le-redhat-linux/8/include;/usr/local/include;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:152 (message)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        ignore line: [Change Dir: '/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-a4su1y']
+        ignore line: []
+        ignore line: [Run Build Command(s): /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9452e/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_9452e.dir/build.make CMakeFiles/cmTC_9452e.dir/build]
+        ignore line: [gmake[1]: Entering directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-a4su1y']
+        ignore line: [Building C object CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -c /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCCompilerABI.c]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/cc]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+        ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+        ignore line: [Target: ppc64le-redhat-linux]
+        ignore line: [Configured with: ../configure --enable-bootstrap --enable-languages=c c++ fortran lto --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-targets=powerpcle-linux --disable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl --disable-libmpx --enable-offload-targets=nvptx-none --without-cuda-driver --enable-gnu-indirect-function --enable-secureplt --with-long-double-128 --with-cpu-32=power8 --with-tune-32=power8 --with-cpu-64=power8 --with-tune-64=power8 --build=ppc64le-redhat-linux]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 8.5.0 20210514 (Red Hat 8.5.0-10) (GCC) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=power8' '-mcpu=power8']
+        ignore line: [ /usr/libexec/gcc/ppc64le-redhat-linux/8/cc1 -quiet -v -D__unix__ -D__gnu_linux__ -D__linux__ -Dunix -D__unix -Dlinux -D__linux -Asystem=linux -Asystem=unix -Asystem=posix /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCCompilerABI.c -msecure-plt -quiet -dumpbase CMakeCCompilerABI.c -mtune=power8 -mcpu=power8 -auxbase-strip CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -version -o /tmp/ccXwj3Fz.s]
+        ignore line: [GNU C17 (GCC) version 8.5.0 20210514 (Red Hat 8.5.0-10) (ppc64le-redhat-linux)]
+        ignore line: [	compiled by GNU C version 8.5.0 20210514 (Red Hat 8.5.0-10)  GMP version 6.1.2  MPFR version 3.1.6-p2  MPC version 1.1.0  isl version isl-0.16.1-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/ppc64le-redhat-linux/8/include-fixed"]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../ppc64le-redhat-linux/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /sw/summit/cuda/11.7.1/include]
+        ignore line: [ /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+        ignore line: [ /usr/lib/gcc/ppc64le-redhat-linux/8/include]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [GNU C17 (GCC) version 8.5.0 20210514 (Red Hat 8.5.0-10) (ppc64le-redhat-linux)]
+        ignore line: [	compiled by GNU C version 8.5.0 20210514 (Red Hat 8.5.0-10)  GMP version 6.1.2  MPFR version 3.1.6-p2  MPC version 1.1.0  isl version isl-0.16.1-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [Compiler executable checksum: b77697c30dd6bb94a36a8985a10a46a8]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=power8' '-mcpu=power8']
+        ignore line: [ as -v -a64 -mpower8 -many -mlittle -o CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o /tmp/ccXwj3Fz.s]
+        ignore line: [GNU assembler version 2.30 (ppc64le-redhat-linux) using BFD version version 2.30-113.el8]
+        ignore line: [COMPILER_PATH=/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/:/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/]
+        ignore line: [LIBRARY_PATH=/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=power8' '-mcpu=power8']
+        ignore line: [Linking C executable cmTC_9452e]
+        ignore line: [/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9452e.dir/link.txt --verbose=1]
+        ignore line: [/usr/bin/cc  -v CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -o cmTC_9452e ]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/cc]
+        ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/ppc64le-redhat-linux/8/lto-wrapper]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+        ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+        ignore line: [Target: ppc64le-redhat-linux]
+        ignore line: [Configured with: ../configure --enable-bootstrap --enable-languages=c c++ fortran lto --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-targets=powerpcle-linux --disable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl --disable-libmpx --enable-offload-targets=nvptx-none --without-cuda-driver --enable-gnu-indirect-function --enable-secureplt --with-long-double-128 --with-cpu-32=power8 --with-tune-32=power8 --with-cpu-64=power8 --with-tune-64=power8 --build=ppc64le-redhat-linux]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 8.5.0 20210514 (Red Hat 8.5.0-10) (GCC) ]
+        ignore line: [COMPILER_PATH=/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/8/:/usr/libexec/gcc/ppc64le-redhat-linux/:/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/]
+        ignore line: [LIBRARY_PATH=/usr/lib/gcc/ppc64le-redhat-linux/8/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/usr/lib/gcc/ppc64le-redhat-linux/8/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9452e' '-mtune=power8' '-mcpu=power8']
+        link line: [ /usr/libexec/gcc/ppc64le-redhat-linux/8/collect2 -plugin /usr/libexec/gcc/ppc64le-redhat-linux/8/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/ppc64le-redhat-linux/8/lto-wrapper -plugin-opt=-fresolution=/tmp/ccH1cgBT.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -V -m elf64lppc -dynamic-linker /lib64/ld64.so.2 -o cmTC_9452e /usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crt1.o /usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crti.o /usr/lib/gcc/ppc64le-redhat-linux/8/crtbegin.o -L/usr/lib/gcc/ppc64le-redhat-linux/8 -L/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib -L/usr/lib/gcc/ppc64le-redhat-linux/8/../../.. CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/ppc64le-redhat-linux/8/crtend.o /usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crtn.o]
+          arg [/usr/libexec/gcc/ppc64le-redhat-linux/8/collect2] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/usr/libexec/gcc/ppc64le-redhat-linux/8/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/usr/libexec/gcc/ppc64le-redhat-linux/8/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccH1cgBT.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--no-add-needed] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [-V] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf64lppc] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld64.so.2] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_9452e] ==> ignore
+          arg [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crt1.o]
+          arg [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crti.o]
+          arg [/usr/lib/gcc/ppc64le-redhat-linux/8/crtbegin.o] ==> obj [/usr/lib/gcc/ppc64le-redhat-linux/8/crtbegin.o]
+          arg [-L/usr/lib/gcc/ppc64le-redhat-linux/8] ==> dir [/usr/lib/gcc/ppc64le-redhat-linux/8]
+          arg [-L/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64] ==> dir [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64]
+          arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+          arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+          arg [-L/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib] ==> dir [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib]
+          arg [-L/usr/lib/gcc/ppc64le-redhat-linux/8/../../..] ==> dir [/usr/lib/gcc/ppc64le-redhat-linux/8/../../..]
+          arg [CMakeFiles/cmTC_9452e.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [-lgcc] ==> lib [gcc]
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--no-as-needed] ==> ignore
+          arg [-lc] ==> lib [c]
+          arg [-lgcc] ==> lib [gcc]
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--no-as-needed] ==> ignore
+          arg [/usr/lib/gcc/ppc64le-redhat-linux/8/crtend.o] ==> obj [/usr/lib/gcc/ppc64le-redhat-linux/8/crtend.o]
+          arg [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crtn.o]
+        collapse obj [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
+        collapse obj [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
+        collapse obj [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64/crtn.o] ==> [/usr/lib64/crtn.o]
+        collapse library dir [/usr/lib/gcc/ppc64le-redhat-linux/8] ==> [/usr/lib/gcc/ppc64le-redhat-linux/8]
+        collapse library dir [/usr/lib/gcc/ppc64le-redhat-linux/8/../../../../lib64] ==> [/usr/lib64]
+        collapse library dir [/lib/../lib64] ==> [/lib64]
+        collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
+        collapse library dir [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib] ==> [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib]
+        collapse library dir [/usr/lib/gcc/ppc64le-redhat-linux/8/../../..] ==> [/usr/lib]
+        implicit libs: [gcc;gcc_s;c;gcc;gcc_s]
+        implicit objs: [/usr/lib64/crt1.o;/usr/lib64/crti.o;/usr/lib/gcc/ppc64le-redhat-linux/8/crtbegin.o;/usr/lib/gcc/ppc64le-redhat-linux/8/crtend.o;/usr/lib64/crtn.o]
+        implicit dirs: [/usr/lib/gcc/ppc64le-redhat-linux/8;/usr/lib64;/lib64;/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib;/usr/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeTestCUDACompiler.cmake:19 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CUDA compiler ABI info"
+    directories:
+      source: "/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-4V22GF"
+      binary: "/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-4V22GF"
+    cmakeVariables:
+      CMAKE_CUDA_FLAGS: ""
+      CMAKE_CUDA_FLAGS_DEBUG: "-g"
+      CMAKE_CUDA_RUNTIME_LIBRARY: "Static"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_CUDA_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-4V22GF'
+        
+        Run Build Command(s): /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_0e835/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_0e835.dir/build.make CMakeFiles/cmTC_0e835.dir/build
+        gmake[1]: Entering directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-4V22GF'
+        Building CUDA object CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o
+        /sw/summit/cuda/11.7.1/bin/nvcc -forward-unknown-to-host-compiler   -Xcompiler=-v -MD -MT CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -MF CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o.d -x cu -c /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCUDACompilerABI.cu -o CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o
+        Using built-in specs.
+        COLLECT_GCC=gcc
+        OFFLOAD_TARGET_NAMES=nvptx-none
+        Target: powerpc64le-unknown-linux-gnu
+        Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c,c++,fortran,lto --disable-multilib CFLAGS=-m64
+        Thread model: posix
+        gcc version 9.3.0 (GCC) 
+        COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-7_CMakeCUDACompilerABI.cpp1.ii'
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/cc1plus -E -quiet -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -iprefix /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/ -D_GNU_SOURCE -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=7 -D __CUDACC_VER_BUILD__=99 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=7 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -include cuda_runtime.h /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCUDACompilerABI.cu -o /tmp/tmpxft_0029604b_00000000-7_CMakeCUDACompilerABI.cpp1.ii
+        ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed"
+        ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"
+        ignoring duplicate directory "/sw/summit/cuda/11.7.1/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include
+         /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed
+         /usr/local/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include
+         /usr/include
+        End of search list.
+        COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/
+        LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-7_CMakeCUDACompilerABI.cpp1.ii'
+        Using built-in specs.
+        COLLECT_GCC=gcc
+        OFFLOAD_TARGET_NAMES=nvptx-none
+        Target: powerpc64le-unknown-linux-gnu
+        Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c,c++,fortran,lto --disable-multilib CFLAGS=-m64
+        Thread model: posix
+        gcc version 9.3.0 (GCC) 
+        COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-5_CMakeCUDACompilerABI.cpp4.ii'
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/cc1plus -E -quiet -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -iprefix /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/ -D_GNU_SOURCE -D __CUDA_ARCH_LIST__=520 -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=7 -D __CUDACC_VER_BUILD__=99 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=7 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -include cuda_runtime.h /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCUDACompilerABI.cu -o /tmp/tmpxft_0029604b_00000000-5_CMakeCUDACompilerABI.cpp4.ii
+        ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed"
+        ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"
+        ignoring duplicate directory "/sw/summit/cuda/11.7.1/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include
+         /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed
+         /usr/local/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include
+         /usr/include
+        End of search list.
+        COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/
+        LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-5_CMakeCUDACompilerABI.cpp4.ii'
+        Using built-in specs.
+        COLLECT_GCC=gcc
+        OFFLOAD_TARGET_NAMES=nvptx-none
+        Target: powerpc64le-unknown-linux-gnu
+        Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c,c++,fortran,lto --disable-multilib CFLAGS=-m64
+        Thread model: posix
+        gcc version 9.3.0 (GCC) 
+        COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-c' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-o' 'CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o'
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/cc1plus -quiet -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -iprefix /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/ -D_GNU_SOURCE -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS /tmp/tmpxft_0029604b_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp -quiet -dumpbase tmpxft_0029604b_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp -auxbase-strip CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -version -o /tmp/cc4acbDK.s
+        GNU C++14 (GCC) version 9.3.0 (powerpc64le-unknown-linux-gnu)
+        	compiled by GNU C version 9.3.0, GMP version 6.1.0, MPFR version 3.1.4, MPC version 1.0.3, isl version isl-0.18-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include"
+        ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed"
+        ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"
+        ignoring duplicate directory "/sw/summit/cuda/11.7.1/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include
+         /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed
+         /usr/local/include
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include
+         /usr/include
+        End of search list.
+        GNU C++14 (GCC) version 9.3.0 (powerpc64le-unknown-linux-gnu)
+        	compiled by GNU C version 9.3.0, GMP version 6.1.0, MPFR version 3.1.4, MPC version 1.0.3, isl version isl-0.18-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: c15ed6e2c35151c8c02118df9948b5e4
+        COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-c' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-o' 'CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o'
+         as -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -a64 -mppc64 -many -mlittle -o CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o /tmp/cc4acbDK.s
+        GNU assembler version 2.30 (ppc64le-redhat-linux) using BFD version version 2.30-113.el8
+        COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/
+        LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-c' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-o' 'CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o'
+        Linking CUDA executable cmTC_0e835
+        /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0e835.dir/link.txt --verbose=1
+        /sw/summit/gcc/9.3.0-2/bin/g++  -v CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -o cmTC_0e835  -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs" -L"/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib"
+        Using built-in specs.
+        COLLECT_GCC=/sw/summit/gcc/9.3.0-2/bin/g++
+        COLLECT_LTO_WRAPPER=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/lto-wrapper
+        OFFLOAD_TARGET_NAMES=nvptx-none
+        Target: powerpc64le-unknown-linux-gnu
+        Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c,c++,fortran,lto --disable-multilib CFLAGS=-m64
+        Thread model: posix
+        gcc version 9.3.0 (GCC) 
+        COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/
+        LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_0e835' '-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs' '-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib' '-shared-libgcc'
+         /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/collect2 -plugin /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccfLr4Zl.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -V -m elf64lppc -dynamic-linker /lib64/ld64.so.2 -o cmTC_0e835 /lib/../lib64/crt1.o /lib/../lib64/crti.o /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtbegin.o -L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs -L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0 -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../.. CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -lcudadevrt -lcudart_static -lrt -lpthread -ldl -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtend.o /lib/../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_0e835' '-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs' '-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib' '-shared-libgcc'
+        gmake[1]: Leaving directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-4V22GF'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:127 (message)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeTestCUDACompiler.cmake:19 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CUDA implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include]
+          add: [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+          add: [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0]
+          add: [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu]
+          add: [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward]
+          add: [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include]
+          add: [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed]
+          add: [/usr/local/include]
+          add: [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include] ==> [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/include]
+        collapse include dir [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include] ==> [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+        collapse include dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include/c++/9.3.0]
+        collapse include dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include/c++/9.3.0/powerpc64le-unknown-linux-gnu]
+        collapse include dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include/c++/9.3.0/backward]
+        collapse include dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include]
+        collapse include dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/include;/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include/c++/9.3.0;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include/c++/9.3.0/powerpc64le-unknown-linux-gnu;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include/c++/9.3.0/backward;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed;/usr/local/include;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/include;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:152 (message)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeTestCUDACompiler.cmake:19 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CUDA implicit link information:
+        link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        ignore line: [Change Dir: '/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-4V22GF']
+        ignore line: []
+        ignore line: [Run Build Command(s): /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_0e835/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_0e835.dir/build.make CMakeFiles/cmTC_0e835.dir/build]
+        ignore line: [gmake[1]: Entering directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-4V22GF']
+        ignore line: [Building CUDA object CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o]
+        ignore line: [/sw/summit/cuda/11.7.1/bin/nvcc -forward-unknown-to-host-compiler   -Xcompiler=-v -MD -MT CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -MF CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o.d -x cu -c /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCUDACompilerABI.cu -o CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=gcc]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+        ignore line: [Target: powerpc64le-unknown-linux-gnu]
+        ignore line: [Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c c++ fortran lto --disable-multilib CFLAGS=-m64]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 9.3.0 (GCC) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-7_CMakeCUDACompilerABI.cpp1.ii']
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/cc1plus -E -quiet -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -iprefix /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/ -D_GNU_SOURCE -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=7 -D __CUDACC_VER_BUILD__=99 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=7 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -include cuda_runtime.h /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCUDACompilerABI.cu -o /tmp/tmpxft_0029604b_00000000-7_CMakeCUDACompilerABI.cpp1.ii]
+        ignore line: [ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed"]
+        ignore line: [ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/sw/summit/cuda/11.7.1/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include]
+        ignore line: [ /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/]
+        ignore line: [LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-7_CMakeCUDACompilerABI.cpp1.ii']
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=gcc]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+        ignore line: [Target: powerpc64le-unknown-linux-gnu]
+        ignore line: [Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c c++ fortran lto --disable-multilib CFLAGS=-m64]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 9.3.0 (GCC) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-5_CMakeCUDACompilerABI.cpp4.ii']
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/cc1plus -E -quiet -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -iprefix /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/ -D_GNU_SOURCE -D __CUDA_ARCH_LIST__=520 -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=7 -D __CUDACC_VER_BUILD__=99 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=7 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -include cuda_runtime.h /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/CMakeCUDACompilerABI.cu -o /tmp/tmpxft_0029604b_00000000-5_CMakeCUDACompilerABI.cpp4.ii]
+        ignore line: [ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed"]
+        ignore line: [ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/sw/summit/cuda/11.7.1/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include]
+        ignore line: [ /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/]
+        ignore line: [LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH_LIST__=520' '-E' '-D' '__CUDACC__' '-D' '__NVCC__' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-D' '__CUDACC_VER_MAJOR__=11' '-D' '__CUDACC_VER_MINOR__=7' '-D' '__CUDACC_VER_BUILD__=99' '-D' '__CUDA_API_VER_MAJOR__=11' '-D' '__CUDA_API_VER_MINOR__=7' '-D' '__NVCC_DIAG_PRAGMA_SUPPORT__=1' '-include' 'cuda_runtime.h' '-o' '/tmp/tmpxft_0029604b_00000000-5_CMakeCUDACompilerABI.cpp4.ii']
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=gcc]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+        ignore line: [Target: powerpc64le-unknown-linux-gnu]
+        ignore line: [Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c c++ fortran lto --disable-multilib CFLAGS=-m64]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 9.3.0 (GCC) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-c' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-o' 'CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o']
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/cc1plus -quiet -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -iprefix /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/ -D_GNU_SOURCE -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS /tmp/tmpxft_0029604b_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp -quiet -dumpbase tmpxft_0029604b_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp -auxbase-strip CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -version -o /tmp/cc4acbDK.s]
+        ignore line: [GNU C++14 (GCC) version 9.3.0 (powerpc64le-unknown-linux-gnu)]
+        ignore line: [	compiled by GNU C version 9.3.0  GMP version 6.1.0  MPFR version 3.1.4  MPC version 1.0.3  isl version isl-0.18-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include"]
+        ignore line: [ignoring duplicate directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed"]
+        ignore line: [ignoring nonexistent directory "/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../powerpc64le-unknown-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/sw/summit/cuda/11.7.1/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include]
+        ignore line: [ /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/powerpc64le-unknown-linux-gnu]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/include-fixed]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/../../include]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [GNU C++14 (GCC) version 9.3.0 (powerpc64le-unknown-linux-gnu)]
+        ignore line: [	compiled by GNU C version 9.3.0  GMP version 6.1.0  MPFR version 3.1.4  MPC version 1.0.3  isl version isl-0.18-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [Compiler executable checksum: c15ed6e2c35151c8c02118df9948b5e4]
+        ignore line: [COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-c' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-o' 'CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o']
+        ignore line: [ as -v -I /sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include -a64 -mppc64 -many -mlittle -o CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o /tmp/cc4acbDK.s]
+        ignore line: [GNU assembler version 2.30 (ppc64le-redhat-linux) using BFD version version 2.30-113.el8]
+        ignore line: [COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/]
+        ignore line: [LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-D' '__CUDA_ARCH__=520' '-D' '__CUDA_ARCH_LIST__=520' '-c' '-D' 'CUDA_DOUBLE_MATH_FUNCTIONS' '-v' '-I' '/sw/summit/cuda/11.7.1/bin/../targets/ppc64le-linux/include' '-o' 'CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o']
+        ignore line: [Linking CUDA executable cmTC_0e835]
+        ignore line: [/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0e835.dir/link.txt --verbose=1]
+        ignore line: [/sw/summit/gcc/9.3.0-2/bin/g++  -v CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -o cmTC_0e835  -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs" -L"/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib"]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/sw/summit/gcc/9.3.0-2/bin/g++]
+        ignore line: [COLLECT_LTO_WRAPPER=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/lto-wrapper]
+        ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+        ignore line: [Target: powerpc64le-unknown-linux-gnu]
+        ignore line: [Configured with: /gpfs/alpine/scratch/belhorn/stf007/builds/gcc-build-9.3.0-3/gcc-9.3.0/configure --prefix=/sw/summit/gcc/9.3.0-3 --enable-offload-targets=nvptx-none --with-cuda-driver-include=/sw/summit/cuda/11.0.3/include --with-cuda-driver-lib=/sw/summit/cuda/11.0.3/lib64 --with-cuda-driver=/sw/summit/cuda/11.0.3 --enable-languages=c c++ fortran lto --disable-multilib CFLAGS=-m64]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 9.3.0 (GCC) ]
+        ignore line: [COMPILER_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/]
+        ignore line: [LIBRARY_PATH=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/:/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_0e835' '-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs' '-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib' '-shared-libgcc']
+        link line: [ /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/collect2 -plugin /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccfLr4Zl.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -V -m elf64lppc -dynamic-linker /lib64/ld64.so.2 -o cmTC_0e835 /lib/../lib64/crt1.o /lib/../lib64/crti.o /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtbegin.o -L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs -L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0 -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib -L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../.. CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o -lcudadevrt -lcudart_static -lrt -lpthread -ldl -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtend.o /lib/../lib64/crtn.o]
+          arg [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/collect2] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../libexec/gcc/powerpc64le-unknown-linux-gnu/9.3.0/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccfLr4Zl.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-V] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf64lppc] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld64.so.2] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_0e835] ==> ignore
+          arg [/lib/../lib64/crt1.o] ==> obj [/lib/../lib64/crt1.o]
+          arg [/lib/../lib64/crti.o] ==> obj [/lib/../lib64/crti.o]
+          arg [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtbegin.o] ==> obj [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtbegin.o]
+          arg [-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs] ==> dir [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs]
+          arg [-L/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib] ==> dir [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib]
+          arg [-L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0] ==> dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0]
+          arg [-L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc] ==> dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc]
+          arg [-L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64] ==> dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64]
+          arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+          arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+          arg [-L/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib] ==> dir [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib]
+          arg [-L/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../..] ==> dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../..]
+          arg [CMakeFiles/cmTC_0e835.dir/CMakeCUDACompilerABI.cu.o] ==> ignore
+          arg [-lcudadevrt] ==> lib [cudadevrt]
+          arg [-lcudart_static] ==> lib [cudart_static]
+          arg [-lrt] ==> lib [rt]
+          arg [-lpthread] ==> lib [pthread]
+          arg [-ldl] ==> lib [dl]
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lc] ==> lib [c]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtend.o] ==> obj [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtend.o]
+          arg [/lib/../lib64/crtn.o] ==> obj [/lib/../lib64/crtn.o]
+        collapse obj [/lib/../lib64/crt1.o] ==> [/lib64/crt1.o]
+        collapse obj [/lib/../lib64/crti.o] ==> [/lib64/crti.o]
+        collapse obj [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtbegin.o] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtbegin.o]
+        collapse obj [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtend.o] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtend.o]
+        collapse obj [/lib/../lib64/crtn.o] ==> [/lib64/crtn.o]
+        collapse library dir [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs] ==> [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs]
+        collapse library dir [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib] ==> [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib]
+        collapse library dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0]
+        collapse library dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc]
+        collapse library dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../../../lib64] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib64]
+        collapse library dir [/lib/../lib64] ==> [/lib64]
+        collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
+        collapse library dir [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib] ==> [/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib]
+        collapse library dir [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/bin/../lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/../../..] ==> [/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib]
+        implicit libs: [cudadevrt;cudart_static;rt;pthread;dl;stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+        implicit objs: [/lib64/crt1.o;/lib64/crti.o;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtbegin.o;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0/crtend.o;/lib64/crtn.o]
+        implicit dirs: [/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs;/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc/powerpc64le-unknown-linux-gnu/9.3.0;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib/gcc;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib64;/lib64;/usr/lib64;/sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib;/autofs/nccs-svm1_sw/summit/gcc/9.3.0-2/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/share/cmake-3.27/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "CMakeLists.txt:16 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-cScGQh"
+      binary: "/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-cScGQh"
+    cmakeVariables:
+      CMAKE_CUDA_ARCHITECTURES: "70"
+      CMAKE_C_FLAGS: " -std=c99 -Wall   -Wextra -Wmissing-prototypes -Wstrict-prototypes           -Wold-style-definition -Wno-unused-parameter"
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-cScGQh'
+        
+        Run Build Command(s): /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_302a8/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_302a8.dir/build.make CMakeFiles/cmTC_302a8.dir/build
+        gmake[1]: Entering directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-cScGQh'
+        Building C object CMakeFiles/cmTC_302a8.dir/test_mpi.c.o
+        /usr/bin/cc  -isystem /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include -isystem /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/include -std=c99 -Wall   -Wextra -Wmissing-prototypes -Wstrict-prototypes           -Wold-style-definition -Wno-unused-parameter  -pthread -o CMakeFiles/cmTC_302a8.dir/test_mpi.c.o -c /ccs/home/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-cScGQh/test_mpi.c
+        Linking C executable cmTC_302a8
+        /autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/cmake-3.27.7-zedecrrdzkqtcxzquip2l4ii7n67egan/bin/cmake -E cmake_link_script CMakeFiles/cmTC_302a8.dir/link.txt --verbose=1
+        /usr/bin/cc  -std=c99 -Wall   -Wextra -Wmissing-prototypes -Wstrict-prototypes           -Wold-style-definition -Wno-unused-parameter  -L/autofs/nccs-svm1_sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib -pthread CMakeFiles/cmTC_302a8.dir/test_mpi.c.o -o cmTC_302a8  /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/libmpiprofilesupport.so /sw/summit/spack-envs/summit-plus/opt/gcc-8.5.0/spectrum-mpi-10.4.0.6-20230210-f3ouht4ckff2qogy74bwki5ovljfou36/lib/libmpi_ibm.so 
+        gmake[1]: Leaving directory '/autofs/nccs-svm1_home1/dean316/AWP_code_archive/gpu/awp_topo/awp/release/CMakeFiles/CMakeScratch/TryCompile-cScGQh'
+        
+      exitCode: 0
+...

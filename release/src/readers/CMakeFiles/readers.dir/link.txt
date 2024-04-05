@@ -1,0 +1,2 @@
+/usr/bin/ar qc libreaders.a CMakeFiles/readers.dir/input.c.o CMakeFiles/readers.dir/version.c.o
+/usr/bin/ranlib libreaders.a

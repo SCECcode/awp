@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtesting.a CMakeFiles/testing.dir/test.c.o CMakeFiles/testing.dir/check.c.o CMakeFiles/testing.dir/grid_check.c.o
+/usr/bin/ranlib libtesting.a

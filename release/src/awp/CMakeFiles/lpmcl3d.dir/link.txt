@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblpmcl3d.a CMakeFiles/lpmcl3d.dir/calc.c.o CMakeFiles/lpmcl3d.dir/cerjan.c.o CMakeFiles/lpmcl3d.dir/command.c.o CMakeFiles/lpmcl3d.dir/dump.c.o CMakeFiles/lpmcl3d.dir/grid.c.o CMakeFiles/lpmcl3d.dir/init.c.o CMakeFiles/lpmcl3d.dir/io.c.o CMakeFiles/lpmcl3d.dir/kernel.cu.o CMakeFiles/lpmcl3d.dir/mesh.c.o CMakeFiles/lpmcl3d.dir/source.c.o CMakeFiles/lpmcl3d.dir/swap.c.o CMakeFiles/lpmcl3d.dir/utils.c.o
+/usr/bin/ranlib liblpmcl3d.a

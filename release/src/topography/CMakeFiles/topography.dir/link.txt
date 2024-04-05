@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtopography.a CMakeFiles/topography.dir/topography.c.o CMakeFiles/topography.dir/velocity.cu.o CMakeFiles/topography.dir/stress.cu.o CMakeFiles/topography.dir/geometry.c.o CMakeFiles/topography.dir/host.c.o CMakeFiles/topography.dir/grids.c.o CMakeFiles/topography.dir/mms.cu.o CMakeFiles/topography.dir/energy.cu.o
+/usr/bin/ranlib libtopography.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtopography_readers.a CMakeFiles/topography_readers.dir/serial_reader.c.o
+/usr/bin/ranlib libtopography_readers.a
