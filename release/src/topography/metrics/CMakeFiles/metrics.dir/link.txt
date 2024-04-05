@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmetrics.a CMakeFiles/metrics.dir/metrics.c.o CMakeFiles/metrics.dir/kernel.c.o CMakeFiles/metrics.dir/shift.c.o
-/usr/bin/ranlib libmetrics.a

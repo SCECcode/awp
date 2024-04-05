@@ -1,1 +1,0 @@
-/sw/summit/gcc/9.3.0-2/bin/g++ @CMakeFiles/test_buffer.dir/objects1.rsp -o test_buffer @CMakeFiles/test_buffer.dir/linkLibs.rsp -L"/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib/stubs" -L"/sw/summit/cuda/11.7.1/targets/ppc64le-linux/lib"

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libgrid.a CMakeFiles/grid.dir/grid_3d.c.o CMakeFiles/grid.dir/shift.c.o
-/usr/bin/ranlib libgrid.a

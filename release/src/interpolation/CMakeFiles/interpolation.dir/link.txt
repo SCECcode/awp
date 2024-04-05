@@ -1,2 +1,0 @@
-/usr/bin/ar qc libinterpolation.a CMakeFiles/interpolation.dir/interpolation.c.o CMakeFiles/interpolation.dir/interpolation.cu.o CMakeFiles/interpolation.dir/lagrange.c.o
-/usr/bin/ranlib libinterpolation.a

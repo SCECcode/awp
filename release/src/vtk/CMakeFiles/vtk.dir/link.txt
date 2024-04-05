@@ -1,2 +1,0 @@
-/usr/bin/ar qc libvtk.a CMakeFiles/vtk.dir/vtk.c.o
-/usr/bin/ranlib libvtk.a

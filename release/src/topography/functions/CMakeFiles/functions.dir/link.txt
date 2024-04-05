@@ -1,2 +1,0 @@
-/usr/bin/ar qc libfunctions.a CMakeFiles/functions.dir/functions.c.o CMakeFiles/functions.dir/random.c.o CMakeFiles/functions.dir/norm.c.o
-/usr/bin/ranlib libfunctions.a

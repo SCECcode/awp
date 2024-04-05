@@ -1,2 +1,0 @@
-/usr/bin/ar qc libchecksum.a CMakeFiles/checksum.dir/checksum.c.o CMakeFiles/checksum.dir/md5/md5.c.o
-/usr/bin/ranlib libchecksum.a
