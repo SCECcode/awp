@@ -5,6 +5,7 @@
 #include <awp/error.h>
 #include <test/test.h>
 #include <topography/readers/serial_reader.h>
+#include <topography/metrics/metrics.h>
 
 
 int topo_read_serial(const char *filename, const int rank, const int px,
@@ -28,9 +29,9 @@ int topo_read_serial(const char *filename, const int rank, const int px,
         assert(count > 0);
         assert(nx * px == gnx);
         assert(ny * py == gny);
-        assert(padding >= ngsl);
+        assert(padding >= metrics_padding);
 
-        if (nx * px != gnx || ny * py != gny || padding < ngsl) {
+        if (nx * px != gnx || ny * py != gny || padding < metrics_padding) {
                 fclose(fh);
                 return ERR_INCONSISTENT_SIZE;
         }
@@ -38,15 +39,15 @@ int topo_read_serial(const char *filename, const int rank, const int px,
         float *data = malloc(sizeof data * gmx * gmy);
         count = fread(data, sizeof data, gmx * gmy, fh);
 
-        int lmx = 4 + nx + 2 * ngsl;
-        int lmy = 4 + ny + 2 * ngsl + 2 * align;
+        int lmx = 4 + nx + 2 * metrics_padding;
+        int lmy = 4 + ny + 2 * metrics_padding + 2 * align;
 
         if (alloc) {
                 *out = malloc(sizeof out * lmx * lmy); 
         }
 
-        for (int i = 0; i < (nx + 2 * ngsl); ++i) {
-        for (int j = 0; j < (ny + 2 * ngsl); ++j) {
+        for (int i = 0; i < (nx + 2 * metrics_padding); ++i) {
+        for (int j = 0; j < (ny + 2 * metrics_padding); ++j) {
                 size_t global_pos =   (ny * coord[1] + j) 
                                     + (nx * coord[0] + i) * gmy;
                 size_t local_pos = 2 + align + j + (2 + i) * lmy;

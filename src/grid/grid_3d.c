@@ -101,6 +101,15 @@ grid3_t grid_init_metric_grid(const int3_t size, const int3_t shift,
                          gridspacing);
 }
 
+grid3_t grid_init_full_grid(const int3_t size, const int3_t shift,
+                         const int3_t coordinate, const int3_t boundary1,
+                         const int3_t boundary2,
+                         const _prec gridspacing)
+{
+        return grid_init(size, shift, coordinate, boundary1, boundary2, ngsl + 2,
+                         gridspacing);
+}
+
 //FIXME: remove this function. It should be replaced by "grid_init"
 fcn_grid_t fcn_init_grid(const int3_t size, const int3_t shift,
                          const int3_t coordinate, const int padding,
@@ -255,11 +264,11 @@ grid1_t grid_grid1_z(const grid3_t grid)
         return grid1;
 }
 
-int grid_fill1(prec *out, const grid1_t grid)
+int grid_fill1(prec *out, const grid1_t grid, const int isxdir)
 {
         _prec h = grid.gridspacing;
         for (int i = 0; i < grid.size; ++i) {
-                out[i] = h * (i + grid.id * (grid.size - 2 * grid.padding) - 0.5 * grid.shift - grid.padding);
+                out[i] = h * (i + grid.id * (grid.size - 2 * grid.padding) - 0.5 * grid.shift + isxdir * grid.shift - grid.padding);
         }
 
         if (grid.shift && grid.boundary1) {
@@ -275,6 +284,17 @@ int grid_fill1(prec *out, const grid1_t grid)
                 out[grid.size - 1] = 0.0;
         }
         return grid.size;
+}
+
+int grid_fill_y_dm(prec *out, const grid1_t grid, const int blocknum) {
+    int count = grid_fill1(out, grid, 0);
+    if (blocknum > 0) {
+        _prec h = grid.gridspacing / 3.0;
+        for (int i = 0; i < grid.size; ++i) {
+            out[i] += h;
+        }
+    }
+    return count;
 }
 
 
@@ -298,34 +318,22 @@ int grid_in_bounds1(const _prec *x, const _prec q, const grid1_t grid)
         return SUCCESS;
 }
 
-int grid_in_bounds_ext1(const _prec *x, const _prec q, const grid1_t grid)
-{
-        _prec h = grid.gridspacing;
-        if ( q - (x[0] - h / 2) < 0 ) {
-                return ERR_OUT_OF_BOUNDS_LOWER;
-        }
-        if ( q - (x[grid.size - 1] + h / 2) >= 0) {
-                return ERR_OUT_OF_BOUNDS_UPPER;
-        }
-        return SUCCESS;
-}
-
 int grid_fill_x(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_x(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 1);
 }
 
 int grid_fill_y(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_y(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 0);
 }
 
 int grid_fill_z(prec *out, const fcn_grid_t grid)
 {
         grid1_t grid1 = grid_grid1_z(grid);
-        return grid_fill1(out, grid1);
+        return grid_fill1(out, grid1, 0);
 }
 
 int grid_fill3_x(_prec *out, const _prec *x, const grid3_t grid)
@@ -394,3 +402,51 @@ double grid_reduce3(const _prec *in, const grid3_t grid)
         return out;
 }
 
+_prec grid_overlap(const _prec h) {
+    return 7.0 * h;
+}
+_prec grid_height(const int nz, const _prec h, const int istopo) {
+    return istopo == 1 ? (nz - 2) * h : (nz - 1) * h;
+}
+void global_to_local(_prec *zloc, int *block_index, const _prec z,
+                     const _prec h, const int *nz, const int num_grids,
+                     const int istopo) {
+    _prec z0 = z;
+    _prec bi = -1;
+
+    _prec hloc = h;
+    _prec H = 0.0;
+    // Go from top grid to bottom grid
+    for (int i = 0; i < num_grids; ++i ) {
+
+        if (i > 0) 
+            z0 -= grid_overlap(hloc / 3);
+
+        // Check minimum number of grid points per block
+        assert(nz[i] >= 7);
+
+        _prec overlap = grid_overlap(hloc);
+        
+        H = i == 0 ? grid_height(nz[i], hloc, istopo) : grid_height(nz[i], hloc, 0);
+
+        z0 += H;
+        hloc *= 3;
+        bi = i;
+
+        // Check if the coordinate touches the last two grid points, if so, push it to the next grid
+        if (z0 > 0 && z0 < grid_overlap(hloc / 3) ) {
+            continue;
+        }
+
+        if (z0 > 0) break;
+
+    }
+
+    // Check if the mapping succeeded or not
+    if (z0 < 0) {
+        printf("WARNING: Failed to map z=%g to a block.\n", z);
+    }
+
+    *zloc = z0;
+    *block_index = bi;
+}

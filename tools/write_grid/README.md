@@ -10,7 +10,7 @@ with the values at the nearest regular grid point.
 ## Usage
 
 ```
-write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py> <mesh_out> <rpt>
+write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <hb> <ht> <px> <py> <mesh_out>
 ```
 ---------------------------------------------------------------
 |  Argument       |  Description                                  |
@@ -24,10 +24,11 @@ write_grid <input> <output> <property> <mesh> <nx> <ny> <nz> <mz> <h> <px> <py> 
 | nz `int`        |   Number of grid points in the z-direction    |
 | mz `int`        |   Number of grid points in the z-direction of the regular property grid  |
 | h `float`       |   Grid spacing                                |
+| hb `float`      |   Bottom grid spacing                         |
+| ht `float`      |   Top grid spacing                            |
 | px `int`        |   Number of MPI partitions in the x-direction |
 | py `int`        |   Number of MPI partitions in the y-direction |
-| mesh_out `int`  |   Generate mesh output (0: disalbe; 1:enable) |
-| rpt `bool`      |   Write the top layer twice (0: disable; default=1: enable)            |
+| mesh_out `int`  |   Generate mesh output (0: disable; 1:enable) |
 
 See
 [awp-benchmarks](https://github.com/SCECcode/awp-benchmarks/tree/master/tests/topography/write_grid)
@@ -87,7 +88,3 @@ neighbor in the property gird (red, `mz` layers). Note that the grid spacing of 
 `nz` curvilinear grids are always larger than or equal to that of the `mz` property
 grids.
 ![](https://i.loli.net/2019/11/06/3XvYondONmFSIzH.png)
-
-### Note
-When `rpt == 1`, both the material properties and grid coordinates at the top layer
-will be repeated twice.

@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H
 #define BLOCK_SIZE_X 2
 #define BLOCK_SIZE_Y 2
-#define BLOCK_SIZE_Z 4
+#define BLOCK_SIZE_Z 32
 #endif
 // Set floating-point precision. Make sure to configure both `_prec` and
 // `_mpi_prec`.
@@ -15,12 +15,9 @@
 #endif
 #define align 32
 #define loop  1 
-// Number of ghost cells is increased from 4 to 8 for topography kernels.
-// In the future, it should be possible to keep this number at four, but modify
-// the vertical velocity exchange so that 6 points is exchanged instead of 4.
-// No modifications necessary to the other velocity components. 
-#define ngsl 8     /* number of ghost cells x loop */
-#define ngsl2 16  /* ngsl * 2 */
+// Do not change the number of ghost cells.
+#define ngsl 4     /* number of ghost cells x loop */
+#define ngsl2 8  /* ngsl * 2 */
 
 #define Both  0
 #define Left  1

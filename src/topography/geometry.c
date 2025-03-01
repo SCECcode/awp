@@ -5,16 +5,40 @@
 
 #include <awp/definitions.h>
 #include <vtk/vtk.h>
-#include <utils/copy.h>
 #include <grid/shift.h>
 #include <topography/topography.h>
 #include <topography/geometry.h>
 #include <topography/geometry/geometry.h>
 
+//#define TOPO_USE_VTK 1
+int copyfile(const char *output, const char *input);
+int copyfile(const char *output, const char *input)
+{
+        FILE *fin = fopen(input, "r"); 
+        FILE *fout = fopen(output, "w"); 
+        int count = -1;
+
+        if (fin == NULL) {
+                fprintf(stderr, "Cannot open file %s. \n", input);
+                return count;
+        }
+
+        if (fout == NULL) {
+                fprintf(stderr, "Cannot write to file %s. \n", output);
+                return count;
+        }
+  
+        char ch;
+        while ((ch = fgetc(fin)) != EOF)
+                fputc(ch, fout);
+        fclose(fin);
+        fclose(fout);
+        return count;
+}
+
 void topo_init_grid(topo_t *T)
 {
         if (!T->use) return;
-        //FIXME: Handle proper grid initialization
         geom_cartesian_topography(&T->metrics_f);
         geom_no_grid_stretching(&T->metrics_g);
 
@@ -26,9 +50,9 @@ void topo_init_grid(topo_t *T)
         T->y1 = malloc(sizeof(T->y1) * y1_grid.size);
         T->z1 = malloc(sizeof(T->z1) * z1_grid.size);
 
-        grid_fill1(T->x1, x1_grid);
-        grid_fill1(T->y1, y1_grid);
-        grid_fill1(T->z1, z1_grid);
+        grid_fill1(T->x1, x1_grid, 1);
+        grid_fill1(T->y1, y1_grid, 0);
+        grid_fill1(T->z1, z1_grid, 0);
 }
 
 void topo_init_gaussian_hill_and_canyon_xz(topo_t *T, const _prec3_t hill_width,
@@ -73,17 +97,17 @@ void topo_write_geometry_vtk(topo_t *T, const int mode)
         _prec *y = malloc(T->topography_grid.num_bytes);
         _prec *z = malloc(T->topography_grid.num_bytes);
 
-        grid_fill3_x(x, T->x1, T->stress_grid);
-        grid_fill3_y(y, T->y1, T->stress_grid);
-        grid_fill3_z(z, T->z1, T->stress_grid);
+        grid_fill3_x(x, T->x1, T->velocity_grid);
+        grid_fill3_y(y, T->y1, T->velocity_grid);
+        grid_fill3_z(z, T->z1, T->velocity_grid);
 
-        geom_mapping_z(z, T->stress_grid, grid_node(), &T->metrics_f,
+        geom_mapping_z(z, T->velocity_grid, grid_node(), &T->metrics_f,
                        &T->metrics_g);
 
         char vtk_file[256];
 
         mkdir("vtk", 0700);
-        sprintf(vtk_file, "vtk/geometry_%d%d.vtk", T->coord[0], T->coord[0]);
+        sprintf(vtk_file, "vtk/geometry_%d%d.vtk", T->coord[0], T->coord[1]);
         switch (mode) {
                 case 0:
                 vtk_write_grid(vtk_file, x, y, z, T->velocity_grid);
@@ -109,10 +133,10 @@ void topo_write_vtk(topo_t *T, const int step, int mode)
         char vtk_vz[256];
         char geom_file[256];
         mkdir("vtk", 0700);
-        sprintf(vtk_vx, "vtk/vx_%d%d_%04d.vtk", T->coord[0], T->coord[0], step);
-        sprintf(vtk_vy, "vtk/vy_%d%d_%04d.vtk", T->coord[0], T->coord[0], step);
-        sprintf(vtk_vz, "vtk/vz_%d%d_%04d.vtk", T->coord[0], T->coord[0], step);
-        sprintf(geom_file, "vtk/geometry_%d%d.vtk", T->coord[0], T->coord[0]);
+        sprintf(vtk_vx, "vtk/vx_%d%d_%04d.vtk", T->coord[0], T->coord[1], step);
+        sprintf(vtk_vy, "vtk/vy_%d%d_%04d.vtk", T->coord[0], T->coord[1], step);
+        sprintf(vtk_vz, "vtk/vz_%d%d_%04d.vtk", T->coord[0], T->coord[1], step);
+        sprintf(geom_file, "vtk/geometry_%d%d.vtk", T->coord[0], T->coord[1]);
         copyfile(vtk_vx, geom_file);
         copyfile(vtk_vy, geom_file);
         copyfile(vtk_vz, geom_file);
@@ -139,5 +163,7 @@ void topo_write_vtk(topo_t *T, const int step, int mode)
         free(vx);
         free(vy);
         free(vz);
+
+        printf("Wrote: %s \n", vtk_vx);
 }
 

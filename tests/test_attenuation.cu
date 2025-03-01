@@ -21,7 +21,7 @@
 #include <awp/kernel.h>
 
 #include <topography/velocity.cuh>
-#include <topography/stress_attenuation.cuh>
+#include <topography/stress.cuh>
 #include <topography/geometry.h>
 #include <topography/host.h>
  
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 void init(topo_t *T)
 {
         *T = topo_init(1, "", rank, side.left, side.right, side.front,
-                              side.back, coord, px, py, nx, ny, nz, dt, h,
+                              side.back, coord, px, py, nx, ny, nz, dt, h, h, h,
                               stream_1, stream_2, stream_i);
         topo_d_malloc(T);
         topo_d_zero_init(T);

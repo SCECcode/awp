@@ -1,5 +1,5 @@
 set(HEADERS
-    ${AWP_MINI_SOURCE_DIR}/include/utils/copy.h
+    ${AWP_SOURCE_DIR}/include/utils/copy.h
     )
 
 add_library(utils
@@ -8,5 +8,5 @@ add_library(utils
 
 target_include_directories(utils
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )

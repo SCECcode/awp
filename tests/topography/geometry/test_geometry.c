@@ -53,7 +53,7 @@ void test_gaussian(_prec **x, _prec **y, _prec **z, const int write_vtk,
         _prec h = gridspacing;
         int gsize[3] = {128, 128, 32};
 
-        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing);
+        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing, 8);
         g_grid_t metrics_g = metrics_init_g(gsize, gridspacing);
 
         int3_t shift = grid_xx();
@@ -119,7 +119,7 @@ void test_incline_plane(const int write_vtk, const int rank)
 
         _prec gridspacing = 1.0 / (gsize[2] - 2);
 
-        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing);
+        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing, 8);
         g_grid_t metrics_g = metrics_init_g(gsize, gridspacing);
 
         int3_t shift = grid_u3();
@@ -149,9 +149,9 @@ void test_incline_plane(const int write_vtk, const int rank)
         _prec *y1 = malloc(sizeof(y1) * y1_grid.size);
         _prec *z1 = malloc(sizeof(z1) * z1_grid.size);
 
-        grid_fill1(x1, x1_grid);
-        grid_fill1(y1, y1_grid);
-        grid_fill1(z1, z1_grid);
+        grid_fill1(x1, x1_grid, 1);
+        grid_fill1(y1, y1_grid, 0);
+        grid_fill1(z1, z1_grid, 0);
 
         _prec *x = malloc(topography_grid.num_bytes);
         _prec *y = malloc(topography_grid.num_bytes);

@@ -152,7 +152,7 @@ void topo_stress_right_H(topo_t *T);
 }
 #endif
 
-// Number of threads per block to use
+// Min. block dimensions
 #ifndef TBX
 #define TBX 1
 #endif

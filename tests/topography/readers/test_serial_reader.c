@@ -13,8 +13,8 @@
 #include <topography/geometry/geometry.h>
 #include <topography/metrics/metrics.h>
 
-void init_geometry(prec **f, const int *gsize, const int3_t coord,
-                   const int rank, int px, int py);
+void init_global_grid(prec **f, const int *gsize);
+void init_local_grid(prec **f, const int *lsize, const int3_t coord, const int gmy);
 void write_geometry(const _prec *f, const int *gsize, int rank);
 int test_read_grid(int rank, const _prec *local_f, const int *local_size,
                    const int px, const int py, const int3_t coord);
@@ -30,14 +30,14 @@ int main(int argc, char **argv)
         MPI_Init(&argc, &argv);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-        int px = 2; 
-        int py = 3; 
+        int px = 3; 
+        int py = 2; 
         assert(mpi_size == px * py);
 
         int3_t coord = { .x = rank % px, .y = rank / px, .z = 0};
 
         int err = 0;
-        int local_grid[3] = {4, 8, 10};
+        int local_grid[3] = {32, 64, 4};
         int global_grid[3] = {local_grid[0] * px, local_grid[1] * py,
                               local_grid[2]};
         prec * global_f;
@@ -50,11 +50,15 @@ int main(int argc, char **argv)
                 printf("===========================\n");
         }
         if (rank == 0) {
-                init_geometry(&global_f, global_grid, coord, rank, 1, 1);
+                init_global_grid(&global_f, global_grid);
         }
-        init_geometry(&local_f, local_grid, coord, rank, px, py);
+            
+        int gmy = global_grid[1] + 4 + 2 * align + 2 * metrics_padding;
+
+        init_local_grid(&local_f, local_grid, coord, gmy);
         write_geometry(global_f, global_grid, rank);
 
+        MPI_Barrier(MPI_COMM_WORLD);
         err = test_read_grid(rank, local_f, local_grid, px, py, coord);
         if (rank == 0) {
                 free(global_f);
@@ -64,90 +68,65 @@ int main(int argc, char **argv)
         return err;
 }
 
-void init_geometry(prec **f, const int *gsize, const int3_t coord,
-                   const int rank, int px, int py) {
-        _prec gridspacing = 0.1; 
+void init_global_grid(prec **f, const int *gsize) {
 
-        f_grid_t metrics_f = metrics_init_f(gsize, gridspacing);
-        g_grid_t metrics_g = metrics_init_g(gsize, gridspacing);
+        int nx = gsize[0];
+        int ny = gsize[1];
 
-        int3_t shift = grid_u3();
-        
-        int3_t size = {gsize[0], gsize[1], gsize[2]};
+        int mxp = nx + 2 * metrics_padding;
+        int myp = ny + 2 * metrics_padding;
+        int mx = 4 + mxp;
+        int my = 4 + myp + 2 * align;
+        *f = malloc(mx * my * sizeof(prec)); 
 
-        int3_t boundary1 = {.x = 0, .y = 0, .z = 0};
-        int3_t boundary2 = {.x = 0, .y = 0, .z = 1};
+        prec *global_f = *f;
 
-        grid3_t topography_grid = grid_init_metric_grid(
-            size, shift, coord, boundary1, boundary2, gridspacing);
+        for (int i = 0; i < mxp; ++i) {
+        for (int j = 0; j < myp; ++j) {
+            size_t pos = align + 2 + j + my * (2 + i);
+            global_f[pos] = j + my * i;
+        }
+        }
+}
 
-        grid1_t x1_grid = grid_grid1_x(topography_grid);
-        grid1_t y1_grid = grid_grid1_y(topography_grid);
-        grid1_t z1_grid = grid_grid1_z(topography_grid);
+void init_local_grid(prec **f, const int *lsize, const int3_t coord, const int gmy) {
+
+        int nx = lsize[0];
+        int ny = lsize[1];
+        int mxp = nx + 2 * metrics_padding;
+        int myp = ny + 2 * metrics_padding;
+        int mx = 4 + mxp;
+        int my = 4 + myp + 2 * align;
+        size_t num_bytes = mx * my * sizeof(prec);
+        *f = malloc(num_bytes); 
+
+        prec *local_f = *f;
+        memset(local_f, 0, num_bytes);
 
 
-        _prec *x1 = malloc(sizeof(x1) * x1_grid.size);
-        _prec *y1 = malloc(sizeof(y1) * y1_grid.size);
-        _prec *z1 = malloc(sizeof(z1) * z1_grid.size);
-
-        grid_fill1(x1, x1_grid);
-        grid_fill1(y1, y1_grid);
-        grid_fill1(z1, z1_grid);
-
-        _prec *x = malloc(topography_grid.num_bytes);
-        _prec *y = malloc(topography_grid.num_bytes);
-        _prec *z = malloc(topography_grid.num_bytes);
-
-        grid_fill3_x(x, x1, topography_grid);
-        grid_fill3_y(y, y1, topography_grid);
-        grid_fill3_z(z, z1, topography_grid);
-
-         _prec3_t hill_width = {.x = 0.5, .y = 0.5, .z = 0};
-         _prec hill_height = 1.0;
-         _prec3_t hill_center = {.x = 0.0, .y = 0.0, .z = 0};
-         _prec3_t canyon_width = {.x = 0.5, .y = 0.5, .z = 0};
-         _prec canyon_height = 0.0;
-         _prec3_t canyon_center = {.x = 2, .y = 2, .z = 0};
-
-        geom_gaussian_hill_and_canyon(&metrics_f, x1, y1, topography_grid, 
-                        hill_width, hill_height, hill_center,
-                        canyon_width, canyon_height, canyon_center,
-                        px, py);
-
-        *f = malloc(metrics_sizeof_f(&metrics_f)); 
-        for (int i = 0; i < metrics_f.mem[0]; ++i) {
-        for (int j = 0; j < metrics_f.mem[1]; ++j) {
-                size_t pos = j + metrics_f.mem[1] * i;
-                (*f)[pos] = metrics_f.f[pos];
+        for (int i = 0; i < mxp; ++i) {
+        for (int j = 0; j < myp; ++j) {
+                size_t pos = align + 2 + j + my * (2 + i);
+                local_f[pos] = (j + ny * coord.y) + gmy * (i + nx * coord.x);
         }
         }
 
-        metrics_build_f(&metrics_f);
-        metrics_build_g(&metrics_g);
 
-
-        free(x);
-        free(y);
-        free(z);
-        free(x1);
-        free(y1);
-        free(z1);
 }
 
 void write_geometry(const prec *f, const int *gsize, int rank) {
         if (rank != 0)
                 return;
-        int padding = ngsl;
         int nx = gsize[0];
         int ny = gsize[1];
-        int mx = nx + 2 * ngsl;
-        int my = ny + 2 * ngsl;
+        int mx = nx + 2 * metrics_padding;
+        int my = ny + 2 * metrics_padding;
         FILE *fh = fopen(geometry_file, "wb");
         float *data;
         data = malloc(sizeof data * mx * my);
         fwrite(&nx, sizeof nx, 1, fh);
         fwrite(&ny, sizeof ny, 1, fh);
-        fwrite(&padding, sizeof padding, 1, fh);
+        fwrite(&metrics_padding, sizeof metrics_padding, 1, fh);
         int slice = 4 + my + 2 * align;
 
         for (int i = 0; i < mx; ++i) {
@@ -159,6 +138,7 @@ void write_geometry(const prec *f, const int *gsize, int rank) {
 
         fwrite(data, sizeof(float), mx * my, fh);
         fclose(fh);
+
 }
 
 int test_read_grid(int rank, const _prec *local_f, const int *local_size, const
@@ -172,23 +152,32 @@ int test_read_grid(int rank, const _prec *local_f, const int *local_size, const
         int lnx, lny;
         lnx = local_size[0];
         lny = local_size[1];
-        int lmy = 4 + lny + 2 * ngsl + 2 * align;
+        int lmx = 4 + lnx + 2 * metrics_padding;
+        int lmy = 4 + lny + 2 * metrics_padding + 2 * align;
         prec *read_f;
         int icoord[2] = {coord.x, coord.y};
         int alloc = 1;
 
+        read_f = malloc(sizeof read_f * lmx * lmy); 
+
+        for (int i = 0; i < lmx * lmy; ++i)
+                read_f[i] = 0.0;
+
         err |= topo_read_serial(geometry_file, rank, px, py, icoord, lnx, lny,
                                 alloc, &read_f);
 
+        MPI_Barrier(MPI_COMM_WORLD);
+
         // Compare data read from file with locally computed data
         float sum = 0;
-        for (int i = 0; i < (lnx + 2 * ngsl); ++i) {
-        for (int j = 0; j < (lny + 2 * ngsl); ++j) {
+            
+        for (int i = 0; i < (lnx + 2 * metrics_padding); ++i) {
+        for (int j = 0; j < (lny + 2 * metrics_padding); ++j) {
                 size_t local_pos = 2 + align + j + (i + 2) * lmy;
-                sum += fabs(read_f[local_pos] - local_f[local_pos]); 
+                double val = fabs(read_f[local_pos] - local_f[local_pos]);
+                sum += val; 
         }
         }
-
 
         free(read_f);
         remove(geometry_file);

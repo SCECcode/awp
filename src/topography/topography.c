@@ -6,13 +6,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <awp/error.h>
 #include <grid/grid_3d.h>
 #include <topography/geometry/geometry.h>
 #include <topography/topography.h>
+#include <topography/mapping.h>
 #include <topography/readers/serial_reader.h>
 #include <topography/topography.cuh>
+#include <test/test.h>
 
 topo_t topo_init(const int USETOPO, 
                  const char *INTOPO, 
@@ -29,6 +31,8 @@ topo_t topo_init(const int USETOPO,
                  int nzt,
                  const _prec dt,
                  const _prec h,
+                 const _prec hb,
+                 const _prec ht,
                  cudaStream_t stream_1,
                  cudaStream_t stream_2,
                  cudaStream_t stream_i
@@ -43,6 +47,7 @@ topo_t topo_init(const int USETOPO,
         int slice = myt * mzt;
         int line = mzt;
         int slice_gl = ngsl * mzt;
+        _prec block_height = h * (nzt - 2 - OVERLAP);
 
         topo_t T = {.use = USETOPO, .dbg = TOPO_DBG, 
                     .verbose = TOPO_VERBOSE,
@@ -59,19 +64,17 @@ topo_t topo_init(const int USETOPO,
                     .off_x = {2, 2 + ngsl, 2 + ngsl + nxt, 2 + ngsl2 + nxt},
                     .off_y = {2, 2 + ngsl, 2 + ngsl + nyt, 2 + ngsl2 + nyt},
                     .off_z = {0, align, align + nzt, 2*align + nzt},
-                    // Grid affinity
-                    .sxx = {0, 1, 1}, .syy = {0, 1, 1}, .szz = {0, 1, 1},
-                    .sxy = {1, 0, 1}, .sxz = {1, 1, 0}, .syz = {0, 0, 0},
-                    .su1 = {1, 1, 1}, .sv1 = {0, 0, 1}, .sw1 = {0, 1, 0},
                     .gridsize = gridsize,
                     .slice = slice, .line = line,
                     .slice_gl = slice_gl,
                     .dth = dt/h,
                     .timestep = 1,
                     .gridspacing = h,
+                    .block_height = block_height,
                     .stream_1 = stream_1,
                     .stream_2 = stream_2,
-                    .stream_i = stream_i
+                    .stream_i = stream_i,
+                    .map = map_init(hb / block_height, ht / block_height, h / block_height) 
                    };
 
         if (rank == 0 && T.verbose && T.use) printf("Topography:: enabled\n");
@@ -79,7 +82,7 @@ topo_t topo_init(const int USETOPO,
                 printf("Topography:: debugging enabled\n");
 
         if (T.dbg && rank == 0 && T.use)
-                printf("Topography block size:: %d %d %d\n", TBX, TBY, TBZ);
+                printf("Topography min. block size:: %d %d %d\n", TBX, TBY, TBZ);
 
         topo_set_bounds(&T);
 
@@ -207,25 +210,16 @@ void topo_d_free(topo_t *T)
         CUCHK(cudaFree(T->dcrjz));
 }
 
-void topo_init_metrics(topo_t *T)
-{
-        if (!T->use) return;
-
-        int size[3] = {T->nx, T->ny, T->nz};
-        T->metrics_f = metrics_init_f(size, T->gridspacing);
-        T->metrics_g = metrics_init_g(size, T->gridspacing);
-}
-
 void topo_init_geometry(topo_t *T)
 {
         int err = 0;
         int alloc = 0;
 
         err |= topo_read_serial(T->topography_file, T->rank, T->px, T->py,
-                                T->coord, T->nx, T->ny, alloc, &T->metrics_f.f);
-        geom_no_grid_stretching(&T->metrics_g);
-        geom_custom(&T->metrics_f, T->topography_grid, T->px, T->py,
-                    T->metrics_f.f);
+                                T->coord, T->nx, T->ny, alloc, &T->metrics_f_init.f);
+        geom_grid_stretching(&T->metrics_g, &T->map, T->block_height);
+        geom_custom(&T->metrics_f_init, T->topography_grid, T->px, T->py,
+                    T->metrics_f_init.f);
 
         if (err > 0) {
                 printf("%s \n", error_message(err));
@@ -234,11 +228,24 @@ void topo_init_geometry(topo_t *T)
         }
 }
 
+void topo_init_metrics(topo_t *T)
+{
+        if (!T->use) return;
+        int size[3] = {T->nx, T->ny, T->nz};
+        T->metrics_f_init = metrics_init_f(size, T->gridspacing, metrics_padding);
+        T->metrics_f = metrics_init_f(size, T->gridspacing, ngsl);
+        T->metrics_g = metrics_init_g(size, T->gridspacing);
+}
+
 void topo_build(topo_t *T)
 {
         if (!T->use) return;
 
-        metrics_build_f(&T->metrics_f);
+        metrics_build_f(&T->metrics_f_init);
+        metrics_shift_f(&T->metrics_f, &T->metrics_f_init);
+        metrics_d_copy_f(&T->metrics_f);
+        metrics_free_f(&T->metrics_f_init);
+
         metrics_build_g(&T->metrics_g);
 
         #if TOPO_USE_CONST_MATERIAL

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include <awp/error.h>
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <interpolation/interpolation.h>
 #include <grid/grid_3d.h>
 #include <interpolation/interpolation.cuh>

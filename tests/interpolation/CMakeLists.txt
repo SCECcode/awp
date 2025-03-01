@@ -10,7 +10,7 @@ target_link_libraries(test_interpolation
 
 target_include_directories(test_interpolation
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_interpolation COMMAND test_interpolation)
@@ -28,7 +28,7 @@ target_link_libraries(test_interpolationcu
 
 target_include_directories(test_interpolationcu
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_interpolationcu COMMAND test_interpolationcu)
@@ -46,7 +46,7 @@ target_link_libraries(test_lagrange
 
 target_include_directories(test_lagrange
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_lagrange COMMAND test_lagrange)

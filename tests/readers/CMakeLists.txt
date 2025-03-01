@@ -10,11 +10,11 @@ target_link_libraries(test_input
 
 target_include_directories(test_input
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_input COMMAND test_input
-        ${AWP_MINI_SOURCE_DIR}/tests/fixtures/input1.txt)
+        ${AWP_SOURCE_DIR}/tests/fixtures/input1.txt)
 
 
 # Version
@@ -28,7 +28,7 @@ target_link_libraries(test_version
 
 target_include_directories(test_version
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_version COMMAND test_version)

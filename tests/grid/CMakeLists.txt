@@ -8,8 +8,7 @@ target_link_libraries(test_grid_3d
 
 target_include_directories(test_grid_3d
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )
 
 add_test(NAME test_grid_3d COMMAND test_grid_3d)
-

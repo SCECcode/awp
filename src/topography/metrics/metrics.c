@@ -3,28 +3,32 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <grid/grid_3d.h>
 #include <grid/shift.h>
 #include <topography/metrics/metrics.h>
 #include <topography/metrics/kernel.h>
+#include <topography/metrics/shift.h>
 #include <test/test.h>
 #include "interpolation/interpolation.h"
 
-f_grid_t metrics_init_f(const int *size, const _prec gridspacing)
-{
-        f_grid_t out = {
-            .size = {size[0], size[1], 1},
-            .mem = {size[0] + 4 + 2*ngsl, size[1] + 4 + 2*ngsl + 2 * align, 1},
-            .bounds_x = {-ngsl, size[0] + ngsl},
-            .bounds_y = {-ngsl, size[1] + ngsl},
-            .bounds_stress_x = {-ngsl / 2, size[0] + ngsl / 2},
-            .bounds_stress_y = {-ngsl / 2, size[1] + ngsl / 2},
-            .offset = {2 + ngsl, 2 + ngsl + align, 0},
-            .hi = 1.0/gridspacing
-        };
+
+// This parameter pads the compute region. Its needed for the computation of
+// derivative and interpolation stencils. Do not change its value.
+
+f_grid_t metrics_init_f(const int *size, const _prec gridspacing,
+                            const int pad) {
+        f_grid_t out = {.size = {size[0], size[1], 1},
+                        .mem = {size[0] + 4 + 2 * pad,
+                                size[1] + 4 + 2 * pad + 2 * align, 1},
+                        .bounds_x = {-pad, size[0] + pad},
+                        .bounds_y = {-pad, size[1] + pad},
+                        .bounds_stress_x = {-pad / 2, size[0] + pad / 2},
+                        .bounds_stress_y = {-pad / 2, size[1] + pad / 2},
+                        .offset = {2 + pad, 2 + pad + align, 0},
+                        .hi = 1.0 / gridspacing};
         out.line = out.mem[2];
-        out.slice = out.mem[1]*out.mem[2];
+        out.slice = out.mem[1] * out.mem[2];
 
         metrics_h_malloc_f(&out);
         metrics_d_malloc_f(&out);
@@ -168,6 +172,24 @@ void metrics_differentiate_f(f_grid_t *f)
                              f->size[2]);
 }
 
+void metrics_shift_f(f_grid_t *fout, const f_grid_t *fin)
+{
+        int nx = fout->size[0];
+        int ny = fout->size[1];
+        metrics_shift_f_apply(fout->f, fin->f, nx, ny);
+        metrics_shift_f_apply(fout->f_1, fin->f_1, nx, ny);
+        metrics_shift_f_apply(fout->f_2, fin->f_2, nx, ny);
+        metrics_shift_f_apply(fout->f_c, fin->f_c, nx, ny);
+
+        metrics_shift_f_apply(fout->f1_1, fin->f1_1, nx, ny);
+        metrics_shift_f_apply(fout->f1_2, fin->f1_2, nx, ny);
+        metrics_shift_f_apply(fout->f1_c, fin->f1_c, nx, ny);
+
+        metrics_shift_f_apply(fout->f2_1, fin->f2_1, nx, ny);
+        metrics_shift_f_apply(fout->f2_2, fin->f2_2, nx, ny);
+        metrics_shift_f_apply(fout->f2_c, fin->f2_c, nx, ny);
+}
+
 int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,
                                 const prec *x, const prec *y,
                                 grid3_t grid, const prec *qx,
@@ -189,7 +211,7 @@ int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,
                 out[q] = 0.0;
                 for (int i = 0; i < deg + 1; ++i) {
                 for (int j = 0; j < deg + 1; ++j) {
-                        int pos = pmetrics_f_index(f, ix + i, iy + j);
+                        int pos = metrics_f_index(f, ix + i, iy + j);
                         out[q] += lx[i] * ly[j] * in[pos];
                 }
                 }
@@ -199,6 +221,66 @@ int metrics_interpolate_f_point(const f_grid_t *f, prec *out, const prec *in,
         free(ly);
         free(xloc);
         free(yloc);
+
+        return err;
+}
+
+// This function might be useful when fixing topo-DM incompatibility
+int metrics_interpolate_jacobian(const f_grid_t *fgrid, float *out, const float *f, const float *dg,
+                        const float *x, const float *y, const float *z,
+                        grid3_t grid, const float *qx,
+                        const float *qy, const float *qz, const int m, const int deg) 
+{
+        int err = 0;
+        prec *lx, *ly, *lz, *xloc, *yloc, *zloc;
+        lx = calloc(sizeof(lx), (deg + 1));
+        ly = calloc(sizeof(ly), (deg + 1));
+        lz = calloc(sizeof(lz), (deg + 1));
+        xloc = calloc(sizeof(xloc), (deg + 1));
+        yloc = calloc(sizeof(yloc), (deg + 1));
+        zloc = calloc(sizeof(zloc), (deg + 1));
+
+        //printf("grid = %d %d \n", grid.size.x, grid.size.y);
+        int ny = grid.size.y - 4 - ngsl2;
+        //printf("ny = %d \n", ny);
+        //printf("z = %g \n", qz[0]);
+        #define _f(i, j) f[(j) + align + (i) * (2 * align + 2 * ngsl + ny + 4)]
+        for (int q = 0; q < m; ++q) { 
+                int ix = 0; int iy = 0; int iz = 0;
+                err = interp_lagrange1_coef(
+                    xloc, lx, &ix, x, grid.size.x, qx[q], deg);
+                err = interp_lagrange1_coef(
+                    yloc, ly, &iy, y, grid.size.y, qy[q], deg);
+                err = interp_lagrange1_coef(
+                    zloc, lz, &iz, z, grid_boundary_size(grid).z, qz[q], deg);
+                out[q] = 0.0;
+                //printf("%d %d %d: \n", ix, iy, iz);
+                for (int i = 0; i < deg + 1; ++i) {
+                for (int j = 0; j < deg + 1; ++j) {
+                for (int k = 0; k < deg + 1; ++k) {
+                        int gpos = align + iz + k;
+                        //printf("g[%d] = %g  f = %g \n", gpos, dg[gpos], _f(ix + i, iy + j));
+                        out[q] += lx[i] * ly[j] * lz[k] * _f(ix + i, iy + j) * dg[gpos];
+                }
+                }
+                }
+
+
+                // int i1 = 2 + 4 + 99;
+                // int j1 = 2 + 4 + 99;
+                // int i2 = i1 + 1;
+                // int j2 = j1 + 1;
+                // printf("%g %g %g %g \n", _f(i1, j1), _f(i1, j2), _f(i2, j1), _f(i2, j2));
+
+                //exit(-1);
+        }
+
+        free(lx);
+        free(ly);
+        free(lz);
+        free(xloc);
+        free(yloc);
+        free(zloc);
 
         return err;
 }

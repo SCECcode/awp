@@ -3,7 +3,7 @@
 #include <math.h>
 #include <errno.h>
 
-#include <awp/definitions.h>
+#include <awp/pmcl3d_cons.h>
 #include <test/test.h>
 #include <topography/receivers/receivers.h>
 #include <topography/receivers/receiver.h>
@@ -21,7 +21,7 @@ static recv_t rz;
 
 static input_t input;
 
-void receivers_init(const char *filename, const grids_t *grids, int ngrids,
+void receivers_init(const char *filename, const grids_t *grids, const struct mapping *map, int ngrids,
                     const f_grid_t *f,
                   const MPI_Comm comm, const int rank, const int size)
 {
@@ -35,9 +35,9 @@ void receivers_init(const char *filename, const grids_t *grids, int ngrids,
         AWPCHK(input_broadcast(&input, rank, 0, comm));
 
 
-        rx = receiver_init("x", X, &input, grids, ngrids, f, rank, comm);
-        ry = receiver_init("y", Y, &input, grids, ngrids, f, rank, comm);
-        rz = receiver_init("z", Z, &input, grids, ngrids, f, rank, comm);
+        rx = receiver_init("x", X, RECEIVER, &input, grids, map, ngrids, f, rank, comm);
+        ry = receiver_init("y", Y, RECEIVER, &input, grids, map, ngrids, f, rank, comm);
+        rz = receiver_init("z", Z, RECEIVER, &input, grids, map, ngrids, f, rank, comm);
 }
 
 void receivers_finalize(void)
@@ -76,6 +76,53 @@ void receivers_write(const prec *d_vx, const prec *d_vy, const prec *d_vz,
 size_t receivers_last_step(void)
 {
         return last_step;
+}
+
+recv_t receivers_get_receiver(enum grid_types grid_type)
+{
+        switch (grid_type)
+        {
+                case XX:
+                        fprintf(stderr, "No receiver can exist on grid XX\n");
+                        break;
+                case YY:
+                        fprintf(stderr, "No receiver can exist on grid YY\n");
+                        break;
+                case ZZ:
+                        fprintf(stderr, "No receiver can exist on grid ZZ\n");
+                        break;
+                case XY:
+                        fprintf(stderr, "No receiver can exist on grid XY\n");
+                        break;
+                case XZ:
+                        fprintf(stderr, "No receiver can exist on grid XZ\n");
+                        break;
+                case YZ:
+                        fprintf(stderr, "No receiver can exist on grid YZ\n");
+                        break;
+                case SX:
+                        fprintf(stderr, "No receiver can exist on grid SX\n");
+                        break;
+                case SY:
+                        fprintf(stderr, "No receiver can exist on grid SY\n");
+                        break;
+                case SZ:
+                        fprintf(stderr, "No receiver can exist on grid SZ\n");
+                        break;
+                case X:
+                        return rx;
+                        break;
+                case Y:
+                        return ry;
+                        break;
+                case Z:
+                        return rz;
+                        break;
+                case NODE:
+                        fprintf(stderr, "No receiver can exist on grid NODE\n");
+                        break;
+        }
+        return rx;
 }
 
 void receivers_step_format(char *out, size_t step, const char *base)

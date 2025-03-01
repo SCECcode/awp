@@ -99,7 +99,7 @@ void buffer_copy_to_device(buffer_t *buffer, size_t step)
                         buffer->d_buffer_bytes, cudaMemcpyHostToDevice));
 }
 
-void buffer_copy_to_host(buffer_t *buffer, int step)
+void buffer_copy_to_host(buffer_t *buffer, size_t step)
 {
        if (!buffer_is_device_full(buffer, step)) return;
 

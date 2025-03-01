@@ -1,7 +1,9 @@
 from ..base import GridFunctionExpression, GridFunction
-from sympy.core.compatibility import NotIterable, string_types
+from sympy.core.compatibility import NotIterable
 from sympy import Expr, Symbol, sympify
 from . types import C
+
+string_types=str
 
 class Variable(Expr, NotIterable):
 

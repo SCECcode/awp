@@ -1,5 +1,5 @@
 from sympy import Expr, Symbol, Tuple, sympify
-from sympy.core.compatibility import NotIterable, string_types, is_sequence
+from sympy.core.compatibility import NotIterable , is_sequence
 from sympy import preorder_traversal
 from sympy.core.cache import clear_cache
 from sympy.core.mul import Mul
@@ -7,6 +7,8 @@ from . import Bounds
 from .. dev import memory
 from .. dev.macro import Macro
 import openfd
+
+string_types=str
 
 def gridfunctions(label, shape, dtype=None, layout=None, struct=False, 
                   remap=None, macro='_'):

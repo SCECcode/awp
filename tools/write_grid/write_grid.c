@@ -3,9 +3,13 @@
  * that contains the grid coordinates (x_i, y_j, z_k) for each grid point in the
  * curvilinear grid.
  *
+ *
+ * Changelog:
+ *  v.3.0.0  Add DM and nonlinear grid stretching compatibility 
+ *
  */ 
-#define VERSION_MAJOR 2
-#define VERSION_MINOR 1
+#define VERSION_MAJOR 3
+#define VERSION_MINOR 0
 #define VERSION_PATCH 0
 
 #include <stdio.h>
@@ -16,23 +20,27 @@
 
 #include <test/test.h>
 #include <topography/readers/serial_reader.h>
+#include <topography/metrics/metrics.h>
+#include <topography/mapping.h>
 #include <awp/definitions.h>
 
 // Command line arguments
-static int nx;
-static int ny;
-static int nz;
-static int mz;
-static prec h;
-static int px;
-static int py;
-static int mesh_out;
-static int rpt;
+int nx;
+int ny;
+int nz;
+int mz;
+prec h;
+prec hb;
+prec ht;
+int px;
+int py;
+int mesh_out;
+int rpt;
 const char *input;
 const char *output;
 const char *property;
 const char *mesh;
-static int nvars = 3;
+int nvars = 3;
 
 struct Mpi
 {
@@ -47,20 +55,18 @@ struct Mpi
   int coord[2];
   MPI_Comm MCW, MC1;
 };
-
 void mpi_init(struct Mpi *m, int argc, char **argv);
 void mpi_cart(struct Mpi *m, const int *size, const int *part);
 MPI_Datatype data_type(const struct Mpi *mpi, int nz);
-
 int main(int argc, char **argv)
 {
         struct Mpi m;
         mpi_init(&m, argc, argv);
 
-        if (argc < 13 && m.rank == 0) {
+        if (argc < 15 && m.rank == 0) {
                 printf(
                     "usage: %s <input> <output> <prop> <mesh> <nx> "
-                    "<ny> <nz> <mz> <h> <px> <py> <rpt>\n",
+                    "<ny> <nz> <mz> <h> <hb> <ht> <px> <py>\n",
                     argv[0]);
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
                        VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
@@ -84,19 +90,20 @@ int main(int argc, char **argv)
                 printf(" mz int         Number of grid points in the "
                     "z-direction of the property grid\n");
                 printf(" h float        Grid spacing\n");
+                printf(" hb float        Bottom grid spacing\n");
+                printf(" ht float        Top grid spacing\n");
                 printf(" px int         Number of MPI partitions in "
                     "the x-direction\n");
                 printf(" py int         Number of MPI partitions in "
                     "the y-direction\n");
                 printf(" mesh_out       Whether to output the mesh "
                     "(1 = True, 0 = False) \n");
-                printf(" rpt int        Whether to repeat top layer when "
-                    "writing (1 = True, 0 = False) \n");
-                printf(" Expect at least %d argc, got %d\n", 13, argc);
+                printf(" Expect at least %d argc, got %d\n", 15, argc);
 
                 MPI_Finalize();
                 return -1;
         }
+
 
         input = argv[1];
         output = argv[2];
@@ -107,10 +114,13 @@ int main(int argc, char **argv)
         nz = atoi(argv[7]);
         mz = atoi(argv[8]);
         h = atof(argv[9]);
-        px = atoi(argv[10]);
-        py = atoi(argv[11]);
-        mesh_out = atoi(argv[12]);
-        rpt = argc < 14 ? 1 : atoi(argv[13]);
+        hb = atof(argv[10]);
+        ht = atof(argv[11]);
+        px = atoi(argv[12]);
+        py = atoi(argv[13]);
+        mesh_out = atoi(argv[14]);
+        rpt = 1;
+
 
         if (m.rank == 0) {
                 printf("AWP curvilinear grid writer, v%d.%d.%d\n",
@@ -118,10 +128,9 @@ int main(int argc, char **argv)
                 printf(
                     "input = %s output = %s property file = %s "
                     "mesh file = %s nx = %d ny = %d nz = %d "
-                    "mz = %d h = %g px = %d py = %d mesh_out = %d "
-                    "rpt = %d\n",
+                    "mz = %d h = %g px = %d py = %d mesh_out = %d\n",
                     input, output, property, mesh, nx, ny, nz, mz, h, px,
-                    py, mesh_out, rpt);
+                    py, mesh_out);
                 int size = nvars * nx * ny * nz * sizeof(prec);
                 printf("Expected file size: %d \n", size);
                 if (rpt > 1 || rpt < 0) {
@@ -143,6 +152,7 @@ int main(int argc, char **argv)
                 }
         }
 
+        fflush(stdout);
 
         int size[3] = {nx, ny, nz};
         int part[2] = {px, py};
@@ -172,7 +182,6 @@ int main(int argc, char **argv)
         err |= topo_read_serial(input, m.rank, px, py, m.coord, m.nxt, m.nyt,
                                 alloc, &f);
 
-
         MPI_Datatype readtype = data_type(&m, nz);
         MPI_Datatype readtype_m = data_type(&m, mz);
         MPI_File     fh, fm, fp;
@@ -183,19 +192,20 @@ int main(int argc, char **argv)
         MPICHK(MPI_File_set_view(fh, 0, MPI_FLOAT, readtype, "native", 
                           MPI_INFO_NULL));
         
-
         int buffer_size = m.nxt * m.nyt * nvars;
-        float *buffer = (float*) calloc(buffer_size * nz, sizeof(float));
+        float *buffer = (float*) calloc(buffer_size, sizeof(float));
         float *prop = (float*) calloc(buffer_size * mz, sizeof(float));
         float *buffer_m = (float*) calloc(buffer_size * nz, sizeof(float));
 
         for (int j = 0; j < m.nyt; ++j) {
         for (int i = 0; i < m.nxt; ++i) {
-                buffer[0 + nvars * i + j * nvars * m.nxt] = i * h;
-                buffer[1 + nvars * i + j * nvars * m.nxt] = j * h;
+                buffer[0 + nvars * i + j * nvars * m.nxt] = (m.coord[0]*m.nxt + i) * h;
+                buffer[1 + nvars * i + j * nvars * m.nxt] = (m.coord[1]*m.nyt + j) * h;
+                //buffer[0 + nvars * i + j * nvars * m.nxt] = i * h;
+                //buffer[1 + nvars * i + j * nvars * m.nxt] = j * h;
         }
         }
-
+        
         if (mesh_out == 1) {
             MPICHK(MPI_File_open(m.MCW, mesh, MPI_MODE_WRONLY | MPI_MODE_CREATE,
                                 MPI_INFO_NULL, &fm));
@@ -212,6 +222,7 @@ int main(int argc, char **argv)
                 printf("%d) ERROR! MPI-IO reading property file set view: %s\n",
                             m.rank, mpiErrStr); 
             }
+
             err = MPI_File_read_all(fp, prop, buffer_size * mz, 
                             MPI_FLOAT, &filestatus);
             if (err != MPI_SUCCESS) {
@@ -221,28 +232,47 @@ int main(int argc, char **argv)
             }
         }
 
+
+
         int show_info = (int) (nz / 10);
         show_info = show_info == 0 ? 1 : show_info;
-        double H = (nz - 1 - rpt) * h;
 
         int len = buffer_size * nz;
         if (m.rank == 0) printf("Processing...\n");
+
+        prec H = map_height(nz, h);
+        struct mapping map = map_init(ht / H, hb / H, h / H);
 
         for (int k = 0; k < nz; ++k) {
             // If k > 0 and we need repeat (rpt == 1), 
             // we shift the domain up by 1
             k0 = k == 0 ? k : k - rpt;  
-            double rk = (double) k0 / (double) (nz - 1 - rpt);
+            // Define index that is kuniform = 0 at the start of the overlapping zone
+            int kuniform = k - (nz - 1) + MAPPING_START_POINT;
+            double rk;
+            if (kuniform >= 0)
+                rk = 1.0;
+            else {
+                rk = map_eval(h * k0 / H, &map);
+            }
+
+            MPI_Barrier(MPI_COMM_WORLD);
             for (int i = 0; i < m.nxt; ++i) {
                 for (int j = 0; j < m.nyt; ++j) {
-                    size_t lmy = 4 + m.nyt + 2 * ngsl + 2 * align;
-                    size_t local_pos = 2 + align + (j + ngsl) +
-                                       (2 + i + ngsl) * lmy;
-                    // Depth, k=0 is the surface
-                    double mapping =
-                        (H + f[local_pos]) * (1 - rk) - H;
-                    buffer[2 + nvars * i + j * nvars * m.nxt] =
+
+                    size_t lmy = 4 + m.nyt + 2 * metrics_padding + 2 * align;
+                    size_t local_pos = 2 + align + (j + metrics_padding) +
+                                       (2 + i + metrics_padding) * lmy;
+                    // Use uniform grid spacing in the DM overlap zone
+                    double mapping;
+                    if (kuniform >= 0) 
+                        mapping = -H - h * kuniform;
+                    else
+                    mapping =
+                        (H + (double)f[local_pos]) * (1.0 - rk) - H;
+                    buffer[2 + nvars * i + j * nvars * m.nxt] = 
                             (prec)mapping;
+
                     if (mesh_out == 1) {           
                         // For reading and mesh writing, we start from the
                         // the surface, to keep compatible with the queried
@@ -256,6 +286,7 @@ int main(int argc, char **argv)
                             MPI_Finalize();
                             return(-1);
                         }
+
                         size_t pos = nvars * (idx_z * m.nxt * m.nyt +
                                             j * m.nxt + i);
                         memcpy(buffer_m + nvars * (k * m.nxt * m.nyt +  

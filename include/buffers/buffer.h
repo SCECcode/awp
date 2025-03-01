@@ -214,7 +214,7 @@ void buffer_copy_to_device(buffer_t *buffer, size_t step);
  *      buffer: Buffer data structure.
  *      step: Time step to query buffer at.
  */
-void buffer_copy_to_host(buffer_t *buffer, int step);
+void buffer_copy_to_host(buffer_t *buffer, size_t step);
 
 #ifdef __cplusplus
 }

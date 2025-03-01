@@ -1,8 +1,6 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-int _last_error;
-
 enum error_codes {SUCCESS, 
                   ERR_FILE_OPEN = 100, 
                   ERR_FILE_READ = 101, 

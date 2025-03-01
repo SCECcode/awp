@@ -13,6 +13,6 @@ num_writes=2
 # * the second source should map to i=0 j=0 in block 1 (bottom block)
 
 coordinates
-0 4.5 1.5 -2.0
-0 4.5 1.5 -11.0
-0 4.5 1.5 -34.0
+0 9.0 9.0 -2.0
+0 9.0 9.0 -11.0
+0 9.0 9.0 -34.0

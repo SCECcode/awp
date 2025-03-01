@@ -1,11 +1,11 @@
 set(HEADERS
-    ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/topography.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/constant.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/random.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/cerjan.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/linear.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/initializations/quadratic.h     
+    ${AWP_SOURCE_DIR}/include/awp/definitions.h     
+    ${AWP_SOURCE_DIR}/include/topography/topography.h     
+    ${AWP_SOURCE_DIR}/include/topography/initializations/constant.h     
+    ${AWP_SOURCE_DIR}/include/topography/initializations/random.h     
+    ${AWP_SOURCE_DIR}/include/topography/initializations/cerjan.h     
+    ${AWP_SOURCE_DIR}/include/topography/initializations/linear.h     
+    ${AWP_SOURCE_DIR}/include/topography/initializations/quadratic.h     
     )
 
 add_library(topography_initializations
@@ -14,5 +14,5 @@ add_library(topography_initializations
 
 target_include_directories(topography_initializations
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
         )

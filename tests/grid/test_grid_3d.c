@@ -17,6 +17,11 @@ int test_grid_xyz(int rank, int size);
 int test_grid3_xyz(int rank, int size);
 int test_grid3_reduce(int rank, int size);
 int test_shift(int rank, int size);
+int test_global_to_local(int rank, int size);
+
+   
+int test_global_to_local(int rank, int size);
+   
 
 int main(int argc, char **argv)
 {
@@ -40,6 +45,7 @@ int main(int argc, char **argv)
         err |= test_grid3_xyz(rank, size);
         err |= test_grid3_reduce(rank, size);
         err |= test_shift(rank, size);
+        err |= test_global_to_local(rank, size);
 
         if (rank == 0) {
                 printf("Testing completed.\n");
@@ -64,7 +70,7 @@ int test_grid_fill(int rank, int size)
                         .boundary1 = 0, .boundary2 = 0};
 
         x = malloc(sizeof(x) * grid.size);
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (1.0 +  rank * n)) < FLTOL, rank);
@@ -78,7 +84,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 0, .size = n, .gridspacing = h, 
                         .boundary1 = 1, .boundary2 = 0};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (1.0 +  rank * n)) < FLTOL, rank);
@@ -92,7 +98,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 0, .size = n, .gridspacing = h, 
                         .boundary1 = 0, .boundary2 = 1};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (1.0 +  rank * n)) < FLTOL, rank);
@@ -106,11 +112,11 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 0, .boundary2 = 0};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 1);
         err |= mpi_assert(!err, rank);
-        err |= mpi_assert(fabs(x[0] - (-0.5 +  rank * n)) < FLTOL, rank);
-        err |= mpi_assert(fabs(x[1] - (+0.5 +  rank * n)) < FLTOL, rank);
-        err |= mpi_assert(fabs(x[n-1] - (n - 1  - 0.5 + rank * n) ) < FLTOL, 
+        err |= mpi_assert(fabs(x[0] - (0.5 +  rank * n)) < FLTOL, rank);
+        err |= mpi_assert(fabs(x[1] - (1.5 +  rank * n)) < FLTOL, rank);
+        err |= mpi_assert(fabs(x[n-1] - (n - 1  + 0.5 + rank * n) ) < FLTOL, 
                           rank);
 
         err |= test_finalize(&test, err);
@@ -121,7 +127,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 1, .boundary2 = 0};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 0);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (0.0 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (0.5 +  rank * n)) < FLTOL, rank);
@@ -136,7 +142,7 @@ int test_grid_fill(int rank, int size)
         grid1_t grid = {.id = rank, .shift = 1, .size = n, .gridspacing = h, 
                         .boundary1 = 0, .boundary2 = 1};
 
-        grid_fill1(x, grid);
+        grid_fill1(x, grid, 0);
         err |= mpi_assert(!err, rank);
         err |= mpi_assert(fabs(x[0] - (-0.5 +  rank * n)) < FLTOL, rank);
         err |= mpi_assert(fabs(x[1] - (+0.5 +  rank * n)) < FLTOL, rank);
@@ -159,7 +165,7 @@ int test_grid_in_bounds(int rank, int size)
 
         x = malloc(sizeof(x) * n);
 
-        int3_t shift = grid_yz();
+        int3_t shift = {0, 0, 0};
         
         int3_t coord = {.x = 0, .y = 0, .z = 0};
         int3_t asize = {gsize[0], gsize[1], gsize[2]};
@@ -173,7 +179,7 @@ int test_grid_in_bounds(int rank, int size)
                          .alignment = 2 + ngsl,
                          .padding = 0,
                          .gridspacing = 1.0};
-        grid_fill1(x, grid1);
+        grid_fill1(x, grid1, 0);
 
         test_t test = test_init(" * grid_in_bounds", rank, size);
         err |= mpi_assert(
@@ -193,7 +199,7 @@ int test_grid_in_bounds(int rank, int size)
                          .alignment = 1 + ngsl,
                          .padding = 1,
                          .gridspacing = 1.0};
-        grid_fill1(x, grid1);
+        grid_fill1(x, grid1, 0);
 
         test_t test = test_init(" * grid_in_bounds", rank, size);
         err |= mpi_assert(
@@ -237,7 +243,7 @@ int test_grid_xyz(int rank, int size)
         test_t test = test_init(" * grid_fill_x", rank, size);
 
         grid1_t grid1 = grid_grid1_x(grid);
-        grid_fill1(ans, grid1);
+        grid_fill1(ans, grid1, 1);
         grid_fill_x(x, grid);
 
         for (int i = 0; i < n; ++i) {
@@ -251,7 +257,7 @@ int test_grid_xyz(int rank, int size)
         test_t test = test_init(" * grid_fill_y", rank, size);
 
         grid1_t grid1 = grid_grid1_y(grid);
-        grid_fill1(ans, grid1);
+        grid_fill1(ans, grid1, 0);
         grid_fill_y(x, grid);
 
         for (int i = 0; i < n; ++i) {
@@ -265,7 +271,7 @@ int test_grid_xyz(int rank, int size)
         test_t test = test_init(" * grid_fill_z", rank, size);
         grid1_t grid1 = grid_grid1_z(grid);
 
-        grid_fill1(ans, grid1);
+        grid_fill1(ans, grid1, 0);
         grid_fill_z(x, grid);
 
         for (int i = 0; i < n; ++i) {
@@ -492,3 +498,69 @@ int test_shift(int rank, int size)
         return test_last_error();
 }
 
+int test_global_to_local(int rank, int size) {
+
+    int err = 0;
+
+
+    test_t test = test_init(" * global_to_local", rank, size);
+    const int num_grids = 3;
+    int nz[3] = {20, 10, 12};
+    _prec h = 1.0;
+    const prec H[3] = {grid_height(nz[0], h, 1), grid_height(nz[1], 3 * h, 0),
+                       grid_height(nz[2], 9 * h, 0)};
+
+    // Above free surface (in topo block)
+    {
+        _prec zglb = 0.2;
+        _prec zloc = 0.0;
+        int block_index = -1;
+        int istopo = 1;
+        global_to_local(&zloc, &block_index, zglb, h, nz, num_grids, istopo);
+        err |= mpi_assert(block_index == 0, rank);
+        err |= mpi_assert(fabs(zloc - (zglb + H[0])) < FLTOL, rank);
+    }
+
+    // Below free surface (in topo block)
+    {
+        _prec zglb = -0.2;
+        _prec zloc = 0.0;
+        int block_index = -1;
+        int istopo = 1;
+        global_to_local(&zloc, &block_index, zglb, h, nz, num_grids, istopo);
+        err |= mpi_assert(block_index == 0, rank);
+        err |= mpi_assert(fabs(zloc - (zglb + H[0]) ) < FLTOL, rank);
+    }
+
+    // In the overlap zone (belongs to the second block)
+    {
+        _prec zglb = -15.0;
+        _prec zloc = 0.0;
+        int block_index = -1;
+        int istopo = 1;
+        global_to_local(&zloc, &block_index, zglb, h, nz, num_grids, istopo);
+        err |= mpi_assert(block_index == 1, rank);
+
+        _prec zs = (zglb + H[0] + H[1] - grid_overlap(h) );
+        err |= mpi_assert(fabs(zloc - zs) < FLTOL, rank);
+    }
+
+
+    // In the overlap zone (belongs to the third block)
+    {
+        _prec zglb = -19.0;
+        _prec zloc = 0.0;
+        int block_index = -1;
+        int istopo = 1;
+        global_to_local(&zloc, &block_index, zglb, h, nz, num_grids, istopo);
+        err |= mpi_assert(block_index == 2, rank);
+
+        _prec zs = (zglb + H[0] + H[1] + H[2] - grid_overlap(h) - grid_overlap(3 * h) );
+        err |= mpi_assert(fabs(zloc - zs) < FLTOL, rank);
+    }
+
+    err |= test_finalize(&test, err);
+
+    return test_last_error();
+
+}   

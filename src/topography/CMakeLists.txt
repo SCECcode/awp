@@ -5,32 +5,24 @@ add_subdirectory(readers)
 add_subdirectory(geometry)
 add_subdirectory(sources)
 add_subdirectory(receivers)
+add_subdirectory(functions)
 
 set(HEADERS
-    ${AWP_MINI_SOURCE_DIR}/include/awp/definitions.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/topography.h     
-    ${AWP_MINI_SOURCE_DIR}/include/grid/grid_3d.h
-    ${AWP_MINI_SOURCE_DIR}/include/grid/shift.h
-    ${AWP_MINI_SOURCE_DIR}/include/topography/geometry.h
-    ${AWP_MINI_SOURCE_DIR}/include/topography/geometry/geometry.h
-    ${AWP_MINI_SOURCE_DIR}/include/topography/readers/serial_reader.h
-    ${AWP_MINI_SOURCE_DIR}/include/test/test.h     
-    ${AWP_MINI_SOURCE_DIR}/include/vtk/vtk.h     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/metrics/metrics.h
-    ${AWP_MINI_SOURCE_DIR}/include/topography/host.h
+    ${AWP_SOURCE_DIR}/include/awp/definitions.h     
+    ${AWP_SOURCE_DIR}/include/topography/topography.h     
+    ${AWP_SOURCE_DIR}/include/grid/grid_3d.h
+    ${AWP_SOURCE_DIR}/include/grid/shift.h
+    ${AWP_SOURCE_DIR}/include/topography/geometry.h
+    ${AWP_SOURCE_DIR}/include/topography/geometry/geometry.h
+    ${AWP_SOURCE_DIR}/include/topography/mms.cuh
+    ${AWP_SOURCE_DIR}/include/topography/readers/serial_reader.h
+    ${AWP_SOURCE_DIR}/include/test/test.h     
+    ${AWP_SOURCE_DIR}/include/vtk/vtk.h     
+    ${AWP_SOURCE_DIR}/include/topography/metrics/metrics.h
+    ${AWP_SOURCE_DIR}/include/topography/host.h
     )
 
-set(UNOPT_HEADERS
-    ${HEADERS}
-    ${AWP_MINI_SOURCE_DIR}/include/topography/topography.cuh     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/unoptimized.cuh     
-    )
-
-set(OPT_HEADERS
-    ${HEADERS}
-    ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/optimized_velocity.cuh     
-    ${AWP_MINI_SOURCE_DIR}/include/topography/kernels/optimized_stress.cuh     
-    )
+add_library(mapping mapping.c)
 
 set(LIBRARIES
     ${MPI_C_LIBRARIES} 
@@ -43,57 +35,31 @@ set(LIBRARIES
     topography_receivers
     readers
     error
+    nvToolsExt
+    nvToolsExt
+    functions
     )
 
-set(UNOPT_LIBRARIES ${LIBRARIES} unoptimized_kernels)
-set(OPT_LIBRARIES ${LIBRARIES} optimized_kernels nvToolsExt)
-set(OPT_ATTENUATION_LIBRARIES ${LIBRARIES} optimized_attenuation_kernels nvToolsExt)
+set(TOPOGRAPHY_LIBRARIES
+    topography.c velocity.cu stress.cu
+    geometry.c host.c grids.c mms.cu energy.cu
+    )
 
+add_library(topography ${TOPOGRAPHY_LIBRARIES})
 
-# Unoptimized version
-add_library(topography
-        topography.c topography.cu geometry.c host.c grids.c
-        ${UNOPT_HEADERS}
-        )
+add_library(topography_no_bc ${TOPOGRAPHY_LIBRARIES})
+
+target_link_libraries(topography ${LIBRARIES})
+
+target_compile_definitions(topography_no_bc PUBLIC -DAPPLY_BC=0)
+target_link_libraries(topography_no_bc ${LIBRARIES})
 
 target_include_directories(topography
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
        )
 
-target_link_libraries(topography 
-        ${UNOPT_LIBRARIES}
-        )
-
-# Optimized version
-add_library(opt_topography
-        topography.c opt_topography.cu velocity.cu stress.cu geometry.c host.c
-        grids.c
-        ${OPT_HEADERS}
-        )
-
-target_include_directories(opt_topography
+target_include_directories(mapping
         PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
+        ${AWP_SOURCE_DIR}/include/
        )
-
-target_link_libraries(opt_topography 
-        ${OPT_LIBRARIES} 
-        )
-
-
-# Work in progress that takes attenuation into account
-add_library(opt_topography_attenuation
-        topography.c opt_topography.cu velocity.cu stress_attenuation.cu
-        geometry.c host.c grids.c
-        ${OPT_HEADERS}
-        )
-
-target_include_directories(opt_topography_attenuation
-        PUBLIC
-        ${AWP_MINI_SOURCE_DIR}/include/
-       )
-
-target_link_libraries(opt_topography_attenuation
-        ${OPT_ATTENUATION_LIBRARIES} 
-        )

@@ -27,7 +27,7 @@ typedef struct
         grid3_t node;
 } grids_t;
 
-enum grid_types {X, Y, Z, XX, YY, ZZ, XY, XZ, YZ, NODE};
+enum grid_types {X, Y, Z, SX, SY, SZ, XX, YY, ZZ, XY, XZ, YZ, NODE};
 
 grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
                    const int coord_y, const int coord_z,
@@ -36,9 +36,11 @@ grids_t grids_init(const int nx, const int ny, const int nz, const int coord_x,
 
 void grids_finalize(grids_t *grids);
 
-void grid_data_init(grid_data_t *grid_data, const grid3_t grid);
+void grid_data_init(grid_data_t *grid_data, const grid3_t grid, const int block_number);
 void grid_data_free(grid_data_t *grid_data);
 grid3_t grids_select(const enum grid_types grid_type, const grids_t *grids);
+
+const char *grid_typename(const enum grid_types gt);
 
 
 

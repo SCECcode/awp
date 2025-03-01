@@ -3,9 +3,9 @@ nx=512
 ny=512
 nz=512
 nt=10
-arch=sm_70
+arch=sm_75
 log=prof.txt
-args=
+args=-lineinfo
 all: c p
 exe=test111.x
 
