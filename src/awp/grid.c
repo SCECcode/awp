@@ -62,10 +62,11 @@ Grid3Dww Alloc3Dww(int nx, int ny, int nz)
 
 
 
-Grid1D Alloc1D(long nx)
+Grid1D Alloc1D(int nx)
 {
-   long i;
+   int i;
    Grid1D U = (Grid1D)malloc(sizeof(_prec)*nx);
+
    if (!U){
        printf("Cannot allocate 2D _prec array\n");
        exit(-1);

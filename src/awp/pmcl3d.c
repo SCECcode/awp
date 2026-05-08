@@ -1499,11 +1499,11 @@ if (!usemms) {
          {
 #if VERBOSE
             if (rank == 0)
-               printf("Allocate buffers of #elements: %ld\n", rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
+               printf("Allocate buffers of #elements: %d\n", rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
 #endif
-            Bufx[p] = Alloc1D((long)rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
-            Bufy[p] = Alloc1D((long)rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
-            Bufz[p] = Alloc1D((long)rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
+            Bufx[p] = Alloc1D(rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
+            Bufy[p] = Alloc1D(rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
+            Bufz[p] = Alloc1D(rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);
             //  Allocate buffers for plasticity output
             if (NVE == 3)
                Bufeta[p] = Alloc1D(rec_nxt[p] * rec_nyt[p] * rec_nzt[p] * WRITE_STEP);

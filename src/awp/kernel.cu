@@ -20,12 +20,11 @@ __constant__ int   d_slice_2[MAXGRIDS];
 __constant__ int   d_yline_1[MAXGRIDS];
 __constant__ int   d_yline_2[MAXGRIDS];
 
-/*
-texture<float, 1, cudaReadModeElementType> p_vx1;
-texture<float, 1, cudaReadModeElementType> p_vx2;
-texture<int, 1, cudaReadModeElementType> p_ww;
-texture<float, 1, cudaReadModeElementType> p_wwo;
-*/
+//texture<float, 1, cudaReadModeElementType> p_vx1;
+//texture<float, 1, cudaReadModeElementType> p_vx2;
+//texture<int, 1, cudaReadModeElementType> p_ww;
+//texture<float, 1, cudaReadModeElementType> p_wwo;
+
 //Parameters used for STF filtering (Daniel)
 __constant__ int d_filtorder;
 __constant__ double d_srcfilt_b[MAXFILT], d_srcfilt_a[MAXFILT];
@@ -123,8 +122,10 @@ void SetDeviceConstValue(_prec *DH, _prec DT, int *nxt, int *nyt, int *nzt, int 
     CUCHK(cudaMemcpyToSymbol(d_RzT, RzT, 9*sizeof(float)));
     return;
 }
+
 /*
 extern "C"
+
 void BindArrayToTexture(float* vx1, float* vx2,int* ww, float* wwo, int memsize)   
 {
    cudaBindTexture(0, p_vx1,  vx1,  memsize);
@@ -145,6 +146,7 @@ void UnBindArrayFromTexture()
    return;
 }
 */
+
 extern "C"
 void SetDeviceFilterParameters(int filtorder, double *srcfilt_b, double *srcfilt_a){
     CUCHK(cudaMemcpyToSymbol(d_filtorder, &filtorder, sizeof(int)));
@@ -4041,6 +4043,7 @@ __global__ void velbuffer(const _prec *u1, const _prec *v1, const _prec *w1, con
     if (i > 2+ngsl+nedx) return;
     if (j > 2+ngsl+nedy) return;
     if (k > nedz) return;
+
     //This implementation assumes topography is turned on.
     //Vx and Vy at k=d_nzt[0]+align-1 can be used.
     //Since Vz at k=d_nzt[0]+align-1 is always zero and shoud be avoided. The Vz right below will be output instead.
@@ -4069,10 +4072,26 @@ __global__ void velbuffer(const _prec *u1, const _prec *v1, const _prec *w1, con
     Bufz[tmpInd] = w1[posz];
 
     if (NVE == 3) Bufeta[tmpInd] = neta[posz];
-   
+
+//Daniel's original implementation 
+//    if (FOLLOWBATHY && d_i == 0){
+//       bpos=j*(d_nxt[0]+4+ngsl2)+i;
+//       ko=bathy[bpos] - k;
+//    }
+//    else ko=d_nzt[d_i]+align-1-k;
+//                      
+//    pos = i*d_slice_1[d_i]+j*d_yline_1[d_i]+ko;
+//
+//    tmpInd =  (k - nbgz)/nskpz*rec_nxt*rec_nyt + 
+//	       (j-2-ngsl-nbgy)/nskpy*rec_nxt + 
+//	       (i-2-ngsl-nbgx)/nskpx;
+//
+//    /*if (i==48 && j==48 && k==1) 
+//        cuPrintf("velbuffer: i=%d,j=%d,k=%d,pos=%d,tmpInd=%d,u1=%e\n", i,j,k,pos,tmpInd,u1[pos]);*/
+
+//    Bufx[tmpInd] = u1[pos];
+//    Bufy[tmpInd] = v1[pos];
+//    Bufz[tmpInd] = w1[pos];
+
+//    if (NVE == 3) Bufeta[tmpInd] = neta[pos];
 }
-
-
-
-
-

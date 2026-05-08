@@ -112,7 +112,7 @@ void init_texture(int nxt,  int nyt,  int nzt,  Grid3D tau1,  Grid3D tau2,  Grid
 
 Grid3D Alloc3D(int nx, int ny, int nz);
 Grid3Dww Alloc3Dww(int nx, int ny, int nz); 
-Grid1D Alloc1D(long nx);    
+Grid1D Alloc1D(int nx);    
 PosInf Alloc1P(int nx);
 
 void Delloc3D(Grid3D U);

@@ -1,21 +1,40 @@
 #!/bin/bash
 
+template=src/awp/mesh_clean.c
+if [ -e "$template" ]; then
+    cp "$template" src/awp/mesh.c
+fi
 
-module unload cmake
 #module unload gcc 
-#ml reset
+ml reset
 #ml nvhpc-hpcx-cuda11/23.7
 #module load intel cmake impi cuda
+module unload cmake
+ml gcc/13.2.0
+module unload openmpi
+ml cuda/12.5
+module load mvapich-plus/4.1.0
 
 rm -r release
 mkdir -p release
 
 cd release
+
+export MPI_HOME="/opt/apps/gcc14/cuda12/mvapich-plus/4.1.0"
+
+export PATH=${MPI_HOME}/bin:$PATH
+export LD_LIBRARY_PATH=${MPI_HOME}/lib:$LD_LIBRARY_PATH
+export CPATH=${MPI_HOME}/include:$CPATH
+export C_INCLUDE_PATH=${MPI_HOME}/include:$C_INCLUDE_PATH
+
+export LD_LIBRARY_PATH=/home1/apps/nvidia/Linux_aarch64/24.7/cuda/12.5/lib64:$LD_LIBRARY_PATH
+
 export CC=$(which mpicc)
 export CXX=$(which mpicxx)
 export FC=$(which mpifort)
 export MPI_C_COMPILER=$(which mpicc)
-export MPI_INCLUDE_PATH=${TACC_MPI_DIR}/include
+export MPI_CXX_COMPILER=$(which mpicxx)
+export MPI_INCLUDE_PATH=${MPI_HOME}/include
 #export CXX
 #export LD_LIBRARY_PATH=/opt/intel/compilers_and_libraries_2020.4.304/linux/mpi/intel64/lib:$LD_LIBRARY_PATH
 #export CPATH=/opt/intel/compilers_and_libraries_2020.4.304/linux/mpi/intel64/include:$CPATH
@@ -40,9 +59,9 @@ echo ""
 
 echo "LD_PRELOAD=$LD_PRELOAD"
 
-export MPI_HOME=${TACC_MPI_DIR}
+#export MPI_HOME=${TACC_MPI_DIR}
 
-echo "TACC_IMPI_INC=$TACC_IMPI_INC"
+#echo "TACC_IMPI_INC=$TACC_IMPI_INC"
 echo "MPI_HOME=$MPI_HOME"
 
 
